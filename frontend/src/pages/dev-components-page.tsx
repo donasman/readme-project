@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
-// 확인용 한 페이지(계획 4.9). shadcn 부품과 dsui 부품을 나란히 놓고 7절 항목을 눈으로 본다.
+// 확인용 한 페이지(계획 4.9, /dev/components). shadcn 부품과 dsui 부품을 나란히 놓고 7절 항목을 눈으로 본다.
 
 /** 리드미 로고가 정해지기 전까지 쓰는 자리표시 마크. */
 function ReadmeMark() {
@@ -55,7 +55,7 @@ function Section({
   )
 }
 
-export function App() {
+export function DevComponentsPage() {
   const { theme, setTheme } = useTheme()
   const sound = useSoundSettings()
 
@@ -167,4 +167,4 @@ export function App() {
   )
 }
 
-export default App
+export default DevComponentsPage
