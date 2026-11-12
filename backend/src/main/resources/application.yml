@@ -1,0 +1,53 @@
+# 모든 환경이 함께 쓰는 설정. 환경마다 다른 값은 application-dev.yml, application-prod.yml 에 있다.
+spring:
+  application:
+    name: readme
+  profiles:
+    default: dev   # SPRING_PROFILES_ACTIVE 를 주지 않으면 dev 로 뜬다. 운영 서버는 prod 를 준다.
+  config:
+    # 내 PC 에서만 쓰는 값(구글 클라이언트 비밀, Claude API 키 등)을 backend/application-local.yml 에 두면 읽는다.
+    # 이 파일은 git 에 올라가지 않는다.
+    import: optional:file:./application-local.yml
+
+  datasource:
+    hikari:
+      maximum-pool-size: 5   # Supabase 무료 구간의 연결 수를 넘지 않게 작게 잡는다
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate     # 테이블은 Flyway 만 만든다
+    properties:
+      hibernate:
+        default_schema: readme
+  flyway:
+    default-schema: readme
+    schemas: readme
+
+  session:
+    timeout: 14d             # 마지막 사용 후 14일(아직 정하지 않은 값. 예시로 넣었다)
+    jdbc:
+      initialize-schema: never           # 세션 테이블도 Flyway(V2)가 만든다
+      table-name: readme.SPRING_SESSION
+
+  servlet:
+    multipart:
+      max-file-size: 20MB    # 이력서·포트폴리오 파일
+      max-request-size: 20MB
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        max-age: 14d
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health      # /actuator/health 만 연다. 배포 확인과 상태 점검에 쓴다
+  health:
+    mail:
+      enabled: false         # 메일 서버가 꺼져 있어도 서버 상태를 DOWN 으로 보지 않는다

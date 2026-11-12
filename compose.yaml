@@ -1,0 +1,31 @@
+# 개발용 DB 와 메일 수신기.
+#   켜기: docker compose up -d      끄기: docker compose down      DB 까지 지우기: docker compose down -v
+name: readme
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: readme
+      POSTGRES_USER: readme
+      POSTGRES_PASSWORD: readme
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U readme -d readme"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # 서버가 보내는 메일(가입 확인, 비밀번호 재설정)을 실제로 보내지 않고 받아 둔다.
+  # 받은 메일은 http://localhost:8025 에서 본다.
+  mail:
+    image: axllent/mailpit
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  db-data:

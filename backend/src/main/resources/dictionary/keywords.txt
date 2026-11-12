@@ -1,0 +1,261 @@
+# 기술·직무 키워드 사전. 한 줄에 대표 표기 하나. 다른 표기는 synonyms.yaml에.
+# 프로젝트 루트에 data/ 폴더를 두면 이 파일 대신 그쪽을 쓴다.
+
+# 언어
+Java
+Kotlin
+Python
+JavaScript
+TypeScript
+Go
+C
+C++
+C#
+Rust
+Scala
+PHP
+Ruby
+Swift
+Dart
+SQL
+
+# 백엔드 프레임워크·런타임
+Spring
+Spring Boot
+Spring Batch
+Spring Security
+JPA
+Hibernate
+MyBatis
+QueryDSL
+Node.js
+Express
+NestJS
+Django
+FastAPI
+Flask
+.NET
+Gin
+gRPC
+GraphQL
+REST API
+WebSocket
+
+# 프런트엔드·모바일
+React
+Vue
+Next.js
+Angular
+Svelte
+Flutter
+React Native
+Android
+iOS
+
+# 데이터베이스·캐시·메시지
+PostgreSQL
+MySQL
+MariaDB
+Oracle
+MSSQL
+MongoDB
+Redis
+Elasticsearch
+Kafka
+RabbitMQ
+SQS
+
+# 인프라·운영
+AWS
+GCP
+Azure
+Docker
+Kubernetes
+Terraform
+Linux
+Nginx
+Jenkins
+GitHub Actions
+GitLab CI
+ArgoCD
+CI/CD
+Prometheus
+Grafana
+ELK
+Datadog
+CloudWatch
+
+# 데이터·AI
+Airflow
+Spark
+Hadoop
+ETL
+데이터 파이프라인
+머신러닝
+LLM
+RAG
+
+# 일반 개발 낱말 — 공고 필수·우대 문장에 자주 나와 매칭이 판단할 수 있게 한다
+API
+데이터베이스
+배포
+테스트
+디버깅
+자동화
+AI
+
+# 설계·방법
+MSA
+DDD
+TDD
+클린 아키텍처
+이벤트 드리븐
+대용량 트래픽
+성능 최적화
+동시성
+분산 시스템
+무중단 배포
+모니터링
+테스트 코드
+코드 리뷰
+애자일
+스크럼
+Git
+
+# 직무·역량 낱말
+백엔드
+프런트엔드
+풀스택
+서버 개발
+데이터 엔지니어
+DevOps
+협업
+커뮤니케이션
+문제 해결
+주도적
+빠른 학습
+문서화
+
+# ── 리드미용 추가 (2026-11-12) ─────────────────────────────────────────
+# 대상: 스마트팩토리·MES, 고장예측, 공기업·대학 전산직. 위쪽 jobfit 원본은 고치지 않았다.
+# 뺀 것: R(R&D에 걸림), GEM(Ruby gem에 걸림), FA·SM·AD·QA(두 글자 약어, 다른 뜻과 겹침),
+#        F/W(펌웨어·방화벽 둘 다), WAS(영어 was에 걸림), Apache 홀로(Apache Kafka에 걸림),
+#        전처리 홀로(제조 '전처리 공정'에 걸림), NCS·토익·한국사(전형·어학 이름이지 역량 낱말이 아님),
+#        SQL 튜닝('SQL 튜닝' 요건이 SQL로 세어지던 기존 동작이 바뀜),
+#        자격증 이름(경험 카드에 없는 값이라 넣으면 '자격증 우대'가 미충족으로 점수를 깎음 → certificates.yaml 로 분리)
+
+# 스마트팩토리·MES
+스마트팩토리
+MES
+ERP
+SAP
+SCM
+WMS
+PLM
+QMS
+SPC
+PLC
+HMI
+SCADA
+DCS
+공장 자동화
+설비 인터페이스
+설비 모니터링
+OPC UA
+Modbus
+MQTT
+EtherCAT
+PROFINET
+시리얼 통신
+SECS/GEM
+IoT
+IIoT
+디지털 트윈
+엣지 컴퓨팅
+임베디드
+펌웨어
+로봇
+ROS
+AGV
+제조 공정
+생산 관리
+공정 관리
+품질 관리
+WPF
+WinForms
+Delphi
+
+# 고장예측·데이터 분석
+예지보전
+고장 진단
+이상 탐지
+시계열
+잔여 수명 예측
+진동 분석
+신호 처리
+센서 데이터
+CBM
+PHM
+FMEA
+딥러닝
+PyTorch
+TensorFlow
+Keras
+scikit-learn
+XGBoost
+LightGBM
+pandas
+NumPy
+CNN
+LSTM
+오토인코더
+MLOps
+MLflow
+컴퓨터 비전
+OpenCV
+데이터 분석
+통계 분석
+데이터 전처리
+데이터 시각화
+MATLAB
+LabVIEW
+InfluxDB
+TimescaleDB
+
+# 공공·대학 전산 (SI·운영)
+전자정부프레임워크
+JSP
+Servlet
+jQuery
+Nexacro
+WebSquare
+Tomcat
+Apache HTTP Server
+WebLogic
+JEUS
+Tibero
+CUBRID
+PL/SQL
+저장 프로시저
+Windows Server
+가상화
+서버 운영
+유지보수
+네트워크
+방화벽
+정보보안
+개인정보보호
+ISMS-P
+망분리
+백업
+IT 자산 관리
+헬프데스크
+그룹웨어
+학사 시스템
+정보화 사업
+제안요청서
+PMO
+감리
+공공데이터
+웹 접근성
+웹 표준

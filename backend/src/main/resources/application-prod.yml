@@ -1,0 +1,38 @@
+# 운영 서버. 값은 모두 환경 변수로 받는다(backend/.env.example 참고). 빠진 값이 있으면 서버가 뜨지 않는다.
+spring:
+  datasource:
+    url: ${DB_URL}           # 예: jdbc:postgresql://<Supabase 세션 모드 풀러 주소>:5432/postgres?currentSchema=readme
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # 구글 로그인을 만들 때 주석을 푼다(SecurityConfig 의 oauth2Login 과 함께).
+  # security:
+  #   oauth2:
+  #     client:
+  #       registration:
+  #         google:
+  #           client-id: ${GOOGLE_CLIENT_ID}
+  #           client-secret: ${GOOGLE_CLIENT_SECRET}
+  #           scope: openid, email, profile
+
+server:
+  forward-headers-strategy: framework   # Cloudflare 와 Caddy 뒤에 있으므로 X-Forwarded-* 헤더를 믿는다
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+app:
+  frontend-origin: ${FRONTEND_ORIGIN}           # 예: https://app.도메인
+  csrf-cookie-domain: ${CSRF_COOKIE_DOMAIN}     # 예: 도메인 (app. 과 api. 의 상위 도메인)

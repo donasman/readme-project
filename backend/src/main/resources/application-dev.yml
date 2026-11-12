@@ -1,0 +1,13 @@
+# 내 PC 에서 띄울 때. DB 와 메일 수신기는 저장소 맨 위의 compose.yaml 로 띄운다(docker compose up -d).
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/readme?currentSchema=readme
+    username: readme
+    password: readme
+  mail:
+    host: localhost
+    port: 1025               # Mailpit. 보낸 메일은 http://localhost:8025 에서 본다
+
+app:
+  frontend-origin: http://localhost:5173
+  csrf-cookie-domain:        # 개발에서는 비워 둔다

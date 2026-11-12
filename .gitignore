@@ -1,0 +1,14 @@
+# 운영체제 · 편집기
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# 비밀 값
+.env
+.env.*
+!.env.example
+application-local.yml
+
+# 백엔드와 프런트의 빌드 결과는 각 폴더의 .gitignore 가 맡는다

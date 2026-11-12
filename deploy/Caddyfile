@@ -1,0 +1,6 @@
+# 초안. 도메인이 정해지면 api.example.com 을 실제 주소로 바꾼다.
+# Caddy 가 HTTPS 를 받아 같은 서버의 Spring Boot(8080)로 넘긴다.
+api.example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:8080
+}
