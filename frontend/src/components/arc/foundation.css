@@ -1,0 +1,297 @@
+/*
+ * Arc foundation tokens (https://uiarc.dev/r/arc-foundation.json), re-valued for devs7udio.
+ *
+ * Token NAMES and structure follow Arc, so `shadcn add @uiarc/*` components work unmodified.
+ * Token VALUES are the devs7udio brand, in OKLCH. What differs from upstream, on purpose:
+ *   - One accent: --accent is brand-blue. The `data-accent` switch is gone (the brand is fixed).
+ *   - Second brand color: --highlight* (brand-yellow). Arc has no equivalent, so Arc components never read it.
+ *     Brand rule: yellow is always a fill, with --highlight-foreground on top; never text or thin strokes on white.
+ *   - Neutrals keep the brand's cool tint; the --neutral-* ramp is upstream's pure gray and only used raw by a few components.
+ *   - --accent-subtle / --highlight-subtle are alpha tints (upstream style), not the solid blue-subtle / yellow-subtle.
+ *   - --text-secondary and --text-muted are the same value (ink-muted, 4.6:1 on surface); there is no fainter step.
+ *   - The brand gradient is blue-only (a blue+yellow mix inside one component breaks the color rules).
+ *   - Fonts: Pretendard for display and body (upstream: Geist / Inter).
+ *   - Added (not in upstream): --surface-sunken, --market-up/down, --inverse*, --glow.
+ *   - Chart series 2 is brand yellow (amber in light so strokes reach 3:1 on white).
+ * Dark mode: `data-theme="dark"` or the `.dark` class (shadcn convention) on <html>, and the OS setting when neither
+ *   data-theme nor a .light/.dark class is set.
+ * Derived tokens: accent-strong/-pressed/-subtle/-foreground-muted, control-on/-glyph (light), control-fill, series-1, glow and
+ *   highlight-subtle are written from --accent, --accent-foreground and --highlight. A theme that sets only those recolors
+ *   the whole control set. Dark --control-on/--control-glyph stay their own values (a deeper blue under a white glyph).
+ *   Themes may set the tokens listed in lib/theme/arc-tokens.ts; a scoped theme re-declares the derived ones
+ *   (custom properties resolve var() where they are declared).
+ * Focus policy is upstream's: no ring on pointer focus, accent outline on keyboard focus (end of file).
+ */
+:root {
+  color-scheme: light;
+  --neutral-0: oklch(100% 0 0);
+  --neutral-1: oklch(99% 0 0);
+  --neutral-2: oklch(97.8% 0 0);
+  --neutral-3: oklch(95.8% 0 0);
+  --neutral-4: oklch(91.5% 0 0);
+  --neutral-5: oklch(84% 0 0);
+  --neutral-6: oklch(72% 0 0);
+  --neutral-7: oklch(59% 0 0);
+  --neutral-8: oklch(46% 0 0);
+  --neutral-9: oklch(34% 0 0);
+  --neutral-10: oklch(23% 0 0);
+  --neutral-11: oklch(15% 0 0);
+  --background: oklch(100% 0 0);
+  --surface: oklch(100% 0 0);
+  --surface-raised: oklch(100% 0 0);
+  --surface-muted: oklch(97.5% .005 258);
+  --surface-sunken: oklch(93.8% .008 254);
+  --foreground: oklch(27.1% .005 248);
+  --text-secondary: oklch(56.1% .023 251);
+  --text-muted: oklch(56.1% .023 251);
+  --border: oklch(91.9% .01 248);
+  --border-subtle: oklch(95.5% .007 248);
+  --border-strong: oklch(80% .014 250);
+  --accent: #2563eb;
+  --accent-strong: var(--accent);
+  --accent-pressed: var(--accent-strong);
+  --accent-subtle: color-mix(in oklch, var(--accent) 12%, transparent);
+  --accent-foreground: oklch(100% 0 0);
+  --accent-foreground-muted: color-mix(in oklch, var(--accent-foreground) 50%, transparent);
+  --highlight: #fbbf24;
+  --highlight-strong: #d8b300;
+  --highlight-subtle: color-mix(in oklch, var(--highlight) 22%, transparent);
+  --highlight-foreground: oklch(27.1% .005 248);
+  /* Selection controls (switch, checkbox, radio, slider). --control-on fills a chosen control; --control-glyph is the check or dot drawn on it. */
+  --control-on: var(--accent);
+  --control-glyph: var(--accent-foreground);
+  --control-track: oklch(89.5% .006 248);
+  --control-track-hover: oklch(86% .007 248);
+  --control-thumb: oklch(100% 0 0);
+  --control-thumb-on: oklch(100% 0 0);
+  --control-thumb-shadow: 0 0 0 .5px oklch(0% 0 0 / .07), 0 1px 2px oklch(0% 0 0 / .14), 0 2px 6px oklch(0% 0 0 / .06);
+  --control-on-subtle: color-mix(in oklab, var(--control-on) 10%, transparent);
+  --control-fill: var(--control-on);
+  /* Pointer focus draws no ring. Keyboard focus uses the outline at the end of this file. */
+  --focus-ring: transparent;
+  --success: #37b66c;
+  --warning: oklch(58% .18 75);
+  --danger: #e35462;
+  /* The text on a --danger fill (a badge): a dark ink in both modes, readable on the light and the dark danger alike. */
+  --danger-foreground: oklch(18.3% .031 263);
+  /* Korean market colors: up is red, down is blue. Never carry meaning by color alone; add an arrow or sign. */
+  --market-up: oklch(54.4% .205 25);
+  --market-down: oklch(51.4% .189 260);
+  --inverse: oklch(27.1% .005 248);
+  --inverse-foreground: oklch(100% 0 0);
+  --glow: var(--highlight);
+  --shadow-resting: 0 1px 2px oklch(0% 0 0 / .035);
+  --shadow-raised: 0 6px 18px oklch(0% 0 0 / .065), 0 1px 3px oklch(0% 0 0 / .035);
+  --shadow-floating: 0 20px 48px oklch(0% 0 0 / .105), 0 3px 10px oklch(0% 0 0 / .045);
+  /* A face with a color of its own (fill or border) casts that color; a plain surface keeps the neutral shadow above. */
+  --shadow-accent-resting: 0 4px 12px color-mix(in oklab, var(--accent) 30%, transparent);
+  --shadow-accent-raised: 0 8px 20px color-mix(in oklab, var(--accent) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-accent-floating: 0 18px 44px color-mix(in oklab, var(--accent) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-highlight-resting: 0 4px 12px color-mix(in oklab, var(--highlight) 30%, transparent);
+  --shadow-highlight-raised: 0 8px 20px color-mix(in oklab, var(--highlight) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--highlight) 20%, transparent);
+  --shadow-highlight-floating: 0 18px 44px color-mix(in oklab, var(--highlight) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--highlight) 20%, transparent);
+  --shadow-danger-resting: 0 4px 12px color-mix(in oklab, var(--danger) 30%, transparent);
+  --shadow-danger-raised: 0 8px 20px color-mix(in oklab, var(--danger) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--danger) 20%, transparent);
+  --shadow-danger-floating: 0 18px 44px color-mix(in oklab, var(--danger) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--danger) 20%, transparent);
+  --shadow-success-resting: 0 4px 12px color-mix(in oklab, var(--success) 30%, transparent);
+  --shadow-success-raised: 0 8px 20px color-mix(in oklab, var(--success) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--success) 20%, transparent);
+  --shadow-success-floating: 0 18px 44px color-mix(in oklab, var(--success) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--success) 20%, transparent);
+  --shadow-warning-resting: 0 4px 12px color-mix(in oklab, var(--warning) 30%, transparent);
+  --shadow-warning-raised: 0 8px 20px color-mix(in oklab, var(--warning) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--warning) 20%, transparent);
+  --shadow-warning-floating: 0 18px 44px color-mix(in oklab, var(--warning) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--warning) 20%, transparent);
+  /* Brand gradient: blue tints only. Light enough for dark text (--arc-gradient-foreground). */
+  --arc-gradient-from: oklch(92% .05 263);
+  --arc-gradient-to: oklch(95% .03 256);
+  --arc-gradient: linear-gradient(100deg, var(--arc-gradient-from), var(--arc-gradient-to));
+  --arc-gradient-foreground: oklch(27.1% .005 248);
+  --arc-gradient-soft: linear-gradient(135deg, oklch(97.5% .012 263), oklch(98% .008 256));
+  --arc-gradient-line: linear-gradient(100deg, oklch(82% .08 263), oklch(88% .05 256));
+  --arc-gradient-ink: linear-gradient(100deg, oklch(47% .17 263), oklch(52% .13 256));
+  /* Chart series: 1 brand blue, 2 brand yellow (amber for strokes), 3 and 4 fixed hues for separation. Approx. validated for contrast on surface and CVD distance. */
+  --series-1: var(--accent);
+  --series-2: #fbbf24;
+  --series-3: #9623f1;
+  --series-4: #03cf4d;
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+  --space-12: 3rem; --space-16: 4rem; --space-20: 5rem; --space-24: 6rem;
+  --radius-control: 1.125rem; --radius-panel: 1.625rem; --radius-surface: 2.125rem; --radius-pill: 9999px;
+  --control-height-sm: 2.25rem; --control-height-md: 2.75rem; --control-height-lg: 3.125rem;
+  --font-display: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-body: var(--font-display);
+  /* Control labels by control size (Figma Text/label-sm, Text/label, Text/label-lg). */
+  --label-sm: .8125rem; --label-md: .875rem; --label-lg: 1rem; --label-weight: 700;
+  --text-xs: .75rem; --text-sm: .875rem; --text-base: 1rem; --text-lg: 1.125rem;
+  --text-xl: 1.375rem; --text-2xl: 1.75rem; --text-3xl: 2.25rem;
+  --text-4xl: 3.25rem; --text-5xl: 4.5rem;
+  --tracking-display: -.03em; --tracking-body: -.01em;
+  --leading-display: 1.1; --leading-body: 1.4;
+  --ease-enter: cubic-bezier(.16,1,.3,1);
+  --ease-standard: cubic-bezier(.22,1,.36,1);
+  --ease-exit: cubic-bezier(.7,0,.84,0);
+  --ease-in-out: cubic-bezier(.65,0,.35,1);
+  /* Spring with a gentle settle (bounce .15). Pair with --duration-spring for transform transitions. */
+  --ease-spring: linear(0, 0.0258, 0.09, 0.1763, 0.2732, 0.3724, 0.4683, 0.5573, 0.6376, 0.7082, 0.7689, 0.8202, 0.8628, 0.8976, 0.9256, 0.9476, 0.9648, 0.9778, 0.9875, 0.9945, 0.9994, 1.0026, 1.0047, 1.0058, 1.0062, 1.0062, 1.0059, 1.0055, 1.0049, 1.0043, 1.0036, 1.0031, 1.0025, 1.002, 1.0016, 1.0013, 1);
+  --duration-micro: 80ms; --duration-instant: 120ms; --duration-fast: 160ms; --duration-standard: 240ms; --duration-moderate: 320ms; --duration-considered: 480ms; --duration-spring: 580ms;
+}
+
+/* Dark values appear twice, once for the explicit switch (data-theme="dark" or the .dark class) and once for the OS setting. Edit both together. */
+:root[data-theme="dark"],
+:root.dark {
+  color-scheme: dark;
+  --background: oklch(18.1% .005 248);
+  --surface: oklch(18.1% .005 248);
+  --surface-raised: oklch(25% .009 250);
+  --surface-muted: oklch(21.6% .007 248);
+  --surface-sunken: oklch(15.8% .005 248);
+  --foreground: oklch(96.9% 0 0);
+  --text-secondary: oklch(71.7% .021 250);
+  --text-muted: oklch(71.7% .021 250);
+  --border: oklch(30.3% .013 253);
+  --border-subtle: oklch(25.5% .01 250);
+  /* Dark shadows are hard to see, so a floating layer gets a quiet edge there. Light keeps "border = fill" (var(--float-edge, fill) falls back to the fill when this is unset). */
+  --float-edge: var(--border-subtle);
+  --border-strong: oklch(42% .015 252);
+  --accent: oklch(70.1% .156 264);
+  --accent-strong: var(--accent);
+  --accent-pressed: var(--accent-strong);
+  --accent-subtle: color-mix(in oklch, var(--accent) 18%, transparent);
+  --accent-foreground: oklch(18.3% .031 263);
+  --accent-foreground-muted: color-mix(in oklch, var(--accent-foreground) 50%, transparent);
+  --highlight: oklch(83.7% .164 84);
+  --highlight-strong: oklch(88% .13 88);
+  --highlight-subtle: color-mix(in oklch, var(--highlight) 20%, transparent);
+  --highlight-foreground: oklch(27.1% .005 248);
+  --control-on: oklch(62.3% .188 260);
+  --control-glyph: oklch(100% 0 0);
+  --control-track: oklch(33% .008 250);
+  --control-track-hover: oklch(37% .009 250);
+  --control-thumb: oklch(97% 0 0);
+  --control-thumb-on: oklch(100% 0 0);
+  --control-fill: var(--control-on);
+  --control-thumb-shadow: 0 0 0 .5px oklch(0% 0 0 / .3), 0 1px 2px oklch(0% 0 0 / .35), 0 2px 6px oklch(0% 0 0 / .2);
+  --success: #59d989;
+  --warning: oklch(83% .17 80);
+  --danger: oklch(76% .2 25);
+  --market-up: oklch(71.2% .181 23);
+  --market-down: oklch(69.8% .159 258);
+  --inverse: oklch(27.1% .005 248);
+  --inverse-foreground: oklch(96.9% 0 0);
+  --glow: var(--highlight);
+  --shadow-resting: 0 1px 2px oklch(0% 0 0 / .18);
+  --shadow-raised: 0 8px 22px oklch(0% 0 0 / .22);
+  --shadow-floating: 0 22px 55px oklch(0% 0 0 / .34);
+  --shadow-accent-resting: 0 4px 12px color-mix(in oklab, var(--accent) 30%, transparent);
+  --shadow-accent-raised: 0 8px 20px color-mix(in oklab, var(--accent) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-accent-floating: 0 18px 44px color-mix(in oklab, var(--accent) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-highlight-resting: 0 4px 12px color-mix(in oklab, var(--highlight) 30%, transparent);
+  --shadow-highlight-raised: 0 8px 20px color-mix(in oklab, var(--highlight) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--highlight) 20%, transparent);
+  --shadow-highlight-floating: 0 18px 44px color-mix(in oklab, var(--highlight) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--highlight) 20%, transparent);
+  --shadow-danger-resting: 0 4px 12px color-mix(in oklab, var(--danger) 30%, transparent);
+  --shadow-danger-raised: 0 8px 20px color-mix(in oklab, var(--danger) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--danger) 20%, transparent);
+  --shadow-danger-floating: 0 18px 44px color-mix(in oklab, var(--danger) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--danger) 20%, transparent);
+  --shadow-success-resting: 0 4px 12px color-mix(in oklab, var(--success) 30%, transparent);
+  --shadow-success-raised: 0 8px 20px color-mix(in oklab, var(--success) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--success) 20%, transparent);
+  --shadow-success-floating: 0 18px 44px color-mix(in oklab, var(--success) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--success) 20%, transparent);
+  --shadow-warning-resting: 0 4px 12px color-mix(in oklab, var(--warning) 30%, transparent);
+  --shadow-warning-raised: 0 8px 20px color-mix(in oklab, var(--warning) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--warning) 20%, transparent);
+  --shadow-warning-floating: 0 18px 44px color-mix(in oklab, var(--warning) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--warning) 20%, transparent);
+  --arc-gradient-from: oklch(34% .07 264);
+  --arc-gradient-to: oklch(30% .05 256);
+  --arc-gradient-foreground: oklch(96.9% 0 0);
+  --arc-gradient-soft: linear-gradient(135deg, oklch(22.5% .02 262), oklch(21% .014 256));
+  --arc-gradient-line: linear-gradient(100deg, oklch(46% .09 264), oklch(40% .06 256));
+  --arc-gradient-ink: linear-gradient(100deg, oklch(82% .09 264), oklch(86% .06 256));
+  --series-1: var(--accent);
+  --series-2: oklch(83.7% .164 84);
+  --series-3: oklch(68% .2 330);
+  --series-4: oklch(76% .14 175);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]):not(.light):not(.dark) {
+    color-scheme: dark;
+    --background: oklch(18.1% .005 248);
+    --surface: oklch(18.1% .005 248);
+    --surface-raised: oklch(25% .009 250);
+    --surface-muted: oklch(21.6% .007 248);
+    --surface-sunken: oklch(15.8% .005 248);
+    --foreground: oklch(96.9% 0 0);
+    --text-secondary: oklch(71.7% .021 250);
+    --text-muted: oklch(71.7% .021 250);
+    --border: oklch(30.3% .013 253);
+    --border-subtle: oklch(25.5% .01 250);
+    /* Dark shadows are hard to see, so a floating layer gets a quiet edge there. Light keeps "border = fill" (var(--float-edge, fill) falls back to the fill when this is unset). */
+    --float-edge: var(--border-subtle);
+    --border-strong: oklch(42% .015 252);
+    --accent: oklch(70.1% .156 264);
+    --accent-strong: var(--accent);
+    --accent-pressed: var(--accent-strong);
+    --accent-subtle: color-mix(in oklch, var(--accent) 18%, transparent);
+    --accent-foreground: oklch(18.3% .031 263);
+    --accent-foreground-muted: color-mix(in oklch, var(--accent-foreground) 50%, transparent);
+    --highlight: oklch(83.7% .164 84);
+    --highlight-strong: oklch(88% .13 88);
+    --highlight-subtle: color-mix(in oklch, var(--highlight) 20%, transparent);
+    --highlight-foreground: oklch(27.1% .005 248);
+    --control-on: oklch(62.3% .188 260);
+    --control-glyph: oklch(100% 0 0);
+    --control-track: oklch(33% .008 250);
+    --control-track-hover: oklch(37% .009 250);
+    --control-thumb: oklch(97% 0 0);
+    --control-thumb-on: oklch(100% 0 0);
+    --control-fill: var(--control-on);
+    --control-thumb-shadow: 0 0 0 .5px oklch(0% 0 0 / .3), 0 1px 2px oklch(0% 0 0 / .35), 0 2px 6px oklch(0% 0 0 / .2);
+    --success: #59d989;
+    --warning: oklch(83% .17 80);
+    --danger: oklch(76% .2 25);
+    --market-up: oklch(71.2% .181 23);
+    --market-down: oklch(69.8% .159 258);
+    --inverse: oklch(27.1% .005 248);
+    --inverse-foreground: oklch(96.9% 0 0);
+    --glow: var(--highlight);
+    --shadow-resting: 0 1px 2px oklch(0% 0 0 / .18);
+    --shadow-raised: 0 8px 22px oklch(0% 0 0 / .22);
+    --shadow-floating: 0 22px 55px oklch(0% 0 0 / .34);
+    --shadow-accent-resting: 0 4px 12px color-mix(in oklab, var(--accent) 30%, transparent);
+    --shadow-accent-raised: 0 8px 20px color-mix(in oklab, var(--accent) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--accent) 20%, transparent);
+    --shadow-accent-floating: 0 18px 44px color-mix(in oklab, var(--accent) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--accent) 20%, transparent);
+    --shadow-highlight-resting: 0 4px 12px color-mix(in oklab, var(--highlight) 30%, transparent);
+    --shadow-highlight-raised: 0 8px 20px color-mix(in oklab, var(--highlight) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--highlight) 20%, transparent);
+    --shadow-highlight-floating: 0 18px 44px color-mix(in oklab, var(--highlight) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--highlight) 20%, transparent);
+    --shadow-danger-resting: 0 4px 12px color-mix(in oklab, var(--danger) 30%, transparent);
+    --shadow-danger-raised: 0 8px 20px color-mix(in oklab, var(--danger) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--danger) 20%, transparent);
+    --shadow-danger-floating: 0 18px 44px color-mix(in oklab, var(--danger) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--danger) 20%, transparent);
+    --shadow-success-resting: 0 4px 12px color-mix(in oklab, var(--success) 30%, transparent);
+    --shadow-success-raised: 0 8px 20px color-mix(in oklab, var(--success) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--success) 20%, transparent);
+    --shadow-success-floating: 0 18px 44px color-mix(in oklab, var(--success) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--success) 20%, transparent);
+    --shadow-warning-resting: 0 4px 12px color-mix(in oklab, var(--warning) 30%, transparent);
+    --shadow-warning-raised: 0 8px 20px color-mix(in oklab, var(--warning) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--warning) 20%, transparent);
+    --shadow-warning-floating: 0 18px 44px color-mix(in oklab, var(--warning) 36%, transparent), 0 4px 12px color-mix(in oklab, var(--warning) 20%, transparent);
+    --arc-gradient-from: oklch(34% .07 264);
+    --arc-gradient-to: oklch(30% .05 256);
+    --arc-gradient-foreground: oklch(96.9% 0 0);
+    --arc-gradient-soft: linear-gradient(135deg, oklch(22.5% .02 262), oklch(21% .014 256));
+    --arc-gradient-line: linear-gradient(100deg, oklch(46% .09 264), oklch(40% .06 256));
+    --arc-gradient-ink: linear-gradient(100deg, oklch(82% .09 264), oklch(86% .06 256));
+    --series-1: var(--accent);
+    --series-2: oklch(83.7% .164 84);
+    --series-3: oklch(68% .2 330);
+    --series-4: oklch(76% .14 175);
+  }
+}
+
+/* Focus. Pointer focus never draws a ring (product decision). Keyboard focus (:focus-visible) draws a subtle accent outline, so keyboard users
+   can always see where they are (WCAG 2.4.7). Left out of the outline: text fields, which match :focus-visible on a mouse click too and show
+   focus with their border and caret; menu items and listbox options, whose highlight fill marks the keyboard position; and tabindex="-1"
+   targets (dialog panels, regions) that only receive focus from script.
+   Tune it on :root or any element, no !important needed:
+     --focus-outline           color (default: the accent, softened); set transparent to hide it
+     --focus-outline-width     default 2px
+     --focus-outline-offset    default 2px; components inside clipped containers set a negative offset */
+:focus:not(:focus-visible),
+:is(input:not([type="button"], [type="checkbox"], [type="color"], [type="file"], [type="image"], [type="radio"], [type="range"], [type="reset"], [type="submit"]), textarea, [contenteditable]:not([contenteditable="false"]), [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [tabindex="-1"]):focus { outline: none !important; }
+:focus-visible:not(input:not([type="button"], [type="checkbox"], [type="color"], [type="file"], [type="image"], [type="radio"], [type="range"], [type="reset"], [type="submit"]), textarea, [contenteditable]:not([contenteditable="false"]), [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [tabindex="-1"]) {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline, color-mix(in oklab, var(--accent-strong) 72%, transparent)) !important;
+  outline-offset: var(--focus-outline-offset, 2px) !important;
+}
