@@ -17,6 +17,8 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30",
         link: "text-primary underline-offset-4 hover:underline",
+        // 리드미: 하이라이트색은 "내 것"(관심 중, 내 관심만 켜짐)에만 쓴다.
+        highlight: "bg-highlight text-highlight-foreground hover:bg-highlight/80",
       },
       size: {
         // Heights, side padding and label size follow the dsui pill button:
