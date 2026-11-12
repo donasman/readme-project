@@ -73,6 +73,45 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
+    /* 4. Tailwind에 없는 Arc 토큰을 같은 이름으로 연결한다.
+          이름 주의: bg-primary 가 리드미 강조색이고, bg-accent 는 shadcn 뜻(surface-muted)이다.
+          강조색의 옅은 채움과 진한 단계는 bg-accent-subtle, text-accent-strong 으로 쓴다.
+          --radius-panel: var(--radius-panel) 처럼 이름이 같은 줄은 Tailwind가 @layer theme 에도 내보내지만,
+          같은 :root 에 레이어 밖에서 값을 정한 foundation.css 가 이겨 순환하지 않는다. */
+    --color-surface: var(--surface);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-muted: var(--surface-muted);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-text-secondary: var(--text-secondary);
+    --color-border-subtle: var(--border-subtle);
+    --color-border-strong: var(--border-strong);
+    /* 떠 있는 층의 가장자리: 다크에서만 Arc가 정한다. 라이트는 border-subtle. */
+    --color-float-edge: var(--float-edge, var(--border-subtle));
+    --color-accent-subtle: var(--accent-subtle);
+    --color-accent-strong: var(--accent-strong);
+    --color-highlight: var(--highlight);
+    --color-highlight-strong: var(--highlight-strong);
+    --color-highlight-foreground: var(--highlight-foreground);
+    --color-warning: var(--warning);
+    --color-danger: var(--danger);
+    --radius-control: var(--radius-control);
+    --radius-panel: var(--radius-panel);
+    --radius-surface: var(--radius-surface);
+    --shadow-resting: var(--shadow-resting);
+    --shadow-raised: var(--shadow-raised);
+    --shadow-floating: var(--shadow-floating);
+    --shadow-highlight-resting: var(--shadow-highlight-resting);
+    /* 컨트롤 높이: h-control-sm(36) · h-control-md(44) · h-control-lg(50) */
+    --spacing-control-sm: var(--control-height-sm);
+    --spacing-control-md: var(--control-height-md);
+    --spacing-control-lg: var(--control-height-lg);
+    /* 13px 라벨 글자 */
+    --text-label-sm: var(--label-sm);
+    --leading-display: var(--leading-display);
+    --leading-body: var(--leading-body);
+    --tracking-display: var(--tracking-display);
+    --tracking-body: var(--tracking-body);
 }
 
 /* shadcn 값 중 Arc에 대응이 없는 것만 남긴다(사이드바 색, 차트 5번). */
