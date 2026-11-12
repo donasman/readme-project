@@ -26,7 +26,8 @@ export function shouldRevalidateGroup({ currentUrl, nextUrl, defaultShouldRevali
 export function GroupLayout() {
   const { viewer, groups, group } = useLoaderData<typeof groupLoader>()
   return (
-    <div className="@container min-h-svh bg-background text-foreground">
+    // 디자인 화면의 뿌리와 같은 글자 규칙: 본문 줄 간격과 자간, 한글 낱말 단위 줄바꿈, 끝줄 고르기.
+    <div className="@container min-h-svh bg-background text-base leading-body tracking-body break-keep text-pretty text-foreground">
       <GroupHeader viewer={viewer} groups={groups} group={group} section="posts" />
       <Outlet />
     </div>

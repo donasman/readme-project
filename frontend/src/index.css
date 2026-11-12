@@ -108,6 +108,12 @@
     --spacing-control-lg: var(--control-height-lg);
     /* 13px 라벨 글자 */
     --text-label-sm: var(--label-sm);
+    /* 본문 크기의 줄 간격은 Arc 본문 줄 간격(1.4)을 쓴다. 제목은 leading-display 를 따로 붙인다. */
+    --text-xs--line-height: var(--leading-body);
+    --text-sm--line-height: var(--leading-body);
+    --text-base--line-height: var(--leading-body);
+    --text-lg--line-height: var(--leading-body);
+    --text-label-sm--line-height: var(--leading-body);
     --leading-display: var(--leading-display);
     --leading-body: var(--leading-body);
     --tracking-display: var(--tracking-display);

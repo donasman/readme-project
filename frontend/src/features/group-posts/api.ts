@@ -17,8 +17,8 @@ import type {
 
 /** 그룹이나 공고가 없을 때. 라우터의 오류 화면이 "찾을 수 없음"으로 보인다. */
 export class NotFoundError extends Error {
-  constructor(what: string) {
-    super(`${what}을(를) 찾을 수 없습니다.`)
+  constructor(what: "그룹" | "공고") {
+    super(what === "그룹" ? "그룹을 찾을 수 없습니다." : "공고를 찾을 수 없습니다.")
     this.name = "NotFoundError"
   }
 }
