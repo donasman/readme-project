@@ -1,0 +1,57 @@
+/*
+ * Illustration styles. Written against data attributes and the single .root class only, so scripts/gen-illustrations.ts
+ * can inline this file into standalone .svg exports by replacing `.root` with `svg`.
+ * Colours come from the Arc tokens (--accent, --surface, ...), so a season theme and dark mode recolour them; the fallbacks are the base theme's light values.
+ */
+.root {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  --ill-blue: var(--accent, #2563eb);
+  --ill-yellow: var(--highlight, #fbbf24);
+  --ill-ink: var(--inverse, #252729);
+  --ill-mute: var(--border, #dfe5eb);
+  --ill-paper: var(--surface, #ffffff);
+  --ill-onYellow: var(--highlight-foreground, #252729);
+  --ill-glow: var(--glow, #fbbf24);
+  --ill-blueSubtle: var(--accent-subtle, #dbeafe);
+  --ill-yellowSubtle: var(--highlight-subtle, #fef3c7);
+}
+
+.root [data-f="blue"] { fill: var(--ill-blue); }
+.root [data-f="yellow"] { fill: var(--ill-yellow); }
+.root [data-f="ink"] { fill: var(--ill-ink); }
+.root [data-f="mute"] { fill: var(--ill-mute); }
+.root [data-f="paper"] { fill: var(--ill-paper); }
+.root [data-f="onYellow"] { fill: var(--ill-onYellow); }
+.root [data-f="glow"] { fill: var(--ill-glow); }
+.root [data-f="blueSubtle"] { fill: var(--ill-blueSubtle); }
+.root [data-f="yellowSubtle"] { fill: var(--ill-yellowSubtle); }
+
+/* Motion only plays when the root says data-animated="true". Entrance first, then the ambient loop. */
+.root [data-m] { transform-box: fill-box; transform-origin: center; }
+.root [data-m="orbit"] { transform-box: view-box; transform-origin: var(--ox, 50%) var(--oy, 50%); }
+
+.root[data-animated="true"] [data-enter] {
+  animation: rise 700ms var(--ds-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+.root[data-animated="true"] [data-m="float"] { animation: float 5s ease-in-out infinite; animation-delay: calc(var(--d, 0) * 1s + 0.8s); }
+.root[data-animated="true"] [data-m="drift"] { animation: drift 6s ease-in-out infinite; animation-delay: calc(var(--d, 0) * 1s + 0.8s); }
+.root[data-animated="true"] [data-m="pulse"] { animation: pulse 3.6s ease-in-out infinite; animation-delay: calc(var(--d, 0) * 1s + 0.8s); }
+.root[data-animated="true"] [data-m="blink"] { animation: blink 2.6s ease-in-out infinite; animation-delay: calc(var(--d, 0) * 1s + 0.8s); }
+.root[data-animated="true"] [data-m="sway"] { animation: sway 4.5s ease-in-out infinite; animation-delay: calc(var(--d, 0) * 1s + 0.8s); }
+.root[data-animated="true"] [data-m="orbit"] { animation: orbit 28s linear infinite; animation-delay: calc(var(--d, 0) * 1s); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(14px); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-animated="true"] * { animation: none !important; }
+}

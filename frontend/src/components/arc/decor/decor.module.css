@@ -1,0 +1,44 @@
+/* Season decor. The parent must be position: relative. Nothing here takes a click or changes the parent's size. */
+
+/* Edge: draws with ::before, so the element that carries .edge must not use ::before itself (a Switch-like root does). Put .edge on a child
+   <span> there instead. A strip along the top, drawn only when the theme sets --decor-edge-size (so a theme without an edge draws nothing).
+   The strip covers the whole root with the root's own corners and is masked down to the top band, so on a pill or a rounded card it follows the
+   curve instead of sticking out past the corners as a flat bar would. */
+.edge::before { content: ""; position: absolute; inset: 0; z-index: 1; background: var(--decor-edge-fill, none); border-radius: inherit; pointer-events: none; -webkit-mask: linear-gradient(#000 0 0) top / 100% var(--decor-edge-size, 0) no-repeat; mask: linear-gradient(#000 0 0) top / 100% var(--decor-edge-size, 0) no-repeat; }
+/* The site's decor setting puts data-decor="off" on <html>. Only the strip goes, never the component that carries .edge.
+   The head script sets it before the first paint, so this rule covers the pre-hydration window: the components have not yet seen
+   decorEnabled=false and still carry .edge. */
+[data-decor="off"] .edge::before { display: none; }
+/* A disabled or busy element keeps its edge, only fainter. */
+.edge:is(:disabled, [aria-disabled="true"])::before { opacity: .35; }
+
+/* Particles: a hidden layer over the parent. z-index 1 lifts it over positioned media (a thumbnail) inside the root, which is its own stacking
+   context (isolation: isolate on every decorated root), so it never rises over neighbours. pointer-events none: it can never take a click or hide a focus ring (an outline is drawn by the root). The shapes may poke out of it (overflow visible) without touching layout. */
+.particles { position: absolute; inset: 0; overflow: visible; pointer-events: none; z-index: 1; }
+.particle { position: absolute; left: var(--decor-x); top: var(--decor-y); display: block; width: 1em; height: 1em; font-size: calc(.8em * var(--decor-scale, 1)); line-height: 0; opacity: 0; animation-duration: calc(var(--duration-slow, .6s) * 4); animation-timing-function: var(--ease-standard, ease-in-out); animation-iteration-count: infinite; animation-delay: var(--decor-delay, 0s); }
+.particle svg { display: block; overflow: visible; }
+
+/* A layer animates only while it shows: always-on, hovered (data-hover, set by the component for a real pointer), fading out after the
+   pointer left (data-leaving, a moment longer than the fade) or marked active.
+   An idle layer has no animation at all, so a page of decorated tags and cards runs none. */
+.particles[data-motion="fall"]:is([data-on="always"], [data-hover], [data-leaving], [data-decor-active]) .particle { animation-name: fall; }
+.particles[data-motion="float"]:is([data-on="always"], [data-hover], [data-leaving], [data-decor-active]) .particle { animation-name: float; }
+.particles[data-motion="twinkle"]:is([data-on="always"], [data-hover], [data-leaving], [data-decor-active]) .particle { animation-name: twinkle; }
+.particles[data-motion="pop"]:is([data-on="always"], [data-hover], [data-leaving], [data-decor-active]) .particle { animation-name: pop; }
+
+/* Always-on particles stay faint; hover-only ones show while the parent is hovered by a real pointer or marked active. */
+.particles[data-on="always"] { opacity: .5; }
+.particles[data-on="hover"] { opacity: 0; transition: opacity var(--duration-fast, .15s) var(--ease-standard, ease); }
+.particles[data-on="hover"]:is([data-hover], [data-decor-active]) { opacity: 1; }
+/* Never on a disabled, aria-disabled or busy parent (the component also skips the hover there). Keyboard focus is deliberately absent:
+   focus keeps the ring and the edge, no particles. */
+:disabled > .particles, [aria-disabled="true"] > .particles, [aria-busy="true"] > .particles { display: none; }
+
+@keyframes fall { 0% { opacity: 0; transform: translateY(-.4em) rotate(0deg); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(1.6em) rotate(40deg); } }
+@keyframes float { 0% { opacity: 0; transform: translateY(.2em); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-1em); } }
+@keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes pop { 0% { opacity: 0; transform: scale(0); } 30% { opacity: 1; transform: scale(1.2); } 60% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1); } }
+
+/* The hook already renders nothing for reduced motion once hydrated; this covers the first paint. */
+@media (prefers-reduced-motion: reduce) { .particles { display: none; } }
+:root[data-motion="reduce"] .particles { display: none; }

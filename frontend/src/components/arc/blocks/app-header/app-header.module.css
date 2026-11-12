@@ -1,0 +1,60 @@
+.header { position: relative; z-index: 20; background: var(--background); }
+.sticky { position: sticky; inset-block-start: 0; transition: transform var(--duration-considered) var(--ease-enter); }
+/* Scrolling down tucks the header away above the page; scrolling up (or focus inside it) brings it back. */
+.sticky[data-hidden]:not(:focus-within) { transform: translateY(calc(-100% - var(--space-6))); }
+.sticky[data-hidden]:not(:focus-within) .bar { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .sticky { transition: none; } }
+:root[data-motion="reduce"] .sticky { transition: none; }
+/* Resting: a line under the bar, nothing else. */
+.bar { display: flex; min-height: calc(var(--space-16) + var(--space-2)); align-items: center; gap: var(--space-5); border: 1px solid transparent; border-block-end-color: var(--border-subtle); padding: var(--space-2) var(--space-6); background: var(--surface); transition: margin var(--duration-standard) var(--ease-standard), border-radius var(--duration-standard) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+/* Scrolled: the bar lifts off the page. It is a layer now, so the border takes the fill color and the shadow draws the edge. */
+.header[data-scrolled] .bar { margin: var(--space-3) var(--space-4); border-color: var(--float-edge, var(--surface)); border-radius: var(--radius-panel); box-shadow: var(--shadow-floating); }
+
+.brand { display: inline-flex; flex: none; align-items: center; gap: var(--space-2); color: var(--foreground); font-size: var(--label-lg); font-weight: 600; line-height: var(--leading-body); text-decoration: none; transition: scale var(--duration-spring) var(--ease-spring); }
+.brand svg, .brand img { flex: none; }
+
+.nav { min-width: 0; }
+.navList { display: flex; margin: 0; padding: 0; align-items: center; gap: var(--space-1); list-style: none; }
+.navLink { position: relative; display: inline-flex; min-height: var(--control-height-sm); align-items: center; border-radius: var(--radius-pill); padding: 0 var(--space-4); color: var(--text-secondary); font-size: var(--label-md); font-weight: var(--label-weight); line-height: var(--leading-body); white-space: nowrap; text-decoration: none; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), scale var(--duration-spring) var(--ease-spring); }
+.navLink[aria-current="page"] { color: var(--accent-strong); }
+/* The fill is its own layer so it can slide between items; the label sits above it. */
+.indicator { position: absolute; inset: 0; z-index: 0; border-radius: var(--radius-pill); background: var(--accent-subtle); }
+.navLabel { position: relative; z-index: 1; }
+
+.actions { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.wideActions { display: flex; align-items: center; gap: var(--space-2); }
+.cta { display: inline-flex; min-height: var(--control-height-sm); flex: none; align-items: center; border: 1px solid var(--accent); border-radius: var(--radius-pill); padding: 0 var(--space-5); background: var(--accent); color: var(--accent-foreground); font-size: var(--label-md); font-weight: var(--label-weight); line-height: var(--leading-body); white-space: nowrap; text-decoration: none; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+.menuSlot { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .navLink:hover { background: var(--surface-muted); color: var(--foreground); }
+  .navLink[aria-current="page"]:hover { background: transparent; color: var(--accent-strong); }
+  .cta:hover { box-shadow: var(--shadow-resting); opacity: .91; }
+}
+.navLink:active { background: var(--surface-sunken); color: var(--foreground); }
+.navLink[aria-current="page"]:active { background: transparent; }
+.cta:active { background: var(--accent-pressed); border-color: var(--accent-pressed); }
+
+/* Below md the links and the wide actions move into the menu; the brand, the bar actions and the CTA stay. */
+@media (max-width: 767px) {
+  .bar { gap: var(--space-2); padding-inline: var(--space-4); }
+  .nav, .wideActions { display: none; }
+  .menuSlot { display: flex; }
+  .cta { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .bar, .navLink, .cta { transition: none; } }
+
+/* Studio feel: a visible hover (swell, soft fill) and a deeper press. */
+@media (hover: hover) and (pointer: fine) {
+  .brand:hover:not(:disabled):not([aria-disabled="true"]) { scale: 1.03; }
+}
+.brand:active:not(:disabled):not([aria-disabled="true"]) { scale: .96; }
+@media (prefers-reduced-motion: reduce) { .brand:hover, .brand:active { scale: none; } }
+
+/* Studio feel: a visible hover (swell, soft fill) and a deeper press. */
+@media (hover: hover) and (pointer: fine) {
+  .navLink:hover:not(:disabled):not([aria-disabled="true"]) { scale: 1.04; }
+  .navLink:hover:not(:disabled):not([aria-disabled="true"]):not([aria-pressed="true"]):not([aria-selected="true"]):not([aria-current]):not([data-selected]):not([data-active]) { background: var(--control-track-hover); }
+}
+.navLink:active:not(:disabled):not([aria-disabled="true"]) { scale: .94; }
+@media (prefers-reduced-motion: reduce) { .navLink:hover, .navLink:active { scale: none; } }
