@@ -48,7 +48,7 @@ function Section({
   children: ReactNode
 }) {
   return (
-    <section id={id} className="flex scroll-mt-24 flex-col gap-4">
+    <section id={id} className="flex scroll-mt-24 flex-col items-start gap-4">
       <h2 className="font-heading text-xl font-bold">{title}</h2>
       {children}
     </section>
@@ -129,7 +129,7 @@ export function App() {
         </Section>
 
         <Section id="inputs" title="입력">
-          <div className="flex max-w-md items-center gap-3">
+          <div className="flex w-full max-w-md items-center gap-3">
             <Input placeholder="이메일" type="email" />
             <Button>확인</Button>
           </div>
