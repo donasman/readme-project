@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { PlusIcon, SearchIcon } from "lucide-react"
+import { PlusIcon, SearchIcon } from "@/components/icons"
 
 import AppHeader from "@/components/arc/blocks/app-header/app-header"
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
