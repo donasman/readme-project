@@ -6,7 +6,9 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // src/components/arc is vendored from the @devs7udio registry (shadcn add). Keep it as shipped
+  // so a re-add does not fight local edits; readme code that wraps it is still linted.
+  globalIgnores(['dist', 'src/components/arc']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
