@@ -5,8 +5,8 @@ import { useSyncExternalStore } from "react";
 export interface SoundSettings { enabled: boolean; volume: number }
 
 const STORAGE_KEY = "devs7udio:sound";
-/** Sound is on by default (an interaction rule of the design system) at a moderate volume. */
-export const DEFAULT_SOUND_SETTINGS: SoundSettings = { enabled: true, volume: 0.5 };
+/** Readme: sound is off by default (upstream ships it on). A visitor who turns it on keeps that choice in this browser. */
+export const DEFAULT_SOUND_SETTINGS: SoundSettings = { enabled: false, volume: 0.5 };
 
 /** Where the settings are kept. An app can swap it, for example to remember nothing until the visitor agrees to cookies. */
 export interface SoundStorage { get: (key: string) => string | null; set: (key: string, value: string) => void }
