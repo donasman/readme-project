@@ -9,19 +9,26 @@
 @custom-variant dark (&:is(.dark *));
 
 /* 2. 리드미 값. Arc 변수 이름으로 덮어쓴다.
-      색은 아직 정하지 않았다. 자리만 두고 Arc 기본값을 쓴다. */
+      색은 A안(잉크와 형광펜, docs/design/README.md "알아 둘 것"). 강조색에서 만드는 값
+      (accent-strong, accent-subtle, 색 그림자 등)은 foundation.css 가 var() 로 읽어 따라온다. */
 :root {
-    /* --accent: ;             리드미 강조색 */
-    /* --accent-foreground: ;  강조색 위 글자 */
-    /* --highlight: ;          리드미 하이라이트색 */
+    --accent: #1e305e;
+    --accent-foreground: #ffffff;
+    --highlight: #f7ee53;
+    --highlight-strong: #dccf3a;
+    --highlight-foreground: #252729;
     /* shadcn 모서리 기준. radius-lg = 18px(Arc 컨트롤), radius-xl ≈ 25px(Arc 패널 26px) */
     --radius: var(--radius-control);
 }
 
 :root.dark {
-    /* --accent: ;             다크 강조색 */
-    /* --accent-foreground: ;  다크에서 강조색 위 글자 */
-    /* --highlight: ;          다크 하이라이트색 */
+    --accent: #c8d8fa;
+    --accent-foreground: #0e1526;
+    /* 다크의 control-on 은 강조색을 따르지 않는 자체 값이라 함께 정한다. */
+    --control-on: #5b73aa;
+    --highlight: #eae142;
+    --highlight-strong: #f3ee82;
+    --highlight-foreground: #252729;
 }
 
 /* 3. shadcn 색 이름을 Arc 변수에 연결한다. */
