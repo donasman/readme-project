@@ -1,7 +1,7 @@
 // 백엔드 연결 전 예시 데이터. docs/design/group-posts.dc.html 의 groups()와 group-post.dc.html 의 값을 그대로 옮겼다.
 // 이름, 회사, 공고, 댓글은 모두 지어낸 예시다. 보는 사람은 "다온"이고 디자인처럼 오늘은 2026-11-13이다.
 // 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
-import type { Disclosure, Member } from "@/domain/group/types"
+import type { Disclosure, GroupMember, Member } from "@/domain/group/types"
 import type { Comment, Deadline, GroupPostDetail } from "@/features/group-posts/types"
 
 export const EXAMPLE_TODAY = "2026-11-13"
@@ -98,6 +98,14 @@ const DETAILS: Record<string, Partial<GroupPostDetail>> = {
     comments: BE1_COMMENTS,
   },
 }
+/** 멤버가 들어온 날. 백엔드 스터디는 시안 7차 "멤버"의 값이고, 나머지 그룹은 지어냈다. */
+const JOINED: Record<string, Partial<Record<Name, string>>> = {
+  be: { 가람: "2026-09-01", 나래: "2026-09-03", 다온: "2026-09-10", 라온: "2026-10-02", 마루: "2026-10-20" },
+  pub: { 나래: "2026-08-20", 바다: "2026-08-22", 다온: "2026-09-05", 사랑: "2026-09-15" },
+  mes: { 다온: "2026-10-01", 자람: "2026-10-03", 차오름: "2026-10-08" },
+}
+const joined = (groupId: string, name: Name): GroupMember => ({ ...member(name), joinedAt: JOINED[groupId]?.[name] ?? EXAMPLE_TODAY })
+
 /** 상세에서만 보이는 지원 단계("단계·결과까지"를 연 멤버만). */
 const PROGRESS: Record<string, Partial<Record<Name, string>>> = { be1: { 나래: "면접 단계" } }
 
@@ -111,7 +119,7 @@ export interface ExampleGroup {
   id: string
   name: string
   mark: string
-  members: Member[]
+  members: GroupMember[]
   leaderId: string
   myDisclosure: Disclosure
   posts: GroupPostDetail[]
@@ -123,7 +131,7 @@ export function createExampleGroups(): ExampleGroup[] {
     id: g.id,
     name: g.name,
     mark: g.mark,
-    members: [VIEWER, ...g.members.map(member)],
+    members: [joined(g.id, "다온"), ...g.members.map((name) => joined(g.id, name))],
     leaderId: people[g.leader],
     myDisclosure: g.myDisclosure,
     posts: g.posts.map((p) => ({

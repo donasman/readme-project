@@ -9,9 +9,11 @@ export {
   CircleAlertIcon,
   CircleCheckIcon,
   ClockIcon,
+  CopyIcon,
   ExternalLinkIcon,
   FileTextIcon,
   FileUpIcon,
+  LinkIcon,
   LockIcon,
   MailIcon,
   MenuIcon,
@@ -21,5 +23,6 @@ export {
   SearchIcon,
   Trash2Icon,
   UploadIcon,
+  UsersIcon,
   XIcon,
 } from "lucide-react"

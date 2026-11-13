@@ -3,7 +3,7 @@ import * as db from "@/mocks/db"
 
 import type { Viewer } from "./types"
 
-/** 지금 보는 사람. */
-export async function getViewer(): Promise<Viewer> {
+/** 지금 보는 사람. 로그인하지 않았으면 null(서버는 401). */
+export async function getViewer(): Promise<Viewer | null> {
   return db.viewer()
 }

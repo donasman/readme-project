@@ -6,7 +6,9 @@ const SIZES = {
   28: "size-7 text-xs",
   32: "size-8 text-label-sm",
   36: "size-control-sm text-label-sm",
+  40: "size-10 text-sm",
   44: "size-11 text-sm",
+  56: "size-14 text-[20px]",
 } as const
 
 const TONES = {
