@@ -1,0 +1,5 @@
+# 통합 테스트(@IntegrationTest)가 쓰는 설정. dev 프로필의 설정(내 PC 의 DB, 예시 데이터, 임시 로그인)은 읽지 않는다.
+# DB 는 Testcontainers 가 정한다(TestcontainersConfiguration).
+app:
+  frontend-origin: http://localhost:5173
+  csrf-cookie-domain:

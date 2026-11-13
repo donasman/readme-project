@@ -25,6 +25,7 @@
 - `common`: 설정(`config`), 오류 응답(`error`). 기능 패키지를 불러오지 않는다.
 - 테이블마다 주인 패키지가 있다(설계 문서의 표). 그 테이블에 쓰는 코드(insert, update, delete)는 주인 패키지에만 둔다. 다른 기능의 데이터를 바꿔야 하면 그 기능의 `public` 서비스를 부른다.
 - 쓰기(행을 만들고 고치고 지우기, 그러려고 엔티티를 읽는 것까지)는 JPA 엔티티와 Spring Data 리포지토리로 한다.
+  같은 요청을 두 번 보내도 결과가 같아야 하는 쓰기(관심 켜기·끄기 같은 PUT)는 리포지토리에 native `insert … on conflict do nothing`·`delete`를 둔다. 바로 실행되므로 같은 트랜잭션의 뒤 조회가 바뀐 값을 본다.
 - 응답을 만드는 조회는 `JdbcClient`로 SQL 을 쓴다. 목록·상세처럼 여러 테이블을 묶는 조회는 테이블을 넘나들어도 된다(설계 문서 3.3 에서 확인한 SQL 을 옮긴다).
 
 ## API
@@ -35,6 +36,21 @@
 - 요청·응답은 record 로 만든다. 응답 모양은 프런트의 `types.ts`(`frontend/src/features/<기능>/`, `frontend/src/domain/<이름>/`)와 맞춘다.
 - id 는 숫자(`Long`)다.
 - 입력은 `@Valid`와 제약(`@NotBlank`, `@Size` 등)으로 검사한다. 길이 제한은 테이블 칸의 길이와 같게 한다.
+
+## 로그인한 사람
+
+- 컨트롤러는 `@CurrentUser LoginUser user`로 지금 로그인한 사람을 받는다(`auth/CurrentUser`). 로그인 방식을 모른다.
+- 로그인은 어느 방식이든 사람을 확인한 뒤 `auth/LoginSession.start(userId, request, response)`를 부른다. 세션 id 를 바꾸고, CSRF 토큰을 새로 만들고, 로그인 정보를 세션(spring_session)에 저장한다.
+- 그룹 안의 것을 다루는 API 는 먼저 `group/GroupAccess.requireMember`로 멤버인지 본다. 멤버가 아니면 그룹이 없을 때와 같은 404 `GROUP_NOT_FOUND`다.
+
+## 임시 로그인 (실제 로그인을 만들 때 걷어낼 것)
+
+2026-11-13 에 로그인보다 그룹을 먼저 만들기로 해서 dev 프로필에만 임시 로그인을 두었다. 실제 로그인(설계 로그인·경험카드 4.1)을 만들 때:
+
+- 지운다: `dev/DevLoginController`(`POST /api/auth/dev-login`, 이메일만 받고 비밀번호를 보지 않는다), `dev/package-info.java`의 그 줄, `test/.../dev/DevLoginTests`·`DevLoginAbsentTests`의 임시 로그인 부분.
+- 남긴다: `auth/LoginSession`, `LoginUser`, `CurrentUser`, `AccountQueries`, `MeController`. 실제 로그인도 이것들을 쓴다. `DevLoginTests`의 세션 확인(로그인 뒤 세션 행이 생기고 그 전에는 안 생긴다, 사람을 바꾸면 세션 id 가 바뀐다)은 실제 로그인 테스트로 옮긴다.
+- 정할 것: 예시 데이터(`dev/DevSeedData`, `resources/dev/seed.sql`)를 남길지. 남기면 예시 사용자에게 비밀번호(`password_hash`)를 넣어야 실제 로그인으로 들어갈 수 있다.
+- 프런트의 개발용 로그인 화면이나 사용자 바꾸기를 만들었으면 같이 걷어낸다.
 
 ## 응답에 싣는 값
 
@@ -77,8 +93,11 @@
 
 - DB 가 필요한 테스트는 PostgreSQL(Testcontainers)로 돌린다. H2 로 바꾸지 않는다.
 - 규칙만 있는 코드(상태 글자, 공개 범위 자르기, 댓글 링크 나누기, 공고키, 카드 검사)는 Spring 없이 JUnit 으로 테스트한다.
-- API 와 DB 를 거치는 테스트는 `@IntegrationTest`를 붙이고 주입받은 `MockMvcTester`로 요청한다. 이 표시를 붙인 테스트는 서버와 DB 를 한 번만 띄워 나눠 쓴다. 테스트 클래스에 설정(`@Import`, `@MockitoBean`, `@TestPropertySource`)을 더하면 그 클래스만 따로 띄우게 되니 꼭 필요할 때만 더한다.
-- 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고, 다른 테스트가 만든 데이터에 기대지 않는다.
+- API 와 DB 를 거치는 테스트는 `@IntegrationTest`를 붙이고 주입받은 `MockMvcTester`로 요청한다. 이 표시를 붙인 테스트는 서버와 DB 를 한 번만 띄워 나눠 쓴다. 테스트 클래스에 설정(`@ActiveProfiles`, `@Import`, `@MockitoBean`, `@TestPropertySource`)을 더하면 그 클래스만 따로 띄우게 되니 꼭 필요할 때만 더한다.
+- `@IntegrationTest`의 프로필은 `test`다(`src/test/resources/application-test.yml`). dev 의 설정, 예시 데이터, 임시 로그인은 없다.
+- 시계는 2026-11-13 00:30(서울)에 멈춰 있다(`FixedClockConfiguration`의 `NOW`, `TODAY`). UTC 로는 11-12 라서 날짜를 UTC 로 구하는 실수가 테스트에 걸린다. 테스트 데이터의 날짜도 이 둘을 기준으로 잡는다.
+- 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고(`Fixtures`), 다른 테스트가 만든 데이터에 기대지 않는다.
+- 로그인한 요청은 `TestRequests.loginAs(userId)`로 만든다. 세션을 실제로 만들고 읽는 것은 dev 프로필 테스트(`DevLoginTests`)가 본다.
 - 바꾸는 요청에는 `TestRequests.xsrf()`를 붙인다. spring-security-test 의 `csrf()`는 쓰지 않는다. 처음 부를 때 CSRF 토큰 저장소를 세션 방식으로 바꿔 끼워, 같은 서버를 쓰는 뒤의 테스트까지 달라진다.
 
 ## 아직 정하지 않은 것

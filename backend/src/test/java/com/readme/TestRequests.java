@@ -6,7 +6,12 @@ import java.util.List;
 
 import jakarta.servlet.http.Cookie;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+
+import com.readme.auth.LoginSession;
 
 /**
  * 통합 테스트의 요청에 붙이는 것들.
@@ -35,6 +40,29 @@ public final class TestRequests {
 			request.addHeader("X-XSRF-TOKEN", XSRF_TOKEN);
 			return request;
 		};
+	}
+
+	/**
+	 * 이 사용자로 로그인한 요청으로 만든다. 실제 로그인(LoginSession)이 세션에 넣는 것과 같은 로그인 정보를 쓴다.
+	 * 세션을 실제로 만들고 읽는 것까지 확인하려면 dev 프로필의 임시 로그인을 쓴다(DevLoginTests).
+	 */
+	public static RequestPostProcessor loginAs(long userId) {
+		return SecurityMockMvcRequestPostProcessors.authentication(LoginSession.authenticationOf(userId));
+	}
+
+	/** 응답의 Set-Cookie 에서 이 이름의 마지막 값. 지우는 쿠키(빈 값)는 건너뛴다. 없으면 null. */
+	public static String setCookie(MvcTestResult result, String name) {
+		String found = null;
+		for (String header : result.getResponse().getHeaders(HttpHeaders.SET_COOKIE)) {
+			if (header.startsWith(name + "=")) {
+				int end = header.indexOf(';');
+				String value = header.substring(name.length() + 1, (end < 0) ? header.length() : end);
+				if (!value.isEmpty()) {
+					found = value;
+				}
+			}
+		}
+		return found;
 	}
 
 }

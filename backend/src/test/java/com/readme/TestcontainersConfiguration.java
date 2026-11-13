@@ -12,10 +12,11 @@ import org.testcontainers.utility.DockerImageName;
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
 
+	/** 개발·운영의 DB 주소처럼 currentSchema=readme 를 붙인다. SQL 의 테이블 이름에 스키마를 붙이지 않아도 된다. */
 	@Bean
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
-		return new PostgreSQLContainer(DockerImageName.parse("postgres:16"));
+		return new PostgreSQLContainer(DockerImageName.parse("postgres:16")).withUrlParam("currentSchema", "readme");
 	}
 
 }
