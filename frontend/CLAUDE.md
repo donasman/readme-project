@@ -43,5 +43,6 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 
 ## 확인
 
-- 커밋 전에 `npm run typecheck`, `npm run lint`, `npm run build`를 돌린다.
+- 커밋 전에 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`를 돌린다.
+- 화면과 무관한 규칙(순수 함수)을 만들거나 고치면 옆에 `*.test.ts`를 두고 Vitest로 확인한다. Vitest는 Node 22.12 이상에서 돈다(이 저장소는 `.nvmrc`의 24).
 - 층 규칙은 lint가 본다. 새 층이나 새 도메인을 만들면 `eslint.layers.js`에 더한다.
