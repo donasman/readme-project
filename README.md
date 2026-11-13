@@ -78,19 +78,19 @@ git switch -c feat/frontend-something  # 작업 브랜치
 
 - 작업 규칙: `backend/CLAUDE.md`.
 - 설정: 세션 쿠키 로그인의 바탕(Spring Session JDBC), CORS, CSRF, 로그인 전 요청에 401, `/actuator/health`. 로그인 전 요청은 세션에 저장하지 않는다(세션 행이 생기지 않는다).
-- 오류 응답: 모든 오류가 `{ code, message }` 다(`common/error`). 코드 목록은 `docs/리드미_설계_그룹_공고.md` 4절.
+- 오류 응답: 모든 오류가 `{ code, message }` 다(`common/error`). 공통 코드는 `docs/리드미_백엔드_구조.md` 5.2, 기능 코드는 각 설계 문서.
 - 시간: 한국 날짜의 기준 `Clock`(`common/config/TimeConfig`, `Asia/Seoul`).
-- DB: `V1__init.sql`(설계 초안의 테이블 10개), `V2__spring_session.sql`(세션 테이블 2개), `V3__groups.sql`(그룹·그룹 공고 테이블 9개). 스키마는 `readme`.
+- DB: `V1__init.sql`(계정·경험카드 테이블 10개), `V2__spring_session.sql`(세션 테이블 2개), `V3__groups.sql`(그룹·그룹 공고 테이블 9개). 스키마는 `readme`.
 - 프로필: `dev`(기본, compose.yaml 의 DB `localhost:5433`, 예시 데이터, 임시 로그인), `prod`(환경 변수, `backend/.env.example`).
-- API: `GET /api/me` 와 그룹·그룹 공고 설계 초안의 16개 전부(`docs/리드미_설계_그룹_공고.md` 4절). 그룹 목록·만들기·공개 범위·나가기·초대 링크·초대 수락, 그룹 공고 목록·상세·올리기·내리기·날짜 넣기·관심·댓글 달기·수정·삭제, 내 지원 상태. 같은 공고는 jobfit 공고키로 알아본다(`posting/PostingKeys`).
+- API: `GET /api/me` 와 그룹 6개(`docs/리드미_설계_그룹.md`), 그룹 공고 9개와 내 공고 1개(`docs/리드미_설계_공고.md`). 목록은 `docs/리드미_백엔드_구조.md` 9절. 그룹 목록·만들기·공개 범위·나가기·초대 링크·초대 수락, 그룹 공고 목록·상세·올리기·내리기·날짜 넣기·관심·댓글 달기·수정·삭제, 내 지원 상태. 같은 공고는 jobfit 공고키로 알아본다(`posting/PostingKeys`).
 - 로그인: 실제 로그인은 아직 없다. dev 프로필에만 임시 로그인(`POST /api/auth/dev-login`)이 있고, 실제 로그인과 같은 세션을 만든다.
-- 패키지: `auth`(세션, `/api/me`), `group`, `posting`, `grouppost`, `dev`(임시 로그인, 예시 데이터), `common`. `card`, `extraction`, `keyword`, `llm`은 설명만 있다.
+- 패키지(`docs/리드미_백엔드_구조.md` 3절): `auth`(세션, `/api/me`), `group`, `posting`, `grouppost`, `dev`(임시 로그인, 예시 데이터), `common`. `card`, `extraction`, `keyword`, `llm`은 설명만 있다.
 - 테스트: `@IntegrationTest`(서버 전체 + Testcontainers PostgreSQL, 테스트끼리 나눠 씀, 시계는 2026-11-13 00:30 서울에 고정). 권한·공개 범위·상태 글자·날짜 규칙, 세션, 오류 응답.
 - 자원: `resources/dictionary`(키워드 사전 4개), `resources/prompts/exp-extract.md`(jobfit 원본 그대로. 옮길 때 첫 줄의 jobfit 안내와 변수 표기를 고친다).
 
 **frontend** (2026-11-13)
 
-- 화면 7개: 로그인 `/login`, 회원가입 `/signup`, 이메일 인증 `/signup/sent`·`/verify-email`, 비밀번호 재설정 `/password-reset`·`/password-reset/sent`·`/password-reset/new`, 경험카드 목록 `/cards`, 그룹 공고 목록 `/groups/:groupId/posts`, 그룹 공고 상세 `/groups/:groupId/posts/:postId`. `/` 는 내 첫 그룹의 목록으로 보낸다. `/dev/components` 는 부품 확인용이고 개발 서버에서만 열린다.
+- 화면 10개: 로그인 `/login`, 회원가입 `/signup`, 이메일 인증 `/signup/sent`·`/verify-email`, 비밀번호 재설정 `/password-reset`·`/password-reset/sent`·`/password-reset/new`, 경험카드 목록 `/cards`, 카드 상세·편집 `/cards/:cardId`·`/cards/:cardId/edit`, 자료로 카드 만들기 `/cards/sources`, 카드 확인 `/cards/review`, 그룹 공고 목록 `/groups/:groupId/posts`, 그룹 공고 상세 `/groups/:groupId/posts/:postId`. `/` 는 내 첫 그룹의 목록으로 보낸다. `/dev/components` 는 부품 확인용이고 개발 서버에서만 열린다.
 - 화면의 기준: 그룹 공고 두 화면은 `docs/design/`(디자인 원본과 캡처), 나머지는 캔버스 "리드미 시안 3종"의 시안이다(로그인과 경험카드 목록은 1차의 A 시안, 가입·인증·재설정은 5차). 시안이 나온 화면 25개와 프런트에 옮긴 화면은 `docs/리드미_화면_API_대응.md` 1절에 있다.
 - 구조: `src/app`(라우터, 틀, 헤더), `src/features/<기능>`(`auth`, `cards`, `group-posts`), `src/domain`(`session`, `group`), `src/shared`, `src/mocks`(가짜 서버). 규칙은 `frontend/CLAUDE.md`, 근거는 `docs/리드미_프런트_구조_계획.md`.
 - 데이터: 각 층의 `api.ts` 가 데이터를 읽고 고치는 한 곳이다. 지금은 `src/mocks/db.ts`(예시 데이터를 메모리에 둔다)를 부른다. 서버 응답은 각 `types.ts` 의 모양으로 온다고 보고 짰다.
@@ -104,24 +104,28 @@ git switch -c feat/frontend-something  # 작업 브랜치
 | 대상 | 상태 |
 |---|---|
 | frontend | `npm run typecheck`, `npm run lint`, `npm run build` 통과. 그룹 공고 목록·상세를 1280px·390px, 라이트·다크로 띄워 `docs/design/shots` 와 비교했고 픽셀 차이는 0.1~0.4% |
-| DB 마이그레이션 | (2026-11-13) Flyway 가 V1, V2 를 compose 의 PostgreSQL 16 과 Testcontainers 의 PostgreSQL 16 에 적용했다. V3 도 같은 날 Flyway 로 적용했다(`docs/리드미_설계_그룹_공고.md` 3.3절) |
+| DB 마이그레이션 | (2026-11-13) Flyway 가 V1, V2 를 compose 의 PostgreSQL 16 과 Testcontainers 의 PostgreSQL 16 에 적용했다. V3 도 같은 날 Flyway 로 적용했다(`docs/리드미_설계_그룹.md`, `docs/리드미_설계_공고.md` 3.3절) |
 | backend | (2026-11-13) Windows PC(JDK 21, Gradle 8.14.3)에서 `.\gradlew build` 통과. `bootRun` 으로 띄워 health `UP`, 로그인 전 401, CSRF 토큰 없는 요청 403, `localhost:5173` 만 받는 CORS, `XSRF-TOKEN` 쿠키 발급을 확인했다 |
 | shadcn/ui, dsui | shadcn 프리셋(`base-nova`)으로 `frontend` 를 새로 만들고 부품을 받아 두었다. 위 frontend 줄의 빌드와 화면 비교에 포함된다 |
 | GitHub Actions, deploy | 돌려 보지 못했다 |
 
 ## 다음에 할 일
 
-1. 서버: 그룹·그룹 공고 API 는 설계 초안의 16개를 모두 만들었다(2026-11-13). 서버 쪽 다음 일은 실제 로그인(4번)이다. 설계 9절의 남은 결정(관심이 꺼진 그룹의 지원 상태, 지원한 뒤 관심 끄기, 그룹장이 없어질 때, 공고 고치기)이 정해지면 그에 맞춰 고친다. 화면이 요구하는데 설계에 없는 것은 `docs/리드미_화면_API_대응.md` 3절에 있다.
+1. 서버: 그룹·그룹 공고 API 는 설계 초안의 16개를 모두 만들었다(2026-11-13). 서버 쪽 다음 일은 실제 로그인(4번)이다. 그룹 설계 9절과 공고 설계 9절의 남은 결정(그룹장이 없어질 때, 관심이 꺼진 그룹의 지원 상태, 지원한 뒤 관심 끄기, 공고 고치기)이 정해지면 그에 맞춰 고친다. 화면이 요구하는데 설계에 없는 것은 `docs/리드미_화면_API_대응.md` 3절에 있다.
 2. GitHub Actions 가 도는지 확인한다. 저장소는 GitHub 에 올렸고(비공개), `gradlew` 의 실행 권한은 git 에 넣었다(`100755`).
-3. 화면: 시안이 나온 25개 중 7개를 프런트에 옮겼다. 나머지를 옮긴다(`docs/리드미_화면_API_대응.md` 1절). 옮긴 화면에도 동작이 없는 자리가 남아 있다(위 "지금 들어 있는 것").
-4. 로그인을 만든다(`docs/리드미_설계_로그인_경험카드.md` 4.1절). 임시 로그인은 이때 걷어낸다(`backend/CLAUDE.md`).
+3. 화면: 시안이 나온 25개 중 10개를 프런트에 옮겼다. 나머지를 옮긴다(`docs/리드미_화면_API_대응.md` 1절). 옮긴 화면에도 동작이 없는 자리가 남아 있다(위 "지금 들어 있는 것").
+4. 로그인을 만든다(`docs/리드미_설계_로그인.md` 4절). 임시 로그인은 이때 걷어낸다(`docs/리드미_백엔드_구조.md` 6.2).
 
 ## 문서
 
-아래 여덟 문서는 claude.ai 프로젝트 "리드미" 문서의 사본이다. 원본이 바뀌면 다시 복사한다.
+아래 문서는 claude.ai 프로젝트 "리드미" 문서의 사본이다. 원본이 바뀌면 다시 복사한다. 서버 작업이 `docs/`를 직접 고치기도 해서, 어느 쪽을 원본으로 둘지는 정하지 않았다(`docs/리드미_백엔드_구조.md` 11절).
 
-- `docs/리드미_설계_로그인_경험카드.md` 테이블 10개, API 21개 (2026-11-13 사본)
-- `docs/리드미_설계_그룹_공고.md` 그룹·그룹 공고의 테이블 9개, API 16개, 화면에 없는 로직 점검 (2026-11-13 사본)
+- `docs/리드미_백엔드_구조.md` 서버의 패키지, 모든 API에 걸리는 규칙과 공통 오류 코드, 로그인과 세션, 임시 로그인, DB, 테스트의 틀, 만든 API (2026-11-13 사본)
+- `docs/리드미_설계_로그인.md` 계정 테이블 3개, 로그인 API 8개, 구글 로그인 (2026-11-13 사본)
+- `docs/리드미_설계_경험카드.md` 카드·자료·추출 테이블 7개, API 13개, jobfit에서 옮길 것 (2026-11-13 사본)
+- `docs/리드미_설계_그룹.md` 그룹 테이블 3개, API 6개 (2026-11-13 사본)
+- `docs/리드미_설계_공고.md` 그룹 공고·내 공고 테이블 6개, API 10개, 화면에 없는 로직 점검 (2026-11-13 사본)
+- `docs/리드미_설계_로그인_경험카드.md`, `docs/리드미_설계_그룹_공고.md` 2026-11-13에 위 넷으로 나눴다. 옛 절이 어디로 갔는지만 남겼다(코드 주석이 옛 절을 가리킨다)
 - `docs/리드미_화면_API_대응.md` 화면 27개의 시안·프런트·서버 상태, 화면별로 쓰는 API, 시안이 요구하는데 설계에 없는 것 25개 (2026-11-13 사본)
 - `docs/리드미_배포_계획.md` 구성, 비용, 뼈대에 미리 넣을 것 (2026-11-12 사본)
 - `docs/리드미_리서치_재사용_정리.md` 정한 것과 남은 결정 (2026-11-13 사본)
