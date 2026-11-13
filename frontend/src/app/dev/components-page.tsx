@@ -1,10 +1,8 @@
 import type { ReactNode } from "react"
-import { PlusIcon, SearchIcon } from "@/shared/icons"
 
 import AppHeader from "@/components/arc/blocks/app-header/app-header"
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { useSoundSettings } from "@/components/arc/sound/settings"
-import { useTheme } from "@/shared/theme/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,6 +15,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { PlusIcon, SearchIcon } from "@/shared/icons"
+import { paths } from "@/shared/lib/paths"
+import { useTheme } from "@/shared/theme/theme-provider"
 
 // 확인용 한 페이지(계획 4.9, /dev/components). shadcn 부품과 dsui 부품을 나란히 놓고 7절 항목을 눈으로 본다.
 
@@ -62,7 +63,7 @@ export function DevComponentsPage() {
   return (
     <>
       <AppHeader
-        brand={{ name: "리드미", href: "/", mark: <ReadmeMark /> }}
+        brand={{ name: "리드미", href: paths.home(), mark: <ReadmeMark /> }}
         navLabel="주요 메뉴"
         items={[
           { href: "#buttons", label: "버튼", current: true },

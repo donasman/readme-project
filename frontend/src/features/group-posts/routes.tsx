@@ -3,12 +3,12 @@ import type { RouteObject } from "react-router"
 import type { GroupRouteHandle } from "@/domain/group/sections"
 import { revalidateOnParams } from "@/shared/lib/router"
 
-import { GroupPostPage, groupPostLoader } from "./pages/group-post-page"
-import { GroupPostsPage, groupPostsLoader } from "./pages/group-posts-page"
-
 const handle: GroupRouteHandle = { section: "posts" }
 
-/** 그룹 공고 화면들. 앱의 그룹 라우트(/groups/:groupId) 아래에 붙는다. */
+/**
+ * 그룹 공고 화면들. 앱의 그룹 라우트(/groups/:groupId) 아래에 붙는다.
+ * 화면과 loader는 그 주소에 처음 들어갈 때 불러온다(lazy). 첫 번들에는 들어가지 않는다.
+ */
 export const groupPostsRoutes: RouteObject[] = [
   {
     path: "posts",
@@ -16,11 +16,19 @@ export const groupPostsRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        loader: groupPostsLoader,
         shouldRevalidate: revalidateOnParams("groupId"),
-        element: <GroupPostsPage />,
+        lazy: async () => {
+          const { GroupPostsPage, groupPostsLoader } = await import("./pages/group-posts-page")
+          return { loader: groupPostsLoader, Component: GroupPostsPage }
+        },
       },
-      { path: ":postId", loader: groupPostLoader, element: <GroupPostPage /> },
+      {
+        path: ":postId",
+        lazy: async () => {
+          const { GroupPostPage, groupPostLoader } = await import("./pages/group-post-page")
+          return { loader: groupPostLoader, Component: GroupPostPage }
+        },
+      },
     ],
   },
 ]
