@@ -118,3 +118,44 @@ export function listCardTags(): CardTag[] {
   for (const card of cardData()) for (const tag of card.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
   return [...counts].map(([name, count]) => ({ name, count }))
 }
+
+// ---- 계정(가입, 인증 메일, 비밀번호 재설정). 서버는 메일을 보내고, 화면은 결과만 받는다 ----
+
+/** 이미 가입된 계정. 회원가입에서 "이미 가입된 이메일"을 볼 때 쓴다. */
+const accounts = new Set(["daon@example.com"])
+
+/** 메일 링크의 토큰. 예시에서는 "expired"면 만료된 링크, 빈 값도 쓸 수 없는 링크, 그 밖에는 쓸 수 있는 링크로 친다. */
+const usableToken = (token: string | null) => !!token && token !== "expired"
+
+/** 가입(POST /api/auth/signup). 이미 있는 이메일이면 409처럼 EMAIL_TAKEN. */
+export function signup(email: string): { ok: true } | { ok: false; error: "EMAIL_TAKEN" } {
+  const key = email.trim().toLowerCase()
+  if (accounts.has(key)) return { ok: false, error: "EMAIL_TAKEN" }
+  accounts.add(key)
+  return { ok: true }
+}
+
+/** 가입 확인 메일 다시 보내기. 계정이 있는지 알려 주지 않는다. */
+export function resendVerification(email: string): void {
+  void email
+}
+
+/** 가입 확인 링크(GET /api/auth/verify?token=). */
+export function verifyEmail(token: string | null): "done" | "expired" {
+  return usableToken(token) ? "done" : "expired"
+}
+
+/** 재설정 메일 보내기(POST /api/auth/password-reset/request). 계정이 있는지 알려 주지 않는다. */
+export function requestPasswordReset(email: string): void {
+  void email
+}
+
+/** 재설정 링크가 아직 쓸 수 있는지. */
+export const checkResetToken = (token: string | null): boolean => usableToken(token)
+
+/** 새 비밀번호로 바꾸기(POST /api/auth/password-reset/confirm). 그 계정의 세션은 모두 끊긴다. */
+export function resetPassword(token: string | null, password: string): "done" | "expired" {
+  void password
+  return usableToken(token) ? "done" : "expired"
+}
+
