@@ -1,6 +1,8 @@
 // 그룹 공고 목록의 필터, 정렬, 묶음 규칙. 디자인 파일(docs/design/group-posts.dc.html)의
 // renderVals()와 같은 규칙을 화면과 떨어진 순수 함수로 옮겼다. "새 공고"는 리서치 문서의 규칙(올린 지 3일 이내)을 따른다.
-import { daysBetween, daysLeft, isClosed, isNewPost } from "./deadline"
+import { daysBetween } from "@/shared/lib/date"
+
+import { daysLeft, isClosed, isNewPost } from "./deadline"
 import type { GroupPost, Member } from "./types"
 
 export type Tab = "open" | "closed"

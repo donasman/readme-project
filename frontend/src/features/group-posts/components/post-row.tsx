@@ -2,7 +2,8 @@ import { Link } from "react-router"
 
 import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
-import { deadlineText, formatMonthDay } from "@/features/group-posts/deadline"
+import { deadlineText } from "@/features/group-posts/deadline"
+import { formatMonthDay } from "@/shared/lib/date"
 import type { PostRow as Row } from "@/features/group-posts/list-rules"
 import type { Member } from "@/features/group-posts/types"
 

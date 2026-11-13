@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { useLoaderData, type LoaderFunctionArgs, type ShouldRevalidateFunctionArgs } from "react-router"
+import { useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
@@ -10,15 +10,10 @@ import { POST_GRID, PostRow } from "@/features/group-posts/components/post-row"
 import { buildPostList } from "@/features/group-posts/list-rules"
 import { useInterest } from "@/features/group-posts/use-interest"
 import { useListFilters } from "@/features/group-posts/use-list-filters"
+import { paths } from "@/shared/lib/paths"
 
 export function groupPostsLoader({ params }: LoaderFunctionArgs) {
   return getGroupPosts(params.groupId ?? "")
-}
-
-/** 검색어·필터처럼 주소의 ? 뒤만 바뀔 때는 다시 읽지 않는다. */
-export function shouldRevalidateGroupPosts({ currentUrl, nextUrl, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
-  if (currentUrl.pathname === nextUrl.pathname && currentUrl.search !== nextUrl.search) return false
-  return defaultShouldRevalidate
 }
 
 /** 그룹 공고 목록(docs/design/group-posts.dc.html). */
@@ -103,7 +98,7 @@ export function GroupPostsPage() {
                   row={row}
                   today={today}
                   viewer={viewer}
-                  detailPath={`/groups/${group.id}/posts/${row.post.id}`}
+                  detailPath={paths.groupPost(group.id, row.post.id)}
                   onToggleInterest={(on) => void interest.toggle(row.post.id, on)}
                 />
               ))}

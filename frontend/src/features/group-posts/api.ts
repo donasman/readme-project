@@ -1,6 +1,8 @@
 // 그룹 공고 화면이 데이터를 가져오고 바꾸는 유일한 곳.
 // 지금은 백엔드 연결 전이라 예시 데이터를 메모리에 두고 읽고 고친다. 서버가 생기면 이 파일의 함수 안만
 // fetch 호출로 바꾸고, 함수 이름과 돌려주는 모양(types.ts)은 그대로 둔다.
+import { NotFoundError } from "@/shared/lib/errors"
+
 import { isClosed } from "./deadline"
 import { createExampleGroups, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
 import type {
@@ -14,14 +16,6 @@ import type {
   MyGroups,
   MyState,
 } from "./types"
-
-/** 그룹이나 공고가 없을 때. 라우터의 오류 화면이 "찾을 수 없음"으로 보인다. */
-export class NotFoundError extends Error {
-  constructor(what: "그룹" | "공고") {
-    super(what === "그룹" ? "그룹을 찾을 수 없습니다." : "공고를 찾을 수 없습니다.")
-    this.name = "NotFoundError"
-  }
-}
 
 let store: ExampleGroup[] | null = null
 const db = () => (store ??= createExampleGroups())

@@ -1,15 +1,13 @@
 import { createBrowserRouter, Outlet, redirect, ScrollRestoration } from "react-router"
 
 import { RouteError } from "@/app/route-error"
-import { GroupLayout, groupLoader, shouldRevalidateGroup } from "@/components/layout/group-layout"
+import { GroupLayout, groupLoader } from "@/components/layout/group-layout"
 import { getMyGroups } from "@/features/group-posts/api"
 import { GroupPostPage, groupPostLoader } from "@/features/group-posts/pages/group-post-page"
-import {
-  GroupPostsPage,
-  groupPostsLoader,
-  shouldRevalidateGroupPosts,
-} from "@/features/group-posts/pages/group-posts-page"
+import { GroupPostsPage, groupPostsLoader } from "@/features/group-posts/pages/group-posts-page"
 import { DevComponentsPage } from "@/pages/dev-components-page"
+import { paths } from "@/shared/lib/paths"
+import { ignoreSearchChanges } from "@/shared/lib/router"
 
 function Root() {
   return (
@@ -30,22 +28,22 @@ export const router = createBrowserRouter([
         path: "/",
         loader: async () => {
           const { groups } = await getMyGroups()
-          return redirect(groups.length ? `/groups/${groups[0].id}/posts` : "/dev/components")
+          return redirect(groups.length ? paths.groupPosts(groups[0].id) : paths.devComponents())
         },
       },
       {
         id: "group",
         path: "/groups/:groupId",
         loader: groupLoader,
-        shouldRevalidate: shouldRevalidateGroup,
+        shouldRevalidate: ignoreSearchChanges,
         element: <GroupLayout />,
         errorElement: <RouteError />,
         children: [
-          { index: true, loader: ({ params }) => redirect(`/groups/${params.groupId}/posts`) },
+          { index: true, loader: ({ params }) => redirect(paths.groupPosts(params.groupId ?? "")) },
           {
             path: "posts",
             loader: groupPostsLoader,
-            shouldRevalidate: shouldRevalidateGroupPosts,
+            shouldRevalidate: ignoreSearchChanges,
             element: <GroupPostsPage />,
           },
           { path: "posts/:postId", loader: groupPostLoader, element: <GroupPostPage /> },

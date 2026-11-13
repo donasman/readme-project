@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Group, Member } from "@/features/group-posts/types"
+import { paths } from "@/shared/lib/paths"
 import { cn } from "@/shared/lib/utils"
 
 export type GroupSection = "posts" | "members"
@@ -33,13 +34,13 @@ const navLink =
  */
 export function GroupHeader({ viewer, groups, group, section }: GroupHeaderProps) {
   const navigate = useNavigate()
-  const listPath = `/groups/${group.id}/posts`
+  const listPath = paths.groupPosts(group.id)
 
   return (
     <header className="relative z-20">
       <div className="mx-4 mt-3 flex min-h-18 items-center gap-2 rounded-panel border border-surface bg-surface px-4 py-2 shadow-floating md:gap-3 md:pr-4 md:pl-6 dark:border-float-edge">
         <Link
-          to="/"
+          to={paths.home()}
           aria-label="리드미 홈"
           className="inline-flex min-h-control-md flex-none items-center text-base leading-body font-bold text-foreground"
         >
@@ -61,7 +62,7 @@ export function GroupHeader({ viewer, groups, group, section }: GroupHeaderProps
             <DropdownMenuGroup>
               <DropdownMenuLabel>내 그룹</DropdownMenuLabel>
               {groups.map((g) => (
-                <DropdownMenuItem key={g.id} className="pl-2" onClick={() => navigate(`/groups/${g.id}/posts`)}>
+                <DropdownMenuItem key={g.id} className="pl-2" onClick={() => navigate(paths.groupPosts(g.id))}>
                   <span
                     aria-hidden="true"
                     className="grid size-7 flex-none place-items-center rounded-full bg-surface-sunken text-xs font-bold"

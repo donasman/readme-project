@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
-import { formatMonthDay } from "@/features/group-posts/deadline"
-import { subjectParticle } from "@/features/group-posts/korean"
+import { formatMonthDay } from "@/shared/lib/date"
+import { subjectParticle } from "@/shared/lib/korean"
 import type { GroupPostDetail, Member } from "@/features/group-posts/types"
 
 interface PostContentProps {

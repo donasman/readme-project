@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { formatCommentTime } from "@/features/group-posts/deadline"
+import { formatCommentTime } from "@/shared/lib/date"
 import type { Comment, Member } from "@/features/group-posts/types"
 
 interface CommentsProps {

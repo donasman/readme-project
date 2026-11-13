@@ -7,6 +7,7 @@ import { DeadlineCard } from "@/features/group-posts/components/deadline-card"
 import { InterestedMembers } from "@/features/group-posts/components/interested-members"
 import { PostContent } from "@/features/group-posts/components/post-content"
 import { useInterest } from "@/features/group-posts/use-interest"
+import { paths } from "@/shared/lib/paths"
 
 export function groupPostLoader({ params }: LoaderFunctionArgs) {
   return getGroupPost(params.groupId ?? "", params.postId ?? "")
@@ -22,7 +23,7 @@ export function GroupPostPage() {
 
   const isLeader = group.leaderId === viewer.id
   const canTakeDown = isLeader || post.postedBy.id === viewer.id
-  const listPath = `/groups/${group.id}/posts`
+  const listPath = paths.groupPosts(group.id)
 
   return (
     <main className="mx-auto flex max-w-[1240px] flex-col gap-4 px-4 pt-6 pb-16">
