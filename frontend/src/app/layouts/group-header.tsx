@@ -11,10 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { sectionOf } from "@/domain/group/sections"
+import type { GroupsPageState } from "@/features/groups"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Avatar } from "@/shared/components/avatar"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn } from "@/shared/lib/utils"
@@ -35,6 +35,8 @@ export function GroupHeader() {
     .findLast((s) => s !== undefined)
   const navigate = useNavigate()
   const listPath = paths.groupPosts(group.id)
+  const membersPath = paths.groupMembers(group.id)
+  const createState: GroupsPageState = { create: true }
 
   return (
     <header className="relative z-20">
@@ -68,9 +70,8 @@ export function GroupHeader() {
               ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            {/* 아직 화면이 없다: 내 그룹 모두 보기, 그룹 만들기 */}
-            <DropdownMenuItem>내 그룹 모두 보기</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
+            <DropdownMenuItem onClick={() => navigate(paths.groups())}>내 그룹 모두 보기</DropdownMenuItem>
+            <DropdownMenuItem className="gap-2" onClick={() => navigate(paths.groups(), { state: createState })}>
               <PlusIcon aria-hidden="true" />
               <span>그룹 만들기</span>
             </DropdownMenuItem>
@@ -94,7 +95,8 @@ export function GroupHeader() {
               </Link>
             </li>
             <li>
-              <PlaceholderLink
+              <Link
+                to={membersPath}
                 aria-current={section === "members" ? "page" : undefined}
                 className={cn(
                   navLink,
@@ -104,7 +106,7 @@ export function GroupHeader() {
                 )}
               >
                 멤버
-              </PlaceholderLink>
+              </Link>
             </li>
           </ul>
         </nav>
@@ -125,7 +127,7 @@ export function GroupHeader() {
                 <span className="flex-1">공고</span>
                 {section === "posts" && <CheckIcon role="img" aria-label="지금 보는 메뉴" className="text-primary" />}
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(membersPath)}>
                 <span className="flex-1">멤버</span>
                 {section === "members" && <CheckIcon role="img" aria-label="지금 보는 메뉴" className="text-primary" />}
               </DropdownMenuItem>

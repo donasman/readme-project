@@ -19,6 +19,9 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         // 리드미: 하이라이트색은 "내 것"(관심 중, 내 관심만 켜짐)에만 쓴다.
         highlight: "bg-highlight text-highlight-foreground hover:bg-highlight/80",
+        // 리드미: 되돌리기 어려운 일(지우기, 내리기, 나가기). 옅은 위험색 바탕에 글자는 그대로 둔다.
+        danger:
+          "bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] text-foreground hover:bg-[color-mix(in_oklab,var(--danger)_16%,transparent)]",
       },
       size: {
         // Heights, side padding and label size follow the dsui pill button:

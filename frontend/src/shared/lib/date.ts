@@ -12,6 +12,17 @@ export function daysBetween(from: string, to: string): number {
   return toUtcDay(to) - toUtcDay(from)
 }
 
+/** date에서 days일 뒤의 날("YYYY-MM-DD"). */
+export function addDays(date: string, days: number): string {
+  return new Date((toUtcDay(date) + days) * 86_400_000).toISOString().slice(0, 10)
+}
+
+/** 마감까지 남은 날의 글자: "D-3", 당일은 "D-Day". date가 today보다 앞이면 쓰지 않는다. */
+export function formatDday(today: string, date: string): string {
+  const left = daysBetween(today, date)
+  return left === 0 ? "D-Day" : `D-${left}`
+}
+
 /** "11.05" */
 export function formatMonthDay(date: string): string {
   const [, m, d] = date.split("-")

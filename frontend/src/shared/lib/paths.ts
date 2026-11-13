@@ -10,9 +10,14 @@ export const paths = {
   signupSent: () => "/signup/sent",
   passwordReset: () => "/password-reset",
   passwordResetSent: () => "/password-reset/sent",
+  /** 내 그룹 목록 */
+  groups: () => "/groups",
   group: (groupId: string) => `/groups/${seg(groupId)}`,
   groupPosts: (groupId: string) => `/groups/${seg(groupId)}/posts`,
   groupPost: (groupId: string, postId: string) => `/groups/${seg(groupId)}/posts/${seg(postId)}`,
+  groupMembers: (groupId: string) => `/groups/${seg(groupId)}/members`,
+  /** 초대 링크가 여는 주소 */
+  invite: (token: string) => `/invite/${seg(token)}`,
   cards: () => "/cards",
   card: (cardId: number) => `/cards/${cardId}`,
   cardEdit: (cardId: number) => `/cards/${cardId}/edit`,

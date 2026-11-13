@@ -1,6 +1,7 @@
 import { Link, useMatches } from "react-router"
 
-import { Button } from "@/components/ui/button"
+import { useViewer } from "@/domain/session/use-viewer"
+import { Avatar } from "@/shared/components/avatar"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { mainNavOf, type MainNav } from "@/shared/lib/main-nav"
@@ -12,10 +13,12 @@ const navState = (on: boolean) =>
   on ? "bg-accent-subtle text-accent-strong" : "text-text-secondary hover:bg-surface-muted hover:text-foreground"
 
 /**
- * 그룹 밖 화면들의 위쪽 헤더(시안 3종의 "A · 카드 목록" 헤더): 로고, 스터디·정보공유·경험카드, 로그아웃.
+ * 그룹 밖 화면들의 위쪽 헤더(시안 3종의 "A · 카드 목록" 헤더): 로고, 스터디·정보공유·경험카드, 내 계정.
+ * 오른쪽은 7~9차 시안의 제안대로 "로그아웃" 대신 내 계정 동그라미를 둔다(로그아웃은 내 정보 화면에 있다).
  * 지금 메뉴는 아래 라우트의 handle.mainNav로 정한다(기능의 routes.tsx가 붙인다).
  */
 export function MainHeader() {
+  const viewer = useViewer()
   const current: MainNav | undefined = useMatches()
     .map((match) => mainNavOf(match.handle))
     .findLast((nav) => nav !== undefined)
@@ -30,8 +33,8 @@ export function MainHeader() {
         <nav aria-label="주요 메뉴" className="min-w-0">
           <ul className="flex flex-wrap items-center gap-1">
             <li>
-              {/* 스터디: 지금은 내 첫 그룹의 공고 목록 */}
-              <Link to={paths.home()} aria-current={current === "study" ? "page" : undefined} className={cn(navLink, navState(current === "study"))}>
+              {/* 스터디: 내 그룹 목록(시안 7차의 제안) */}
+              <Link to={paths.groups()} aria-current={current === "study" ? "page" : undefined} className={cn(navLink, navState(current === "study"))}>
                 스터디
               </Link>
             </li>
@@ -49,10 +52,10 @@ export function MainHeader() {
           </ul>
         </nav>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          {/* 로그아웃: 서버가 없어 아직 동작 없음 */}
-          <Button type="button" variant="outline" size="sm" className="flex-none">
-            로그아웃
-          </Button>
+          {/* 내 계정: 내 정보 화면(9차)이 생기면 그리로 간다 */}
+          <PlaceholderLink aria-label="내 계정" className="flex-none rounded-full">
+            <Avatar>{viewer.name.slice(0, 1)}</Avatar>
+          </PlaceholderLink>
         </div>
       </div>
     </header>

@@ -1,7 +1,7 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { describe, expect, it } from "vitest"
 
-import { daysBetween, formatCommentTime, formatMonthDay, formatMonthDayWeekday } from "./date"
+import { addDays, daysBetween, formatCommentTime, formatDday, formatMonthDay, formatMonthDayWeekday } from "./date"
 import { NotFoundError } from "./errors"
 import { objectParticle, subjectParticle } from "./korean"
 import { paths } from "./paths"
@@ -12,6 +12,14 @@ describe("date", () => {
     expect(daysBetween("2026-10-30", "2026-11-02")).toBe(3)
     expect(daysBetween("2026-12-31", "2027-01-01")).toBe(1)
     expect(daysBetween("2026-11-13", "2026-11-10")).toBe(-3)
+  })
+  it("addDays: 달과 해를 넘긴다", () => {
+    expect(addDays("2026-11-13", 7)).toBe("2026-11-20")
+    expect(addDays("2026-12-28", 7)).toBe("2027-01-04")
+  })
+  it("D-day: 남은 날, 당일은 D-Day", () => {
+    expect(formatDday("2026-11-13", "2026-11-16")).toBe("D-3")
+    expect(formatDday("2026-11-13", "2026-11-13")).toBe("D-Day")
   })
   it("월.일과 요일", () => {
     expect(formatMonthDay("2026-03-05")).toBe("03.05")

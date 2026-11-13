@@ -3,6 +3,8 @@
 // /api/auth/* 호출로 바꾸고, 함수 이름과 돌려주는 모양은 그대로 둔다.
 import * as db from "@/mocks/db"
 
+import type { AcceptInviteResult, InviteView } from "./types"
+
 export type SignupResult = { ok: true } | { ok: false; error: "EMAIL_TAKEN" }
 
 /** 이메일로 가입한다. 확인 메일은 서버가 보낸다. */
@@ -33,4 +35,14 @@ export async function checkResetToken(token: string | null): Promise<boolean> {
 /** 새 비밀번호로 바꾼다. 바꾸면 그 계정의 다른 로그인이 모두 풀린다. */
 export async function resetPassword(token: string | null, password: string): Promise<"done" | "expired"> {
   return db.resetPassword(token, password)
+}
+
+/** 초대 링크의 내용(그룹 이름, 만든 사람, 멤버 수). 없거나 지난 링크는 expired. 로그인하지 않아도 읽는다. */
+export async function getInvite(token: string): Promise<InviteView> {
+  return db.getInvite(token)
+}
+
+/** 초대를 받아 그룹에 들어간다. 이미 멤버면 그대로 들어간다. */
+export async function acceptInvite(token: string): Promise<AcceptInviteResult> {
+  return db.acceptInvite(token)
 }

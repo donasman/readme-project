@@ -1,5 +1,5 @@
 // 마감 규칙과 마감 칸의 글자. 화면과 떨어진 순수 함수다. 날짜는 "YYYY-MM-DD".
-import { daysBetween, formatMonthDay, formatMonthDayWeekday } from "@/shared/lib/date"
+import { daysBetween, formatDday, formatMonthDay, formatMonthDayWeekday } from "@/shared/lib/date"
 
 import type { Deadline } from "./types"
 
@@ -23,7 +23,7 @@ export function deadlineText(deadline: Deadline, today: string): { main: string;
     case "date": {
       const left = daysBetween(today, deadline.date)
       if (left < 0) return { main: "마감됨", sub: `${formatMonthDay(deadline.date)} 마감` }
-      return { main: left === 0 ? "D-Day" : `D-${left}`, sub: formatMonthDayWeekday(deadline.date) }
+      return { main: formatDday(today, deadline.date), sub: formatMonthDayWeekday(deadline.date) }
     }
   }
 }

@@ -10,6 +10,7 @@ import { SESSION_ROUTE_ID, sessionLoader } from "@/domain/session/loader"
 import { authRoutes } from "@/features/auth"
 import { cardsRoutes } from "@/features/cards"
 import { groupPostsRoutes } from "@/features/group-posts"
+import { groupMembersRoutes, groupsRoutes } from "@/features/groups"
 import { paths } from "@/shared/lib/paths"
 import { revalidateOnParams } from "@/shared/lib/router"
 
@@ -45,11 +46,12 @@ export const router = createBrowserRouter([
         shouldRevalidate: revalidateOnParams(),
         children: [
           {
-            // 첫 화면: 내 첫 그룹의 공고 목록으로 보낸다. 그리는 것은 없다(element: null).
+            // 첫 화면: 내 첫 그룹의 공고 목록으로 보낸다. 그룹이 없으면 내 그룹(빈 상태)으로 보낸다(시안 7차의 제안).
+            // 그리는 것은 없다(element: null).
             path: "/",
             loader: async () => {
               const groups = await getMyGroups()
-              return redirect(groups.length ? paths.groupPosts(groups[0].id) : paths.devComponents())
+              return redirect(groups.length ? paths.groupPosts(groups[0].id) : paths.groups())
             },
             element: null,
           },
@@ -65,10 +67,11 @@ export const router = createBrowserRouter([
               // 그룹 주소만 오면 공고 목록으로 보낸다.
               { index: true, loader: ({ params }) => redirect(paths.groupPosts(params.groupId ?? "")), element: null },
               ...groupPostsRoutes,
+              ...groupMembersRoutes,
             ],
           },
           // 그룹 밖 화면: 위쪽 헤더(스터디·정보공유·경험카드) 아래에 붙는다.
-          { element: <MainLayout />, children: [...cardsRoutes] },
+          { element: <MainLayout />, children: [...groupsRoutes, ...cardsRoutes] },
         ],
       },
       ...devRoutes,
