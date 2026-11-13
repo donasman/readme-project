@@ -93,8 +93,10 @@
     --color-highlight: var(--highlight);
     --color-highlight-strong: var(--highlight-strong);
     --color-highlight-foreground: var(--highlight-foreground);
+    --color-highlight-subtle: var(--highlight-subtle);
     --color-warning: var(--warning);
     --color-danger: var(--danger);
+    --color-success: var(--success);
     --radius-control: var(--radius-control);
     --radius-panel: var(--radius-panel);
     --radius-surface: var(--radius-surface);
