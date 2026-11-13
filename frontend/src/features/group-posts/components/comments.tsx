@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react"
 
-import { PlaceholderLink } from "@/components/placeholder-link"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCommentTime } from "@/features/group-posts/deadline"

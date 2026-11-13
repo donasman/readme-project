@@ -1,10 +1,10 @@
 import type { ReactNode } from "react"
-import { PlusIcon, SearchIcon } from "@/components/icons"
+import { PlusIcon, SearchIcon } from "@/shared/icons"
 
 import AppHeader from "@/components/arc/blocks/app-header/app-header"
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { useSoundSettings } from "@/components/arc/sound/settings"
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "@/shared/theme/theme-provider"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

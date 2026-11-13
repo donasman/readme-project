@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { useLoaderData, type LoaderFunctionArgs, type ShouldRevalidateFunctionArgs } from "react-router"
 
-import { CheckIcon, PlusIcon, SearchIcon } from "@/components/icons"
+import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getGroupPosts } from "@/features/group-posts/api"

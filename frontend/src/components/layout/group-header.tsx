@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router"
 
-import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/components/icons"
-import { PlaceholderLink } from "@/components/placeholder-link"
+import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Group, Member } from "@/features/group-posts/types"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 
 export type GroupSection = "posts" | "members"
 

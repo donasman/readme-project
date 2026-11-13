@@ -1,6 +1,6 @@
 import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
-import { ArrowLeftIcon } from "@/components/icons"
+import { ArrowLeftIcon } from "@/shared/icons"
 import { addComment, getGroupPost } from "@/features/group-posts/api"
 import { Comments } from "@/features/group-posts/components/comments"
 import { DeadlineCard } from "@/features/group-posts/components/deadline-card"

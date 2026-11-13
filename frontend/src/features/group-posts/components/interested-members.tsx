@@ -1,6 +1,6 @@
-import { PlaceholderLink } from "@/components/placeholder-link"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import type { Disclosure, GroupPostDetail, Member } from "@/features/group-posts/types"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 
 import { AppliedBadge } from "./chips"
 

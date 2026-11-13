@@ -2,7 +2,7 @@ import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "cn"
 
-import { CheckIcon, ChevronRightIcon } from "@/components/icons"
+import { CheckIcon, ChevronRightIcon } from "@/shared/icons"
 
 // 리드미 모양(docs/design): 메뉴는 radius-panel, 안쪽 8px, 떠 있는 그림자. 항목은 44px 알약, 14px 600.
 // 키보드 위치는 항목의 채움(surface-muted)으로 보인다. 메뉴 항목은 Arc 외곽선 대상이 아니라 포커스 표시가 하나다.

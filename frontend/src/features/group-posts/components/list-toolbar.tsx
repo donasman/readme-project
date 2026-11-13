@@ -1,5 +1,5 @@
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
-import { CheckIcon, ChevronDownIcon } from "@/components/icons"
+import { CheckIcon, ChevronDownIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,

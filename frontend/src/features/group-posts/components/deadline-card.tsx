@@ -1,5 +1,5 @@
-import { CheckIcon, ExternalLinkIcon } from "@/components/icons"
-import { PlaceholderLink } from "@/components/placeholder-link"
+import { CheckIcon, ExternalLinkIcon } from "@/shared/icons"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import { deadlineText } from "@/features/group-posts/deadline"
 import type { GroupPostDetail } from "@/features/group-posts/types"

@@ -3,9 +3,9 @@ import { createRoot } from "react-dom/client"
 import { RouterProvider } from "react-router/dom"
 
 import "./index.css"
-import "@/lib/arc-sound"
+import "@/app/arc-sound"
 import { router } from "@/app/router"
-import { ThemeProvider } from "@/components/theme-provider.tsx"
+import { ThemeProvider } from "@/shared/theme/theme-provider"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
-import { CheckIcon } from "@/components/icons"
-import { cn } from "@/lib/utils"
+import { CheckIcon } from "@/shared/icons"
+import { cn } from "@/shared/lib/utils"
 
 const chip = "inline-flex h-6 items-center rounded-full px-2.5 text-xs whitespace-nowrap"
 
