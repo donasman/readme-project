@@ -1,7 +1,7 @@
 # 내 PC 에서 띄울 때. DB 와 메일 수신기는 저장소 맨 위의 compose.yaml 로 띄운다(docker compose up -d).
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/readme?currentSchema=readme
+    url: jdbc:postgresql://localhost:5433/readme?currentSchema=readme   # compose.yaml 이 5433 으로 연다
     username: readme
     password: readme
   mail:

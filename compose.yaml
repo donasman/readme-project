@@ -10,7 +10,8 @@ services:
       POSTGRES_USER: readme
       POSTGRES_PASSWORD: readme
     ports:
-      - "127.0.0.1:5432:5432"
+      # PC 에 PostgreSQL 이 따로 깔려 있으면 5432 를 쓰고 있으므로 밖으로는 5433 으로 연다.
+      - "127.0.0.1:5433:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
