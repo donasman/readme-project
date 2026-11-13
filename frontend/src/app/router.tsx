@@ -10,6 +10,7 @@ import { authRoutes } from "@/features/auth"
 import { cardsRoutes } from "@/features/cards"
 import { groupPostsRoutes } from "@/features/group-posts"
 import { groupMembersRoutes, groupsRoutes } from "@/features/groups"
+import { mailRoutes } from "@/features/mail"
 import { myPostsRoutes } from "@/features/my-posts"
 import { paths } from "@/shared/lib/paths"
 import { revalidateOnParams } from "@/shared/lib/router"
@@ -62,7 +63,7 @@ export const router = createBrowserRouter([
           },
           // 그룹 밖 화면: 위쪽 헤더(스터디·정보공유·경험카드) 아래에 붙는다.
           // 첫 화면(/)은 홈이다. 그룹이 없으면 홈의 loader가 내 그룹(빈 상태)으로 보낸다.
-          { element: <MainLayout />, children: [...myPostsRoutes, ...groupsRoutes, ...cardsRoutes] },
+          { element: <MainLayout />, children: [...myPostsRoutes, ...mailRoutes, ...groupsRoutes, ...cardsRoutes] },
         ],
       },
       ...devRoutes,

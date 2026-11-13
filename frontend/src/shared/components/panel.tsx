@@ -4,7 +4,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 interface PanelProps extends HTMLAttributes<HTMLElement> {
   /** 요소 종류. 기본은 section */
-  as?: "section" | "article" | "div" | "ul"
+  as?: "section" | "article" | "div" | "ul" | "li"
 }
 
 /**

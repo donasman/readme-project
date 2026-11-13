@@ -45,9 +45,8 @@ export function HomePage() {
         ? [{ key: p.id, to: paths.groupPosts(group.id), state: { fillDeadline: group.postId }, content: <><strong className="font-bold">{p.company}</strong> 공고의 마감일을 못 읽었습니다</> }]
         : []
     }),
-    // 메일 확인함: 9차에서 화면이 생긴다
     ...(mailChanges.count > 0
-      ? [{ key: "mail", to: null, content: <>메일에서 온 변경 <strong className="font-bold">{mailChanges.count}건</strong>{mailChanges.first && `: ${mailChanges.first}`}</> }]
+      ? [{ key: "mail", to: paths.mail(), content: <>메일에서 온 변경 <strong className="font-bold">{mailChanges.count}건</strong>{mailChanges.first && `: ${mailChanges.first}`}</> }]
       : []),
   ]
 

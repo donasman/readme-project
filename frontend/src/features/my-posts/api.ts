@@ -1,5 +1,6 @@
 // 홈과 내 공고 화면이 서버와 주고받는 곳. 내 공고 조회와 홈 모음은 아직 설계에 없고(화면 API 대응 3.3의 10, 14번),
 // 상태 바꾸기만 PUT /api/me/postings/{postingId}가 있다. 지금은 가짜 서버(mocks/my-db.ts)를 부른다.
+import { mailSummary } from "@/mocks/mail-db"
 import * as db from "@/mocks/my-db"
 
 import type { HomeData, MyPosting, MyPostingDetail, MyState } from "./types"
@@ -26,5 +27,5 @@ export async function saveMemo(id: string, memo: string): Promise<void> {
 
 /** 홈에 보일 것: 내 공고, 확인을 기다리는 카드 수, 메일에서 온 변경, 그룹 소식. */
 export async function getHome(): Promise<HomeData> {
-  return db.getHome()
+  return { ...db.getHome(), mailChanges: mailSummary() }
 }

@@ -13,8 +13,7 @@ const ITEMS: { key: MySpace; label: string; to: string | null }[] = [
   { key: "posts", label: "내 공고", to: paths.myPosts() },
   { key: "board", label: "지원 현황", to: paths.board() },
   { key: "calendar", label: "달력", to: paths.calendar() },
-  // 메일 확인함: 9차에서 화면이 생긴다
-  { key: "mail", label: "메일 확인함", to: null },
+  { key: "mail", label: "메일 확인함", to: paths.mail() },
 ]
 
 const item = (on: boolean) =>
