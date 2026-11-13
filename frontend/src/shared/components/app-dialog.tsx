@@ -11,6 +11,8 @@ interface AppDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: ReactNode
+  /** 제목의 id. 창 안의 묶음(radiogroup 등)이 제목을 이름으로 쓸 때 준다 */
+  titleId?: string
   /** 제목 아래 작은 회색 글(대상 공고, 그룹 이름 …) */
   subtitle?: ReactNode
   children?: ReactNode
@@ -21,28 +23,36 @@ interface AppDialogProps {
 }
 
 /** 확인을 받거나 짧게 고치는 창. 본문(children)은 세로로 20px씩 띄워 쌓는다. */
-export function AppDialog({ open, onOpenChange, title, subtitle, children, actions, placement = "center" }: AppDialogProps) {
+export function AppDialog({ open, onOpenChange, title, titleId, subtitle, children, actions, placement = "center" }: AppDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Popup
+        {/* 가운데 맞춤은 시안처럼 flex로 한다(translate는 반 픽셀에 걸려 글자가 흐려진다). 덮개 클릭은 아래 Backdrop이 받는다 */}
+        <div
           className={joinClasses(
-            "fixed left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-[440px] -translate-x-1/2 flex-col gap-5 overflow-y-auto rounded-panel border border-border-subtle bg-surface-raised p-6 text-foreground shadow-floating outline-none",
-            placement === "top" ? "top-[120px] max-h-[calc(100svh-136px)]" : "top-1/2 max-h-[calc(100svh-2rem)] -translate-y-1/2"
+            "pointer-events-none fixed inset-0 z-50 flex justify-center px-4",
+            placement === "top" ? "items-start pt-[120px] pb-4" : "items-center py-6"
           )}
         >
+        {/* 창은 뿌리 틀 밖(body)에 그려지므로 뿌리 틀의 글자 규칙(root-layout.tsx)을 다시 건다 */}
+        <Dialog.Popup className="pointer-events-auto flex max-h-full w-full max-w-[440px] flex-col gap-5 overflow-y-auto rounded-panel border border-border-subtle bg-surface-raised p-6 text-base leading-body tracking-body break-keep text-pretty text-foreground shadow-floating outline-none">
           {subtitle ? (
             <div className="flex flex-col gap-2">
-              <Dialog.Title className="text-lg font-bold">{title}</Dialog.Title>
+              <Dialog.Title id={titleId} className="text-lg font-bold">
+              {title}
+            </Dialog.Title>
               <p className="text-sm text-text-secondary">{subtitle}</p>
             </div>
           ) : (
-            <Dialog.Title className="text-lg font-bold">{title}</Dialog.Title>
+            <Dialog.Title id={titleId} className="text-lg font-bold">
+              {title}
+            </Dialog.Title>
           )}
           {children}
           <div className="flex flex-wrap justify-end gap-2">{actions}</div>
         </Dialog.Popup>
+        </div>
       </Dialog.Portal>
     </Dialog.Root>
   )

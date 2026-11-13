@@ -219,6 +219,49 @@ export function addComment(groupId: string, postId: string, text: string): Comme
   return copy(comment)
 }
 
+/** 댓글 고치기(PUT …/comments/{commentId}). 쓴 사람만 고친다. */
+export function updateComment(groupId: string, postId: string, commentId: string, text: string): Comment {
+  const comment = rawPost(groupId, postId).comments.find((c) => c.id === commentId)
+  if (!comment) throw new NotFoundError("댓글")
+  if (comment.author.id !== VIEWER.id) throw new Error("쓴 사람만 고칠 수 있습니다.")
+  comment.body = toParts(text.trim())
+  return copy(comment)
+}
+
+/** 댓글 지우기(DELETE …/comments/{commentId}). 쓴 사람과 그룹장이 지운다. 되돌릴 수 없다. */
+export function deleteComment(groupId: string, postId: string, commentId: string): void {
+  const group = rawGroup(groupId)
+  const post = rawPost(groupId, postId)
+  const comment = post.comments.find((c) => c.id === commentId)
+  if (!comment) throw new NotFoundError("댓글")
+  if (comment.author.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("쓴 사람과 그룹장만 지울 수 있습니다.")
+  post.comments = post.comments.filter((c) => c.id !== commentId)
+  post.commentCount -= 1
+}
+
+/**
+ * 날짜 넣기(PUT …/posts/{postId}/deadline). 마감을 못 읽은 공고에만, 한 번. 날짜나 상시를 받는다(그룹 설계 4.2 아래 "정함").
+ * 공고 본체는 그룹들이 함께 쓰므로 이 공고가 올라간 다른 그룹에도 보인다(가짜 서버는 그룹마다 따로 둔다).
+ */
+export function setDeadline(groupId: string, postId: string, deadline: Deadline): { ok: true; deadline: Deadline } | { ok: false; error: "DEADLINE_ALREADY_SET" } {
+  const post = rawPost(groupId, postId)
+  if (post.deadline.kind !== "unknown") return { ok: false, error: "DEADLINE_ALREADY_SET" }
+  post.deadline = copy(deadline)
+  return { ok: true, deadline: copy(post.deadline) }
+}
+
+/** 그룹에서 내린 공고. 같은 공고를 다시 올리면 댓글과 관심 그대로 돌아온다(그룹 설계 가정 4). */
+const takenDown = new Map<string, GroupPostDetail[]>()
+
+/** 그룹에서 내리기(DELETE …/posts/{postId}). 올린 사람과 그룹장만 한다. */
+export function takeDownPost(groupId: string, postId: string): void {
+  const group = rawGroup(groupId)
+  const post = rawPost(groupId, postId)
+  if (post.postedBy.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("올린 사람과 그룹장만 내릴 수 있습니다.")
+  group.posts = group.posts.filter((p) => p.id !== postId)
+  takenDown.set(groupId, [...(takenDown.get(groupId) ?? []), post])
+}
+
 // ---- 공고 읽어 오기와 올리기. 읽어 오기는 아직 설계에 없다(화면 API 대응 3.2의 7~9번). 여기서는 흉내만 낸다 ----
 
 const postUrls = new Map(Object.entries(EXAMPLE_POST_URLS))
@@ -301,6 +344,14 @@ export function uploadPost(groupId: string, input: PostUpload): UploadPostResult
   const group = rawGroup(groupId)
   const same = findSamePost(group, { url: input.sourceUrl ?? undefined, company: input.company, title: input.title })
   if (same) return { ok: false, error: "ALREADY_IN_GROUP", postId: same.id }
+  // 내렸던 공고면 댓글과 관심 그대로 돌아온다
+  const gone = takenDown.get(groupId) ?? []
+  const back = gone.find((p) => p.company === input.company && p.title === input.title)
+  if (back) {
+    takenDown.set(groupId, gone.filter((p) => p !== back))
+    group.posts.unshift(back)
+    return { ok: true, postId: back.id }
+  }
   const post: GroupPostDetail = {
     id: `${groupId}-new${nextPostId++}`,
     groupId,

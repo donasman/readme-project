@@ -3,7 +3,6 @@ import type { Disclosure } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
 import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { textLink } from "@/shared/components/text-link"
 import { joinClasses } from "@/shared/lib/utils"
@@ -16,6 +15,8 @@ interface InterestedMembersProps {
   post: GroupPostDetail
   viewer: Viewer
   myDisclosure: Disclosure
+  /** "공개 범위 바꾸기": 공개 범위 창을 연다 */
+  onChangeDisclosure: () => void
 }
 
 /** 내 줄에는 그룹 멤버에게 보이는 만큼(내 공개 범위)만 적는다. */
@@ -26,7 +27,7 @@ function myVisibleState(status: string | null, disclosure: Disclosure): string |
 }
 
 /** 관심 멤버: 나를 맨 위에, 지원한 멤버는 지원 표시(공개 범위만큼). */
-export function InterestedMembers({ post, viewer, myDisclosure }: InterestedMembersProps) {
+export function InterestedMembers({ post, viewer, myDisclosure, onChangeDisclosure }: InterestedMembersProps) {
   const meOn = isInterestedOrApplied(post.me)
   const mine = myVisibleState(post.me.status, myDisclosure)
   const count = (meOn ? 1 : 0) + post.interests.length
@@ -55,8 +56,9 @@ export function InterestedMembers({ post, viewer, myDisclosure }: InterestedMemb
       </ul>
       <p className="mt-3 border-t border-border-subtle pt-3 text-label-sm text-text-secondary">
         지원 상태는 멤버마다 이 그룹에 정한 공개 범위만큼 보입니다. 내 공개 범위는 {DISCLOSURE_LABELS[myDisclosure]}입니다.{" "}
-        {/* 공개 범위 바꾸기: 아직 화면이 없다 */}
-        <PlaceholderLink className={joinClasses(textLink, "whitespace-nowrap")}>공개 범위 바꾸기</PlaceholderLink>
+        <button type="button" onClick={onChangeDisclosure} className={joinClasses(textLink, "cursor-pointer whitespace-nowrap")}>
+          공개 범위 바꾸기
+        </button>
       </p>
     </SurfaceCard>
   )

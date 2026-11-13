@@ -18,13 +18,15 @@ interface CommentsProps {
   /** 그룹장이면 남의 댓글도 삭제할 수 있다(리서치 문서: 쓴 사람만 수정·삭제, 그룹장은 삭제만) */
   isLeader: boolean
   onAdd: (text: string) => Promise<void>
+  onEdit: (comment: Comment) => void
+  onDelete: (comment: Comment) => void
 }
 
 const action =
   "min-h-7 cursor-pointer rounded-full px-2 text-label-sm font-semibold text-text-secondary hover:bg-surface-muted hover:text-foreground"
 
 /** 댓글: "그룹 × 공고"에 달리고 이 그룹에만 보인다. 글자와 링크만 받는다. */
-export function Comments({ comments, viewer, isLeader, onAdd }: CommentsProps) {
+export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }: CommentsProps) {
   const [draft, setDraft] = useState("")
   const [saving, setSaving] = useState(false)
 
@@ -57,19 +59,18 @@ export function Comments({ comments, viewer, isLeader, onAdd }: CommentsProps) {
                   {mine ? "나" : comment.author.name}{" "}
                   <span className="font-normal text-text-secondary">· {formatCommentTime(comment.createdAt)}</span>
                 </span>
-                {/* 수정·삭제: 아직 동작 없음 */}
                 {mine ? (
                   <span className="inline-flex items-center gap-0.5">
-                    <button type="button" className={action}>
+                    <button type="button" className={action} onClick={() => onEdit(comment)}>
                       수정
                     </button>
-                    <button type="button" className={action}>
+                    <button type="button" className={action} onClick={() => onDelete(comment)}>
                       삭제
                     </button>
                   </span>
                 ) : (
                   isLeader && (
-                    <button type="button" className={action}>
+                    <button type="button" className={action} onClick={() => onDelete(comment)}>
                       삭제
                     </button>
                   )

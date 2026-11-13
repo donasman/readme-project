@@ -18,13 +18,15 @@ interface PostRowProps {
   viewer: Viewer
   detailPath: string
   onToggleInterest: (interested: boolean) => void
+  /** 마감을 못 읽은 공고의 "날짜 넣기" */
+  onFillDeadline: () => void
 }
 
 /**
  * 목록 한 줄. 넓으면 칸 6개, 768px 미만이면 카드(회사명과 D-day / 관심 멤버와 댓글 수 / 내 상태)이고
  * 올린 사람은 상세에서 보여 준다(docs/design/readme-tabs.css 의 rm-row 규칙).
  */
-export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: PostRowProps) {
+export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFillDeadline }: PostRowProps) {
   const { post } = row
   const due = deadlineText(post.deadline, today)
 
@@ -36,8 +38,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: Po
         {post.deadline.kind === "unknown" ? (
           <>
             <span className="text-label-sm font-bold text-warning">마감일 확인 필요</span>
-            {/* 날짜 넣기: 아직 동작 없음 */}
-            <Button variant="outline" size="xs" className="mt-0.5 h-7 self-start px-3">
+            <Button variant="outline" size="xs" className="mt-0.5 h-7 self-start px-3" onClick={onFillDeadline}>
               날짜 넣기
             </Button>
           </>

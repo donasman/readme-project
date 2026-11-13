@@ -1,13 +1,15 @@
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
+import { useState } from "react"
+import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Chip } from "@/shared/components/chip"
 import { subpageTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, PencilIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
-import { getCard } from "../api"
+import { deleteCard, getCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
 import { CardStatusBadge, CardsSubpage, FactList, FlaggedText, sectionTitle, subLabel } from "../components/card-bits"
 
@@ -20,6 +22,8 @@ export function CardPage() {
   const card = useLoaderData<typeof cardLoader>()
   const notes = card.issues.length + card.extractionNotes.length
   const where = orgAndRole(card)
+  const navigate = useNavigate()
+  const [deleting, setDeleting] = useState(false)
 
   return (
     <CardsSubpage>
@@ -34,8 +38,7 @@ export function CardPage() {
             {where && <p className="text-text-secondary">{where}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* 삭제: 확인 창(7차 "창 · 카드 지우기")과 함께 붙인다 */}
-            <Button variant="ghost" className="px-4">
+            <Button variant="ghost" className="px-4" onClick={() => setDeleting(true)}>
               <Trash2Icon aria-hidden="true" className="text-danger" />
               삭제
             </Button>
@@ -148,6 +151,28 @@ export function CardPage() {
           </aside>
         </div>
       </div>
+      <AppDialog
+        open={deleting}
+        onOpenChange={setDeleting}
+        title="카드를 지울까요?"
+        actions={
+          <>
+            <DialogCancel />
+            <Button
+              type="button"
+              variant="danger"
+              onClick={async () => {
+                await deleteCard(card.id)
+                navigate(paths.cards())
+              }}
+            >
+              지우기
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm">"{card.title}" 카드가 지워집니다. 되돌릴 수 없습니다. 뽑아 온 자료는 남습니다.</p>
+      </AppDialog>
     </CardsSubpage>
   )
 }

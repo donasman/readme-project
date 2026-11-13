@@ -1,5 +1,5 @@
-import { useMemo } from "react"
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
+import { useMemo, useState } from "react"
+import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,11 +11,13 @@ import { SurfaceCard } from "@/shared/components/surface-card"
 import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
-import { getGroupPosts } from "../api"
+import { getGroupPosts, setDeadline } from "../api"
 import { ListToolbar } from "../components/list-toolbar"
+import { DeadlineDialog } from "../components/post-dialogs"
 import { POST_GRID, PostRow } from "../components/post-row"
 import { buildPostList } from "../list-rules"
 import { useInterest } from "../use-interest"
+import type { GroupPost } from "../types"
 import { useListFilters } from "../use-list-filters"
 
 export function groupPostsLoader({ params }: LoaderFunctionArgs) {
@@ -29,6 +31,8 @@ export function GroupPostsPage() {
   const { group } = useGroup()
   const [filters, setFilters] = useListFilters()
   const interest = useInterest(group.id)
+  const revalidator = useRevalidator()
+  const [fillFor, setFillFor] = useState<GroupPost | null>(null)
 
   const list = useMemo(
     () => buildPostList(posts.map(interest.apply), filters, today),
@@ -107,6 +111,7 @@ export function GroupPostsPage() {
                   viewer={viewer}
                   detailPath={paths.groupPost(group.id, row.post.id)}
                   onToggleInterest={(on) => void interest.toggle(row.post.id, on)}
+                  onFillDeadline={() => setFillFor(row.post)}
                 />
               ))}
             </ul>
@@ -119,6 +124,16 @@ export function GroupPostsPage() {
           </p>
         )}
       </SurfaceCard>
+
+      <DeadlineDialog
+        target={fillFor}
+        onClose={() => setFillFor(null)}
+        onSave={async (deadline) => {
+          if (fillFor) await setDeadline(group.id, fillFor.id, deadline)
+          await revalidator.revalidate()
+          setFillFor(null)
+        }}
+      />
     </Page>
   )
 }
