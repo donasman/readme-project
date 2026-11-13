@@ -31,6 +31,11 @@ import com.readme.IntegrationTest;
 @IntegrationTest
 class GroupPostUploadTests {
 
+	/** 날짜 넣기의 본문(올리기의 deadline 과 같은 꼴). 응답도 같은 꼴이다. */
+	private static final String DATE_20 = "{ \"kind\": \"date\", \"date\": \"2026-11-20\" }";
+
+	private static final String ALWAYS = "{ \"kind\": \"always\" }";
+
 	@Autowired
 	MockMvcTester mvc;
 
@@ -226,29 +231,60 @@ class GroupPostUploadTests {
 		long postId = postIdOf(upload(this.group, this.me, body).exchange());
 		upload(otherGroup, this.me, body).exchange();
 
-		assertThat(fillDeadline(postId, this.other, "2026-11-20")).hasStatusOk().bodyJson().isStrictlyEqualTo("""
-				{ "kind": "date", "date": "2026-11-20" }
-				""");
+		assertThat(fillDeadline(postId, this.other, DATE_20)).hasStatusOk().bodyJson().isStrictlyEqualTo(DATE_20);
 
 		assertThat(this.mvc.get().uri("/api/groups/{groupId}/posts/{postId}", otherGroup, postId).with(loginAs(this.me)))
 			.bodyJson().extractingPath("$.post.deadline").isEqualTo(Map.of("kind", "date", "date", "2026-11-20"));
 		assertThat(this.jdbc.sql("select deadline_set_by from postings where id = :id").param("id", postId)
 			.query(Long.class).single()).isEqualTo(this.other);
 		// 한 번뿐이다
-		assertThat(fillDeadline(postId, this.leader, "2026-11-21")).hasStatus(HttpStatus.CONFLICT)
+		assertThat(fillDeadline(postId, this.leader, ALWAYS)).hasStatus(HttpStatus.CONFLICT)
 			.bodyJson().extractingPath("$.code").isEqualTo("DEADLINE_ALREADY_SET");
 	}
 
 	@Test
-	void datedOrAlwaysJobsTakeNoDate() throws Exception {
+	void anUnknownDeadlineCanBecomeAlwaysOpenOnce() throws Exception {
+		long postId = postIdOf(upload(this.group, this.me, """
+				{ "company": "상시인지 모를 회사 %s", "title": "공고", "deadline": { "kind": "unknown" } }
+				""".formatted(UUID.randomUUID())).exchange());
+
+		assertThat(fillDeadline(postId, this.other, ALWAYS)).hasStatusOk().bodyJson().isStrictlyEqualTo(ALWAYS);
+
+		assertThat(this.mvc.get().uri("/api/groups/{groupId}/posts", this.group).with(loginAs(this.me)))
+			.bodyJson().extractingPath("$.posts[0].deadline").isEqualTo(Map.of("kind", "always"));
+		assertThat(this.jdbc.sql("select deadline_set_by from postings where id = :id").param("id", postId)
+			.query(Long.class).single()).isEqualTo(this.other);
+		assertThat(fillDeadline(postId, this.leader, DATE_20)).hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.code").isEqualTo("DEADLINE_ALREADY_SET");
+	}
+
+	@Test
+	void datedOrAlwaysJobsTakeNoDeadline() throws Exception {
 		long always = postIdOf(upload(this.group, this.me, """
 				{ "company": "상시 회사 %s", "title": "공고", "deadline": { "kind": "always" } }
 				""".formatted(UUID.randomUUID())).exchange());
+		long dated = postIdOf(upload(this.group, this.me, """
+				{ "company": "날짜 회사 %s", "title": "공고", "deadline": { "kind": "date", "date": "2026-11-16" } }
+				""".formatted(UUID.randomUUID())).exchange());
 
-		assertThat(fillDeadline(always, this.me, "2026-11-20")).hasStatus(HttpStatus.CONFLICT)
+		assertThat(fillDeadline(always, this.me, DATE_20)).hasStatus(HttpStatus.CONFLICT)
 			.bodyJson().extractingPath("$.code").isEqualTo("DEADLINE_ALREADY_SET");
-		assertInvalid(this.mvc.put().uri("/api/groups/{groupId}/posts/{postId}/deadline", this.group, always)
-			.with(loginAs(this.me)).with(xsrf()).contentType(MediaType.APPLICATION_JSON).content("{}"));
+		assertThat(fillDeadline(dated, this.me, ALWAYS)).hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.code").isEqualTo("DEADLINE_ALREADY_SET");
+	}
+
+	@Test
+	void theDeadlineBodyIsADateOrAlwaysInTheUploadShape() throws Exception {
+		long postId = postIdOf(upload(this.group, this.me, """
+				{ "company": "모양 확인 회사 %s", "title": "공고", "deadline": { "kind": "unknown" } }
+				""".formatted(UUID.randomUUID())).exchange());
+
+		for (String body : new String[] { "{}", "{ \"date\": \"2026-11-20\" }", "{ \"kind\": \"unknown\" }",
+				"{ \"kind\": \"date\" }", "{ \"kind\": \"always\", \"date\": \"2026-11-20\" }", "{ \"kind\": \"someday\" }" }) {
+			assertInvalid(fillDeadline(postId, this.me, body));
+		}
+		// 잘못된 요청은 아무것도 바꾸지 않았다
+		assertThat(fillDeadline(postId, this.me, DATE_20)).hasStatusOk();
 	}
 
 	private MockMvcTester.MockMvcRequestBuilder upload(long groupId, long userId, String body) {
@@ -261,10 +297,10 @@ class GroupPostUploadTests {
 			.with(loginAs(userId)).with(xsrf());
 	}
 
-	private MockMvcTester.MockMvcRequestBuilder fillDeadline(long postId, long userId, String date) {
+	private MockMvcTester.MockMvcRequestBuilder fillDeadline(long postId, long userId, String body) {
 		return this.mvc.put().uri("/api/groups/{groupId}/posts/{postId}/deadline", this.group, postId)
 			.with(loginAs(userId)).with(xsrf())
-			.contentType(MediaType.APPLICATION_JSON).content("{ \"date\": \"%s\" }".formatted(date));
+			.contentType(MediaType.APPLICATION_JSON).content(body);
 	}
 
 	private void assertInvalid(MockMvcTester.MockMvcRequestBuilder request) {

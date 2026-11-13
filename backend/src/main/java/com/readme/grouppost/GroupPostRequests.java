@@ -27,10 +27,6 @@ final class GroupPostRequests {
 	record CommentRequest(@NotBlank @Size(max = 2000) String text) {
 	}
 
-	/** PUT …/deadline 의 본문. 예: { "date": "2026-11-20" } */
-	record FillDeadlineRequest(@NotNull LocalDate date) {
-	}
-
 	/**
 	 * POST /api/groups/{groupId}/posts 의 본문(설계 4.4 의 올리기 요청). 회사명, 공고명, 마감이 필수다.
 	 * 원문 주소는 http·https 만 받는다(설계 6절 12번). 빈 글자는 넣지 않은 것으로 본다.
@@ -39,11 +35,6 @@ final class GroupPostRequests {
 			@NotNull @Valid DeadlineInput deadline, @Size(max = 50) String deadlineName,
 			@Size(max = 100) String applyAt,
 			@Size(max = 2000) @Pattern(regexp = "(?i)(https?://\\S+)?") String sourceUrl) {
-
-		/** 마감 종류와 날짜의 짝이 맞는지: 날짜는 "date"일 때만 있다. */
-		boolean deadlineIsConsistent() {
-			return (this.deadline.kind() == DeadlineKind.DATE) == (this.deadline.date() != null);
-		}
 
 		PostingDraft toDraft() {
 			return new PostingDraft(this.company.strip(), this.title.strip(), this.deadline.kind(), this.deadline.date(),
@@ -56,8 +47,17 @@ final class GroupPostRequests {
 
 	}
 
-	/** 마감. 프런트의 Deadline 모양 그대로: { "kind": "date", "date": "2026-11-16" }, { "kind": "unknown" }. */
+	/**
+	 * 마감. 프런트의 Deadline 모양 그대로: { "kind": "date", "date": "2026-11-16" }, { "kind": "always" }, { "kind": "unknown" }.
+	 * 올리기 본문의 deadline 이고, PUT …/deadline(날짜 넣기)의 본문 자체다.
+	 */
 	record DeadlineInput(@NotNull DeadlineKind kind, LocalDate date) {
+
+		/** 종류와 날짜의 짝이 맞는지: 날짜는 "date"일 때만, 꼭 있다. */
+		boolean isConsistent() {
+			return (this.kind == DeadlineKind.DATE) == (this.date != null);
+		}
+
 	}
 
 }
