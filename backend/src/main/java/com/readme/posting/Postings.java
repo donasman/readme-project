@@ -44,12 +44,17 @@ public class Postings {
 	}
 
 	/**
-	 * 날짜 넣기. 마감을 읽지 못한(UNKNOWN) 공고에만 한 번 넣는다. 넣었으면 true, 이미 마감이 있었으면 false.
-	 * 공고 본체를 고치므로 같은 공고를 올린 다른 그룹에도 보인다(설계 가정 2).
+	 * 날짜 넣기. 마감을 읽지 못한(UNKNOWN) 공고에만 한 번, 날짜(DATE)나 상시(ALWAYS)를 넣는다.
+	 * 넣었으면 true, 이미 마감이 있었으면 false. 공고 본체를 고치므로 같은 공고를 올린 다른 그룹에도 보인다(설계 가정 2).
+	 *
+	 * @param date DATE 일 때만 넣고, ALWAYS 면 null
 	 */
 	@Transactional
-	public boolean fillUnknownDeadline(long postingId, LocalDate date, long userId) {
-		return this.repository.fillUnknownDeadline(postingId, date, userId, this.clock.instant()) == 1;
+	public boolean fillUnknownDeadline(long postingId, DeadlineKind kind, LocalDate date, long userId) {
+		if (kind == DeadlineKind.UNKNOWN || (kind == DeadlineKind.DATE) != (date != null)) {
+			throw new IllegalArgumentException("마감은 날짜가 있는 DATE 나 날짜가 없는 ALWAYS 로만 넣는다: " + kind + ", " + date);
+		}
+		return this.repository.fillUnknownDeadline(postingId, kind.name(), date, userId, this.clock.instant()) == 1;
 	}
 
 }

@@ -22,9 +22,10 @@ import com.readme.common.error.ApiException;
 import com.readme.common.error.CommonErrorCode;
 import com.readme.group.GroupAccess;
 import com.readme.grouppost.GroupPostRequests.CommentRequest;
-import com.readme.grouppost.GroupPostRequests.FillDeadlineRequest;
+import com.readme.grouppost.GroupPostRequests.DeadlineInput;
 import com.readme.grouppost.GroupPostRequests.InterestRequest;
 import com.readme.grouppost.GroupPostRequests.PostRequest;
+import com.readme.posting.DeadlineKind;
 
 /**
  * 그룹 공고 API(설계 4.2). 그룹의 멤버만 부를 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.
@@ -61,7 +62,7 @@ class GroupPostController {
 	@ResponseStatus(HttpStatus.CREATED)
 	GroupPostDataResponse post(@PathVariable long groupId, @Valid @RequestBody PostRequest request,
 			@CurrentUser LoginUser user) {
-		if (!request.deadlineIsConsistent()) {
+		if (!request.deadline().isConsistent()) {
 			throw new ApiException(CommonErrorCode.INVALID_INPUT, "마감일은 마감이 \"date\"일 때만, 꼭 넣어 주세요");
 		}
 		long postingId = this.service.post(groupId, user.id(), request.toDraft());
@@ -83,11 +84,18 @@ class GroupPostController {
 		this.service.takeDown(groupId, postId, user.id());
 	}
 
-	/** 날짜 넣기. 바뀐 마감을 돌려준다. */
+	/**
+	 * 날짜 넣기. 본문은 올리기의 deadline 과 같은 꼴로, 날짜 { "kind": "date", "date": "…" } 나 상시 { "kind": "always" } 다
+	 * (화면·API 대응 문서 3절 6번, 2026-11-13 정함). 바뀐 마감을 같은 꼴로 돌려준다.
+	 */
 	@PutMapping("/{postId}/deadline")
 	DeadlineResponse fillDeadline(@PathVariable long groupId, @PathVariable long postId,
-			@Valid @RequestBody FillDeadlineRequest request, @CurrentUser LoginUser user) {
-		return this.service.fillDeadline(groupId, postId, user.id(), request.date());
+			@Valid @RequestBody DeadlineInput deadline, @CurrentUser LoginUser user) {
+		if (deadline.kind() == DeadlineKind.UNKNOWN || !deadline.isConsistent()) {
+			throw new ApiException(CommonErrorCode.INVALID_INPUT,
+					"마감은 날짜({\"kind\": \"date\", \"date\": …})나 상시({\"kind\": \"always\"})로 넣어 주세요");
+		}
+		return this.service.fillDeadline(groupId, postId, user.id(), deadline.kind(), deadline.date());
 	}
 
 	@PutMapping("/{postId}/interest")
