@@ -1,11 +1,10 @@
 name: backend
 
-# 이 파일은 .github/workflows/ 로 옮겨야 동작한다.
-# backend 폴더가 바뀔 때만 돈다. 지금은 빌드와 테스트까지만 한다.
+# backend 폴더가 바뀔 때만 돈다: main·dev 에 올라온 커밋과 PR. 지금은 빌드와 테스트까지만 한다.
 # 서버가 생기면 이 뒤에 "JAR 복사 → 서비스 재시작 → /actuator/health 확인" 단계를 붙인다(docs/리드미_배포_계획.md 3절).
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - "backend/**"
       - ".github/workflows/backend.yml"

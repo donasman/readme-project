@@ -8,7 +8,8 @@ readme/
 ├─ frontend/           Vite · React · TypeScript · Tailwind CSS    → 배포: Cloudflare Pages
 ├─ docs/               설계 초안, 배포 계획, 조사 정리, 화면 디자인(design)
 ├─ reverse-engineering/ devs7ud.io 디자인 분석, 디자인 적용 계획
-├─ deploy/             서버에 올릴 때 쓰는 파일 초안(Caddy, systemd), GitHub Actions 파일(github-workflows)
+├─ deploy/             서버에 올릴 때 쓰는 파일 초안(Caddy, systemd)
+├─ .github/workflows/  CI: backend·frontend 빌드 확인(main·dev 푸시, PR)
 └─ compose.yaml        개발용 PostgreSQL 16 + 메일 수신기(Mailpit)
 ```
 
@@ -104,7 +105,6 @@ git switch -c feat/frontend-something  # 작업 브랜치
 
 1. `backend` 에서 `.\gradlew build` 를 돌려 서버 빌드를 확인한다.
 2. 저장소를 GitHub 에 올린다. 로컬 저장소는 만들었고 원격은 아직 없다. `gradlew` 의 실행 권한이 빠져 있으므로(`100644`) `git update-index --chmod=+x backend/gradlew` 를 한 번 해 둔다.
-   - 빌드 확인(CI)을 켜려면 `deploy/github-workflows/` 의 `backend.yml`, `frontend.yml` 을 `.github/workflows/` 로 옮긴다. 원격 작업으로는 `.github/workflows/` 에 파일을 쓸 수 없어서 따로 두었다.
 3. 다음 화면을 정한다. 그룹 공고 화면 2개는 만들었고, 동작이 없는 자리가 남아 있다(위 "지금 들어 있는 것").
 4. 로그인을 만든다(`docs/리드미_설계_로그인_경험카드.md` 4.1절). 그룹과 그룹 공고의 테이블·API는 `docs/리드미_설계_그룹_공고.md` 에 초안이 있다.
 
