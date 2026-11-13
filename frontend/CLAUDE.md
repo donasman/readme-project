@@ -2,7 +2,7 @@
 
 이 폴더(`frontend/`)의 코드를 만들거나 고칠 때 따른다. 근거와 옮기는 순서는 `../docs/리드미_프런트_구조_계획.md`에 있다.
 
-- 계획 문서 9절 중 정한 것(2026-11-13): 이름은 계획 그대로, 가짜 서버는 `mocks/`로 분리, 글자 규칙은 뿌리 틀로 올림, `/dev/components`는 개발 때만 등록. ESLint 경계 규칙과 테스트는 아직 정하지 않았다. 8단계에 오면 사용자에게 묻는다. 이름이 바뀌면 이 파일도 같이 고친다.
+- 계획 문서 9절 중 정한 것(2026-11-13): 이름은 계획 그대로, 가짜 서버는 `mocks/`로 분리, 글자 규칙은 뿌리 틀로 올림, `/dev/components`는 개발 때만 등록. ESLint 경계 규칙은 넣는다(`eslint.layers.js`), 테스트는 Vitest로 넣는다. 이름이 바뀌면 이 파일도 같이 고친다.
 
 ## 층
 
@@ -18,6 +18,8 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 - `shared/`: 도메인을 모르는 코드. `domain/`, `features/`, `app/`을 불러오지 않는다.
 - `components/ui`(shadcn), `components/arc`(dsui): 받아 온 부품이다. 폴더를 옮기지 않는다. `arc`는 고치지 않는다.
 - `mocks/`: 가짜 서버. 각 층의 `api.ts`만 부른다. `mocks/`는 `shared/`와 타입(`import type`)만 불러온다.
+- 다른 층이나 다른 묶음은 `@/` 별칭으로 불러온다. 묶음 밖으로 올라가는 상대 경로(`../../shared/…`)는 쓰지 않는다.
+- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session)도 거기 적는다.
 
 ## 새 코드를 둘 자리
 
@@ -42,4 +44,4 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 ## 확인
 
 - 커밋 전에 `npm run typecheck`, `npm run lint`, `npm run build`를 돌린다.
-- 층 규칙을 어긴 import가 없는지 본다: `shared/`에서 `@/domain`, `@/features`, `@/app`을, `domain/`에서 `@/features`, `@/app`을, `features/`에서 `@/app`과 다른 기능을 찾는다.
+- 층 규칙은 lint가 본다. 새 층이나 새 도메인을 만들면 `eslint.layers.js`에 더한다.
