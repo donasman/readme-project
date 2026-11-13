@@ -11,6 +11,11 @@ export const paths = {
   /** 지원 현황. postingId를 주면 그 공고의 상태 바꾸기를 연다 */
   board: (postingId?: string) => (postingId === undefined ? "/board" : `/board?posting=${seg(postingId)}`),
   calendar: () => "/calendar",
+  /** 설정: 내 정보, 메일 자동화, 탈퇴 */
+  settings: () => "/settings",
+  account: () => "/settings/account",
+  mailSettings: () => "/settings/mail",
+  withdraw: () => "/settings/withdraw",
   mail: () => "/mail",
   login: () => "/login",
   signup: () => "/signup",

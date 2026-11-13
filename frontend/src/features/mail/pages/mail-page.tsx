@@ -6,7 +6,6 @@ import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ArrowRightIcon, MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
@@ -44,8 +43,9 @@ export function MailPage() {
             </h2>
             <p className="text-text-secondary">채용 메일을 내 수신 주소로 자동 전달하면 여기에 모입니다.</p>
           </div>
-          {/* 메일 자동화 설정: 설정 화면이 생기면 그리로 간다 */}
-          <PlaceholderLink className={buttonVariants()}>메일 자동화 설정하기</PlaceholderLink>
+          <Link to={paths.mailSettings()} className={buttonVariants()}>
+            메일 자동화 설정하기
+          </Link>
         </section>
       ) : (
         <>

@@ -7,6 +7,7 @@ import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import { Avatar } from "@/shared/components/avatar"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
+import { Dot } from "@/shared/components/dot"
 import { Heading } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
@@ -86,7 +87,7 @@ export function MyPostPage() {
                 <ul className="flex flex-col gap-1.5">
                   {s.items.map((item) => (
                     <li key={item} className="flex items-start gap-2.5">
-                      <span aria-hidden="true" className="mt-[9px] size-1.5 flex-none rounded-full bg-border-strong" />
+                      <Dot tone="muted" className="mt-[9px]" />
                       <span>{item}</span>
                     </li>
                   ))}

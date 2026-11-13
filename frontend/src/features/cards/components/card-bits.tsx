@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 
 import { BackLink } from "@/shared/components/back-link"
+import { Dot } from "@/shared/components/dot"
 import { CircleAlertIcon, CircleCheckIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
@@ -64,7 +65,7 @@ export function FactList({ facts }: { facts: string[] }) {
     <ul className="flex flex-col gap-2">
       {facts.map((fact) => (
         <li key={fact} className="flex items-start gap-2.5">
-          <span aria-hidden="true" className="mt-[9px] size-1.5 flex-none rounded-full bg-primary" />
+          <Dot tone="accent" className="mt-[9px]" />
           <span>{fact}</span>
         </li>
       ))}
