@@ -112,9 +112,9 @@ export function GroupHeader() {
         </nav>
 
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          <button type="button" aria-label="내 계정" className="flex-none cursor-pointer rounded-full">
+          <Link to={paths.account()} aria-label="내 계정" className="flex-none rounded-full">
             <Avatar>{viewer.name.slice(0, 1)}</Avatar>
-          </button>
+          </Link>
           {/* 768px 미만에서만: 숨은 그룹 메뉴를 여기서 연다 */}
           <DropdownMenu>
             <DropdownMenuTrigger

@@ -28,6 +28,7 @@ import { createExampleDraft, createExampleGroups, EXAMPLE_POST_URLS, EXAMPLE_TOD
 /**
  * 가짜 서버만의 보기 설정. 처음 여는 주소에 붙인다(새로 고치면 처음 상태로 돌아간다).
  * ?mock=guest: 로그인하지 않은 사람. ?mock=no-groups: 그룹이 하나도 없는 사람(내 그룹의 빈 상태, 초대 수락).
+ * ?mock=no-google: 구글을 연결하지 않은 사람(내 정보).
  */
 const MOCK = new Set(typeof location === "undefined" ? [] : new URLSearchParams(location.search).getAll("mock"))
 
@@ -65,6 +66,20 @@ export const today = (): string => EXAMPLE_TODAY
 
 /** 로그인한 사람. 로그인하지 않았으면 null(서버의 401). */
 export const viewer = (): Viewer | null => (MOCK.has("guest") ? null : copy(VIEWER))
+
+/** 가짜 서버의 보기 설정을 읽는다(같은 폴더의 다른 가짜 서버가 쓴다). */
+export const mockFlag = (name: string) => MOCK.has(name)
+
+/** 로그아웃(POST /api/auth/logout)과 탈퇴 뒤: 이 뒤로는 로그인하지 않은 사람으로 본다. */
+export function signOut(): void {
+  MOCK.add("guest")
+}
+
+/** 표시 이름 바꾸기. 그룹 멤버에게 보이는 이름이다. */
+export function renameViewer(name: string): Viewer {
+  VIEWER.name = name
+  return copy(VIEWER)
+}
 
 /**
  * 그룹 전환 메뉴의 "공고 N": 마감되지 않은 공고 수. 서버가 세는 값을 흉내 낸다.

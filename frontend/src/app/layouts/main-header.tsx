@@ -52,10 +52,9 @@ export function MainHeader() {
           </ul>
         </nav>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          {/* 내 계정: 내 정보 화면(9차)이 생기면 그리로 간다 */}
-          <PlaceholderLink aria-label="내 계정" className="flex-none rounded-full">
+          <Link to={paths.account()} aria-label="내 계정" className="flex-none rounded-full">
             <Avatar>{viewer.name.slice(0, 1)}</Avatar>
-          </PlaceholderLink>
+          </Link>
         </div>
       </div>
     </header>

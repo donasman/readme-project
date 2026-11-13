@@ -14,6 +14,7 @@ import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
+import { copyText } from "@/shared/lib/clipboard"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
@@ -155,8 +156,7 @@ function InviteLink({ token, expiresAt }: { token: string; expiresAt: string }) 
   const [copied, setCopied] = useState(false)
 
   async function copy() {
-    await navigator.clipboard?.writeText(url)
-    setCopied(true)
+    setCopied(await copyText(url))
   }
 
   return (
