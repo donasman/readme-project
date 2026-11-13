@@ -26,7 +26,7 @@ readme/
 터미널 세 개를 쓴다. 모두 이 폴더(`C:\Dev\readme`)에서 시작한다.
 
 ```powershell
-# 1) DB 와 메일 수신기
+# 1) DB(localhost:5433) 와 메일 수신기
 docker compose up -d
 
 # 2) 서버 → http://localhost:8080
@@ -75,10 +75,14 @@ git switch -c feat/frontend-something  # 작업 브랜치
 
 **backend** (`com.readme`)
 
-- 설정: 세션 쿠키 로그인의 바탕(Spring Session JDBC), CORS, CSRF, 로그인 전 요청에 401, `/actuator/health`.
+- 작업 규칙: `backend/CLAUDE.md`.
+- 설정: 세션 쿠키 로그인의 바탕(Spring Session JDBC), CORS, CSRF, 로그인 전 요청에 401, `/actuator/health`. 로그인 전 요청은 세션에 저장하지 않는다(세션 행이 생기지 않는다).
+- 오류 응답: 모든 오류가 `{ code, message }` 다(`common/error`). 코드 목록은 `docs/리드미_설계_그룹_공고.md` 4절.
+- 시간: 한국 날짜의 기준 `Clock`(`common/config/TimeConfig`, `Asia/Seoul`).
 - DB: `V1__init.sql`(설계 초안의 테이블 10개), `V2__spring_session.sql`(세션 테이블 2개). 스키마는 `readme`.
-- 프로필: `dev`(기본, compose.yaml 의 DB), `prod`(환경 변수, `backend/.env.example`).
-- 패키지: `auth`, `card`, `extraction`, `keyword`, `llm`, `common`. 설명만 있고 기능 코드는 아직 없다.
+- 프로필: `dev`(기본, compose.yaml 의 DB `localhost:5433`), `prod`(환경 변수, `backend/.env.example`).
+- 패키지: `auth`, `card`, `extraction`, `keyword`, `llm`, `common`. `common` 밖은 설명만 있고 기능 코드는 아직 없다.
+- 테스트: `@IntegrationTest`(서버 전체 + Testcontainers PostgreSQL, 테스트끼리 나눠 씀), 오류 응답과 보안 설정 테스트.
 - 자원: `resources/dictionary`(키워드 사전 4개), `resources/prompts/exp-extract.md`(jobfit 원본 그대로. 옮길 때 첫 줄의 jobfit 안내와 변수 표기를 고친다).
 
 **frontend** (2026-11-13)
@@ -96,17 +100,17 @@ git switch -c feat/frontend-something  # 작업 브랜치
 | 대상 | 상태 |
 |---|---|
 | frontend | `npm run typecheck`, `npm run lint`, `npm run build` 통과. 그룹 공고 목록·상세를 1280px·390px, 라이트·다크로 띄워 `docs/design/shots` 와 비교했고 픽셀 차이는 0.1~0.4% |
-| DB 마이그레이션 | V1, V2 를 PostgreSQL 16 에 직접 적용해 확인. Flyway 를 거친 실행은 확인 못 함 |
-| backend | **컴파일과 실행을 확인하지 못했다.** 뼈대를 만든 환경에서 Maven Central 에 접속할 수 없었다. Java 문법 검사와, 의존성 이름·설정 이름을 Spring Boot 4.1.2 소스와 대조하는 것까지 했다. PC 에서 `.\gradlew build` 로 확인이 필요하다 |
+| DB 마이그레이션 | (2026-11-13) Flyway 가 V1, V2 를 compose 의 PostgreSQL 16 과 Testcontainers 의 PostgreSQL 16 에 적용했다 |
+| backend | (2026-11-13) Windows PC(JDK 21, Gradle 8.14.3)에서 `.\gradlew build` 통과. `bootRun` 으로 띄워 health `UP`, 로그인 전 401, CSRF 토큰 없는 요청 403, `localhost:5173` 만 받는 CORS, `XSRF-TOKEN` 쿠키 발급을 확인했다 |
 | shadcn/ui, dsui | shadcn 프리셋(`base-nova`)으로 `frontend` 를 새로 만들고 부품을 받아 두었다. 위 frontend 줄의 빌드와 화면 비교에 포함된다 |
 | GitHub Actions, deploy | 돌려 보지 못했다 |
 
 ## 다음에 할 일
 
-1. `backend` 에서 `.\gradlew build` 를 돌려 서버 빌드를 확인한다.
-2. 저장소를 GitHub 에 올린다. 로컬 저장소는 만들었고 원격은 아직 없다. `gradlew` 의 실행 권한이 빠져 있으므로(`100644`) `git update-index --chmod=+x backend/gradlew` 를 한 번 해 둔다.
+1. 서버: 그룹·그룹 공고 API 를 만든다. 로그인 전까지는 dev 프로필에서만 켜지는 임시 로그인으로 확인한다(`docs/리드미_설계_그룹_공고.md`).
+2. 저장소를 GitHub 에 올린다. 로컬 저장소는 만들었고 원격은 아직 없다. `gradlew` 의 실행 권한은 git 에 넣었다(`100755`).
 3. 다음 화면을 정한다. 그룹 공고 화면 2개는 만들었고, 동작이 없는 자리가 남아 있다(위 "지금 들어 있는 것").
-4. 로그인을 만든다(`docs/리드미_설계_로그인_경험카드.md` 4.1절). 그룹과 그룹 공고의 테이블·API는 `docs/리드미_설계_그룹_공고.md` 에 초안이 있다.
+4. 로그인을 만든다(`docs/리드미_설계_로그인_경험카드.md` 4.1절). 임시 로그인은 이때 걷어낸다(`backend/CLAUDE.md`).
 
 ## 문서
 
