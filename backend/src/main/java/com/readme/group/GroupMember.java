@@ -46,10 +46,6 @@ class GroupMember {
 		return member;
 	}
 
-	boolean isLeader() {
-		return this.role == Role.LEADER;
-	}
-
 	void changeDisclosure(Disclosure disclosure) {
 		this.disclosure = disclosure;
 	}
