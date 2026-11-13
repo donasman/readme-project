@@ -51,6 +51,25 @@ cd backend;  .\gradlew build      # 테스트 포함. Docker 가 켜져 있어�
 cd frontend; npm run lint; npm run build
 ```
 
+## 브랜치
+
+| 브랜치 | 뜻 |
+|---|---|
+| `main` | 배포할 수 있는 상태. `dev`에서만 들어온다 |
+| `dev` | 작업을 모으는 곳. 작업 브랜치에서만 들어온다 |
+| `종류/영역-내용` | 작업 브랜치. `dev`에서 따고 `dev`로 돌아간다(예: `feat/backend-groups`, `fix/frontend-deadline`) |
+
+새 PC에서 시작하기:
+
+```powershell
+git clone https://github.com/donasman/readme-project.git readme
+cd readme
+git switch dev                         # 원격 dev를 따라가는 로컬 dev가 생긴다
+git switch -c feat/frontend-something  # 작업 브랜치
+```
+
+병합, 푸시, 브랜치 지우기 규칙은 루트의 `CLAUDE.md`에 있다.
+
 ## 지금 들어 있는 것
 
 **backend** (`com.readme`)
