@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import type { Viewer } from "@/domain/session/types"
+import { Chip } from "@/shared/components/chip"
 import { Heading } from "@/shared/components/heading"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { formatMonthDay } from "@/shared/lib/date"
@@ -56,9 +57,7 @@ export function PostContent({ post, viewer, canTakeDown }: PostContentProps) {
               <h3 className="text-sm font-bold">키워드</h3>
               <ul className="flex flex-wrap gap-1.5">
                 {post.keywords.map((keyword) => (
-                  <li key={keyword} className="rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium">
-                    {keyword}
-                  </li>
+                  <Chip key={keyword}>{keyword}</Chip>
                 ))}
               </ul>
             </div>

@@ -14,5 +14,10 @@ export const paths = {
   groupPosts: (groupId: string) => `/groups/${seg(groupId)}/posts`,
   groupPost: (groupId: string, postId: string) => `/groups/${seg(groupId)}/posts/${seg(postId)}`,
   cards: () => "/cards",
+  card: (cardId: number) => `/cards/${cardId}`,
+  cardEdit: (cardId: number) => `/cards/${cardId}/edit`,
+  cardSources: () => "/cards/sources",
+  /** 카드 확인. cardId를 주면 그 카드부터 본다 */
+  cardReview: (cardId?: number) => (cardId === undefined ? "/cards/review" : `/cards/review?card=${cardId}`),
   devComponents: () => "/dev/components",
 }

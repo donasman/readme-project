@@ -1,5 +1,5 @@
 // 경험카드 목록의 거르기 규칙과 태그 순서. 화면과 떨어진 순수 함수다.
-import type { CardTag, ExperienceCard } from "./types"
+import type { CardTag, ExperienceCard, Star } from "./types"
 
 /** 목록 보기: 전체, 확인 필요(verified = false), 확인됨 */
 export type CardStatus = "all" | "unverified" | "verified"
@@ -11,6 +11,14 @@ export interface CardFilters {
 }
 
 export const DEFAULT_CARD_FILTERS: CardFilters = { status: "all", tag: "" }
+
+/** STAR 네 칸의 이름(화면에 보이는 순서). */
+export const STAR_PARTS: [keyof Star, string][] = [
+  ["situation", "상황"],
+  ["task", "과제"],
+  ["action", "행동"],
+  ["result", "결과"],
+]
 
 export const CARD_STATUS_LABELS: Record<CardStatus, string> = {
   all: "전체",
