@@ -3,8 +3,12 @@ import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import type { Viewer } from "@/domain/session/types"
+import { Heading } from "@/shared/components/heading"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
+import { SurfaceCard } from "@/shared/components/surface-card"
+import { textLink } from "@/shared/components/text-link"
 import { formatCommentTime } from "@/shared/lib/date"
+import { joinClasses } from "@/shared/lib/utils"
 
 import type { Comment } from "../types"
 
@@ -38,13 +42,9 @@ export function Comments({ comments, viewer, isLeader, onAdd }: CommentsProps) {
   }
 
   return (
-    <section
-      id="comments"
-      aria-label="댓글"
-      className="flex scroll-mt-4 flex-col rounded-surface border border-border bg-surface px-6 pt-6 pb-5 shadow-resting"
-    >
+    <SurfaceCard id="comments" aria-label="댓글" className="flex scroll-mt-4 flex-col px-6 pt-6 pb-5">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="font-heading text-xl leading-display font-bold tracking-display">댓글</h2>
+        <Heading>댓글</Heading>
         <span className="text-xs text-text-secondary">{comments.length}개 · 이 그룹에만 보임</span>
       </div>
       <ul className="flex flex-col">
@@ -80,7 +80,7 @@ export function Comments({ comments, viewer, isLeader, onAdd }: CommentsProps) {
                   part.href === undefined ? (
                     <span key={index}>{part.text}</span>
                   ) : part.href === "#" ? (
-                    <PlaceholderLink key={index} className="font-bold text-primary underline">
+                    <PlaceholderLink key={index} className={textLink}>
                       {part.text}
                     </PlaceholderLink>
                   ) : (
@@ -89,7 +89,7 @@ export function Comments({ comments, viewer, isLeader, onAdd }: CommentsProps) {
                       href={part.href}
                       target="_blank"
                       rel="noreferrer ugc"
-                      className="font-bold break-all text-primary underline"
+                      className={joinClasses(textLink, "break-all")}
                     >
                       {part.text}
                     </a>
@@ -115,6 +115,6 @@ export function Comments({ comments, viewer, isLeader, onAdd }: CommentsProps) {
           댓글 달기
         </Button>
       </form>
-    </section>
+    </SurfaceCard>
   )
 }

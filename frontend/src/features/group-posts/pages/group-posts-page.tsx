@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
+import { Heading } from "@/shared/components/heading"
+import { Page } from "@/shared/components/page"
+import { SurfaceCard } from "@/shared/components/surface-card"
 import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
@@ -34,15 +37,15 @@ export function GroupPostsPage() {
   const others = group.members.filter((m) => m.id !== viewer.id)
 
   return (
-    <main className="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 pt-10 pb-16">
+    <Page className="gap-6 pt-10">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-sm text-text-secondary">
             {group.name} · 멤버 {group.members.length}명
           </p>
-          <h1 className="font-heading text-[clamp(2.5rem,10cqw,var(--text-5xl))] leading-display font-bold tracking-display">
+          <Heading level={1} size="text-[clamp(2.5rem,10cqw,var(--text-5xl))]">
             공고
-          </h1>
+          </Heading>
         </div>
         <div className="flex min-w-0 flex-[1_1_320px] flex-wrap items-center justify-end gap-2">
           <div className="relative flex max-w-80 min-w-0 flex-[1_1_200px] items-center">
@@ -69,7 +72,7 @@ export function GroupPostsPage() {
 
       <ListToolbar filters={filters} counts={list.counts} members={others} onChange={setFilters} />
 
-      <section aria-label="공고 목록" className="rounded-surface border border-border bg-surface px-6 pt-2 pb-4 shadow-resting">
+      <SurfaceCard aria-label="공고 목록" className="px-6 pt-2 pb-4">
         <div
           aria-hidden="true"
           className={`hidden items-center gap-4 pt-3 pb-2.5 text-xs font-semibold text-text-secondary md:grid ${POST_GRID}`}
@@ -116,7 +119,7 @@ export function GroupPostsPage() {
             조건에 맞는 공고가 없습니다.
           </p>
         )}
-      </section>
-    </main>
+      </SurfaceCard>
+    </Page>
   )
 }

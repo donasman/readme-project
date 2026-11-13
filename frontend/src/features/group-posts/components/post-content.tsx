@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button"
 import type { Viewer } from "@/domain/session/types"
+import { Heading } from "@/shared/components/heading"
+import { SurfaceCard } from "@/shared/components/surface-card"
 import { formatMonthDay } from "@/shared/lib/date"
 import { subjectParticle } from "@/shared/lib/korean"
 
@@ -19,13 +21,10 @@ export function PostContent({ post, viewer, canTakeDown }: PostContentProps) {
   const empty = post.sections.length === 0 && post.keywords.length === 0
 
   return (
-    <section
-      aria-label="공고 내용"
-      className="flex flex-col gap-5 rounded-surface border border-border bg-surface p-6 shadow-resting"
-    >
+    <SurfaceCard aria-label="공고 내용" className="flex flex-col gap-5 p-6">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="font-heading text-xl leading-display font-bold tracking-display">공고 내용</h2>
+          <Heading>공고 내용</Heading>
           <p className="text-label-sm text-text-secondary">
             {poster} {formatMonthDay(post.postedAt)}에 올림
           </p>
@@ -66,6 +65,6 @@ export function PostContent({ post, viewer, canTakeDown }: PostContentProps) {
           )}
         </div>
       )}
-    </section>
+    </SurfaceCard>
   )
 }

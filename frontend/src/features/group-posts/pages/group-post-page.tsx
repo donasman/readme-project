@@ -2,6 +2,7 @@ import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "re
 
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
+import { Page } from "@/shared/components/page"
 import { ArrowLeftIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
@@ -31,7 +32,7 @@ export function GroupPostPage() {
   const listPath = paths.groupPosts(group.id)
 
   return (
-    <main className="mx-auto flex max-w-[1240px] flex-col gap-4 px-4 pt-6 pb-16">
+    <Page className="gap-4 pt-6">
       <Link
         to={listPath}
         className="inline-flex min-h-control-md items-center gap-1.5 self-start text-sm font-bold text-text-secondary"
@@ -58,6 +59,6 @@ export function GroupPostPage() {
           />
         </div>
       </div>
-    </main>
+    </Page>
   )
 }

@@ -13,6 +13,7 @@ import {
 import { sectionOf } from "@/domain/group/sections"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
+import { Avatar } from "@/shared/components/avatar"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -48,12 +49,9 @@ export function GroupHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger className="inline-flex h-control-md min-w-0 flex-none cursor-pointer items-center gap-2 rounded-full bg-surface-muted pr-3 pl-1.5 text-sm font-bold text-foreground">
-            <span
-              aria-hidden="true"
-              className="grid size-8 flex-none place-items-center rounded-full bg-primary text-label-sm font-bold text-primary-foreground"
-            >
+            <Avatar size={32} tone="accent">
               {group.mark}
-            </span>
+            </Avatar>
             <span className="max-w-40 truncate">{group.name}</span>
             <ChevronDownIcon aria-hidden="true" className="size-4 flex-none" />
           </DropdownMenuTrigger>
@@ -62,12 +60,7 @@ export function GroupHeader() {
               <DropdownMenuLabel>내 그룹</DropdownMenuLabel>
               {groups.map((g) => (
                 <DropdownMenuItem key={g.id} className="pl-2" onClick={() => navigate(paths.groupPosts(g.id))}>
-                  <span
-                    aria-hidden="true"
-                    className="grid size-7 flex-none place-items-center rounded-full bg-surface-sunken text-xs font-bold"
-                  >
-                    {g.mark}
-                  </span>
+                  <Avatar size={28}>{g.mark}</Avatar>
                   <span className="min-w-0 flex-1 whitespace-nowrap">{g.name}</span>
                   <span className="flex-none text-xs font-normal text-text-secondary">공고 {g.openPostCount}</span>
                   {g.id === group.id && <CheckIcon role="img" aria-label="지금 보는 그룹" className="text-primary" />}
@@ -117,12 +110,8 @@ export function GroupHeader() {
         </nav>
 
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          <button
-            type="button"
-            aria-label="내 계정"
-            className="inline-flex size-control-sm flex-none cursor-pointer items-center justify-center rounded-full bg-surface-sunken text-label-sm font-bold text-foreground"
-          >
-            {viewer.name.slice(0, 1)}
+          <button type="button" aria-label="내 계정" className="flex-none cursor-pointer rounded-full">
+            <Avatar>{viewer.name.slice(0, 1)}</Avatar>
           </button>
           {/* 768px 미만에서만: 숨은 그룹 메뉴를 여기서 연다 */}
           <DropdownMenu>

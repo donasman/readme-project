@@ -4,6 +4,7 @@ import type { Member } from "@/domain/group/types"
 import { daysBetween } from "@/shared/lib/date"
 
 import { daysLeft, isClosed, isNewPost } from "./deadline"
+import { isInterestedOrApplied } from "./my-state"
 import type { GroupPost } from "./types"
 
 export type Tab = "open" | "closed"
@@ -52,7 +53,7 @@ export interface PostList {
 }
 
 export function toRow(post: GroupPost, today: string): PostRow {
-  const meOn = post.me.interested || post.me.status !== null
+  const meOn = isInterestedOrApplied(post.me)
   const fans: FanChip[] = post.interests.map((i) => ({ kind: "member", member: i.member, applied: i.applied }))
   if (meOn) fans.unshift({ kind: "me" })
   return {

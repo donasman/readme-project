@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { Heading } from "@/shared/components/heading"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { CheckIcon, ExternalLinkIcon } from "@/shared/icons"
 
@@ -38,9 +39,9 @@ export function DeadlineCard({ post, today, onToggleInterest }: DeadlineCardProp
 
       <div className="flex min-w-0 flex-[2_1_320px] flex-col items-start justify-center gap-2 px-6 pt-4 pb-6">
         <p className="text-base font-bold">{post.company}</p>
-        <h1 className="font-heading text-[clamp(var(--text-2xl),8cqw,var(--text-3xl))] leading-display font-bold tracking-display">
+        <Heading level={1} size="text-[clamp(var(--text-2xl),8cqw,var(--text-3xl))]">
           {post.title}
-        </h1>
+        </Heading>
         {post.applyAt && <p className="text-sm">지원처 · {post.applyAt}</p>}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {post.me.status ? (
