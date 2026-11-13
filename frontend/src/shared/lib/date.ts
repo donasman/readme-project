@@ -23,6 +23,18 @@ export function formatDday(today: string, date: string): string {
   return left === 0 ? "D-Day" : `D-${left}`
 }
 
+/** "2026년 11월 13일 금요일" */
+export function formatLongDate(date: string): string {
+  const [y, m, d] = date.split("-").map(Number)
+  return `${y}년 ${m}월 ${d}일 ${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}요일`
+}
+
+/** "2026-11-18 (수)" */
+export function formatDateWeekday(date: string): string {
+  const [y, m, d] = date.split("-").map(Number)
+  return `${date} (${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]})`
+}
+
 /** "11.05" */
 export function formatMonthDay(date: string): string {
   const [, m, d] = date.split("-")

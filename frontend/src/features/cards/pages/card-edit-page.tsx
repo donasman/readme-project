@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { subpageTitle } from "@/shared/components/heading"
 import { FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
 import { Panel } from "@/shared/components/panel"
+import { ToggleButton } from "@/shared/components/toggle-button"
 import { CircleAlertIcon, LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses } from "@/shared/lib/utils"
@@ -14,7 +15,7 @@ import { cn, joinClasses } from "@/shared/lib/utils"
 import { getCard, suggestKeywords, updateCard } from "../api"
 import { STAR_PARTS } from "../card-rules"
 import { flaggedValues, SUMMARY_LIMIT } from "../card-text"
-import { CardsSubpage, pressedOutline, sectionTitle } from "../components/card-bits"
+import { CardsSubpage, sectionTitle } from "../components/card-bits"
 import { QUESTION_TYPES, type KeywordSuggestion, type QuestionType } from "../types"
 
 export function cardEditLoader({ params }: LoaderFunctionArgs) {
@@ -194,17 +195,9 @@ export function CardEditPage() {
                 {QUESTION_TYPES.map((type) => {
                   const on = types.includes(type)
                   return (
-                    <Button
-                      key={type}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      aria-pressed={on}
-                      onClick={() => setTypes((ts) => (on ? ts.filter((t) => t !== type) : [...ts, type]))}
-                      className={cn(on && pressedOutline)}
-                    >
+                    <ToggleButton key={type} pressed={on} onClick={() => setTypes((ts) => (on ? ts.filter((t) => t !== type) : [...ts, type]))}>
                       {type}
-                    </Button>
+                    </ToggleButton>
                   )
                 })}
               </div>

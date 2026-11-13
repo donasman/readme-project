@@ -24,10 +24,6 @@ export const subLabel = "text-label-sm font-bold text-text-secondary"
 /** 칸 묶음 제목(18px 굵게): "STAR", "근거 숫자" … */
 export const sectionTitle = "text-lg font-bold"
 
-/** 켜고 끄는 outline 버튼(태그 거르기, 쓸 문항 유형)의 켜진 모양: 옅은 강조색 바탕. */
-export const pressedOutline =
-  "border-transparent bg-accent-subtle text-accent-strong hover:bg-accent-subtle hover:text-accent-strong dark:border-transparent dark:bg-accent-subtle dark:hover:bg-accent-subtle"
-
 /** 확인 필요(하이라이트 알약) / 확인됨(초록 체크). */
 export function CardStatusBadge({ verified }: { verified: boolean }) {
   return verified ? (
