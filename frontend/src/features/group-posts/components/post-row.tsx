@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { deadlineText } from "@/features/group-posts/deadline"
 import { formatMonthDay } from "@/shared/lib/date"
 import type { PostRow as Row } from "@/features/group-posts/list-rules"
-import type { Member } from "@/features/group-posts/types"
+import type { Viewer } from "@/domain/session/types"
 
 import { MeChip, MemberChip, NewBadge, StatusPill } from "./chips"
 
@@ -15,7 +15,7 @@ export const POST_GRID = "md:grid-cols-[104px_minmax(0,1.15fr)_minmax(0,1fr)_128
 interface PostRowProps {
   row: Row
   today: string
-  viewer: Member
+  viewer: Viewer
   detailPath: string
   onToggleInterest: (interested: boolean) => void
 }

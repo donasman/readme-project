@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SORT_LABELS, type ListFilters, type Sort, type Tab } from "@/features/group-posts/list-rules"
-import type { Member } from "@/features/group-posts/types"
+import type { Member } from "@/domain/group/types"
 
 interface ListToolbarProps {
   filters: ListFilters

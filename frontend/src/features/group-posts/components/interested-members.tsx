@@ -1,18 +1,15 @@
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
-import type { Disclosure, GroupPostDetail, Member } from "@/features/group-posts/types"
+import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
+import type { Disclosure } from "@/domain/group/types"
+import type { Viewer } from "@/domain/session/types"
+import type { GroupPostDetail } from "@/features/group-posts/types"
 import { cn } from "@/shared/lib/utils"
 
 import { AppliedBadge } from "./chips"
 
-export const DISCLOSURE_LABELS: Record<Disclosure, string> = {
-  interest: "관심만",
-  applied: "지원 여부까지",
-  progress: "단계·결과까지",
-}
-
 interface InterestedMembersProps {
   post: GroupPostDetail
-  viewer: Member
+  viewer: Viewer
   myDisclosure: Disclosure
 }
 

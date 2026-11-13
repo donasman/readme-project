@@ -1,6 +1,8 @@
 import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { ArrowLeftIcon } from "@/shared/icons"
+import { useGroup } from "@/domain/group/use-group"
+import { useViewer } from "@/domain/session/use-viewer"
 import { addComment, getGroupPost } from "@/features/group-posts/api"
 import { Comments } from "@/features/group-posts/components/comments"
 import { DeadlineCard } from "@/features/group-posts/components/deadline-card"
@@ -16,7 +18,9 @@ export function groupPostLoader({ params }: LoaderFunctionArgs) {
 /** 그룹 공고 상세(docs/design/group-post.dc.html). */
 export function GroupPostPage() {
   const data = useLoaderData<typeof groupPostLoader>()
-  const { today, viewer, group } = data
+  const { today } = data
+  const viewer = useViewer()
+  const { group } = useGroup()
   const revalidator = useRevalidator()
   const interest = useInterest(group.id)
   const post = interest.apply(data.post)

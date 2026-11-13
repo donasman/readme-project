@@ -4,11 +4,12 @@ import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCommentTime } from "@/shared/lib/date"
-import type { Comment, Member } from "@/features/group-posts/types"
+import type { Viewer } from "@/domain/session/types"
+import type { Comment } from "@/features/group-posts/types"
 
 interface CommentsProps {
   comments: Comment[]
-  viewer: Member
+  viewer: Viewer
   /** 그룹장이면 남의 댓글도 삭제할 수 있다(리서치 문서: 쓴 사람만 수정·삭제, 그룹장은 삭제만) */
   isLeader: boolean
   onAdd: (text: string) => Promise<void>

@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button"
 import { formatMonthDay } from "@/shared/lib/date"
 import { subjectParticle } from "@/shared/lib/korean"
-import type { GroupPostDetail, Member } from "@/features/group-posts/types"
+import type { Viewer } from "@/domain/session/types"
+import type { GroupPostDetail } from "@/features/group-posts/types"
 
 interface PostContentProps {
   post: GroupPostDetail
-  viewer: Member
+  viewer: Viewer
   /** 올린 사람이나 그룹장일 때만 "그룹에서 내리기"가 보인다 */
   canTakeDown: boolean
 }

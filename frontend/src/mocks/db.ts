@@ -2,15 +2,9 @@
 // 예시 데이터를 처음 한 번 만들어 메모리에 두고 읽고 고친다. 새로 고치면 처음 상태로 돌아간다.
 // 서버가 할 일(열린 공고 수 세기, 댓글 링크 나누기)도 여기서 흉내 낸다. 백엔드를 연결하면 이 폴더를 지운다.
 // 이 폴더는 shared와 타입(import type)만 불러온다.
-import type {
-  Comment,
-  CommentPart,
-  Group,
-  GroupPost,
-  GroupPostDetail,
-  Member,
-  MyState,
-} from "@/features/group-posts/types"
+import type { Group } from "@/domain/group/types"
+import type { Viewer } from "@/domain/session/types"
+import type { Comment, CommentPart, GroupPost, GroupPostDetail, MyState } from "@/features/group-posts/types"
 import { daysBetween } from "@/shared/lib/date"
 import { NotFoundError } from "@/shared/lib/errors"
 
@@ -38,7 +32,7 @@ function rawPost(groupId: string, postId: string): GroupPostDetail {
 export const today = (): string => EXAMPLE_TODAY
 
 /** 로그인한 사람. */
-export const viewer = (): Member => copy(VIEWER)
+export const viewer = (): Viewer => copy(VIEWER)
 
 /**
  * 그룹 전환 메뉴의 "공고 N": 마감되지 않은 공고 수. 서버가 세는 값을 흉내 낸다.

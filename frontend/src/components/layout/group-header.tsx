@@ -12,14 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Group, Member } from "@/features/group-posts/types"
+import type { Group } from "@/domain/group/types"
+import type { Viewer } from "@/domain/session/types"
 import { paths } from "@/shared/lib/paths"
 import { cn } from "@/shared/lib/utils"
 
 export type GroupSection = "posts" | "members"
 
 interface GroupHeaderProps {
-  viewer: Member
+  viewer: Viewer
   groups: Group[]
   group: Group
   section: GroupSection

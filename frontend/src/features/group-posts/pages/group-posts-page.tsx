@@ -4,6 +4,8 @@ import { useLoaderData, type LoaderFunctionArgs } from "react-router"
 import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useGroup } from "@/domain/group/use-group"
+import { useViewer } from "@/domain/session/use-viewer"
 import { getGroupPosts } from "@/features/group-posts/api"
 import { ListToolbar } from "@/features/group-posts/components/list-toolbar"
 import { POST_GRID, PostRow } from "@/features/group-posts/components/post-row"
@@ -18,7 +20,9 @@ export function groupPostsLoader({ params }: LoaderFunctionArgs) {
 
 /** 그룹 공고 목록(docs/design/group-posts.dc.html). */
 export function GroupPostsPage() {
-  const { today, viewer, group, posts } = useLoaderData<typeof groupPostsLoader>()
+  const { today, posts } = useLoaderData<typeof groupPostsLoader>()
+  const viewer = useViewer()
+  const { group } = useGroup()
   const [filters, setFilters] = useListFilters()
   const interest = useInterest(group.id)
 
