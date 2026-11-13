@@ -1,0 +1,127 @@
+/*
+ * 리드미 틀 — 시안 아트보드가 함께 쓰는 변수와 기본 규칙.
+ * 값은 frontend/src/components/arc/foundation.css (2026-11-12) 에서 그대로 옮겼다.
+ *
+ * 시안용 자리는 여기 없다. 각 아트보드의 <helmet><style> 이 정한다:
+ *   --accent, --accent-foreground, --highlight, --highlight-strong, --highlight-foreground, 다크 --control-on
+ * 강조색에서 만들어지는 값(accent-strong, accent-subtle, highlight-subtle, 색 그림자 등)은 여기서 var() 로 읽으니
+ * 자리 값만 바꾸면 따라온다.
+ *
+ * 라이트는 :root 와 [data-theme="light"], 다크는 [data-theme="dark"] 를 붙인 요소 아래에 적용된다.
+ */
+
+@font-face { font-family: "Pretendard"; src: url("ds/readme/fonts/Pretendard-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("ds/readme/fonts/Pretendard-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("ds/readme/fonts/Pretendard-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Pretendard"; src: url("ds/readme/fonts/Pretendard-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+
+/* 모드와 무관한 값: 간격, 모서리, 컨트롤 높이, 글자 */
+:root {
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+  --space-12: 3rem; --space-16: 4rem; --space-20: 5rem; --space-24: 6rem;
+  --radius-control: 1.125rem; --radius-panel: 1.625rem; --radius-surface: 2.125rem; --radius-pill: 9999px;
+  --control-height-sm: 2.25rem; --control-height-md: 2.75rem; --control-height-lg: 3.125rem;
+  --font-display: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-body: var(--font-display);
+  --label-sm: .8125rem; --label-md: .875rem; --label-lg: 1rem; --label-weight: 700;
+  --text-xs: .75rem; --text-sm: .875rem; --text-base: 1rem; --text-lg: 1.125rem;
+  --text-xl: 1.375rem; --text-2xl: 1.75rem; --text-3xl: 2.25rem;
+  --text-4xl: 3.25rem; --text-5xl: 4.5rem;
+  --tracking-display: -.03em; --tracking-body: -.01em;
+  --leading-display: 1.1; --leading-body: 1.4;
+}
+
+/* 라이트 */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --background: oklch(100% 0 0);
+  --surface: oklch(100% 0 0);
+  --surface-raised: oklch(100% 0 0);
+  --surface-muted: oklch(97.5% .005 258);
+  --surface-sunken: oklch(93.8% .008 254);
+  --foreground: oklch(27.1% .005 248);
+  --text-secondary: oklch(56.1% .023 251);
+  --text-muted: oklch(56.1% .023 251);
+  --border: oklch(91.9% .01 248);
+  --border-subtle: oklch(95.5% .007 248);
+  --border-strong: oklch(80% .014 250);
+  --accent-strong: var(--accent);
+  --accent-pressed: var(--accent-strong);
+  --accent-subtle: color-mix(in oklch, var(--accent) 12%, transparent);
+  --accent-foreground-muted: color-mix(in oklch, var(--accent-foreground) 50%, transparent);
+  --highlight-subtle: color-mix(in oklch, var(--highlight) 22%, transparent);
+  --control-on: var(--accent);
+  --control-glyph: var(--accent-foreground);
+  --control-track: oklch(89.5% .006 248);
+  --control-track-hover: oklch(86% .007 248);
+  --success: #37b66c;
+  --warning: oklch(58% .18 75);
+  --danger: #e35462;
+  --glow: var(--highlight);
+  --series-1: var(--accent);
+  --shadow-resting: 0 1px 2px oklch(0% 0 0 / .035);
+  --shadow-raised: 0 6px 18px oklch(0% 0 0 / .065), 0 1px 3px oklch(0% 0 0 / .035);
+  --shadow-floating: 0 20px 48px oklch(0% 0 0 / .105), 0 3px 10px oklch(0% 0 0 / .045);
+  --shadow-accent-resting: 0 4px 12px color-mix(in oklab, var(--accent) 30%, transparent);
+  --shadow-accent-raised: 0 8px 20px color-mix(in oklab, var(--accent) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-highlight-resting: 0 4px 12px color-mix(in oklab, var(--highlight) 30%, transparent);
+  --shadow-highlight-raised: 0 8px 20px color-mix(in oklab, var(--highlight) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--highlight) 20%, transparent);
+  /* shadcn 부품이 라이트와 다크에서 달리 그리는 값 (button outline, input) */
+  --outline-border: var(--border);
+  --outline-fill: var(--background);
+  --input-fill: transparent;
+}
+
+/* 다크 */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: oklch(18.1% .005 248);
+  --surface: oklch(18.1% .005 248);
+  --surface-raised: oklch(25% .009 250);
+  --surface-muted: oklch(21.6% .007 248);
+  --surface-sunken: oklch(15.8% .005 248);
+  --foreground: oklch(96.9% 0 0);
+  --text-secondary: oklch(71.7% .021 250);
+  --text-muted: oklch(71.7% .021 250);
+  --border: oklch(30.3% .013 253);
+  --border-subtle: oklch(25.5% .01 250);
+  --float-edge: var(--border-subtle);
+  --border-strong: oklch(42% .015 252);
+  --accent-strong: var(--accent);
+  --accent-pressed: var(--accent-strong);
+  --accent-subtle: color-mix(in oklch, var(--accent) 18%, transparent);
+  --accent-foreground-muted: color-mix(in oklch, var(--accent-foreground) 50%, transparent);
+  --highlight-subtle: color-mix(in oklch, var(--highlight) 20%, transparent);
+  --control-glyph: oklch(100% 0 0);
+  --control-track: oklch(33% .008 250);
+  --control-track-hover: oklch(37% .009 250);
+  --success: #59d989;
+  --warning: oklch(83% .17 80);
+  --danger: oklch(76% .2 25);
+  --glow: var(--highlight);
+  --series-1: var(--accent);
+  --shadow-resting: 0 1px 2px oklch(0% 0 0 / .18);
+  --shadow-raised: 0 8px 22px oklch(0% 0 0 / .22);
+  --shadow-floating: 0 22px 55px oklch(0% 0 0 / .34);
+  --shadow-accent-resting: 0 4px 12px color-mix(in oklab, var(--accent) 30%, transparent);
+  --shadow-accent-raised: 0 8px 20px color-mix(in oklab, var(--accent) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-highlight-resting: 0 4px 12px color-mix(in oklab, var(--highlight) 30%, transparent);
+  --shadow-highlight-raised: 0 8px 20px color-mix(in oklab, var(--highlight) 36%, transparent), 0 2px 6px color-mix(in oklab, var(--highlight) 20%, transparent);
+  --outline-border: var(--border-strong);
+  --outline-fill: color-mix(in oklab, var(--border-strong) 30%, transparent);
+  --input-fill: color-mix(in oklab, var(--border-strong) 30%, transparent);
+}
+
+/* 입력창: 자리 글자는 text-secondary, 포커스는 외곽선 없이 테두리만 accent */
+input::placeholder { color: var(--text-secondary); opacity: 1; }
+input:focus { border-color: var(--accent) !important; }
+
+/* 포커스 (foundation.css 끝의 규칙 그대로): 마우스로 누를 때는 그리지 않고, 키보드 포커스에만 2px 외곽선 */
+:focus:not(:focus-visible),
+:is(input:not([type="button"], [type="checkbox"], [type="color"], [type="file"], [type="image"], [type="radio"], [type="range"], [type="reset"], [type="submit"]), textarea, [contenteditable]:not([contenteditable="false"]), [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [tabindex="-1"]):focus { outline: none !important; }
+:focus-visible:not(input:not([type="button"], [type="checkbox"], [type="color"], [type="file"], [type="image"], [type="radio"], [type="range"], [type="reset"], [type="submit"]), textarea, [contenteditable]:not([contenteditable="false"]), [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [tabindex="-1"]) {
+  outline: var(--focus-outline-width, 2px) solid var(--focus-outline, color-mix(in oklab, var(--accent-strong) 72%, transparent)) !important;
+  outline-offset: var(--focus-outline-offset, 2px) !important;
+}

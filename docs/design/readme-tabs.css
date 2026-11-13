@@ -1,0 +1,88 @@
+/*
+ * 2차 그룹 탭 시안이 함께 쓰는 것: 색 두 벌(A, C)과 좁은 화면 규칙.
+ * 틀 값은 readme-frame.css 에 있고, 여기는 시안용 자리만 정한다.
+ * 화면 뿌리 요소에 class="rm-root pal-a" 또는 "rm-root pal-c", data-theme="light" | "dark" 를 붙인다.
+ */
+
+/* 색 A · 잉크와 형광펜 (class 가 아직 안 붙었을 때의 기본값이기도 하다) */
+:root,
+.pal-a { --accent: #1e305e; --accent-foreground: #ffffff; --highlight: #f7ee53; --highlight-strong: #dccf3a; --highlight-foreground: #252729; }
+[data-theme="dark"],
+.pal-a[data-theme="dark"] { --accent: #c8d8fa; --accent-foreground: #0e1526; --control-on: #5b73aa; --highlight: #eae142; --highlight-strong: #f3ee82; --highlight-foreground: #252729; }
+
+/* 색 C · 바이올렛과 민트 */
+.pal-c { --accent: #6938ca; --accent-foreground: #ffffff; --highlight: #8af3d0; --highlight-strong: #54d5ab; --highlight-foreground: #252729; }
+.pal-c[data-theme="dark"] { --accent: #baa3fe; --accent-foreground: #120e22; --control-on: #7e57e1; --highlight: #76ebc5; --highlight-strong: #9ef2d7; --highlight-foreground: #252729; }
+
+/* 3차 색 조합. D, E 는 A 와 C 의 강조색과 하이라이트를 서로 바꾼 것, F~I 는 새 조합 */
+
+/* 색 D · 잉크와 민트 (A 강조색 + C 하이라이트) */
+.pal-d { --accent: #1e305e; --accent-foreground: #ffffff; --highlight: #8af3d0; --highlight-strong: #54d5ab; --highlight-foreground: #252729; }
+.pal-d[data-theme="dark"] { --accent: #c8d8fa; --accent-foreground: #0e1526; --control-on: #5b73aa; --highlight: #76ebc5; --highlight-strong: #9ef2d7; --highlight-foreground: #252729; }
+
+/* 색 E · 바이올렛과 형광펜 (C 강조색 + A 하이라이트) */
+.pal-e { --accent: #6938ca; --accent-foreground: #ffffff; --highlight: #f7ee53; --highlight-strong: #dccf3a; --highlight-foreground: #252729; }
+.pal-e[data-theme="dark"] { --accent: #baa3fe; --accent-foreground: #120e22; --control-on: #7e57e1; --highlight: #eae142; --highlight-strong: #f3ee82; --highlight-foreground: #252729; }
+
+/* 색 F · 먹과 라임 */
+.pal-f { --accent: #171b22; --accent-foreground: #ffffff; --highlight: #c6fb50; --highlight-strong: #a4de2f; --highlight-foreground: #252729; }
+.pal-f[data-theme="dark"] { --accent: #e8ebf2; --accent-foreground: #13161c; --control-on: #696f7b; --highlight: #bdf043; --highlight-strong: #d1f985; --highlight-foreground: #252729; }
+
+/* 색 G · 포레스트와 핑크 */
+.pal-g { --accent: #034d2a; --accent-foreground: #ffffff; --highlight: #ffb9d4; --highlight-strong: #f093b8; --highlight-foreground: #252729; }
+.pal-g[data-theme="dark"] { --accent: #87e2a8; --accent-foreground: #03190c; --control-on: #1e7546; --highlight: #ffafce; --highlight-strong: #ffc8dd; --highlight-foreground: #252729; }
+
+/* 색 H · 플럼과 피치 */
+.pal-h { --accent: #661752; --accent-foreground: #ffffff; --highlight: #ffc798; --highlight-strong: #ef9f67; --highlight-foreground: #252729; }
+.pal-h[data-theme="dark"] { --accent: #eda8d5; --accent-foreground: #22091b; --control-on: #a5458a; --highlight: #ffbe8a; --highlight-strong: #ffd0a5; --highlight-foreground: #252729; }
+
+/* 색 I · 페트롤과 코랄 */
+.pal-i { --accent: #134862; --accent-foreground: #ffffff; --highlight: #ffa392; --highlight-strong: #f47c6e; --highlight-foreground: #252729; }
+.pal-i[data-theme="dark"] { --accent: #8acbeb; --accent-foreground: #05161f; --control-on: #2d7498; --highlight: #ffa08f; --highlight-strong: #ffbcac; --highlight-foreground: #252729; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-strong); }
+
+/* 화면 폭이 아니라 뿌리 요소 폭을 본다. 같은 화면을 390px 틀에 넣으면 좁은 화면 규칙이 적용된다. */
+.rm-root { container-type: inline-size; }
+
+/* 가로로 넘치는 탭 줄: 스크롤은 되고 스크롤바는 숨긴다 */
+.rm-scroll { scrollbar-width: none; }
+.rm-scroll::-webkit-scrollbar { display: none; }
+
+/* 헤더: 768px 미만에서는 메뉴 링크를 숨기고 메뉴 버튼을 보인다 (app-header.module.css 와 같은 기준) */
+.rm-menu { display: none !important; }
+/* rm-wide 는 넓을 때만, rm-narrow 는 좁을 때만 보인다 */
+.rm-narrow { display: none !important; }
+@container (max-width: 767px) {
+  .rm-nav { display: none !important; }
+  .rm-menu { display: inline-flex !important; }
+  .rm-bar { gap: 8px !important; padding-inline: 16px !important; }
+  .rm-wide { display: none !important; }
+  .rm-narrow { display: block !important; }
+  /* 탭 3: 왼쪽 그룹 목록이 위로 올라가 가로 줄이 된다 */
+  .rm-rail { flex-basis: 100% !important; max-width: none !important; }
+  .rm-rail-list { flex-direction: row !important; overflow-x: auto; }
+  .rm-rail-item { flex: 0 0 auto !important; }
+}
+
+/* 4차 그룹 공고 */
+
+/* 눈에는 안 보이고 화면 낭독기에만 읽히는 글자 (입력창 이름 등) */
+.rm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* 공고 목록: 넓을 때는 한 줄(칸 6개), 768px 미만에서는 카드.
+   카드 순서는 회사명과 D-day, 공고명, 관심 멤버와 댓글 수, 내 상태. 올린 사람은 상세에서 보여 준다. */
+.rm-c-post { grid-area: post; }
+.rm-c-due { grid-area: due; }
+.rm-c-fans { grid-area: fans; }
+.rm-c-me { grid-area: me; }
+.rm-c-cmt { grid-area: cmt; }
+.rm-c-by { grid-area: by; }
+@container (max-width: 767px) {
+  .rm-head { display: none !important; }
+  .rm-row { grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: "post due" "fans cmt" "me me" !important; gap: 10px 12px !important; }
+  .rm-c-due { align-items: flex-end; text-align: right; }
+  .rm-c-cmt { justify-self: end; }
+  .rm-c-by { display: none !important; }
+}

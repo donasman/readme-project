@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그룹 공고 상세</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="readme-frame.css">
+<link rel="stylesheet" href="readme-tabs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="rm-root pal-a" data-theme="{{theme}}" style="min-height: 100vh; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: 16px; line-height: 1.4; letter-spacing: -0.01em; word-break: keep-all; text-wrap: pretty">
+
+<header style="position: relative; z-index: 20">
+<div class="rm-bar" style="display: flex; min-height: 72px; box-sizing: border-box; align-items: center; gap: 12px; margin: 12px 16px 0; padding: 8px 16px 8px 24px; border: 1px solid var(--float-edge, var(--surface)); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-floating)">
+<a href="#" aria-label="리드미 홈" style="display: inline-flex; flex: none; align-items: center; min-height: var(--control-height-md); color: var(--foreground); font-size: 16px; font-weight: 700; line-height: 1.4; text-decoration: none">리드미</a>
+<button type="button" aria-haspopup="true" aria-expanded="false" style="display: inline-flex; flex: none; align-items: center; gap: 8px; height: var(--control-height-md); padding: 0 12px 0 6px; border: 0; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--foreground); font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: inherit; cursor: pointer">
+<span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-foreground); font-size: 13px; font-weight: 700">백</span>
+<span style="overflow: hidden; max-width: 160px; text-overflow: ellipsis; white-space: nowrap">백엔드 스터디</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<nav class="rm-nav" aria-label="그룹 메뉴" style="min-width: 0; margin-left: 8px">
+<ul style="display: flex; margin: 0; padding: 0; align-items: center; gap: 4px; list-style: none">
+<li><a href="{{listHref}}" aria-current="page" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none">공고</a></li>
+<li><a href="#" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); color: var(--text-secondary); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none">멤버</a></li>
+</ul>
+</nav>
+<div style="display: flex; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: 8px">
+<button type="button" aria-label="내 계정" style="display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); padding: 0; border: 0; border-radius: 50%; background: var(--surface-sunken); color: var(--foreground); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer">다</button>
+<button class="rm-menu" type="button" aria-label="메뉴" style="flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); padding: 0; border: 1px solid var(--outline-border); border-radius: var(--radius-pill); background: var(--outline-fill); color: var(--foreground); cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg>
+</button>
+</div>
+</div>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; box-sizing: border-box; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 16px">
+
+<a href="{{listHref}}" style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; min-height: var(--control-height-md); color: var(--text-secondary); font-size: 14px; font-weight: 700; text-decoration: none">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+<span>공고 목록</span>
+</a>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px">
+
+<div style="display: flex; flex: 999 1 560px; min-width: 0; flex-direction: column; gap: 24px">
+
+<article style="display: flex; flex-wrap: wrap; overflow: hidden; border-radius: var(--radius-surface); background: var(--highlight); color: var(--highlight-foreground); box-shadow: var(--shadow-highlight-resting)">
+<div style="display: flex; flex: 1 1 220px; min-width: 0; box-sizing: border-box; padding: 16px">
+<div style="display: flex; flex: 1 1 auto; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 184px; box-sizing: border-box; padding: 24px; border-radius: var(--radius-panel); background: var(--accent); color: var(--accent-foreground)">
+<span style="font-size: 13px; font-weight: 700">서류 접수 마감</span>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: var(--font-display); font-size: 72px; font-weight: 700; line-height: 1; letter-spacing: -0.03em">D-3</span>
+<span style="font-size: 14px">11.16 (월)</span>
+</div>
+</div>
+</div>
+<div style="display: flex; flex: 2 1 320px; min-width: 0; box-sizing: border-box; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; padding: 16px 24px 24px">
+<p style="margin: 0; font-size: 16px; font-weight: 700">예시 커머스</p>
+<h1 style="margin: 0; font-family: var(--font-display); font-size: clamp(1.75rem, 8cqw, 2.25rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">백엔드 개발자 신입</h1>
+<p style="margin: 0; font-size: 14px">지원처 · 회사 채용 홈페이지</p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px">
+<sc-if value="{{meOff}}">
+<button type="button" aria-pressed="false" onClick="{{toggle}}" style="display: inline-flex; flex: none; align-items: center; justify-content: center; height: var(--control-height-md); padding: 0 20px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-foreground); font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">관심 켜기</button>
+</sc-if>
+<sc-if value="{{meOn}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-pressed="true" onClick="{{toggle}}" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); padding: 0 20px 0 16px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--surface); color: var(--foreground); font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: inherit; box-shadow: var(--shadow-resting); white-space: nowrap; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+<span>관심 중</span>
+</button>
+</sc-if>
+<a href="#" style="display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: var(--control-height-md); padding: 0 16px; border-radius: var(--radius-pill); color: var(--highlight-foreground); font-size: 14px; font-weight: 700; white-space: nowrap; text-decoration: underline; text-underline-offset: 4px">
+<span>원문 보기</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+</a>
+</div>
+<p style="margin: 4px 0 0; font-size: 13px">관심을 켜면 이 그룹 멤버에게 내 이름이 보이고, 이 공고가 내 공고 목록에 들어갑니다.</p>
+</div>
+</article>
+
+<section aria-label="공고 내용" style="display: flex; flex-direction: column; gap: 20px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-surface); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<h2 style="margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">공고 내용</h2>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">가람이 11.05에 올림</p>
+</div>
+<sc-if value="{{asLeader}}">
+<button type="button" style="display: inline-flex; flex: none; align-items: center; height: var(--control-height-sm); padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius-pill); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--foreground); font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">그룹에서 내리기</button>
+</sc-if>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 20px 32px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 700">주요 업무</h3>
+<ul style="display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 0 0 18px; font-size: 14px">
+<li>주문·결제 서버 API 개발과 운영</li>
+<li>배치 작업과 내부 관리 도구 개발</li>
+</ul>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 700">필수 요건</h3>
+<ul style="display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 0 0 18px; font-size: 14px">
+<li>Java 또는 Kotlin으로 서버를 개발해 본 경험</li>
+<li>관계형 DB를 써 본 경험</li>
+</ul>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 700">우대 사항</h3>
+<ul style="display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 0 0 18px; font-size: 14px">
+<li>캐시나 메시지 큐를 써 본 경험</li>
+<li>테스트 코드를 작성해 온 경험</li>
+</ul>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 700">키워드</h3>
+<ul style="display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none">
+<li style="padding: 4px 10px; border-radius: var(--radius-pill); background: var(--surface-muted); font-size: 12px; font-weight: 500">Java</li>
+<li style="padding: 4px 10px; border-radius: var(--radius-pill); background: var(--surface-muted); font-size: 12px; font-weight: 500">Kotlin</li>
+<li style="padding: 4px 10px; border-radius: var(--radius-pill); background: var(--surface-muted); font-size: 12px; font-weight: 500">Spring Boot</li>
+<li style="padding: 4px 10px; border-radius: var(--radius-pill); background: var(--surface-muted); font-size: 12px; font-weight: 500">JPA</li>
+<li style="padding: 4px 10px; border-radius: var(--radius-pill); background: var(--surface-muted); font-size: 12px; font-weight: 500">Redis</li>
+</ul>
+</div>
+</div>
+</section>
+
+</div>
+
+<div style="display: flex; flex: 1 1 340px; min-width: 0; flex-direction: column; gap: 24px">
+
+<section aria-label="관심 멤버" style="display: flex; flex-direction: column; padding: 24px 24px 20px; border: 1px solid var(--border); border-radius: var(--radius-surface); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px">
+<h2 style="margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">관심 멤버</h2>
+<span style="font-size: 12px; color: var(--text-secondary)">{{fanCount}}명</span>
+</div>
+<ul style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none">
+<sc-if value="{{meOn}}" hint-placeholder-val="{{ true }}">
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-subtle)">
+<span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--highlight); color: var(--highlight-foreground); font-size: 14px; font-weight: 700">다</span>
+<span style="flex: 1 1 0; min-width: 0; font-size: 16px; font-weight: 600">다온 (나)</span>
+<span style="flex: none; font-size: 13px; color: var(--text-secondary)">관심</span>
+</li>
+</sc-if>
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-subtle)">
+<span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface-sunken); font-size: 14px; font-weight: 700">가</span>
+<span style="flex: 1 1 0; min-width: 0; font-size: 16px; font-weight: 600">가람</span>
+<span style="display: inline-flex; flex: none; align-items: center; gap: 2px; height: 24px; padding: 0 10px 0 6px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 12px; font-weight: 600">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+<span>지원함</span>
+</span>
+</li>
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-subtle)">
+<span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface-sunken); font-size: 14px; font-weight: 700">나</span>
+<span style="flex: 1 1 0; min-width: 0; font-size: 16px; font-weight: 600">나래</span>
+<span style="display: inline-flex; flex: none; align-items: center; gap: 2px; height: 24px; padding: 0 10px 0 6px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 12px; font-weight: 600">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+<span>지원함 · 면접 단계</span>
+</span>
+</li>
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-subtle)">
+<span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface-sunken); font-size: 14px; font-weight: 700">라</span>
+<span style="flex: 1 1 0; min-width: 0; font-size: 16px; font-weight: 600">라온</span>
+<span style="flex: none; font-size: 13px; color: var(--text-secondary)">관심</span>
+</li>
+</ul>
+<p style="margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--border-subtle); font-size: 13px; color: var(--text-secondary)">지원 상태는 멤버마다 이 그룹에 정한 공개 범위만큼 보입니다. 내 공개 범위는 지원 여부까지입니다. <a href="#" style="font-weight: 700; white-space: nowrap">공개 범위 바꾸기</a></p>
+</section>
+
+<section id="comments" aria-label="댓글" style="display: flex; flex-direction: column; padding: 24px 24px 20px; border: 1px solid var(--border); border-radius: var(--radius-surface); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px">
+<h2 style="margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">댓글</h2>
+<span style="font-size: 12px; color: var(--text-secondary)">{{commentCount}}개 · 이 그룹에만 보임</span>
+</div>
+<ul style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none">
+<li style="display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 14px; font-weight: 700">가람 <span style="font-weight: 400; color: var(--text-secondary)">· 11.05</span></span>
+<sc-if value="{{asLeader}}">
+<button type="button" style="min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">삭제</button>
+</sc-if>
+</div>
+<p style="margin: 0; font-size: 14px">코딩 테스트 일정이 공고 아래쪽에 따로 적혀 있어요. 접수 마감 바로 다음 주입니다.</p>
+</li>
+<li style="display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 14px; font-weight: 700">나래 <span style="font-weight: 400; color: var(--text-secondary)">· 11.09</span></span>
+<sc-if value="{{asLeader}}">
+<button type="button" style="min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">삭제</button>
+</sc-if>
+</div>
+<p style="margin: 0; font-size: 14px">작년 지원 후기를 찾았어요. <a href="#" style="font-weight: 700">후기 글 보기</a></p>
+</li>
+<li style="display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 14px; font-weight: 700">나 <span style="font-weight: 400; color: var(--text-secondary)">· 11.12</span></span>
+<span style="display: inline-flex; align-items: center; gap: 2px">
+<button type="button" style="min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">수정</button>
+<button type="button" style="min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">삭제</button>
+</span>
+</div>
+<p style="margin: 0; font-size: 14px">포트폴리오 링크 칸이 필수라서 미리 정리해 두면 좋겠어요.</p>
+</li>
+<sc-for list="{{added}}" as="c" hint-placeholder-count="0">
+<li style="display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 14px; font-weight: 700">나 <span style="font-weight: 400; color: var(--text-secondary)">· 방금</span></span>
+<span style="display: inline-flex; align-items: center; gap: 2px">
+<button type="button" style="min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">수정</button>
+<button type="button" style="min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">삭제</button>
+</span>
+</div>
+<p style="margin: 0; font-size: 14px; white-space: pre-wrap">{{c.text}}</p>
+</li>
+</sc-for>
+</ul>
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-subtle)">
+<label for="comment-text" style="font-size: 14px; font-weight: 500">댓글 쓰기</label>
+<textarea id="comment-text" ref="{{draftRef}}" rows="3" placeholder="글자와 링크만 넣을 수 있습니다" style="width: 100%; min-width: 0; box-sizing: border-box; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; line-height: 1.4; letter-spacing: inherit; resize: vertical"></textarea>
+<button type="button" onClick="{{addComment}}" style="display: inline-flex; align-self: flex-end; align-items: center; justify-content: center; height: var(--control-height-md); padding: 0 20px; border: 1px solid var(--outline-border); border-radius: var(--radius-pill); background: var(--outline-fill); color: var(--foreground); font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">댓글 달기</button>
+</div>
+</section>
+
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"asLeader":{"editor":"boolean","default":false},"listHref":{"editor":null,"default":"GroupPosts.dc.html"},"$preview":{"width":1280,"height":1240}}'>
+class Component extends DCLogic {
+renderVals() {
+var props = this.props || {};
+var st = this.state || {};
+var self = this;
+if (!this.draftRef) this.draftRef = React.createRef();
+var on = st.on === undefined ? true : !!st.on;
+var added = st.added || [];
+return {
+theme: props.dark ? 'dark' : 'light',
+listHref: props.listHref || 'GroupPosts.dc.html',
+asLeader: !!props.asLeader,
+meOn: on,
+meOff: !on,
+toggle: function () { self.setState({ on: !on }); },
+fanCount: on ? 4 : 3,
+added: added,
+commentCount: 3 + added.length,
+draftRef: this.draftRef,
+addComment: function () {
+var el = self.draftRef.current;
+var text = el ? String(el.value || '').trim() : '';
+if (!text) return;
+el.value = '';
+self.setState({ added: added.concat([{ text: text }]) });
+}
+};
+}
+}
+</script>
+</body>
+</html>
