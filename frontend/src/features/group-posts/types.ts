@@ -83,3 +83,56 @@ export interface GroupPostData {
   today: string
   post: GroupPostDetail
 }
+
+// ---- 공고 올리기(시안 7차 "공고 올리기", "칸 확인"). 읽어 오기 API는 아직 설계에 없다(화면 API 대응 3.2의 7~9번) ----
+
+/** 공고를 넣는 방법: 링크, 붙여넣은 본문(원문 링크는 비워도 된다), 파일. */
+export type PostReadInput =
+  | { kind: "url"; url: string }
+  | { kind: "text"; text: string; sourceUrl: string }
+  | { kind: "file"; file: File }
+
+/** 칸 확인 화면의 칸 가운데 근거와 "읽지 못함"을 따로 보이는 칸. */
+export type DraftField = "company" | "title" | "deadline" | "sourceUrl" | "applyAt"
+
+/** 공고 내용 한 묶음과 그 근거(원문의 어느 머리 아래에서 읽었는지). */
+export interface DraftSection extends PostSection {
+  from: string | null
+}
+
+/** 읽어 온 공고. 칸 확인 화면이 고친 뒤 올린다. */
+export interface PostDraft {
+  company: string
+  title: string
+  deadline: Deadline
+  sourceUrl: string
+  applyAt: string
+  sections: DraftSection[]
+  keywords: string[]
+  /** 칸마다 읽어 온 근거 */
+  evidence: Partial<Record<DraftField, string>>
+  /** 읽지 못한 칸(노란 칸) */
+  unread: DraftField[]
+  /** 오른쪽에 보이는 원문: 제목, 문단(머리는 굵게), 읽은 쪽의 덧붙임 */
+  source: { title: string; paragraphs: { heading: string | null; text: string }[]; note: string | null }
+}
+
+/** 읽어 오기 결과: 읽음 / 이 그룹에 이미 있는 공고 / 읽지 못함. */
+export type ReadPostResult =
+  | { status: "ok"; draft: PostDraft }
+  | { status: "duplicate"; post: Pick<GroupPost, "id" | "company" | "title" | "postedBy" | "postedAt"> }
+  | { status: "failed" }
+
+/** 그룹에 올리는 값(POST /api/groups/{groupId}/posts. 키워드와 묶음은 화면 API 대응 3.2의 8번). */
+export interface PostUpload {
+  company: string
+  title: string
+  deadline: Deadline
+  sourceUrl: string | null
+  applyAt: string | null
+  sections: PostSection[]
+  keywords: string[]
+}
+
+/** 올리기 결과. 같은 공고가 이 그룹에 있으면 서버가 409 ALREADY_IN_GROUP과 그 공고를 알려 준다. */
+export type UploadPostResult = { ok: true; postId: string } | { ok: false; error: "ALREADY_IN_GROUP"; postId: string }

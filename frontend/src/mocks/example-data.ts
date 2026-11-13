@@ -2,7 +2,7 @@
 // 이름, 회사, 공고, 댓글은 모두 지어낸 예시다. 보는 사람은 "다온"이고 디자인처럼 오늘은 2026-11-13이다.
 // 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
 import type { Disclosure, GroupMember, Member } from "@/domain/group/types"
-import type { Comment, Deadline, GroupPostDetail } from "@/features/group-posts/types"
+import type { Comment, Deadline, GroupPostDetail, PostDraft } from "@/features/group-posts/types"
 
 export const EXAMPLE_TODAY = "2026-11-13"
 
@@ -158,4 +158,38 @@ export function createExampleGroups(): ExampleGroup[] {
       ...DETAILS[p.id],
     })),
   }))
+}
+
+/** 링크로 읽어 온 공고의 예시(시안 7차 "칸 확인"의 값). 마감은 "채용 시 마감"이라 읽지 못한 것으로 둔다. */
+export function createExampleDraft(sourceUrl: string): PostDraft {
+  return {
+    company: "예시 에듀테크",
+    title: "백엔드 엔지니어",
+    deadline: { kind: "unknown" },
+    sourceUrl,
+    applyAt: "회사 채용 페이지",
+    sections: [
+      { title: "주요 업무", items: ["학습 기록 API 개발과 운영", "배치 작업 개선"], from: "주요 업무" },
+      { title: "필수 요건", items: ["Java, Spring Boot 사용 경험", "RDBMS 설계 경험"], from: "자격 요건" },
+      { title: "우대 사항", items: ["JPA, MySQL 성능 개선 경험", "교육 서비스에 대한 관심"], from: "우대 사항" },
+    ],
+    keywords: ["Java", "Spring Boot", "JPA", "MySQL"],
+    evidence: { company: `페이지 제목 "[예시 에듀테크] 백엔드 엔지니어 채용"`, title: "페이지 제목" },
+    unread: ["deadline"],
+    source: {
+      title: "[예시 에듀테크] 백엔드 엔지니어 채용",
+      paragraphs: [
+        { heading: "주요 업무", text: "학습 기록 API 개발과 운영, 배치 작업 개선" },
+        { heading: "자격 요건", text: "Java, Spring Boot 사용 경험. RDBMS 설계 경험" },
+        { heading: "우대 사항", text: "JPA, MySQL 성능 개선 경험. 교육 서비스에 대한 관심" },
+        { heading: null, text: "접수: 채용 시 마감" },
+      ],
+      note: `"채용 시 마감"은 날짜가 아니라서 마감일을 비워 두었습니다.`,
+    },
+  }
+}
+
+/** 공고의 원문 주소. 같은 주소를 다시 읽으면 "이미 이 그룹에 있는 공고"가 된다(시안 7차 "이미 있는 공고"). */
+export const EXAMPLE_POST_URLS: Record<string, string> = {
+  "https://careers.example.com/jobs/1001": "be1",
 }

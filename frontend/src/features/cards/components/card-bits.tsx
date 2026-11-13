@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
-import { Link } from "react-router"
 
-import { ArrowLeftIcon, CircleAlertIcon, CircleCheckIcon } from "@/shared/icons"
+import { BackLink } from "@/shared/components/back-link"
+import { CircleAlertIcon, CircleCheckIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { splitFlagged } from "../card-text"
@@ -12,17 +12,11 @@ import { splitFlagged } from "../card-text"
 export function CardsSubpage({ children }: { children: ReactNode }) {
   return (
     <main className="mx-auto flex max-w-[1120px] flex-col gap-6 px-6 pt-6 pb-16">
-      <Link to={paths.cards()} className="inline-flex min-h-control-md items-center gap-1.5 self-start text-sm font-bold text-text-secondary">
-        <ArrowLeftIcon aria-hidden="true" className="size-4" />
-        <span>경험카드</span>
-      </Link>
+      <BackLink to={paths.cards()}>경험카드</BackLink>
       {children}
     </main>
   )
 }
-
-/** 카드 아래 화면들의 제목(32px). */
-export const cardsTitle = "m-0 font-heading text-[32px] leading-[1.15] font-bold tracking-display"
 
 /** 칸 이름(13px 굵은 회색): "상황", "태그", "근거 숫자" … */
 export const subLabel = "text-label-sm font-bold text-text-secondary"
