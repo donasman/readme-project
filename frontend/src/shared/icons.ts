@@ -2,10 +2,14 @@
 // 아이콘 묶음을 통째로 바꿀 때 이 파일만 고친다. (shadcn add 로 받은 부품도 이 파일을 쓰게 고친다.)
 export {
   ArrowLeftIcon,
+  ArrowRightIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  CircleAlertIcon,
+  CircleCheckIcon,
   ExternalLinkIcon,
+  FileUpIcon,
   MenuIcon,
   MessageSquareIcon,
   PlusIcon,

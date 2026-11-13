@@ -4,10 +4,12 @@
 // 이 폴더는 shared와 타입(import type)만 불러온다.
 import type { Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
+import type { CardTag, ExperienceCard } from "@/features/cards/types"
 import type { Comment, CommentPart, GroupPost, GroupPostDetail, MyState } from "@/features/group-posts/types"
 import { daysBetween } from "@/shared/lib/date"
 import { NotFoundError } from "@/shared/lib/errors"
 
+import { createExampleCards } from "./example-cards"
 import { createExampleGroups, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
 
 let store: ExampleGroup[] | null = null
@@ -100,4 +102,19 @@ export function addComment(groupId: string, postId: string, text: string): Comme
   post.comments.push(comment)
   post.commentCount += 1
   return copy(comment)
+}
+
+// ---- 경험카드(보는 사람의 카드) ----
+
+let cardStore: ExperienceCard[] | null = null
+const cardData = () => (cardStore ??= createExampleCards())
+
+/** 내 경험카드 목록. 순서는 저장된 순서 그대로다. */
+export const listCards = (): ExperienceCard[] => copy(cardData())
+
+/** 내 카드에 쓰인 태그와 카드 수(GET /api/cards/tags). 처음 나온 순서로 돌려준다. */
+export function listCardTags(): CardTag[] {
+  const counts = new Map<string, number>()
+  for (const card of cardData()) for (const tag of card.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+  return [...counts].map(([name, count]) => ({ name, count }))
 }

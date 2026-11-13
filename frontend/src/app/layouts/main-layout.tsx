@@ -1,0 +1,13 @@
+import { Outlet } from "react-router"
+
+import { MainHeader } from "./main-header"
+
+/** 그룹 밖 화면들(경험카드 …)이 함께 쓰는 틀: 위쪽 헤더와 그 아래 화면. 글자 규칙은 뿌리 틀이 건다. */
+export function MainLayout() {
+  return (
+    <>
+      <MainHeader />
+      <Outlet />
+    </>
+  )
+}

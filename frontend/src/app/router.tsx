@@ -1,11 +1,13 @@
 import { createBrowserRouter, redirect, type RouteObject } from "react-router"
 
 import { GroupLayout } from "@/app/layouts/group-layout"
+import { MainLayout } from "@/app/layouts/main-layout"
 import { RootFrame, RootLayout } from "@/app/layouts/root-layout"
 import { RouteError } from "@/app/route-error"
 import { getMyGroups } from "@/domain/group/api"
 import { GROUP_ROUTE_ID, groupLoader } from "@/domain/group/loader"
 import { SESSION_ROUTE_ID, sessionLoader } from "@/domain/session/loader"
+import { cardsRoutes } from "@/features/cards"
 import { groupPostsRoutes } from "@/features/group-posts"
 import { paths } from "@/shared/lib/paths"
 import { revalidateOnParams } from "@/shared/lib/router"
@@ -60,6 +62,8 @@ export const router = createBrowserRouter([
           ...groupPostsRoutes,
         ],
       },
+      // 그룹 밖 화면: 위쪽 헤더(스터디·정보공유·경험카드) 아래에 붙는다.
+      { element: <MainLayout />, children: [...cardsRoutes] },
       ...devRoutes,
       { path: "*", element: <RouteError notFound /> },
     ],
