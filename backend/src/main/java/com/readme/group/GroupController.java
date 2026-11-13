@@ -4,28 +4,91 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.readme.auth.CurrentUser;
 import com.readme.auth.LoginUser;
+import com.readme.group.GroupRequests.CreateGroupRequest;
+import com.readme.group.GroupRequests.DisclosureRequest;
+import com.readme.group.GroupRequests.InviteResponse;
 
+/**
+ * 그룹 API(설계 4.1). 그룹 안의 것은 멤버만 다룰 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.
+ */
 @RestController
 class GroupController {
 
 	private final GroupQueries queries;
 
+	private final GroupService service;
+
 	private final Clock clock;
 
-	GroupController(GroupQueries queries, Clock clock) {
+	GroupController(GroupQueries queries, GroupService service, Clock clock) {
 		this.queries = queries;
+		this.service = service;
 		this.clock = clock;
 	}
 
 	/** 내가 속한 그룹들. 들어간 순서다. 프런트의 첫 화면은 첫 그룹으로 간다. */
 	@GetMapping("/api/groups")
 	List<GroupResponse> myGroups(@CurrentUser LoginUser user) {
-		return this.queries.findMyGroups(user.id(), LocalDate.now(this.clock));
+		return this.queries.findMyGroups(user.id(), today());
+	}
+
+	/** 그룹 만들기. 만든 사람이 그룹장이 된다. 만든 그룹을 GET /api/groups 의 한 항목 모양으로 돌려준다. */
+	@PostMapping("/api/groups")
+	@ResponseStatus(HttpStatus.CREATED)
+	GroupResponse create(@Valid @RequestBody CreateGroupRequest request, @CurrentUser LoginUser user) {
+		long groupId = this.service.create(user.id(), request.name(), request.mark());
+		return myGroup(groupId, user);
+	}
+
+	/** 이 그룹에 보일 내 공개 범위 바꾸기. 바뀐 그룹을 돌려준다. */
+	@PutMapping("/api/groups/{groupId}/me/disclosure")
+	GroupResponse changeDisclosure(@PathVariable long groupId, @Valid @RequestBody DisclosureRequest request,
+			@CurrentUser LoginUser user) {
+		this.service.changeDisclosure(groupId, user.id(), request.disclosure());
+		return myGroup(groupId, user);
+	}
+
+	/** 그룹 나가기. 그룹장이면 409 LEADER_CANNOT_LEAVE. */
+	@DeleteMapping("/api/groups/{groupId}/me")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void leave(@PathVariable long groupId, @CurrentUser LoginUser user) {
+		this.service.leave(groupId, user.id());
+	}
+
+	/** 초대 링크 만들기. 멤버 누구나 만든다. */
+	@PostMapping("/api/groups/{groupId}/invites")
+	@ResponseStatus(HttpStatus.CREATED)
+	InviteResponse createInvite(@PathVariable long groupId, @CurrentUser LoginUser user) {
+		return this.service.createInvite(groupId, user.id());
+	}
+
+	/** 초대 수락. 로그인한 사람이 그 그룹의 멤버가 되고, 들어간 그룹을 돌려준다. */
+	@PostMapping("/api/group-invites/{token}/accept")
+	GroupResponse acceptInvite(@PathVariable String token, @CurrentUser LoginUser user) {
+		long groupId = this.service.acceptInvite(token, user.id());
+		return myGroup(groupId, user);
+	}
+
+	private GroupResponse myGroup(long groupId, LoginUser user) {
+		return this.queries.findMyGroup(user.id(), groupId, today()).orElseThrow();
+	}
+
+	private LocalDate today() {
+		return LocalDate.now(this.clock);
 	}
 
 }

@@ -2,9 +2,11 @@ package com.readme;
 
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 
@@ -12,11 +14,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
  * 통합 테스트가 자기 데이터를 DB 에 직접 넣는 도우미. @IntegrationTest 를 붙인 테스트에서 주입받아 쓴다.
  *
  * <p>테스트끼리 DB 를 나눠 쓰므로 이메일 같은 유일한 값은 겹치지 않게 만든다. 순서가 중요한 시각(들어온 때, 관심을 켠 때)은
- * 부른 순서대로 늘어난다.
+ * 부른 순서대로 늘어나고, 모두 멈춘 시계의 NOW 보다 앞이다. 그래서 테스트 안에서 API 로 만든 것(NOW)이 늘 뒤에 온다.
  */
 public class Fixtures {
 
 	private final JdbcClient jdbc;
+
+	private final AtomicLong ticks = new AtomicLong();
 
 	Fixtures(JdbcClient jdbc) {
 		this.jdbc = jdbc;
@@ -73,11 +77,12 @@ public class Fixtures {
 	private void join(long groupId, long userId, String role) {
 		this.jdbc.sql("""
 				insert into group_members (group_id, user_id, role, joined_at)
-				values (:groupId, :userId, :role, clock_timestamp())
+				values (:groupId, :userId, :role, :joinedAt)
 				""")
 			.param("groupId", groupId)
 			.param("userId", userId)
 			.param("role", role)
+			.param("joinedAt", nextMoment())
 			.update();
 	}
 
@@ -148,11 +153,12 @@ public class Fixtures {
 	public void interest(long groupId, long postingId, long userId) {
 		this.jdbc.sql("""
 				insert into group_post_interests (group_id, posting_id, user_id, created_at)
-				values (:groupId, :postingId, :userId, clock_timestamp())
+				values (:groupId, :postingId, :userId, :createdAt)
 				""")
 			.param("groupId", groupId)
 			.param("postingId", postingId)
 			.param("userId", userId)
+			.param("createdAt", nextMoment())
 			.update();
 	}
 
@@ -184,6 +190,11 @@ public class Fixtures {
 			.param("at", Timestamp.from(at))
 			.query(Long.class)
 			.single();
+	}
+
+	/** 부를 때마다 1ms 씩 늘어나는 시각. 멈춘 시계의 NOW 하루 전에서 시작한다. */
+	private Timestamp nextMoment() {
+		return Timestamp.from(FixedClockConfiguration.NOW.minus(Duration.ofDays(1)).plusMillis(this.ticks.incrementAndGet()));
 	}
 
 }

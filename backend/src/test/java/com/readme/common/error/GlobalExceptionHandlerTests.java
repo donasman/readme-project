@@ -45,6 +45,15 @@ class GlobalExceptionHandlerTests {
 	}
 
 	@Test
+	void valuesAttachedToTheErrorSitBesideCodeAndMessage() {
+		assertThat(this.mvc.get().uri("/probe/conflict-with-details"))
+			.hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().isStrictlyEqualTo("""
+				{ "code": "PROBE_CONFLICT", "message": "이미 있습니다", "postId": 12 }
+				""");
+	}
+
+	@Test
 	void invalidBodyNamesTheField() {
 		assertThat(this.mvc.post().uri("/probe/validated").contentType(MediaType.APPLICATION_JSON).content("""
 				{ "company": " " }
@@ -116,6 +125,11 @@ class GlobalExceptionHandlerTests {
 		@GetMapping("/probe/conflict-with-message")
 		void conflictWithMessage() {
 			throw new ApiException(ProbeErrorCode.PROBE_CONFLICT, "그 공고는 이미 이 그룹에 있습니다");
+		}
+
+		@GetMapping("/probe/conflict-with-details")
+		void conflictWithDetails() {
+			throw new ApiException(ProbeErrorCode.PROBE_CONFLICT).with("postId", 12L);
 		}
 
 		@PostMapping("/probe/validated")

@@ -30,7 +30,8 @@ class GlobalExceptionHandler {
 	@ExceptionHandler(ApiException.class)
 	ResponseEntity<ApiError> handleApiException(ApiException exception) {
 		ErrorCode code = exception.errorCode();
-		return ResponseEntity.status(code.status()).body(new ApiError(code.name(), exception.getMessage()));
+		return ResponseEntity.status(code.status())
+			.body(new ApiError(code.name(), exception.getMessage(), exception.details()));
 	}
 
 	/** @Valid 검사에 걸린 본문. 어느 칸이 틀렸는지 메시지에 붙인다. */

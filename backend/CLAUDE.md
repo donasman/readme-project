@@ -23,11 +23,15 @@
 
 - 기능 패키지 안은 더 나누지 않는다. `…Controller`, `…Service`, `…Repository`, 엔티티, 요청·응답 record 를 한 폴더에 둔다.
 - 클래스는 package-private 이 기본이다. 다른 기능이 써야 하는 것만 `public`으로 연다.
-- `common`: 설정(`config`), 오류 응답(`error`). 기능 패키지를 불러오지 않는다.
+- `common`: 설정(`config`), 오류 응답(`error`), 링크 토큰(`token`). 기능 패키지를 불러오지 않는다.
 - 테이블마다 주인 패키지가 있다(설계 문서의 표). 그 테이블에 쓰는 코드(insert, update, delete)는 주인 패키지에만 둔다. 다른 기능의 데이터를 바꿔야 하면 그 기능의 `public` 서비스를 부른다.
 - 쓰기(행을 만들고 고치고 지우기, 그러려고 엔티티를 읽는 것까지)는 JPA 엔티티와 Spring Data 리포지토리로 한다.
   같은 요청을 두 번 보내도 결과가 같아야 하는 쓰기(관심 켜기·끄기 같은 PUT)는 리포지토리에 native `insert … on conflict do nothing`·`delete`를 둔다. 바로 실행되므로 같은 트랜잭션의 뒤 조회가 바뀐 값을 본다.
+  두 사람이 같이 눌러도 한 번만 되어야 하는 쓰기(공고 올리기, 다시 올리기, 날짜 넣기)도 같은 방식으로, 조건이 붙은 native insert·update 로 하고 바뀐 행 수를 본다. PostgreSQL 은 유일 제약 위반이 난 트랜잭션을 더 쓰지 못하게 하므로 "넣어 보고 실패하면 찾기"로 짜지 않는다.
 - 응답을 만드는 조회는 `JdbcClient`로 SQL 을 쓴다. 목록·상세처럼 여러 테이블을 묶는 조회는 테이블을 넘나들어도 된다(설계 문서 3.3 에서 확인한 SQL 을 옮긴다).
+- JPA 엔티티로 바꾼 값(dirty checking)은 커밋 전까지 `JdbcClient` 조회에 보이지 않는다. 그래서 응답은 서비스의 트랜잭션이 끝난 뒤 컨트롤러가 읽는다. 서비스는 바꾼 행의 id 만 돌려준다.
+- 리포지토리는 파일 하나에 하나씩 둔다. 다른 클래스 안에 넣은 리포지토리는 Spring Data 가 찾지 않는다.
+- `char(n)` 칸(`token_hash`)은 엔티티에서 `@JdbcTypeCode(SqlTypes.CHAR) @Column(length = n)`으로 받는다. 그냥 `String`이면 Hibernate 가 varchar 로 보고 `ddl-auto: validate`에서 서버가 뜨지 않는다.
 
 ## API
 
@@ -89,6 +93,8 @@
 
 - pytest 테스트를 JUnit 으로 먼저 옮기고, 그 테스트가 통과할 때까지 구현한다.
 - CLI, 엑셀 입출력, 로컬 파일로 하는 상태 관리는 옮기지 않는다.
+- Python 표준 라이브러리(`urllib.parse` 등)에 기대는 부분은 pytest 만으로는 차이를 놓친다. jobfit 의 원본 파일을 `python -I`로 직접 돌려 까다로운 입력의 값을 뽑고, 그 값도 JUnit 에 넣는다(예: `posting/PostingKeysTests`).
+- 옮긴 것: `jobkey.py` → `posting/PostingKeys`(2026-11-13).
 
 ## 테스트
 
@@ -97,7 +103,8 @@
 - API 와 DB 를 거치는 테스트는 `@IntegrationTest`를 붙이고 주입받은 `MockMvcTester`로 요청한다. 이 표시를 붙인 테스트는 서버와 DB 를 한 번만 띄워 나눠 쓴다. 테스트 클래스에 설정(`@ActiveProfiles`, `@Import`, `@MockitoBean`, `@TestPropertySource`)을 더하면 그 클래스만 따로 띄우게 되니 꼭 필요할 때만 더한다.
 - `@IntegrationTest`의 프로필은 `test`다(`src/test/resources/application-test.yml`). dev 의 설정, 예시 데이터, 임시 로그인은 없다.
 - 시계는 2026-11-13 00:30(서울)에 멈춰 있다(`FixedClockConfiguration`의 `NOW`, `TODAY`). UTC 로는 11-12 라서 날짜를 UTC 로 구하는 실수가 테스트에 걸린다. 테스트 데이터의 날짜도 이 둘을 기준으로 잡는다.
-- 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고(`Fixtures`), 다른 테스트가 만든 데이터에 기대지 않는다.
+- 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고(`Fixtures`), 다른 테스트가 만든 데이터에 기대지 않는다. DB 전체에서 유일한 값(이메일, 공고키)은 테스트마다 다르게 만든다.
+- `Fixtures`가 넣는 순서용 시각(들어온 때, 관심을 켠 때)은 멈춘 시계의 `NOW`보다 앞이다. 테스트 안에서 API 로 만든 것은 `NOW`라 늘 뒤에 온다.
 - 로그인한 요청은 `TestRequests.loginAs(userId)`로 만든다. 세션을 실제로 만들고 읽는 것은 dev 프로필 테스트(`DevLoginTests`)가 본다.
 - 바꾸는 요청에는 `TestRequests.xsrf()`를 붙인다. spring-security-test 의 `csrf()`는 쓰지 않는다. 처음 부를 때 CSRF 토큰 저장소를 세션 방식으로 바꿔 끼워, 같은 서버를 쓰는 뒤의 테스트까지 달라진다.
 

@@ -1,9 +1,13 @@
 package com.readme.posting;
 
+import java.util.Locale;
+
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * 한 사람의 한 공고 지원 상태(user_postings 의 decision, stage, result).
  *
- * <p>단계와 결과는 지원함일 때만 있다(테이블 제약).
+ * <p>단계와 결과는 지원함일 때만 있다(테이블 제약). 요청·응답에서는 소문자로 쓴다("applied", "interview_1", "in_progress").
  */
 public record ApplicationStatus(Decision decision, Stage stage, Result result) {
 
@@ -15,7 +19,13 @@ public record ApplicationStatus(Decision decision, Stage stage, Result result) {
 		/** 지원안함 */
 		SKIP,
 		/** 지원함 */
-		APPLIED
+		APPLIED;
+
+		@JsonValue
+		public String json() {
+			return name().toLowerCase(Locale.ROOT);
+		}
+
 	}
 
 	public enum Stage {
@@ -28,6 +38,11 @@ public record ApplicationStatus(Decision decision, Stage stage, Result result) {
 			this.label = label;
 		}
 
+		@JsonValue
+		public String json() {
+			return name().toLowerCase(Locale.ROOT);
+		}
+
 	}
 
 	public enum Result {
@@ -36,7 +51,13 @@ public record ApplicationStatus(Decision decision, Stage stage, Result result) {
 		/** 합격 */
 		PASSED,
 		/** 불합격 */
-		FAILED
+		FAILED;
+
+		@JsonValue
+		public String json() {
+			return name().toLowerCase(Locale.ROOT);
+		}
+
 	}
 
 	/** DB 의 세 칸으로 만든다. 내 공고 행이 없으면(decision 이 null) null 을 돌려준다. */
@@ -46,6 +67,11 @@ public record ApplicationStatus(Decision decision, Stage stage, Result result) {
 		}
 		return new ApplicationStatus(Decision.valueOf(decision), (stage != null) ? Stage.valueOf(stage) : null,
 				(result != null) ? Result.valueOf(result) : null);
+	}
+
+	/** 테이블 제약과 같다: 단계와 결과는 지원함일 때만, 둘이 함께 있다. */
+	public boolean isConsistent() {
+		return (this.decision == Decision.APPLIED) == (this.stage != null) && (this.stage == null) == (this.result == null);
 	}
 
 	public boolean applied() {
