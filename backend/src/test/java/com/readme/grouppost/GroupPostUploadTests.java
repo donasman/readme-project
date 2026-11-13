@@ -183,6 +183,8 @@ class GroupPostUploadTests {
 		// 원문 주소는 http·https 만
 		assertInvalid(upload(this.group, this.me, job("회사", "javascript:alert(1)")));
 		assertInvalid(upload(this.group, this.me, job("회사", "ftp://example.com/job")));
+		// 역슬래시는 받지 않는다. 브라우저는 \ 를 / 로 읽어 evil.example 을 여는데, 공고키는 사람인 공고가 된다
+		assertInvalid(upload(this.group, this.me, job("회사", "https://evil.example\\\\@www.saramin.co.kr/?rec_idx=" + jobNumber())));
 		assertThat(upload(this.group, this.me, job("회사", url.replace("https", "HTTPS") + jobNumber())))
 			.hasStatus(HttpStatus.CREATED);
 	}
