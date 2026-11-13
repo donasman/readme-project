@@ -1,7 +1,7 @@
 // 백엔드 연결 전 예시 데이터. docs/design/group-posts.dc.html 의 groups()와 group-post.dc.html 의 값을 그대로 옮겼다.
 // 이름, 회사, 공고, 댓글은 모두 지어낸 예시다. 보는 사람은 "다온"이고 디자인처럼 오늘은 2026-11-13이다.
-// 화면은 이 파일을 직접 읽지 않는다. api.ts만 읽는다.
-import type { Comment, Deadline, Disclosure, GroupPostDetail, Member } from "./types"
+// 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
+import type { Comment, Deadline, Disclosure, GroupPostDetail, Member } from "@/features/group-posts/types"
 
 export const EXAMPLE_TODAY = "2026-11-13"
 
@@ -116,7 +116,7 @@ export interface ExampleGroup {
   posts: GroupPostDetail[]
 }
 
-/** 예시 데이터를 새로 만든다. api.ts가 처음 한 번 불러 메모리에 두고 고친다. */
+/** 예시 데이터를 새로 만든다. db.ts가 처음 한 번 불러 메모리에 두고 고친다. */
 export function createExampleGroups(): ExampleGroup[] {
   return RAW.map((g) => ({
     id: g.id,
