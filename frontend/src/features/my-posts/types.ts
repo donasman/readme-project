@@ -1,21 +1,10 @@
 // 내 공고의 데이터 모양(관심을 켜거나 직접 넣은 공고와 내 지원 상태). 서버의 내 공고 조회는 아직 설계에 없다
 // (화면 API 대응 3.3의 10번). 상태 값의 글자는 정했다: 소문자로 주고받는다(그룹 설계 4.3 아래 "정함").
 import type { Disclosure } from "@/domain/group/types"
+import type { MyState } from "@/domain/posting/my-state"
 import type { Deadline, PostSection } from "@/domain/posting/types"
 
-/** 결정: 미정, 보류, 지원안함, 지원함. */
-export type Decision = "undecided" | "hold" | "skip" | "applied"
-/** 단계: 서류, 필기, 1차 면접, 2차 면접, 최종. 지원함일 때만 있다. */
-export type Stage = "document" | "test" | "interview_1" | "interview_2" | "final"
-/** 지금 단계의 결과: 진행 중, 합격, 불합격. 지원함일 때만 있다. */
-export type Result = "in_progress" | "passed" | "failed"
-
-/** 내 지원 상태(PUT /api/me/postings/{postingId}의 본문). 단계와 결과는 applied일 때만 함께 넣는다. */
-export interface MyState {
-  decision: Decision
-  stage: Stage | null
-  result: Result | null
-}
+export type { Decision, MyState, Result, Stage } from "@/domain/posting/my-state"
 
 /** 그룹의 이름과 표시 글자. */
 export interface GroupLabel {

@@ -55,9 +55,6 @@ const DETAILS: Record<string, Partial<Pick<MyPostingDetail, "applyAt" | "section
   },
 }
 
-/** 메일에서 온 상태 변경(9차 "메일 확인함"이 생기면 그쪽 값을 읽는다). */
-const MAIL_CHANGES = { count: 1, first: "예시 보안 면접 안내" }
-
 /** 홈의 그룹 소식(시안 8차 "홈"의 두 줄). 무엇을 소식으로 볼지는 아직 정하지 않아 예시로 둔다. */
 const NEWS: { groupId: string; text: string; postId: string | null }[] = [
   { groupId: "be", text: "새 공고 2건", postId: null },
@@ -150,12 +147,12 @@ export function saveMemo(id: string, memo: string): void {
   rawEntry(id).memo = memo
 }
 
-/** 홈에 모으는 것. */
-export function getHome(): HomeData {
+/** 홈에 모으는 것. 메일에서 온 변경은 메일 확인함(mail-db.ts)이 센다. */
+export function getHome(): Omit<HomeData, "mailChanges"> {
   const groups = listGroups()
   const news: GroupNews[] = NEWS.flatMap((n) => {
     const g = groups.find((x) => x.id === n.groupId)
     return g ? [{ group: { id: g.id, name: g.name, mark: g.mark }, text: n.text, postId: n.postId }] : []
   })
-  return { today: today(), postings: listMyPostings(), unverifiedCards: listUnverifiedCards().length, mailChanges: { ...MAIL_CHANGES }, news }
+  return { today: today(), postings: listMyPostings(), unverifiedCards: listUnverifiedCards().length, news }
 }

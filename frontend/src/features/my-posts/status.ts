@@ -1,38 +1,11 @@
 // 내 지원 상태와 내 공고 목록의 규칙. 화면과 떨어진 순수 함수다.
 import { daysBetween, formatDday, formatMonthDayWeekday } from "@/shared/lib/date"
 
-import type { Decision, MyPosting, MyState, Result, Stage } from "./types"
+import { progress, STAGES, type Decision, type MyState } from "@/domain/posting/my-state"
 
-export const DECISION_LABELS: Record<Decision, string> = { undecided: "미정", hold: "보류", skip: "지원안함", applied: "지원함" }
-/** 상태 바꾸기의 결정 순서(시안 9차 "지원 현황") */
-export const DECISIONS: Decision[] = ["undecided", "hold", "skip", "applied"]
-export const STAGE_LABELS: Record<Stage, string> = { document: "서류", test: "필기", interview_1: "1차 면접", interview_2: "2차 면접", final: "최종" }
-export const STAGES: Stage[] = ["document", "test", "interview_1", "interview_2", "final"]
-export const RESULT_LABELS: Record<Result, string> = { in_progress: "진행 중", passed: "합격", failed: "불합격" }
-export const RESULTS: Result[] = ["in_progress", "passed", "failed"]
+import type { MyPosting } from "./types"
 
-/** 지원함인데 단계·결과가 없으면 서류 · 진행 중으로 본다. */
-function progress(state: MyState): { stage: Stage; result: Result } {
-  return { stage: state.stage ?? "document", result: state.result ?? "in_progress" }
-}
-
-/** 단계와 결과 글자: "필기 단계", "서류 불합격", "최종 합격". */
-function stageText(state: MyState): string {
-  const { stage, result } = progress(state)
-  return `${STAGE_LABELS[stage]} ${result === "in_progress" ? "단계" : RESULT_LABELS[result]}`
-}
-
-/** 목록의 짧은 상태 글자. 지원하고 서류 진행 중이면 "지원함", 그 뒤로는 단계 글자. */
-export function statusLabel(state: MyState): string {
-  if (state.decision !== "applied") return DECISION_LABELS[state.decision]
-  const { stage, result } = progress(state)
-  return stage === "document" && result === "in_progress" ? "지원함" : stageText(state)
-}
-
-/** 상세의 상태 글자: "지원함 · 필기 단계", "미정". */
-export function statusDetail(state: MyState): string {
-  return state.decision === "applied" ? `지원함 · ${stageText(state)}` : DECISION_LABELS[state.decision]
-}
+export { DECISION_LABELS, DECISIONS, isActive, RESULT_LABELS, RESULTS, STAGE_LABELS, STAGES, statusDetail, statusLabel } from "@/domain/posting/my-state"
 
 /** 마감 칸의 글자: 큰 글자(D-2, 상시, 확인 필요, 마감)와 작은 글자(11.15 (일), 날짜 없음, 마감일 모름). */
 export function dueText(p: Pick<MyPosting, "deadline">, today: string): { main: string; sub: string; soon: boolean } {
@@ -43,9 +16,6 @@ export function dueText(p: Pick<MyPosting, "deadline">, today: string): { main: 
   // 3일 안에 마감하면 진한 강조색으로 보인다(시안 8차 "홈"의 D-2, D-3)
   return { main: left < 0 ? "마감" : formatDday(today, d.date), sub: formatMonthDayWeekday(d.date), soon: left >= 0 && left <= 3 }
 }
-
-/** 강조색 알약으로 보일 상태: 지원했고 떨어지지 않았다. */
-export const isActive = (state: MyState) => state.decision === "applied" && state.result !== "failed"
 
 /** 마감됨: 마감일이 오늘보다 앞. 상시와 마감일 모름은 진행 중이다. */
 export const isPostingClosed = (p: MyPosting, today: string) => p.deadline.kind === "date" && daysBetween(today, p.deadline.date) < 0
