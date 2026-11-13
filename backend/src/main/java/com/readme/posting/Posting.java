@@ -69,4 +69,16 @@ class Posting {
 		return this.id;
 	}
 
+	String postingKey() {
+		return this.postingKey;
+	}
+
+	String company() {
+		return this.company;
+	}
+
+	String title() {
+		return this.title;
+	}
+
 }

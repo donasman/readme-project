@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.readme.Fixtures;
 import com.readme.IntegrationTest;
+import com.readme.posting.PostingKeys;
 
 /**
  * 올리기, 그룹에서 내리기, 날짜 넣기(설계 4.2, 가정 2·3·4·5).
@@ -276,6 +277,31 @@ class GroupPostUploadTests {
 	}
 
 	@Test
+	void fillingTheDateOfALinklessJobMakesItTheSameJobAsThatDate() throws Exception {
+		String company = "링크 없는 회사 " + UUID.randomUUID();
+		long postId = postIdOf(upload(this.group, this.me, linkless(company, null)).exchange());
+
+		assertThat(fillDeadline(postId, this.other, DATE_20)).hasStatusOk();
+
+		// 회사명·공고명·마감일이 같으므로 같은 공고다(공고키를 새 날짜로 다시 만든다)
+		assertThat(upload(this.group, this.leader, linkless(company, "2026-11-20"))).hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.postId").isEqualTo((int) postId);
+	}
+
+	@Test
+	void fillingKeepsTheOldKeyWhenAnotherJobAlreadyHasTheNewOne() throws Exception {
+		String company = "같은 날짜가 이미 있는 회사 " + UUID.randomUUID();
+		long unknown = postIdOf(upload(this.group, this.me, linkless(company, null)).exchange());
+		long dated = postIdOf(upload(this.group, this.me, linkless(company, "2026-11-20")).exchange());
+
+		assertThat(fillDeadline(unknown, this.me, DATE_20)).hasStatusOk();
+
+		assertThat(dated).isNotEqualTo(unknown);
+		assertThat(this.jdbc.sql("select posting_key from postings where id = :id").param("id", unknown)
+			.query(String.class).single()).isEqualTo(PostingKeys.derive(null, company, "공고", "").key());
+	}
+
+	@Test
 	void theDeadlineBodyIsADateOrAlwaysInTheUploadShape() throws Exception {
 		long postId = postIdOf(upload(this.group, this.me, """
 				{ "company": "모양 확인 회사 %s", "title": "공고", "deadline": { "kind": "unknown" } }
@@ -313,6 +339,14 @@ class GroupPostUploadTests {
 		return """
 				{ "company": "%s", "title": "백엔드", "deadline": { "kind": "always" }, "sourceUrl": "%s" }
 				""".formatted(company, sourceUrl);
+	}
+
+	/** 링크 없는 공고. date 가 null 이면 마감 모름. */
+	private static String linkless(String company, String date) {
+		String deadline = (date != null) ? "{ \"kind\": \"date\", \"date\": \"%s\" }".formatted(date) : "{ \"kind\": \"unknown\" }";
+		return """
+				{ "company": "%s", "title": "공고", "deadline": %s }
+				""".formatted(company, deadline);
 	}
 
 	private static long jobNumber() {
