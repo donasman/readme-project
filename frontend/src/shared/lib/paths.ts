@@ -5,6 +5,7 @@ const seg = encodeURIComponent
 
 export const paths = {
   home: () => "/",
+  login: () => "/login",
   group: (groupId: string) => `/groups/${seg(groupId)}`,
   groupPosts: (groupId: string) => `/groups/${seg(groupId)}/posts`,
   groupPost: (groupId: string, postId: string) => `/groups/${seg(groupId)}/posts/${seg(postId)}`,
