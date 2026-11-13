@@ -41,7 +41,8 @@ npm run dev
 
 잘 떴는지 보는 법:
 
-- `http://localhost:8080/actuator/health` 가 `{"status":"UP"}` 을 돌려준다. 서버가 뜰 때 Flyway 가 테이블 12개를 만들므로, 서버가 떴다면 DB 연결과 테이블 생성까지 된 것이다.
+- `http://localhost:8080/actuator/health` 가 `{"status":"UP"}` 을 돌려준다. 서버가 뜰 때 Flyway 가 테이블 21개를 만들므로, 서버가 떴다면 DB 연결과 테이블 생성까지 된 것이다.
+- 서버는 dev 프로필로 뜨고, 빈 DB 에 개발용 사용자와 예시 그룹·공고를 넣는다. `POST /api/auth/dev-login` 에 `{ "email": "daon@example.com" }` 을 보내면 그 사람으로 로그인된다(임시 로그인, `backend/CLAUDE.md`).
 - `http://localhost:5173` 은 내 첫 그룹의 공고 목록(`/groups/be/posts`)으로 넘어간다. 화면은 아직 서버를 부르지 않고 예시 데이터로 돈다. 서버가 꺼져 있어도 화면은 뜬다.
 - 보낸 메일은 `http://localhost:8025` 에서 본다(아직 메일을 보내는 기능은 없다).
 
@@ -79,10 +80,12 @@ git switch -c feat/frontend-something  # 작업 브랜치
 - 설정: 세션 쿠키 로그인의 바탕(Spring Session JDBC), CORS, CSRF, 로그인 전 요청에 401, `/actuator/health`. 로그인 전 요청은 세션에 저장하지 않는다(세션 행이 생기지 않는다).
 - 오류 응답: 모든 오류가 `{ code, message }` 다(`common/error`). 코드 목록은 `docs/리드미_설계_그룹_공고.md` 4절.
 - 시간: 한국 날짜의 기준 `Clock`(`common/config/TimeConfig`, `Asia/Seoul`).
-- DB: `V1__init.sql`(설계 초안의 테이블 10개), `V2__spring_session.sql`(세션 테이블 2개). 스키마는 `readme`.
-- 프로필: `dev`(기본, compose.yaml 의 DB `localhost:5433`), `prod`(환경 변수, `backend/.env.example`).
-- 패키지: `auth`, `card`, `extraction`, `keyword`, `llm`, `common`. `common` 밖은 설명만 있고 기능 코드는 아직 없다.
-- 테스트: `@IntegrationTest`(서버 전체 + Testcontainers PostgreSQL, 테스트끼리 나눠 씀), 오류 응답과 보안 설정 테스트.
+- DB: `V1__init.sql`(설계 초안의 테이블 10개), `V2__spring_session.sql`(세션 테이블 2개), `V3__groups.sql`(그룹·그룹 공고 테이블 9개). 스키마는 `readme`.
+- 프로필: `dev`(기본, compose.yaml 의 DB `localhost:5433`, 예시 데이터, 임시 로그인), `prod`(환경 변수, `backend/.env.example`).
+- API: `GET /api/me`, `GET /api/groups`, `GET /api/groups/{groupId}/posts`, `GET …/posts/{postId}`, `PUT …/posts/{postId}/interest`, `POST …/posts/{postId}/comments`. 프런트의 두 화면이 부르는 것이다. 나머지(올리기, 내리기, 날짜 넣기, 초대 등)는 아직 없다.
+- 로그인: 실제 로그인은 아직 없다. dev 프로필에만 임시 로그인(`POST /api/auth/dev-login`)이 있고, 실제 로그인과 같은 세션을 만든다.
+- 패키지: `auth`(세션, `/api/me`), `group`, `posting`, `grouppost`, `dev`(임시 로그인, 예시 데이터), `common`. `card`, `extraction`, `keyword`, `llm`은 설명만 있다.
+- 테스트: `@IntegrationTest`(서버 전체 + Testcontainers PostgreSQL, 테스트끼리 나눠 씀, 시계는 2026-11-13 00:30 서울에 고정). 권한·공개 범위·상태 글자·날짜 규칙, 세션, 오류 응답.
 - 자원: `resources/dictionary`(키워드 사전 4개), `resources/prompts/exp-extract.md`(jobfit 원본 그대로. 옮길 때 첫 줄의 jobfit 안내와 변수 표기를 고친다).
 
 **frontend** (2026-11-13)
@@ -107,7 +110,7 @@ git switch -c feat/frontend-something  # 작업 브랜치
 
 ## 다음에 할 일
 
-1. 서버: 그룹·그룹 공고 API 를 만든다. 로그인 전까지는 dev 프로필에서만 켜지는 임시 로그인으로 확인한다(`docs/리드미_설계_그룹_공고.md`).
+1. 서버: 그룹·그룹 공고 API 의 나머지(올리기, 내리기, 날짜 넣기, 댓글 수정·삭제, 공개 범위, 그룹 만들기·나가기·초대, 내 지원 상태)를 만든다. 읽기와 관심·댓글 달기는 2026-11-13 에 만들었다(`docs/리드미_설계_그룹_공고.md`).
 2. 저장소를 GitHub 에 올린다. 로컬 저장소는 만들었고 원격은 아직 없다. `gradlew` 의 실행 권한은 git 에 넣었다(`100755`).
 3. 다음 화면을 정한다. 그룹 공고 화면 2개는 만들었고, 동작이 없는 자리가 남아 있다(위 "지금 들어 있는 것").
 4. 로그인을 만든다(`docs/리드미_설계_로그인_경험카드.md` 4.1절). 임시 로그인은 이때 걷어낸다(`backend/CLAUDE.md`).
