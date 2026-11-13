@@ -48,4 +48,18 @@ class GroupPostComment {
 		return this.id;
 	}
 
+	/** 그 그룹의 그 공고에 달린 댓글인지. */
+	boolean belongsTo(long groupId, long postingId) {
+		return this.groupId == groupId && this.postingId == postingId;
+	}
+
+	boolean isWrittenBy(long userId) {
+		return this.authorId != null && this.authorId == userId;
+	}
+
+	void edit(String body, Instant now) {
+		this.body = body;
+		this.updatedAt = now;
+	}
+
 }

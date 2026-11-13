@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,12 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 import com.readme.auth.CurrentUser;
 import com.readme.auth.LoginUser;
 import com.readme.common.error.ApiException;
+import com.readme.common.error.CommonErrorCode;
 import com.readme.group.GroupAccess;
 import com.readme.grouppost.GroupPostRequests.CommentRequest;
+import com.readme.grouppost.GroupPostRequests.FillDeadlineRequest;
 import com.readme.grouppost.GroupPostRequests.InterestRequest;
+import com.readme.grouppost.GroupPostRequests.PostRequest;
 
 /**
  * 그룹 공고 API(설계 4.2). 그룹의 멤버만 부를 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.
+ * 그 그룹에 없거나 내린 공고는 404 POST_NOT_FOUND 다.
  */
 @RestController
 @RequestMapping("/api/groups/{groupId}/posts")
@@ -48,7 +53,19 @@ class GroupPostController {
 	@GetMapping
 	GroupPostsResponse list(@PathVariable long groupId, @CurrentUser LoginUser user) {
 		this.access.requireMember(groupId, user.id());
-		return new GroupPostsResponse(LocalDate.now(this.clock), this.queries.list(groupId, user.id()));
+		return new GroupPostsResponse(today(), this.queries.list(groupId, user.id()));
+	}
+
+	/** 올리기. 올린 공고를 상세와 같은 모양으로 돌려준다. 이미 이 그룹에 있으면 409 ALREADY_IN_GROUP 과 postId. */
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	GroupPostDataResponse post(@PathVariable long groupId, @Valid @RequestBody PostRequest request,
+			@CurrentUser LoginUser user) {
+		if (!request.deadlineIsConsistent()) {
+			throw new ApiException(CommonErrorCode.INVALID_INPUT, "마감일은 마감이 \"date\"일 때만, 꼭 넣어 주세요");
+		}
+		long postingId = this.service.post(groupId, user.id(), request.toDraft());
+		return detail(groupId, postingId, user);
 	}
 
 	@GetMapping("/{postId}")
@@ -56,7 +73,21 @@ class GroupPostController {
 		this.access.requireMember(groupId, user.id());
 		GroupPostDetailResponse post = this.queries.detail(groupId, postId, user.id())
 			.orElseThrow(() -> new ApiException(GroupPostErrorCode.POST_NOT_FOUND));
-		return new GroupPostDataResponse(LocalDate.now(this.clock), post);
+		return new GroupPostDataResponse(today(), post);
+	}
+
+	/** 그룹에서 내리기. 올린 사람과 그룹장만. */
+	@DeleteMapping("/{postId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void takeDown(@PathVariable long groupId, @PathVariable long postId, @CurrentUser LoginUser user) {
+		this.service.takeDown(groupId, postId, user.id());
+	}
+
+	/** 날짜 넣기. 바뀐 마감을 돌려준다. */
+	@PutMapping("/{postId}/deadline")
+	DeadlineResponse fillDeadline(@PathVariable long groupId, @PathVariable long postId,
+			@Valid @RequestBody FillDeadlineRequest request, @CurrentUser LoginUser user) {
+		return this.service.fillDeadline(groupId, postId, user.id(), request.date());
 	}
 
 	@PutMapping("/{postId}/interest")
@@ -70,6 +101,26 @@ class GroupPostController {
 	CommentResponse addComment(@PathVariable long groupId, @PathVariable long postId,
 			@Valid @RequestBody CommentRequest request, @CurrentUser LoginUser user) {
 		return this.service.addComment(groupId, postId, user.id(), request.text());
+	}
+
+	/** 댓글 수정. 쓴 사람만. 고친 댓글을 돌려준다. */
+	@PutMapping("/{postId}/comments/{commentId}")
+	CommentResponse editComment(@PathVariable long groupId, @PathVariable long postId, @PathVariable long commentId,
+			@Valid @RequestBody CommentRequest request, @CurrentUser LoginUser user) {
+		this.service.editComment(groupId, postId, commentId, user.id(), request.text());
+		return this.queries.comment(commentId);
+	}
+
+	/** 댓글 삭제. 쓴 사람과 그룹장. */
+	@DeleteMapping("/{postId}/comments/{commentId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void deleteComment(@PathVariable long groupId, @PathVariable long postId, @PathVariable long commentId,
+			@CurrentUser LoginUser user) {
+		this.service.deleteComment(groupId, postId, commentId, user.id());
+	}
+
+	private LocalDate today() {
+		return LocalDate.now(this.clock);
 	}
 
 }
