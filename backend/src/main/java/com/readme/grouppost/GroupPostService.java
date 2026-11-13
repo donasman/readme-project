@@ -11,6 +11,7 @@ import com.readme.common.error.ApiException;
 import com.readme.common.error.CommonErrorCode;
 import com.readme.group.GroupAccess;
 import com.readme.group.GroupMembership;
+import com.readme.posting.DeadlineKind;
 import com.readme.posting.PostingDraft;
 import com.readme.posting.Postings;
 import com.readme.posting.UserPostings;
@@ -83,14 +84,17 @@ class GroupPostService {
 		post.takeDown(userId, this.clock.instant());
 	}
 
-	/** 날짜 넣기. 마감일을 읽지 못한 공고에만, 멤버 누구나, 한 번(설계 가정 5). 아니면 409 DEADLINE_ALREADY_SET. */
+	/**
+	 * 날짜 넣기. 마감일을 읽지 못한 공고에만, 멤버 누구나, 한 번(설계 가정 5). 날짜나 상시를 넣는다.
+	 * 이미 마감이 있으면 409 DEADLINE_ALREADY_SET.
+	 */
 	@Transactional
-	DeadlineResponse fillDeadline(long groupId, long postingId, long userId, LocalDate date) {
+	DeadlineResponse fillDeadline(long groupId, long postingId, long userId, DeadlineKind kind, LocalDate date) {
 		requireVisiblePost(groupId, postingId, userId);
-		if (!this.postings.fillUnknownDeadline(postingId, date, userId)) {
+		if (!this.postings.fillUnknownDeadline(postingId, kind, date, userId)) {
 			throw new ApiException(GroupPostErrorCode.DEADLINE_ALREADY_SET);
 		}
-		return DeadlineResponse.of("DATE", date);
+		return DeadlineResponse.of(kind.name(), date);
 	}
 
 	/**
