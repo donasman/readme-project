@@ -37,7 +37,7 @@ export function WithdrawPage() {
     if (next.password || next.agreed) return
     if (!(await withdraw(password))) return setErrors({ password: "비밀번호가 맞지 않습니다." })
     // 로그인한 화면들(세션 라우트) 밖으로 나간다. 안에 머물면 보는 사람을 다시 읽지 않는다
-    navigate(paths.login(), { replace: true })
+    navigate(paths.welcome(), { replace: true })
   }
 
   return (
