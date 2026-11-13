@@ -31,6 +31,15 @@ export const myPostsRoutes: RouteObject[] = [
     },
   },
   {
+    path: "/calendar",
+    // 달(?month=)만 바뀌면 다시 읽지 않는다
+    shouldRevalidate: revalidateOnParams(),
+    lazy: async () => {
+      const { CalendarPage, calendarLoader } = await import("./pages/calendar-page")
+      return { loader: calendarLoader, Component: CalendarPage }
+    },
+  },
+  {
     path: "/board",
     // 고른 공고(?posting=)만 바뀌면 다시 읽지 않는다
     shouldRevalidate: revalidateOnParams(),

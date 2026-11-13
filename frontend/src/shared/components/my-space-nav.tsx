@@ -12,8 +12,8 @@ const ITEMS: { key: MySpace; label: string; to: string | null }[] = [
   { key: "home", label: "홈", to: paths.home() },
   { key: "posts", label: "내 공고", to: paths.myPosts() },
   { key: "board", label: "지원 현황", to: paths.board() },
-  // 달력, 메일 확인함: 9차에서 화면이 생긴다
-  { key: "calendar", label: "달력", to: null },
+  { key: "calendar", label: "달력", to: paths.calendar() },
+  // 메일 확인함: 9차에서 화면이 생긴다
   { key: "mail", label: "메일 확인함", to: null },
 ]
 
