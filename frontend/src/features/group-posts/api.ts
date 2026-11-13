@@ -3,7 +3,7 @@
 // fetch 호출로 바꾸고, 함수 이름과 돌려주는 모양(types.ts)은 그대로 둔다.
 import * as db from "@/mocks/db"
 
-import type { Comment, GroupPostData, GroupPostsData, MyState, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
+import type { Comment, Deadline, GroupPostData, GroupPostsData, MyState, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
 
 /** 그룹 공고 목록. */
 export async function getGroupPosts(groupId: string): Promise<GroupPostsData> {
@@ -34,4 +34,24 @@ export async function readPost(groupId: string, input: PostReadInput): Promise<R
 /** 칸을 확인한 공고를 그룹에 올린다. */
 export async function uploadPost(groupId: string, input: PostUpload): Promise<UploadPostResult> {
   return db.uploadPost(groupId, input)
+}
+
+/** 마감을 못 읽은 공고에 날짜나 상시를 넣는다. 한 번 넣으면 바꿀 수 없다(이미 있으면 409 DEADLINE_ALREADY_SET). */
+export async function setDeadline(groupId: string, postId: string, deadline: Deadline): Promise<boolean> {
+  return db.setDeadline(groupId, postId, deadline).ok
+}
+
+/** 그룹에서 내린다. 댓글과 관심은 남고, 같은 공고를 다시 올리면 돌아온다. */
+export async function takeDownPost(groupId: string, postId: string): Promise<void> {
+  db.takeDownPost(groupId, postId)
+}
+
+/** 내 댓글을 고친다. */
+export async function updateComment(groupId: string, postId: string, commentId: string, text: string): Promise<Comment> {
+  return db.updateComment(groupId, postId, commentId, text)
+}
+
+/** 댓글을 지운다(내 댓글, 그룹장은 남의 댓글도). 되돌릴 수 없다. */
+export async function deleteComment(groupId: string, postId: string, commentId: string): Promise<void> {
+  db.deleteComment(groupId, postId, commentId)
 }

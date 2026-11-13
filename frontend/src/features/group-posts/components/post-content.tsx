@@ -13,10 +13,11 @@ interface PostContentProps {
   viewer: Viewer
   /** 올린 사람이나 그룹장일 때만 "그룹에서 내리기"가 보인다 */
   canTakeDown: boolean
+  onTakeDown: () => void
 }
 
 /** 공고 내용: 올린 사람과 날, 주요 업무 등 묶음, 키워드. */
-export function PostContent({ post, viewer, canTakeDown }: PostContentProps) {
+export function PostContent({ post, viewer, canTakeDown, onTakeDown }: PostContentProps) {
   const byMe = post.postedBy.id === viewer.id
   const poster = byMe ? "내가" : `${post.postedBy.name}${subjectParticle(post.postedBy.name)}`
   const empty = post.sections.length === 0 && post.keywords.length === 0
@@ -31,8 +32,7 @@ export function PostContent({ post, viewer, canTakeDown }: PostContentProps) {
           </p>
         </div>
         {canTakeDown && (
-          // 그룹에서 내리기: 아직 동작 없음
-          <Button size="sm" variant="destructive" className="flex-none text-foreground dark:bg-destructive/10">
+          <Button size="sm" variant="destructive" className="flex-none text-foreground dark:bg-destructive/10" onClick={onTakeDown}>
             그룹에서 내리기
           </Button>
         )}

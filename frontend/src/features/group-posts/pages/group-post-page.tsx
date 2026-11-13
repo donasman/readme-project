@@ -1,16 +1,22 @@
-import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router"
+import { useState } from "react"
+import { useLoaderData, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
+
+import { setMyDisclosure } from "@/domain/group/api"
+import type { Group } from "@/domain/group/types"
 
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
+import { BackLink } from "@/shared/components/back-link"
 import { Page } from "@/shared/components/page"
-import { ArrowLeftIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
-import { addComment, getGroupPost } from "../api"
+import { addComment, deleteComment, getGroupPost, takeDownPost, updateComment } from "../api"
 import { Comments } from "../components/comments"
 import { DeadlineCard } from "../components/deadline-card"
 import { InterestedMembers } from "../components/interested-members"
 import { PostContent } from "../components/post-content"
+import { CommentDeleteDialog, CommentEditDialog, DisclosureDialog, TakedownDialog } from "../components/post-dialogs"
+import type { Comment, GroupPostDetail } from "../types"
 import { useInterest } from "../use-interest"
 
 export function groupPostLoader({ params }: LoaderFunctionArgs) {
@@ -24,6 +30,11 @@ export function GroupPostPage() {
   const viewer = useViewer()
   const { group } = useGroup()
   const revalidator = useRevalidator()
+  const navigate = useNavigate()
+  const [takingDown, setTakingDown] = useState<GroupPostDetail | null>(null)
+  const [editing, setEditing] = useState<Comment | null>(null)
+  const [deleting, setDeleting] = useState<Comment | null>(null)
+  const [disclosureFor, setDisclosureFor] = useState<Group | null>(null)
   const interest = useInterest(group.id)
   const post = interest.apply(data.post)
 
@@ -33,21 +44,15 @@ export function GroupPostPage() {
 
   return (
     <Page className="gap-4 pt-6">
-      <Link
-        to={listPath}
-        className="inline-flex min-h-control-md items-center gap-1.5 self-start text-sm font-bold text-text-secondary"
-      >
-        <ArrowLeftIcon aria-hidden="true" className="size-4" />
-        <span>공고 목록</span>
-      </Link>
+      <BackLink to={listPath}>공고 목록</BackLink>
 
       <div className="flex flex-wrap items-start gap-6">
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
           <DeadlineCard post={post} today={today} onToggleInterest={(on) => void interest.toggle(post.id, on)} />
-          <PostContent post={post} viewer={viewer} canTakeDown={canTakeDown} />
+          <PostContent post={post} viewer={viewer} canTakeDown={canTakeDown} onTakeDown={() => setTakingDown(post)} />
         </div>
         <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-6">
-          <InterestedMembers post={post} viewer={viewer} myDisclosure={group.myDisclosure} />
+          <InterestedMembers post={post} viewer={viewer} myDisclosure={group.myDisclosure} onChangeDisclosure={() => setDisclosureFor(group)} />
           <Comments
             comments={post.comments}
             viewer={viewer}
@@ -56,9 +61,47 @@ export function GroupPostPage() {
               await addComment(group.id, post.id, text)
               await revalidator.revalidate()
             }}
+            onEdit={setEditing}
+            onDelete={setDeleting}
           />
         </div>
       </div>
+
+      <TakedownDialog
+        target={takingDown}
+        onClose={() => setTakingDown(null)}
+        onConfirm={async () => {
+          await takeDownPost(group.id, post.id)
+          navigate(listPath)
+        }}
+      />
+      <CommentEditDialog
+        target={editing}
+        onClose={() => setEditing(null)}
+        onSave={async (text) => {
+          if (editing) await updateComment(group.id, post.id, editing.id, text)
+          await revalidator.revalidate()
+          setEditing(null)
+        }}
+      />
+      <CommentDeleteDialog
+        target={deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={async () => {
+          if (deleting) await deleteComment(group.id, post.id, deleting.id)
+          await revalidator.revalidate()
+          setDeleting(null)
+        }}
+      />
+      <DisclosureDialog
+        target={disclosureFor}
+        onClose={() => setDisclosureFor(null)}
+        onSave={async (disclosure) => {
+          await setMyDisclosure(group.id, disclosure)
+          await revalidator.revalidate()
+          setDisclosureFor(null)
+        }}
+      />
     </Page>
   )
 }
