@@ -97,6 +97,7 @@
     --color-warning: var(--warning);
     --color-danger: var(--danger);
     --color-success: var(--success);
+    --color-control-track: var(--control-track);
     --radius-control: var(--radius-control);
     --radius-panel: var(--radius-panel);
     --radius-surface: var(--radius-surface);

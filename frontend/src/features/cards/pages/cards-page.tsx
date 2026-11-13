@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
 import { ArrowRightIcon, CircleAlertIcon, FileUpIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -10,8 +10,9 @@ import { cn } from "@/shared/lib/utils"
 
 import { getCards } from "../api"
 import { CARD_STATUS_LABELS, countUnverified, filterCards, orderTags, type CardStatus } from "../card-rules"
+import { pressedOutline } from "../components/card-bits"
 import { CardItem } from "../components/card-item"
-import { cardFiltersSearch, useCardFilters } from "../use-card-filters"
+import { useCardFilters } from "../use-card-filters"
 
 export function cardsLoader() {
   return getCards()
@@ -37,15 +38,15 @@ export function CardsPage() {
           <p className="text-text-secondary">문항 유형별로 꺼내 쓸 경험을 카드 한 장씩 정리합니다.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* 직접 만들기, 자료로 카드 만들기: 아직 동작 없음 */}
+          {/* 직접 만들기: 아직 시안이 없어 동작 없음 */}
           <Button variant="outline">
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             직접 만들기
           </Button>
-          <Button>
+          <Link to={paths.cardSources()} className={buttonVariants()}>
             <FileUpIcon data-icon="inline-start" aria-hidden="true" />
             자료로 카드 만들기
-          </Button>
+          </Link>
         </div>
       </div>
 
@@ -61,11 +62,8 @@ export function CardsPage() {
           <p className="min-w-0 flex-[1_1_320px] text-sm">
             자료에서 뽑은 카드 {unverified}장이 확인을 기다립니다. 원문에 없는 숫자는 [확인 필요]로 표시해 두었습니다.
           </p>
-          {/* 카드 확인 화면이 생기기 전까지는 목록을 "확인 필요"로 거른다 */}
           <Link
-            to={{ pathname: paths.cards(), search: cardFiltersSearch({ status: "unverified", tag: "" }) }}
-            replace
-            preventScrollReset
+            to={paths.cardReview()}
             className="inline-flex min-h-control-sm flex-none items-center gap-1 text-sm font-bold whitespace-nowrap text-primary"
           >
             <span>카드 확인하기</span>
@@ -93,10 +91,7 @@ export function CardsPage() {
                   size="sm"
                   aria-pressed={on}
                   onClick={() => setFilters({ tag: on ? "" : tag.name })}
-                  className={cn(
-                    on &&
-                      "border-transparent bg-accent-subtle text-accent-strong hover:bg-accent-subtle hover:text-accent-strong dark:border-transparent dark:bg-accent-subtle dark:hover:bg-accent-subtle"
-                  )}
+                  className={cn(on && pressedOutline)}
                 >
                   {tag.name}
                 </Button>
