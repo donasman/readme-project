@@ -3,6 +3,7 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { subpageTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -10,7 +11,7 @@ import { cn } from "@/shared/lib/utils"
 
 import { deleteSource, getExtractionJob, getSources, startExtraction, uploadSource } from "../api"
 import { formatChars } from "../card-text"
-import { CardsSubpage, cardsTitle, ProgressBar, sectionTitle, StatBox } from "../components/card-bits"
+import { CardsSubpage, ProgressBar, sectionTitle, StatBox } from "../components/card-bits"
 import type { CardSource, ExtractionJob } from "../types"
 
 export function cardSourcesLoader() {
@@ -53,7 +54,7 @@ export function CardSourcesPage() {
   return (
     <CardsSubpage>
       <div className="flex flex-col gap-2">
-        <h1 className={cardsTitle}>자료로 카드 만들기</h1>
+        <h1 className={subpageTitle}>자료로 카드 만들기</h1>
         <p className="text-text-secondary">이력서나 포트폴리오를 올리면 경험을 카드로 뽑습니다. 뽑은 카드는 하나씩 확인한 뒤에 씁니다.</p>
       </div>
 

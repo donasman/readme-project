@@ -1,7 +1,7 @@
 import { useMemo } from "react"
-import { useLoaderData, type LoaderFunctionArgs } from "react-router"
+import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
@@ -62,11 +62,10 @@ export function GroupPostsPage() {
               className="pl-10 md:text-base"
             />
           </div>
-          {/* 공고 올리기: 아직 동작 없음 */}
-          <Button className="flex-none">
+          <Link to={paths.groupPostNew(group.id)} className={buttonVariants({ className: "flex-none" })}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             공고 올리기
-          </Button>
+          </Link>
         </div>
       </div>
 

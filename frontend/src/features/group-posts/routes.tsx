@@ -23,6 +23,15 @@ export const groupPostsRoutes: RouteObject[] = [
         },
       },
       {
+        // 공고 올리기. 읽은 결과는 칸 확인으로 넘긴다(주소에는 싣지 않는다)
+        path: "new",
+        lazy: async () => ({ Component: (await import("./pages/post-new-page")).PostNewPage }),
+      },
+      {
+        path: "new/check",
+        lazy: async () => ({ Component: (await import("./pages/post-check-page")).PostCheckPage }),
+      },
+      {
         path: ":postId",
         lazy: async () => {
           const { GroupPostPage, groupPostLoader } = await import("./pages/group-post-page")

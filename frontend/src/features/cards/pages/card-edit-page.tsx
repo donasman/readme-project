@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { subpageTitle } from "@/shared/components/heading"
+import { FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
 import { Panel } from "@/shared/components/panel"
 import { CircleAlertIcon, LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -12,7 +14,7 @@ import { cn, joinClasses } from "@/shared/lib/utils"
 import { getCard, suggestKeywords, updateCard } from "../api"
 import { STAR_PARTS } from "../card-rules"
 import { flaggedValues, SUMMARY_LIMIT } from "../card-text"
-import { CardsSubpage, cardsTitle, pressedOutline, sectionTitle } from "../components/card-bits"
+import { CardsSubpage, pressedOutline, sectionTitle } from "../components/card-bits"
 import { QUESTION_TYPES, type KeywordSuggestion, type QuestionType } from "../types"
 
 export function cardEditLoader({ params }: LoaderFunctionArgs) {
@@ -63,7 +65,7 @@ export function CardEditPage() {
     <CardsSubpage>
       <form onSubmit={save} className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-          <h1 className={cardsTitle}>카드 고치기</h1>
+          <h1 className={subpageTitle}>카드 고치기</h1>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" onClick={() => navigate(paths.card(card.id))}>
               취소
@@ -84,8 +86,8 @@ export function CardEditPage() {
                 <Input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} required className="md:text-base" />
               </Field>
               <div className="flex flex-wrap gap-4">
-                <Field id="edit-period" label="기간" hint="예: 2025-03 ~ 2025-05, 2026 ~ 현재" className="min-w-0 flex-[1_1_200px]">
-                  <Input id="edit-period" value={period} onChange={(e) => setPeriod(e.target.value)} aria-describedby="edit-period-hint" className="md:text-base" />
+                <Field id="edit-period" label="기간" note={<FieldHint id="edit-period">예: 2025-03 ~ 2025-05, 2026 ~ 현재</FieldHint>} className="min-w-0 flex-[1_1_200px]">
+                  <Input id="edit-period" value={period} onChange={(e) => setPeriod(e.target.value)} aria-describedby={noteId("edit-period")} className="md:text-base" />
                 </Field>
                 <Field id="edit-org" label="어디서" className="min-w-0 flex-[2_1_280px]">
                   <Input id="edit-org" value={org} onChange={(e) => setOrg(e.target.value)} className="md:text-base" />
@@ -222,32 +224,6 @@ export function CardEditPage() {
         </div>
       </form>
     </CardsSubpage>
-  )
-}
-
-/** 이름표와 입력 한 묶음. aside는 이름표 오른쪽(글자 수 등), hint는 입력 아래 작은 글자. */
-function Field({ id, label, hint, aside, className, children }: { id: string; label: string; hint?: string; aside?: ReactNode; className?: string; children: ReactNode }) {
-  return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      {aside ? (
-        <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor={id} className="text-sm font-medium">
-            {label}
-          </label>
-          {aside}
-        </div>
-      ) : (
-        <label htmlFor={id} className="text-sm font-medium">
-          {label}
-        </label>
-      )}
-      {children}
-      {hint && (
-        <p id={`${id}-hint`} className="text-label-sm text-text-secondary">
-          {hint}
-        </p>
-      )}
-    </div>
   )
 }
 

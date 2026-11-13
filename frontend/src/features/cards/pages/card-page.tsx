@@ -2,13 +2,14 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Chip } from "@/shared/components/chip"
+import { subpageTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, PencilIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { getCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
-import { CardStatusBadge, CardsSubpage, cardsTitle, FactList, FlaggedText, sectionTitle, subLabel } from "../components/card-bits"
+import { CardStatusBadge, CardsSubpage, FactList, FlaggedText, sectionTitle, subLabel } from "../components/card-bits"
 
 export function cardLoader({ params }: LoaderFunctionArgs) {
   return getCard(Number(params.cardId))
@@ -29,7 +30,7 @@ export function CardPage() {
               <CardStatusBadge verified={card.verified} />
               {card.period && <span className="text-label-sm whitespace-nowrap text-text-secondary">{card.period}</span>}
             </div>
-            <h1 className={cardsTitle}>{card.title}</h1>
+            <h1 className={subpageTitle}>{card.title}</h1>
             {where && <p className="text-text-secondary">{where}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">

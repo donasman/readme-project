@@ -5,11 +5,25 @@
 import type { Disclosure, Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
 import type { AcceptInviteResult, InviteView } from "@/features/auth/types"
-import type { Comment, CommentPart, GroupPost, GroupPostDetail, MyState } from "@/features/group-posts/types"
+import type {
+  Comment,
+  CommentPart,
+  Deadline,
+  DraftField,
+  DraftSection,
+  GroupPost,
+  GroupPostDetail,
+  MyState,
+  PostDraft,
+  PostUpload,
+  ReadPostResult,
+  UploadPostResult,
+} from "@/features/group-posts/types"
 import { addDays, daysBetween } from "@/shared/lib/date"
 import { NotFoundError } from "@/shared/lib/errors"
 
-import { createExampleGroups, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
+import { KEYWORDS } from "./example-cards"
+import { createExampleDraft, createExampleGroups, EXAMPLE_POST_URLS, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
 
 /**
  * 가짜 서버만의 보기 설정. 처음 여는 주소에 붙인다(새로 고치면 처음 상태로 돌아간다).
@@ -203,6 +217,111 @@ export function addComment(groupId: string, postId: string, text: string): Comme
   post.comments.push(comment)
   post.commentCount += 1
   return copy(comment)
+}
+
+// ---- 공고 읽어 오기와 올리기. 읽어 오기는 아직 설계에 없다(화면 API 대응 3.2의 7~9번). 여기서는 흉내만 낸다 ----
+
+const postUrls = new Map(Object.entries(EXAMPLE_POST_URLS))
+
+/** 이 그룹에 이미 있는 공고. 원문 주소나 회사·공고명이 같으면 같은 공고로 본다. */
+function findSamePost(group: ExampleGroup, by: { url?: string; company?: string; title?: string }) {
+  const id = by.url ? postUrls.get(by.url.trim()) : undefined
+  return group.posts.find((p) => p.id === id || (by.company !== undefined && p.company === by.company && p.title === by.title))
+}
+
+const SECTION_HEADINGS: Record<string, string> = { "주요 업무": "주요 업무", "담당 업무": "주요 업무", "자격 요건": "필수 요건", "필수 요건": "필수 요건", "우대 사항": "우대 사항" }
+
+/** 붙여넣은 본문을 칸으로 나눈다: 첫 줄의 [회사] 공고명, 날짜나 상시, 묶음 머리 아래 줄들, 사전에 있는 키워드. */
+function parsePostText(text: string, sourceUrl: string): PostDraft {
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean)
+  const first = lines[0] ?? ""
+  const head = first.match(/^\[(.+?)\]\s*(.+?)(?:\s*채용)?$/)
+  const date = text.match(/(\d{4})[-.](\d{1,2})[-.](\d{1,2})/)
+  const deadline: Deadline = date
+    ? { kind: "date", date: `${date[1]}-${date[2].padStart(2, "0")}-${date[3].padStart(2, "0")}` }
+    : /상시|수시/.test(text)
+      ? { kind: "always" }
+      : { kind: "unknown" }
+  const sections: DraftSection[] = []
+  const paragraphs: PostDraft["source"]["paragraphs"] = []
+  for (const line of lines.slice(1)) {
+    const title = SECTION_HEADINGS[line]
+    if (title) {
+      sections.push({ title, items: [], from: line })
+      paragraphs.push({ heading: line, text: "" })
+    } else {
+      sections.at(-1)?.items.push(line)
+      const last = paragraphs.at(-1)
+      if (last?.heading && !last.text) last.text = line
+      else paragraphs.push({ heading: null, text: line })
+    }
+  }
+  const unread: DraftField[] = []
+  if (!head) unread.push("company", "title")
+  if (deadline.kind === "unknown") unread.push("deadline")
+  if (!sourceUrl.trim()) unread.push("sourceUrl")
+  return {
+    company: head?.[1] ?? "",
+    title: head?.[2] ?? "",
+    deadline,
+    sourceUrl: sourceUrl.trim(),
+    applyAt: "",
+    sections,
+    keywords: KEYWORDS.filter((k) => text.toLowerCase().includes(k.toLowerCase())),
+    evidence: head ? { company: `첫 줄 "${first}"`, title: "첫 줄" } : {},
+    unread,
+    source: { title: first, paragraphs, note: null },
+  }
+}
+
+/** 공고 읽어 오기. 가짜 서버: 주소에 login이나 fail이 들어가면 읽지 못한 것으로, 그 밖의 링크와 파일은 예시 공고로 읽는다. */
+export function readPosting(groupId: string, input: { kind: "url"; url: string } | { kind: "text"; text: string; sourceUrl: string } | { kind: "file"; name: string }): ReadPostResult {
+  const group = rawGroup(groupId)
+  const draft =
+    input.kind === "url"
+      ? /login|fail/i.test(input.url)
+        ? null
+        : createExampleDraft(input.url.trim())
+      : input.kind === "text"
+        ? parsePostText(input.text, input.sourceUrl)
+        : { ...createExampleDraft(""), unread: ["deadline", "sourceUrl"] as DraftField[] }
+  if (!draft) return { status: "failed" }
+  const same = findSamePost(group, { url: input.kind === "url" ? input.url : draft.sourceUrl })
+  if (same) {
+    const { id, company, title, postedBy, postedAt } = same
+    return { status: "duplicate", post: copy({ id, company, title, postedBy, postedAt }) }
+  }
+  return { status: "ok", draft }
+}
+
+let nextPostId = 1
+
+/** 그룹에 공고 올리기(POST /api/groups/{groupId}/posts). 같은 공고가 있으면 409 ALREADY_IN_GROUP. */
+export function uploadPost(groupId: string, input: PostUpload): UploadPostResult {
+  const group = rawGroup(groupId)
+  const same = findSamePost(group, { url: input.sourceUrl ?? undefined, company: input.company, title: input.title })
+  if (same) return { ok: false, error: "ALREADY_IN_GROUP", postId: same.id }
+  const post: GroupPostDetail = {
+    id: `${groupId}-new${nextPostId++}`,
+    groupId,
+    company: input.company,
+    title: input.title,
+    deadline: input.deadline,
+    postedBy: copy(VIEWER),
+    postedAt: today(),
+    interests: [],
+    me: { interested: false, status: null },
+    commentCount: 0,
+    deadlineName: null,
+    applyAt: input.applyAt,
+    sourceUrl: input.sourceUrl,
+    sections: copy(input.sections),
+    keywords: [...input.keywords],
+    comments: [],
+  }
+  group.posts.unshift(post)
+  if (input.sourceUrl) postUrls.set(input.sourceUrl, post.id)
+  return { ok: true, postId: post.id }
 }
 
 // ---- 계정(가입, 인증 메일, 비밀번호 재설정). 서버는 메일을 보내고, 화면은 결과만 받는다 ----

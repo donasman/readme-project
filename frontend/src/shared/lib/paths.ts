@@ -15,6 +15,9 @@ export const paths = {
   group: (groupId: string) => `/groups/${seg(groupId)}`,
   groupPosts: (groupId: string) => `/groups/${seg(groupId)}/posts`,
   groupPost: (groupId: string, postId: string) => `/groups/${seg(groupId)}/posts/${seg(postId)}`,
+  /** 공고 올리기와 그 다음 칸 확인 */
+  groupPostNew: (groupId: string) => `/groups/${seg(groupId)}/posts/new`,
+  groupPostCheck: (groupId: string) => `/groups/${seg(groupId)}/posts/new/check`,
   groupMembers: (groupId: string) => `/groups/${seg(groupId)}/members`,
   /** 초대 링크가 여는 주소 */
   invite: (token: string) => `/invite/${seg(token)}`,

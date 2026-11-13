@@ -3,6 +3,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Chip } from "@/shared/components/chip"
+import { subpageTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -10,7 +11,7 @@ import { paths } from "@/shared/lib/paths"
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
 import { dropFlaggedSentences, flaggedValues, markUsedNumbers } from "../card-text"
-import { CardsSubpage, cardsTitle, FactList, FlaggedText, ProgressBar, sectionTitle, StatBox, subLabel } from "../components/card-bits"
+import { CardsSubpage, FactList, FlaggedText, ProgressBar, sectionTitle, StatBox, subLabel } from "../components/card-bits"
 import type { CardDetail } from "../types"
 
 /** 확인을 기다리는 카드를 읽는다. ?card=id 가 있으면 그 카드부터 본다. */
@@ -52,7 +53,7 @@ export function CardReviewPage() {
             <CheckIcon className="size-6" />
           </span>
           <div className="flex flex-col gap-2">
-            <h1 className={cardsTitle}>{total ? `${total}장을 모두 봤습니다` : "확인할 카드가 없습니다"}</h1>
+            <h1 className={subpageTitle}>{total ? `${total}장을 모두 봤습니다` : "확인할 카드가 없습니다"}</h1>
             <p className="text-text-secondary">확인한 카드는 공고와 맞춰 볼 때 쓰입니다.</p>
           </div>
           {total > 0 && (
@@ -89,7 +90,7 @@ export function CardReviewPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
           <div className="flex min-w-0 flex-col gap-2">
-            <h1 className={cardsTitle}>카드 확인</h1>
+            <h1 className={subpageTitle}>카드 확인</h1>
             <p className="text-text-secondary">
               {card.sourceName ? `${card.sourceName}에서 뽑은 카드입니다.` : "자료에서 뽑은 카드입니다."} 내 경험과 맞는지 한 장씩 봅니다.
             </p>
