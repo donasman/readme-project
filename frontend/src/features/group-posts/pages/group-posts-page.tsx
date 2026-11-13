@@ -1,18 +1,19 @@
 import { useMemo } from "react"
 import { useLoaderData, type LoaderFunctionArgs } from "react-router"
 
-import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
-import { getGroupPosts } from "@/features/group-posts/api"
-import { ListToolbar } from "@/features/group-posts/components/list-toolbar"
-import { POST_GRID, PostRow } from "@/features/group-posts/components/post-row"
-import { buildPostList } from "@/features/group-posts/list-rules"
-import { useInterest } from "@/features/group-posts/use-interest"
-import { useListFilters } from "@/features/group-posts/use-list-filters"
+import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+
+import { getGroupPosts } from "../api"
+import { ListToolbar } from "../components/list-toolbar"
+import { POST_GRID, PostRow } from "../components/post-row"
+import { buildPostList } from "../list-rules"
+import { useInterest } from "../use-interest"
+import { useListFilters } from "../use-list-filters"
 
 export function groupPostsLoader({ params }: LoaderFunctionArgs) {
   return getGroupPosts(params.groupId ?? "")

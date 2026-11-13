@@ -1,12 +1,12 @@
 import { Link } from "react-router"
 
-import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
-import { deadlineText } from "@/features/group-posts/deadline"
-import { formatMonthDay } from "@/shared/lib/date"
-import type { PostRow as Row } from "@/features/group-posts/list-rules"
 import type { Viewer } from "@/domain/session/types"
+import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
+import { formatMonthDay } from "@/shared/lib/date"
 
+import { deadlineText } from "../deadline"
+import type { PostRow as Row } from "../list-rules"
 import { MeChip, MemberChip, NewBadge, StatusPill } from "./chips"
 
 /** 칸 6개: 마감, 공고, 관심 멤버, 내 상태, 댓글, 올린 사람. 768px 미만에서는 카드가 된다. */

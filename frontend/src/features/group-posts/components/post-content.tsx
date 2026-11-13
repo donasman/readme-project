@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button"
+import type { Viewer } from "@/domain/session/types"
 import { formatMonthDay } from "@/shared/lib/date"
 import { subjectParticle } from "@/shared/lib/korean"
-import type { Viewer } from "@/domain/session/types"
-import type { GroupPostDetail } from "@/features/group-posts/types"
+
+import type { GroupPostDetail } from "../types"
 
 interface PostContentProps {
   post: GroupPostDetail

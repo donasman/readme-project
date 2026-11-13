@@ -1,9 +1,9 @@
-import { CheckIcon, ExternalLinkIcon } from "@/shared/icons"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
-import { deadlineText } from "@/features/group-posts/deadline"
-import type { GroupPostDetail } from "@/features/group-posts/types"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
+import { CheckIcon, ExternalLinkIcon } from "@/shared/icons"
 
+import { deadlineText } from "../deadline"
+import type { GroupPostDetail } from "../types"
 import { StatusPill } from "./chips"
 
 interface DeadlineCardProps {

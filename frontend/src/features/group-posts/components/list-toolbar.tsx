@@ -1,5 +1,4 @@
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
-import { CheckIcon, ChevronDownIcon } from "@/shared/icons"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -10,8 +9,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SORT_LABELS, type ListFilters, type Sort, type Tab } from "@/features/group-posts/list-rules"
 import type { Member } from "@/domain/group/types"
+import { CheckIcon, ChevronDownIcon } from "@/shared/icons"
+
+import { SORT_LABELS, type ListFilters, type Sort, type Tab } from "../list-rules"
 
 interface ListToolbarProps {
   filters: ListFilters

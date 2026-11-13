@@ -1,10 +1,10 @@
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import type { Disclosure } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
-import type { GroupPostDetail } from "@/features/group-posts/types"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { cn } from "@/shared/lib/utils"
 
+import type { GroupPostDetail } from "../types"
 import { AppliedBadge } from "./chips"
 
 interface InterestedMembersProps {

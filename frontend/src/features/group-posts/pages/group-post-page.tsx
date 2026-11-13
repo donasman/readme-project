@@ -1,15 +1,16 @@
 import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
-import { ArrowLeftIcon } from "@/shared/icons"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
-import { addComment, getGroupPost } from "@/features/group-posts/api"
-import { Comments } from "@/features/group-posts/components/comments"
-import { DeadlineCard } from "@/features/group-posts/components/deadline-card"
-import { InterestedMembers } from "@/features/group-posts/components/interested-members"
-import { PostContent } from "@/features/group-posts/components/post-content"
-import { useInterest } from "@/features/group-posts/use-interest"
+import { ArrowLeftIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+
+import { addComment, getGroupPost } from "../api"
+import { Comments } from "../components/comments"
+import { DeadlineCard } from "../components/deadline-card"
+import { InterestedMembers } from "../components/interested-members"
+import { PostContent } from "../components/post-content"
+import { useInterest } from "../use-interest"
 
 export function groupPostLoader({ params }: LoaderFunctionArgs) {
   return getGroupPost(params.groupId ?? "", params.postId ?? "")

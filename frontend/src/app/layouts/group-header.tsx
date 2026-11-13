@@ -1,7 +1,5 @@
-import { Link, useNavigate } from "react-router"
+import { Link, useMatches, useNavigate } from "react-router"
 
-import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,19 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Group } from "@/domain/group/types"
-import type { Viewer } from "@/domain/session/types"
+import { sectionOf } from "@/domain/group/sections"
+import { useGroup } from "@/domain/group/use-group"
+import { useViewer } from "@/domain/session/use-viewer"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
+import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn } from "@/shared/lib/utils"
-
-export type GroupSection = "posts" | "members"
-
-interface GroupHeaderProps {
-  viewer: Viewer
-  groups: Group[]
-  group: Group
-  section: GroupSection
-}
 
 const navLink =
   "inline-flex min-h-control-sm items-center rounded-full px-4 text-sm leading-body font-bold whitespace-nowrap"
@@ -32,8 +24,14 @@ const navLink =
 /**
  * 그룹 화면들의 머리. Arc app-header 가 스크롤됐을 때의 값(바깥 여백 12px 16px, radius-panel, shadow-floating)으로
  * 그렸다. Arc 헤더는 브랜드가 <a> 안이라 그룹 전환 버튼을 넣을 수 없어 따로 만들었다.
+ * 지금 메뉴는 아래 라우트의 handle.section으로 정한다(기능의 routes.tsx가 붙인다).
  */
-export function GroupHeader({ viewer, groups, group, section }: GroupHeaderProps) {
+export function GroupHeader() {
+  const viewer = useViewer()
+  const { groups, group } = useGroup()
+  const section = useMatches()
+    .map((match) => sectionOf(match.handle))
+    .findLast((s) => s !== undefined)
   const navigate = useNavigate()
   const listPath = paths.groupPosts(group.id)
 

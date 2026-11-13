@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react"
 
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { formatCommentTime } from "@/shared/lib/date"
 import type { Viewer } from "@/domain/session/types"
-import type { Comment } from "@/features/group-posts/types"
+import { PlaceholderLink } from "@/shared/components/placeholder-link"
+import { formatCommentTime } from "@/shared/lib/date"
+
+import type { Comment } from "../types"
 
 interface CommentsProps {
   comments: Comment[]
