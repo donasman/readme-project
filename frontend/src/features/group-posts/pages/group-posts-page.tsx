@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react"
-import { Link, useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router"
+import { Link, useLoaderData, useLocation, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useGroup } from "@/domain/group/use-group"
+import type { FillDeadlineState } from "@/domain/posting/types"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
@@ -32,7 +33,16 @@ export function GroupPostsPage() {
   const [filters, setFilters] = useListFilters()
   const interest = useInterest(group.id)
   const revalidator = useRevalidator()
-  const [fillFor, setFillFor] = useState<GroupPost | null>(null)
+  const location = useLocation()
+  const navigate = useNavigate()
+  // 홈의 "마감일을 못 읽었습니다"로 오면 그 공고의 마감일 넣기 창을 바로 연다
+  const [fillFor, setFillFor] = useState<GroupPost | null>(
+    () => posts.find((p) => p.id === (location.state as FillDeadlineState | null)?.fillDeadline && p.deadline.kind === "unknown") ?? null
+  )
+  const closeFill = () => {
+    setFillFor(null)
+    if (location.state) navigate(location.pathname + location.search, { replace: true, state: null, preventScrollReset: true })
+  }
 
   const list = useMemo(
     () => buildPostList(posts.map(interest.apply), filters, today),
@@ -127,11 +137,11 @@ export function GroupPostsPage() {
 
       <DeadlineDialog
         target={fillFor}
-        onClose={() => setFillFor(null)}
+        onClose={closeFill}
         onSave={async (deadline) => {
           if (fillFor) await setDeadline(group.id, fillFor.id, deadline)
           await revalidator.revalidate()
-          setFillFor(null)
+          closeFill()
         }}
       />
     </Page>

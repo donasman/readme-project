@@ -4,13 +4,12 @@ import { Link, useLoaderData } from "react-router"
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
+import { ToggleButton } from "@/shared/components/toggle-button"
 import { ArrowRightIcon, CircleAlertIcon, FileUpIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn } from "@/shared/lib/utils"
 
 import { getCards } from "../api"
 import { CARD_STATUS_LABELS, countUnverified, filterCards, orderTags, type CardStatus } from "../card-rules"
-import { pressedOutline } from "../components/card-bits"
 import { CardItem } from "../components/card-item"
 import { useCardFilters } from "../use-card-filters"
 
@@ -85,16 +84,9 @@ export function CardsPage() {
             {orderedTags.map((tag) => {
               const on = filters.tag === tag.name
               return (
-                <Button
-                  key={tag.name}
-                  variant="outline"
-                  size="sm"
-                  aria-pressed={on}
-                  onClick={() => setFilters({ tag: on ? "" : tag.name })}
-                  className={cn(on && pressedOutline)}
-                >
+                <ToggleButton key={tag.name} pressed={on} onClick={() => setFilters({ tag: on ? "" : tag.name })}>
                   {tag.name}
-                </Button>
+                </ToggleButton>
               )
             })}
           </div>

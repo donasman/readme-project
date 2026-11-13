@@ -2,12 +2,9 @@
 // 날짜는 모두 한국 시간 기준 "YYYY-MM-DD"(댓글만 시각까지 ISO 8601).
 // 그룹과 멤버는 domain/group, 보는 사람은 domain/session에 있다.
 import type { Member } from "@/domain/group/types"
+import type { Deadline, PostSection } from "@/domain/posting/types"
 
-/** 마감. 날짜를 못 읽었으면 unknown, 상시·수시 채용이면 always. */
-export type Deadline =
-  | { kind: "date"; date: string }
-  | { kind: "always" }
-  | { kind: "unknown" }
+export type { Deadline, PostSection }
 
 /**
  * 그룹에 보이는 다른 멤버의 관심. 지원 정보는 그 멤버가 이 그룹에 정한 공개 범위만큼만 들어 있다
@@ -52,12 +49,6 @@ export interface Comment {
   author: Member
   createdAt: string
   body: CommentPart[]
-}
-
-/** 공고 내용의 한 묶음(주요 업무, 필수 요건 …). */
-export interface PostSection {
-  title: string
-  items: string[]
 }
 
 /** 그룹 공고 상세. 목록의 한 줄에 공고 내용과 댓글이 더해진다. */

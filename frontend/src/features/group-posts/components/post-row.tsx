@@ -5,7 +5,7 @@ import type { Viewer } from "@/domain/session/types"
 import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
 import { formatMonthDay } from "@/shared/lib/date"
 
-import { deadlineText } from "../deadline"
+import { deadlineText } from "@/domain/posting/deadline"
 import type { PostRow as Row } from "../list-rules"
 import { MeChip, MemberChip, NewBadge, StatusPill } from "./chips"
 

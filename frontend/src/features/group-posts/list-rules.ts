@@ -3,7 +3,7 @@
 import type { Member } from "@/domain/group/types"
 import { daysBetween } from "@/shared/lib/date"
 
-import { daysLeft, isClosed, isNewPost } from "./deadline"
+import { daysLeft, isClosed, isNewPost } from "@/domain/posting/deadline"
 import { isInterestedOrApplied } from "./my-state"
 import type { GroupPost } from "./types"
 

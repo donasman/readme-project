@@ -3,7 +3,7 @@ import { Heading } from "@/shared/components/heading"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { CheckIcon, ExternalLinkIcon } from "@/shared/icons"
 
-import { deadlineText } from "../deadline"
+import { deadlineText } from "@/domain/posting/deadline"
 import type { GroupPostDetail } from "../types"
 import { StatusPill } from "./chips"
 

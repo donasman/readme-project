@@ -4,7 +4,14 @@
 const seg = encodeURIComponent
 
 export const paths = {
+  /** 홈(그룹이 없으면 내 그룹으로 보낸다) */
   home: () => "/",
+  myPosts: () => "/my-posts",
+  myPost: (postingId: string) => `/my-posts/${seg(postingId)}`,
+  /** 지원 현황. postingId를 주면 그 공고의 상태 바꾸기를 연다 */
+  board: (postingId?: string) => (postingId === undefined ? "/board" : `/board?posting=${seg(postingId)}`),
+  calendar: () => "/calendar",
+  mail: () => "/mail",
   login: () => "/login",
   signup: () => "/signup",
   signupSent: () => "/signup/sent",
