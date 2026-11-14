@@ -25,7 +25,7 @@ import { NotFoundError } from "@/shared/lib/errors"
 
 import { KEYWORDS } from "./example-cards"
 import { createExampleDraft, createExampleGroups, EXAMPLE_POST_URLS, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
-import { statusOf } from "./user-postings"
+import { keepSnapshot, statusOf } from "./user-postings"
 
 /**
  * 가짜 서버만의 보기 설정. 처음 여는 주소에 붙인다(새로 고치면 처음 상태로 돌아간다).
@@ -79,6 +79,8 @@ export function signOut(): void {
 /** 표시 이름 바꾸기. 그룹 멤버에게 보이는 이름이다. */
 export function renameViewer(name: string): Viewer {
   VIEWER.name = name
+  // 멤버 목록은 그룹마다 복사본이라 함께 고친다
+  for (const g of data()) for (const m of g.members) if (m.id === VIEWER.id) m.name = name
   return structuredClone(VIEWER)
 }
 
@@ -157,6 +159,8 @@ export function setMyDisclosure(groupId: string, disclosure: Disclosure): void {
 export function leaveGroup(groupId: string): void {
   const group = rawGroup(groupId)
   if (group.leaderId === VIEWER.id) throw new Error("그룹장은 나갈 수 없습니다.")
+  // 나가면 이 그룹의 공고를 읽지 못하므로 내 공고에 마지막 값을 남긴다
+  for (const post of group.posts) keepSnapshot(groupId, post)
   group.members = group.members.filter((m) => m.id !== VIEWER.id)
   for (const post of group.posts) post.me.interested = false
 }
@@ -214,6 +218,7 @@ export function setInterest(groupId: string, postId: string, interested: boolean
   return myState(post)
 }
 
+// shortcut: 링크를 빈칸까지로 잘라 바로 뒤에 붙은 조사나 괄호("…/1에서", "…/x)")도 주소에 들어간다, 서버가 댓글을 글자와 링크로 나누므로 가짜 서버를 지울 때 함께 지운다
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g
 
 /** 댓글 본문을 글자와 링크로 나눈다. 댓글은 글자와 링크만 받는다. */
@@ -277,6 +282,7 @@ export function takeDownPost(groupId: string, postId: string): void {
   const group = rawGroup(groupId)
   const post = rawPost(groupId, postId)
   if (post.postedBy.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("올린 사람과 그룹장만 내릴 수 있습니다.")
+  keepSnapshot(groupId, post)
   group.posts = group.posts.filter((p) => p.id !== postId)
   takenDown.set(groupId, [...(takenDown.get(groupId) ?? []), post])
 }
@@ -298,6 +304,7 @@ function parsePostText(text: string, sourceUrl: string): PostDraft {
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean)
   const first = lines[0] ?? ""
   const head = first.match(/^\[(.+?)\]\s*(.+?)(?:\s*채용)?$/)
+  // shortcut: 본문의 첫 날짜를 마감일로 본다("접수기간 11.01 ~ 11.30"이면 시작일), 서버의 읽어 오기가 생기면 지운다(화면 API 대응 3.2의 7~9번)
   const date = text.match(/(\d{4})[-.](\d{1,2})[-.](\d{1,2})/)
   const deadline: Deadline = date
     ? { kind: "date", date: `${date[1]}-${date[2].padStart(2, "0")}-${date[3].padStart(2, "0")}` }
