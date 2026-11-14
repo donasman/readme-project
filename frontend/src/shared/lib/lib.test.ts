@@ -6,6 +6,7 @@ import { NotFoundError } from "./errors"
 import { objectParticle, subjectParticle } from "./korean"
 import { paths } from "./paths"
 import { revalidateOnParams } from "./router"
+import { isHttpUrl } from "./utils"
 
 describe("date", () => {
   it("daysBetween: 달과 해를 넘어도 날 수", () => {
@@ -92,5 +93,13 @@ describe("revalidateOnParams", () => {
     expect(group(args("/groups/be/posts?q=a", "/groups/be/posts?q=a"))).toBe(true)
     expect(group(args("/groups/be/posts?q=a", "/groups/be/posts?q=a", { defaultShouldRevalidate: false }))).toBe(false)
     expect(group(args("/groups/be/posts", "/groups/be/posts/be1", { formMethod: "POST" }))).toBe(true)
+  })
+})
+
+describe("isHttpUrl", () => {
+  it("http·https 주소만 받는다", () => {
+    expect(isHttpUrl("https://careers.example.com/jobs/7")).toBe(true)
+    expect(isHttpUrl("careers.example.com/jobs/7")).toBe(false)
+    expect(isHttpUrl("javascript:alert(1)")).toBe(false)
   })
 })
