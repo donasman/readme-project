@@ -2,5 +2,9 @@
 # Caddy 가 HTTPS 를 받아 같은 서버의 Spring Boot(8080)로 넘긴다.
 api.example.com {
 	encode gzip
+	# 자료 파일은 20MB 까지다(서버가 SOURCE_TOO_LARGE 로 답한다). 그보다 훨씬 큰 요청은 여기서 끊는다(413, 본문 없음).
+	request_body {
+		max_size 25MB
+	}
 	reverse_proxy 127.0.0.1:8080
 }

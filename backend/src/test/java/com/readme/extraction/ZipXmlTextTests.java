@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -123,6 +124,28 @@ class ZipXmlTextTests {
 
 		assertCode(() -> SourceFiles.read("lol.docx", zip(Map.of("word/document.xml", document))),
 				ExtractionErrorCode.SOURCE_UNREADABLE);
+	}
+
+	@Test
+	void deeplyNestedElementsAreRefused() {
+		// 요소를 겹칠 때마다 파서가 이름을 쌓아 둔다. 깊이를 막지 않으면 작은 파일로 메모리를 채운다.
+		int depth = ZipXmlText.MAX_ELEMENT_DEPTH + 1;
+		String document = "<w:document>" + "<a>".repeat(depth) + "</a>".repeat(depth) + "</w:document>";
+
+		assertCode(() -> SourceFiles.read("deep.docx", zip(Map.of("word/document.xml", document))),
+				ExtractionErrorCode.SOURCE_UNREADABLE);
+	}
+
+	@Test
+	void aZipWithEntryNamesFromKoreanWindowsIsNotADocument() throws IOException {
+		// 한국어 윈도우에서 만든 zip 은 항목 이름이 CP949 다. Office·한글 문서의 항목 이름은 늘 UTF-8 이다.
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ZipOutputStream zip = new ZipOutputStream(bytes, Charset.forName("x-windows-949"))) {
+			zip.putNextEntry(new ZipEntry("이력서.txt"));
+			zip.write("글".getBytes(StandardCharsets.UTF_8));
+		}
+
+		assertCode(() -> SourceFiles.read("자료.zip", bytes.toByteArray()), ExtractionErrorCode.SOURCE_UNSUPPORTED_TYPE);
 	}
 
 	// ── 압축 폭탄 ──────────────────────────────────────────────────────

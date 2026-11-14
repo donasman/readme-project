@@ -2,19 +2,16 @@ package com.readme.extraction;
 
 import static com.readme.extraction.HwpTextTests.assertCode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.zip.DeflaterOutputStream;
+import java.time.Duration;
 
 import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -24,6 +21,7 @@ import org.junit.jupiter.api.Test;
 /**
  * PDF 의 글자 층. 시험 파일은 PDFBox 로 만든다(글꼴은 PDF 기본 글꼴이라 영문만 쓴다).
  * jobfit tests/test_exp_extract.py 의 test_read_any_formats 에서 PDF 부분을 옮겼다.
+ * SourceFiles.read 를 부르는 것은 다른 프로세스(IsolatedReader)를 거친다. 압축 폭탄은 IsolatedReaderTests 가 본다.
  */
 class PdfTextTests {
 
@@ -80,39 +78,15 @@ class PdfTextTests {
 	}
 
 	@Test
-	void aContentStreamThatInflatesPastTheLimitIsRefusedBeforeTheTextIsRead() throws IOException {
-		// 쪽의 내용 스트림에 풀면 MAX_INFLATED_BYTES 를 넘는 공백을 압축해 넣는다(압축하면 100KB 남짓)
-		ByteArrayOutputStream deflated = new ByteArrayOutputStream();
-		try (DeflaterOutputStream out = new DeflaterOutputStream(deflated)) {
-			byte[] spaces = new byte[1 << 20];
-			Arrays.fill(spaces, (byte) ' ');
-			for (long written = 0; written <= SourceFiles.MAX_INFLATED_BYTES; written += spaces.length) {
-				out.write(spaces);
-			}
-		}
-		byte[] bomb;
-		try (PDDocument document = new PDDocument()) {
-			PDPage page = new PDPage();
-			document.addPage(page);
-			COSStream contents = document.getDocument().createCOSStream();
-			try (OutputStream raw = contents.createRawOutputStream()) {
-				raw.write(deflated.toByteArray());
-			}
-			contents.setItem(COSName.FILTER, COSName.FLATE_DECODE);
-			page.setContents(new PDStream(contents));
-			bomb = save(document);
+	void pagesAreCountedFromThePageTreeNotFromCount() throws IOException {
+		// 쪽 트리의 /Count 는 믿지 않는다. 쪽이 하나인데 200만 쪽이라고 적은 PDF 도 한 쪽만 읽고, 쪽당 40자 규칙도 실제 쪽으로 센다.
+		byte[] lying;
+		try (PDDocument document = document("Order API p95 1.8s to 0.4s, queries 21 to 1 per order")) {
+			document.getDocumentCatalog().getPages().getCOSObject().setInt(COSName.COUNT, 2_000_000);
+			lying = save(document);
 		}
 
-		assertThat(bomb.length).isLessThan((int) SourceInput.MAX_BYTES);
-		assertCode(() -> SourceFiles.read("bomb.pdf", bomb), ExtractionErrorCode.SOURCE_TOO_LARGE);
-	}
-
-	@Test
-	void aPageWithTooManyGlyphsIsStopped() throws IOException {
-		// 글자마다 위치 정보가 메모리에 쌓이므로 한 쪽의 글자 수를 센다
-		byte[] crowded = pdf("A".repeat(PdfText.MAX_GLYPHS_PER_PAGE + 1));
-
-		assertCode(() -> PdfText.read(crowded), ExtractionErrorCode.SOURCE_TOO_LARGE);
+		assertThat(assertTimeoutPreemptively(Duration.ofSeconds(20), () -> PdfText.read(lying))).contains("21 to 1");
 	}
 
 	/** 쪽마다 한 줄씩. 빈 글이면 글자가 없는 쪽이다. */

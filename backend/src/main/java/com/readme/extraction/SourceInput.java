@@ -1,12 +1,9 @@
 package com.readme.extraction;
 
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.Locale;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-
-import com.readme.common.error.ApiException;
 
 /**
  * 저장할 자료 한 건: 읽어서 다듬은 글과 파일 정보. 파일과 붙여넣은 글이 여기서 같은 꼴이 된다.
@@ -36,11 +33,8 @@ record SourceInput(Kind kind, String fileName, String contentType, Long byteSize
 
 	}
 
-	/** 올린 파일을 읽는다. 크기를 넘거나, 받지 않는 형식이거나, 읽을 글이 없으면 ApiException. */
+	/** 올린 파일을 읽는다(크기는 컨트롤러가 먼저 본다). 받지 않는 형식이거나 읽을 글이 없으면 ApiException. */
 	static SourceInput file(String originalName, byte[] bytes) {
-		if (bytes.length > MAX_BYTES) {
-			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
-		}
 		String fileName = cleanName(originalName);
 		SourceFiles.Read read = SourceFiles.read(fileName, bytes);
 		String text = SourceText.normalize(read.text());
@@ -48,10 +42,10 @@ record SourceInput(Kind kind, String fileName, String contentType, Long byteSize
 		return new SourceInput(Kind.FILE, fileName, read.format().contentType, (long) bytes.length, text);
 	}
 
-	/** 붙여넣은 글. 파일과 같은 규칙으로 다듬고, 같은 크기(UTF-8 로 20MB)까지 받는다. */
+	/** 붙여넣은 글. 파일과 같은 규칙으로 다듬는다. 다듬기 전에 READ_LIMIT 를 넘으면 사본을 만들기 전에 거부한다. */
 	static SourceInput text(String pasted) {
-		if (pasted.length() > MAX_BYTES || pasted.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) {
-			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
+		if (pasted.length() > SourceText.READ_LIMIT) {
+			throw SourceText.tooLong();
 		}
 		String text = SourceText.normalize(pasted);
 		SourceText.check(text);

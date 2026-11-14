@@ -2,6 +2,7 @@ package com.readme.extraction;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import jakarta.validation.Valid;
 
@@ -36,6 +37,14 @@ import com.readme.extraction.CardSourceRequests.UploadResponse;
 @RestController
 class CardSourceController {
 
+	/**
+	 * 동시에 읽는 파일 수. 파일 하나를 읽는 데 메모리가 수십~수백 MB 든다(PDF·HWP 는 256MB 힙의 다른 프로세스).
+	 * 기다리는 파일은 Tomcat 의 임시 파일에 있다.
+	 */
+	private static final int CONCURRENT_READS = 2;
+
+	private final Semaphore reading = new Semaphore(CONCURRENT_READS);
+
 	private final CardSourceQueries queries;
 
 	private final CardSourceService service;
@@ -57,7 +66,15 @@ class CardSourceController {
 		if (file.getSize() > SourceInput.MAX_BYTES) {
 			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
 		}
-		return saved(SourceInput.file(file.getOriginalFilename(), file.getBytes()), user);
+		SourceInput input;
+		this.reading.acquireUninterruptibly();
+		try {
+			input = SourceInput.file(file.getOriginalFilename(), file.getBytes());
+		}
+		finally {
+			this.reading.release();
+		}
+		return saved(input, user);
 	}
 
 	@PostMapping(path = "/api/card-sources", consumes = MediaType.APPLICATION_JSON_VALUE)

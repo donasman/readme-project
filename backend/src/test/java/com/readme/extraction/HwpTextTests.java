@@ -3,18 +3,12 @@ package com.readme.extraction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
 
 import kr.dogfoot.hwplib.object.HWPFile;
 import kr.dogfoot.hwplib.object.bodytext.paragraph.Paragraph;
-import kr.dogfoot.hwplib.org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import kr.dogfoot.hwplib.tool.blankfilemaker.BlankFileMaker;
 import kr.dogfoot.hwplib.writer.HWPWriter;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -23,7 +17,8 @@ import org.junit.jupiter.api.Test;
 import com.readme.common.error.ApiException;
 
 /**
- * 옛 한글 파일(HWP). 시험 파일은 hwplib 으로 만든다.
+ * 옛 한글 파일(HWP). 시험 파일은 hwplib 으로 만든다. SourceFiles.read 를 부르는 것은 다른 프로세스(IsolatedReader)를 거친다.
+ * 큰 파일이 메모리를 다 쓰는 경우는 IsolatedReaderTests 가 본다.
  */
 class HwpTextTests {
 
@@ -62,39 +57,6 @@ class HwpTextTests {
 		byte[] broken = Arrays.copyOf(hwp("한글 파일"), 600);
 
 		assertCode(() -> SourceFiles.read("broken.hwp", broken), ExtractionErrorCode.SOURCE_UNREADABLE);
-	}
-
-	@Test
-	void aCompressedStreamThatInflatesPastTheLimitIsRefusedBeforeHwplibReadsIt() throws Exception {
-		// FileHeader 만 제대로 두고, DocInfo 에 풀면 MAX_INFLATED_BYTES 를 넘는 0 을 압축해 넣는다(압축하면 100KB 남짓).
-		POIFSFileSystem fs = new POIFSFileSystem();
-		byte[] header = new byte[256];
-		System.arraycopy("HWP Document File".getBytes(StandardCharsets.US_ASCII), 0, header, 0, 17);
-		header[36] = 0b001; // 압축
-		fs.createDocument(new ByteArrayInputStream(header), "FileHeader");
-		fs.createDocument(new ByteArrayInputStream(deflatedZeros(SourceFiles.MAX_INFLATED_BYTES + 1)), "DocInfo");
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		fs.writeFilesystem(out);
-
-		assertCode(() -> SourceFiles.read("bomb.hwp", out.toByteArray()), ExtractionErrorCode.SOURCE_TOO_LARGE);
-	}
-
-	private static byte[] deflatedZeros(long size) {
-		Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION, true);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		try (DeflaterOutputStream deflating = new DeflaterOutputStream(out, deflater)) {
-			byte[] zeros = new byte[1 << 20];
-			for (long left = size; left > 0; left -= zeros.length) {
-				deflating.write(zeros, 0, (int) Math.min(zeros.length, left));
-			}
-		}
-		catch (IOException ex) {
-			throw new UncheckedIOException(ex);
-		}
-		finally {
-			deflater.end();
-		}
-		return out.toByteArray();
 	}
 
 	private static int signatureAt(byte[] hwp) {

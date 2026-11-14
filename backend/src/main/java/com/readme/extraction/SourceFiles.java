@@ -21,11 +21,12 @@ import com.readme.common.error.ApiException;
  * 확장자는 앞부분으로 알 수 없는 글 파일(TXT, MD)에만 쓴다.
  *
  * <p>읽는 형식(정함): PDF(글자 층만), DOCX, HWPX, HWP, PPTX, TXT, MD. 사진과 글자 층이 없는 PDF 는 SOURCE_NO_TEXT 다.
+ * PDF 와 HWP 는 다른 프로세스에서 읽는다(IsolatedReader).
  * 파일 이름과 내용은 기록(log)에 남기지 않는다.
  */
 final class SourceFiles {
 
-	/** 압축을 푼 크기의 상한(zip 안의 XML, HWP 의 압축된 스트림). 압축 폭탄이 메모리와 CPU 를 쓰지 않게 한다 */
+	/** zip(DOCX, PPTX, HWPX)의 압축을 푼 크기 합계의 상한. 압축 폭탄이 메모리와 CPU 를 쓰지 않게 한다 */
 	static final long MAX_INFLATED_BYTES = 100L * 1024 * 1024;
 
 	private static final Logger log = LoggerFactory.getLogger(SourceFiles.class);
@@ -74,13 +75,13 @@ final class SourceFiles {
 			throw new ApiException(ExtractionErrorCode.SOURCE_EMPTY);
 		}
 		if (indexOf(bytes, PDF, 1024) >= 0) {
-			return new Read(Format.PDF, PdfText.read(bytes));
+			return new Read(Format.PDF, IsolatedReader.read(Format.PDF, bytes));
 		}
 		if (startsWith(bytes, ZIP)) {
 			return ZipXmlText.read(bytes);
 		}
 		if (startsWith(bytes, OLE)) {
-			return new Read(Format.HWP, HwpText.read(bytes));
+			return new Read(Format.HWP, IsolatedReader.read(Format.HWP, bytes));
 		}
 		if (isImage(bytes)) {
 			throw new ApiException(ExtractionErrorCode.SOURCE_NO_TEXT);
