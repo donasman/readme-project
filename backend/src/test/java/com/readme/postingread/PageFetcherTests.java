@@ -192,6 +192,16 @@ class PageFetcherTests {
 	}
 
 	@Test
+	void slowBodiesTimeOutToo() {
+		// 머리는 바로 오고 본문이 늦다. HttpClient 의 시간 한도(머리까지)는 끊지 않으므로 연결+응답(1초+0.3초) 전체 한도가 끊는다
+		PageFetcher impatient = new PageFetcher(UA, settings(Duration.ofMillis(300), true));
+		this.site.slowBody("/drip", Duration.ofSeconds(4));
+		long started = System.nanoTime();
+		assertFails(() -> impatient.html(this.site.url("/drip"), ""), PostingReadErrorCode.FETCH_FAILED, "제때 응답하지");
+		assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(2));
+	}
+
+	@Test
 	void loopbackIsRefusedUnlessTheTestSwitchIsOn() {
 		PageFetcher production = new PageFetcher(UA, settings(Duration.ofSeconds(2), false));
 		this.site.html("/a", "<p>a</p>");

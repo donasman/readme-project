@@ -35,7 +35,17 @@ final class LocalSite implements AutoCloseable {
 
 	private final Map<String, Headers> lastHeaders = new ConcurrentHashMap<>();
 
-	private record Route(int status, Map<String, String> headers, byte[] body, Duration delay, boolean chunked) {
+	/**
+	 * @param delay     머리를 보내기 전에 기다리는 시간
+	 * @param bodyDelay 머리를 보낸 뒤 본문 앞에서 기다리는 시간
+	 */
+	private record Route(int status, Map<String, String> headers, byte[] body, Duration delay, boolean chunked,
+			Duration bodyDelay) {
+
+		Route(int status, Map<String, String> headers, byte[] body, Duration delay, boolean chunked) {
+			this(status, headers, body, delay, chunked, Duration.ZERO);
+		}
+
 	}
 
 	private LocalSite() {
@@ -83,6 +93,13 @@ final class LocalSite implements AutoCloseable {
 		return this;
 	}
 
+	/** 머리는 바로 보내고 본문은 delay 뒤에 보낸다. HttpClient 의 시간 한도는 머리까지만 보므로 PageFetcher 의 전체 한도가 끊어야 한다. */
+	LocalSite slowBody(String path, Duration delay) {
+		this.routes.put(path, new Route(200, Map.of("Content-Type", "text/html"), "<p>늦은 본문</p>".getBytes(StandardCharsets.UTF_8),
+				Duration.ZERO, false, delay));
+		return this;
+	}
+
 	/** 길이를 알리지 않고(chunked) 보낸다. */
 	LocalSite chunked(String path, String contentType, byte[] body) {
 		this.routes.put(path, new Route(200, Map.of("Content-Type", contentType), body, Duration.ZERO, true));
@@ -112,6 +129,10 @@ final class LocalSite implements AutoCloseable {
 			exchange.sendResponseHeaders(route.status(), route.chunked() ? 0 : (route.body().length == 0 ? -1 : route.body().length));
 			if (route.body().length > 0) {
 				try (OutputStream out = exchange.getResponseBody()) {
+					out.flush();
+					if (!route.bodyDelay().isZero()) {
+						Thread.sleep(route.bodyDelay());
+					}
 					out.write(route.body());
 				}
 			}
