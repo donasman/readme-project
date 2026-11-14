@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.readme.common.config.AppProperties;
 import com.readme.common.config.TimeConfig;
 import com.readme.common.error.ApiException;
+import com.readme.common.error.CommonErrorCode;
 import com.readme.common.token.Tokens;
 import com.readme.group.GroupRequests.InviteResponse;
 
@@ -107,6 +108,22 @@ class GroupService {
 		}
 		this.members.insertMemberIfAbsent(groupId, userId, now);
 		return groupId;
+	}
+
+	/**
+	 * 초대 링크를 취소한다. 만든 사람과 그룹장만 한다(아니면 403 FORBIDDEN). 그 그룹에 없는 초대는 404 INVITE_NOT_FOUND.
+	 * 이미 취소했거나 만료된 링크도 그대로 성공한다.
+	 */
+	@Transactional
+	void revokeInvite(long groupId, long inviteId, long userId) {
+		GroupMembership membership = this.access.requireMember(groupId, userId);
+		GroupInvite invite = this.invites.findById(inviteId)
+			.filter((found) -> found.groupId() == groupId)
+			.orElseThrow(() -> new ApiException(GroupErrorCode.INVITE_NOT_FOUND));
+		if (!membership.leader() && !invite.isCreatedBy(userId)) {
+			throw new ApiException(CommonErrorCode.FORBIDDEN, "링크를 만든 사람과 그룹장만 취소할 수 있습니다");
+		}
+		invite.revoke(this.clock.instant());
 	}
 
 	private String inviteLink(String token) {

@@ -1,6 +1,7 @@
 package com.readme.group;
 
 import java.time.Instant;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,9 +54,20 @@ class GroupInvite {
 		return this.groupId;
 	}
 
-	/** 취소되지 않았고 만료 시각 전이다. */
+	/** 취소되지 않았고 만료 시각 전이다. GroupQueries 의 LIVE 조건과 같다. */
 	boolean usableAt(Instant now) {
 		return this.revokedAt == null && now.isBefore(this.expiresAt);
+	}
+
+	boolean isCreatedBy(long userId) {
+		return Objects.equals(this.createdBy, userId);
+	}
+
+	/** 취소한다. 이미 취소했으면 처음 취소한 시각을 그대로 둔다. */
+	void revoke(Instant now) {
+		if (this.revokedAt == null) {
+			this.revokedAt = now;
+		}
 	}
 
 }

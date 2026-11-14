@@ -12,7 +12,7 @@ public enum GroupErrorCode implements ErrorCode {
 	/** 그룹장은 그룹을 나갈 수 없다(설계 가정 7). */
 	LEADER_CANNOT_LEAVE(HttpStatus.CONFLICT, "그룹장은 그룹을 나갈 수 없습니다"),
 
-	/** 그런 초대 링크가 없다. 주소가 잘렸거나 잘못 옮겨졌다. */
+	/** 그런 초대 링크가 없다. 주소가 잘렸거나 잘못 옮겨졌다. 취소할 때는 그 그룹에 그런 초대가 없다. */
 	INVITE_NOT_FOUND(HttpStatus.NOT_FOUND, "초대 링크를 찾을 수 없습니다. 주소를 다시 확인해 주세요"),
 
 	/** 만료되었거나 취소된 초대 링크. */

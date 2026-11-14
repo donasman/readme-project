@@ -18,15 +18,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.readme.auth.CurrentUser;
 import com.readme.auth.LoginUser;
+import com.readme.common.error.ApiException;
+import com.readme.common.token.Tokens;
+import com.readme.group.GroupQueries.InvitePreview;
 import com.readme.group.GroupRequests.CreateGroupRequest;
 import com.readme.group.GroupRequests.DisclosureRequest;
+import com.readme.group.GroupRequests.InvitePreviewResponse;
 import com.readme.group.GroupRequests.InviteResponse;
+import com.readme.group.GroupRequests.LiveInviteResponse;
 
 /**
- * 그룹 API(설계 4.1). 그룹 안의 것은 멤버만 다룰 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.
+ * 그룹 API(설계 4절). 그룹 안의 것은 멤버만 다룰 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.
+ * 초대 미리 보기만 로그인 없이 연다(SecurityConfig).
  */
 @RestController
 class GroupController {
+
+	private final GroupAccess access;
 
 	private final GroupQueries queries;
 
@@ -34,7 +42,8 @@ class GroupController {
 
 	private final Clock clock;
 
-	GroupController(GroupQueries queries, GroupService service, Clock clock) {
+	GroupController(GroupAccess access, GroupQueries queries, GroupService service, Clock clock) {
+		this.access = access;
 		this.queries = queries;
 		this.service = service;
 		this.clock = clock;
@@ -74,6 +83,34 @@ class GroupController {
 	@ResponseStatus(HttpStatus.CREATED)
 	InviteResponse createInvite(@PathVariable long groupId, @CurrentUser LoginUser user) {
 		return this.service.createInvite(groupId, user.id());
+	}
+
+	/** 쓸 수 있는(만료·취소되지 않은) 초대 링크들. 멤버만 본다. 링크 자체는 다시 보여 줄 수 없다. */
+	@GetMapping("/api/groups/{groupId}/invites")
+	List<LiveInviteResponse> liveInvites(@PathVariable long groupId, @CurrentUser LoginUser user) {
+		this.access.requireMember(groupId, user.id());
+		return this.queries.findLiveInvites(groupId, this.clock.instant());
+	}
+
+	/** 초대 링크 취소. 만든 사람과 그룹장만. 이미 취소한 링크도 204 다. */
+	@DeleteMapping("/api/groups/{groupId}/invites/{inviteId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void revokeInvite(@PathVariable long groupId, @PathVariable long inviteId, @CurrentUser LoginUser user) {
+		this.service.revokeInvite(groupId, inviteId, user.id());
+	}
+
+	/**
+	 * 초대 미리 보기. 로그인하지 않아도 본다. 그룹 이름, 표시 글자, 만든 사람의 이름, 멤버 수만 싣는다.
+	 * 없는 링크는 404 INVITE_NOT_FOUND, 만료·취소된 링크는 410 INVITE_EXPIRED.
+	 */
+	@GetMapping("/api/group-invites/{token}")
+	InvitePreviewResponse previewInvite(@PathVariable String token) {
+		InvitePreview invite = this.queries.findInvitePreview(Tokens.sha256Hex(token), this.clock.instant())
+			.orElseThrow(() -> new ApiException(GroupErrorCode.INVITE_NOT_FOUND));
+		if (!invite.usable()) {
+			throw new ApiException(GroupErrorCode.INVITE_EXPIRED);
+		}
+		return invite.response();
 	}
 
 	/** 초대 수락. 로그인한 사람이 그 그룹의 멤버가 되고, 들어간 그룹을 돌려준다. */

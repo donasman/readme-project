@@ -34,4 +34,24 @@ final class GroupRequests {
 	record InviteResponse(String link, OffsetDateTime expiresAt) {
 	}
 
+	/**
+	 * GET /api/group-invites/{token} 의 응답. 로그인하지 않은 사람도 보므로 초대 화면에 쓰는 것만 싣는다(멤버 이름, id 는 없다).
+	 *
+	 * @param mark        그룹 표시 글자
+	 * @param inviterName 링크를 만든 사람의 표시 이름. 그 사람이 계정을 지웠으면 null
+	 * @param memberCount 지금 멤버 수
+	 */
+	record InvitePreviewResponse(String groupName, String mark, String inviterName, int memberCount) {
+	}
+
+	/**
+	 * GET /api/groups/{groupId}/invites 의 한 줄. 토큰은 해시로만 있어 링크는 다시 보여 줄 수 없다.
+	 *
+	 * @param createdBy 링크를 만든 사람. 계정을 지웠으면 null
+	 * @param createdAt 만든 시각(한국 시각 +09:00)
+	 * @param expiresAt 만료 시각(한국 시각 +09:00)
+	 */
+	record LiveInviteResponse(long id, MemberResponse createdBy, OffsetDateTime createdAt, OffsetDateTime expiresAt) {
+	}
+
 }
