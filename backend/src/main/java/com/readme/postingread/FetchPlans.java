@@ -6,7 +6,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import com.readme.posting.PostingKey;
@@ -59,9 +59,9 @@ final class FetchPlans {
 	}
 
 	/** 받은 페이지와 같은 호스트로 가는 첫 iframe 의 주소. about: 과 다른 호스트는 건너뛴다. */
-	static Optional<String> sameHostIframe(String html, URI base) {
+	static Optional<String> sameHostIframe(Document page, URI base) {
 		String host = authority(base);
-		for (Element frame : Jsoup.parse(html).select("iframe")) {
+		for (Element frame : page.select("iframe")) {
 			String src = frame.attr("src").isEmpty() ? frame.attr("data-src") : frame.attr("src");
 			if (src.isEmpty() || src.startsWith("about:")) {
 				continue;

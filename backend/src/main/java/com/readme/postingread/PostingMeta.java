@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
@@ -40,7 +39,7 @@ final class PostingMeta {
 	private static final int U = Pattern.UNICODE_CHARACTER_CLASS;
 
 	/** 사람인 제목에 폭 없는 공백이 섞여 온다. */
-	private static final Pattern ZW = Pattern.compile("[\\u200B-\\u200D\\u2060\\uFEFF]");
+	private static final Pattern ZW = HtmlText.ZERO_WIDTH;
 
 	private static final Pattern CORP = Pattern.compile("㈜|\\(\\s*주\\s*\\)|\\(\\s*유\\s*\\)|주식회사|유한회사", U);
 
@@ -98,8 +97,14 @@ final class PostingMeta {
 	}
 
 	static Meta read(String html, LocalDate today) {
-		String page = ZW.matcher(html).replaceAll("");
-		Document document = Jsoup.parse(page);
+		return read(HtmlText.parse(html), today);
+	}
+
+	/**
+	 * 읽은 문서에서. jobfit 은 HTML 에서 폭 없는 공백을 먼저 지우고, 리드미는 문서에서 꺼낸 글자마다 지운다(같은 값이 나온다).
+	 * 문서는 바꾸지 않는다.
+	 */
+	static Meta read(Document document, LocalDate today) {
 		Meta meta = fromJsonLd(document);
 		if (meta == null) {
 			meta = fromPageTitle(document);
@@ -108,9 +113,9 @@ final class PostingMeta {
 			meta = new Meta("", "", "", "", Read.UNKNOWN, "", "", "");
 		}
 		Dated deadline = meta.deadline().known() ? new Dated(meta.deadline(), meta.deadlineFrom())
-				: deadlineFromSummary(HtmlText.toText(page), today);
+				: deadlineFromSummary(HtmlText.toText(document, true), today);
 		return new Meta(meta.company(), meta.companyFrom(), meta.title(), meta.titleFrom(), deadline.deadline(),
-				deadline.from(), meta.source(), document.title());
+				deadline.from(), meta.source(), noZeroWidth(document.title()));
 	}
 
 	/** 요약 칸의 마감일·접수마감·접수기간 가운데 처음 읽히는 것. */
@@ -147,7 +152,7 @@ final class PostingMeta {
 		for (Element script : document.select("script[type*=application/ld+json]")) {
 			JsonNode root;
 			try {
-				root = JsonMapper.shared().readTree(script.data());
+				root = JsonMapper.shared().readTree(noZeroWidth(script.data()));
 			}
 			catch (JacksonException ex) {
 				continue;
@@ -225,11 +230,11 @@ final class PostingMeta {
 		Element og = document.selectFirst("meta[property=og:title]");
 		Element title = document.selectFirst("title");
 		String raw;
-		if (og != null && !og.attr("content").isEmpty()) {
-			raw = Py.strip(WHITESPACE.matcher(og.attr("content")).replaceAll(" "));
+		if (og != null && !noZeroWidth(og.attr("content")).isEmpty()) {
+			raw = Py.strip(WHITESPACE.matcher(noZeroWidth(og.attr("content"))).replaceAll(" "));
 		}
 		else if (title != null) {
-			raw = Py.strip(WHITESPACE.matcher(title.text()).replaceAll(" "));
+			raw = Py.strip(WHITESPACE.matcher(noZeroWidth(title.text())).replaceAll(" "));
 		}
 		else {
 			return null;
@@ -257,6 +262,10 @@ final class PostingMeta {
 
 	private static String unescape(String text) {
 		return Parser.unescapeEntities(text, false);
+	}
+
+	private static String noZeroWidth(String text) {
+		return ZW.matcher(text).replaceAll("");
 	}
 
 	/** 칸보다 긴 값은 "". jobfit 은 길이를 보지 않는다. */

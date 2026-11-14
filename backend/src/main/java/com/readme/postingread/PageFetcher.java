@@ -51,7 +51,7 @@ import com.readme.common.error.ApiException;
  * <li>받는 페이지마다 그 사이트의 robots.txt 를 따른다. robots.txt 는 사이트마다 한 시간 기억한다.</li>
  * <li>같은 호스트에는 1초에 하나만 보낸다({@link HostThrottle}).</li>
  * <li>주소를 넘어가라는 응답(redirect)은 직접 따라가며 세 번까지, 넘어갈 때마다 주소 검사와 robots.txt 를 다시 한다.</li>
- * <li>연결 5초, 응답 전체 10초, 본문 3MB 까지. text/html 만 받는다.</li>
+ * <li>연결 5초, 응답 전체 10초, 본문 1MB 까지. text/html 만 받는다.</li>
  * <li>받은 본문은 기록하지 않는다. 실패하면 호스트와 이유만 남긴다.</li>
  * </ul>
  * 받지 못하면 422 FETCH_BLOCKED(사이트가 막음)나 FETCH_FAILED(그 밖)이고, 메시지는 본문 붙여넣기로 안내한다.
@@ -61,7 +61,8 @@ class PageFetcher {
 
 	static final String NAME = "ReadmeFetcher/1.0";
 
-	static final int MAX_BYTES = 3 * 1024 * 1024;
+	/** 본문 한도. jobfit 의 실측 페이지 가운데 가장 큰 것이 470KB 다. 읽은 문서가 메모리를 많이 쓰므로 작게 둔다(PostingReader). */
+	static final int MAX_BYTES = 1024 * 1024;
 
 	private static final int MAX_REDIRECTS = 3;
 

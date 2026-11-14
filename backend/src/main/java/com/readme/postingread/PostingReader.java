@@ -4,10 +4,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.jsoup.nodes.Document;
 
 import org.springframework.stereotype.Component;
 
@@ -42,7 +45,12 @@ class PostingReader {
 
 	private static final int FIRST_LINE_MAX = 120;
 
+	/** 한 서버에서 한 번에 읽는 링크 수. */
+	static final int MAX_READS = 3;
+
 	private final PageFetcher fetcher;
+
+	private final Semaphore reads = new Semaphore(MAX_READS);
 
 	PostingReader(PageFetcher fetcher) {
 		this.fetcher = fetcher;
@@ -71,17 +79,31 @@ class PostingReader {
 	/**
 	 * 링크. 사이트 규칙대로 요약 페이지를 받고, 거기에 공고 본문이 없으면 같은 공고의 상세요강(또는 같은 호스트 iframe 하나)을 받는다.
 	 * 둘 다 본문이 없으면 422 FETCH_FAILED 다(로그인 필요, 스크립트로 그리는 화면, 그림 공고).
+	 *
+	 * <p>한 번에 MAX_READS 개까지만 읽는다. 큰 페이지를 읽은 문서는 메모리를 많이 쓰고(1MB 의 빈 태그만으로 수십 MB), 느린 사이트는
+	 * 요청 스레드를 오래 잡는다. 넘으면 기다리지 않고 422 FETCH_FAILED 다.
+	 * shortcut: 서버 한 대 안에서만 센다, 서버를 여러 대 띄우거나 읽기가 자주 막히면 수를 다시 정하거나 줄을 세운다.
 	 */
 	PostingReadResponse fromUrl(String url, LocalDate today) {
+		if (!this.reads.tryAcquire()) {
+			throw new ApiException(PostingReadErrorCode.FETCH_FAILED,
+					"지금 읽고 있는 링크가 많습니다. 잠시 뒤 다시 시도하거나 공고 본문을 복사해 붙여넣어 주세요");
+		}
+		try {
+			return read(url, today);
+		}
+		finally {
+			this.reads.release();
+		}
+	}
+
+	private PostingReadResponse read(String url, LocalDate today) {
 		FetchPlans.Plan plan = FetchPlans.plan(url);
-		Page main = this.fetcher.html(plan.mainUrl(), plan.referer());
-		String mainText = PostingSections.dropNoise(HtmlText.toText(main.html()));
+		MainPage main = readMain(this.fetcher.html(plan.mainUrl(), plan.referer()), plan, today);
+		String mainText = main.text();
 		String detailText = "";
 		if (!PostingSections.hasPostingBody(mainText)) {
-			Optional<String> detail = plan.detailUrls().stream().findFirst();
-			if (detail.isEmpty() && plan.followIframes()) {
-				detail = FetchPlans.sameHostIframe(main.html(), main.url());
-			}
+			Optional<String> detail = plan.detailUrls().stream().findFirst().or(main::iframe);
 			if (detail.isPresent()) {
 				detailText = PostingSections.dropNoise(HtmlText.toText(this.fetcher.html(detail.get(), plan.mainUrl()).html()));
 			}
@@ -91,7 +113,7 @@ class PostingReader {
 			throw new ApiException(PostingReadErrorCode.FETCH_FAILED,
 					"공고 본문을 찾지 못했습니다. 로그인이 필요하거나, 화면을 스크립트로 그리거나, 그림으로 된 공고일 수 있습니다. 공고 본문을 복사해 붙여넣어 주세요");
 		}
-		Meta meta = PostingMeta.read(main.html(), today);
+		Meta meta = main.meta();
 		Dated deadline = meta.deadline().known() ? new Dated(meta.deadline(), meta.deadlineFrom())
 				: PostingMeta.deadlineFromSummary(detailText, today);
 		String full = Stream.of(mainText, detailText).filter((t) -> !t.isEmpty()).collect(Collectors.joining("\n\n"));
@@ -99,6 +121,16 @@ class PostingReader {
 		return PostingReadResponse.read(new Found(meta.company(), meta.companyFrom()), new Found(meta.title(), meta.titleFrom()),
 				deadline.deadline(), deadline.from(), url, sections(PostingSections.split(body)),
 				new Source(PostingSections.cleanTitle(pageTitle), full));
+	}
+
+	/** 요약 페이지에서 쓰는 것. 문서는 여기서만 살아 있어 상세요강을 읽기 전에 버려진다. */
+	private record MainPage(String text, Meta meta, Optional<String> iframe) {
+	}
+
+	private static MainPage readMain(Page page, FetchPlans.Plan plan, LocalDate today) {
+		Document document = HtmlText.parse(page.html());
+		return new MainPage(PostingSections.dropNoise(HtmlText.toText(document, false)), PostingMeta.read(document, today),
+				plan.followIframes() ? FetchPlans.sameHostIframe(document, page.url()) : Optional.empty());
 	}
 
 	/** 헤더가 있는 섹션만, 항목이 있는 것만. 머리(헤더 없는 앞부분)는 원문 글자에만 있다. */

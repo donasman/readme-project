@@ -2,6 +2,7 @@ package com.readme.postingread;
 
 import static com.readme.postingread.HtmlTextTests.resource;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
@@ -11,11 +12,17 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.readme.common.error.ApiException;
 import com.readme.posting.DeadlineKind;
 import com.readme.postingread.PostingReadResponse.DeadlineValue;
 import com.readme.postingread.PostingReadResponse.SectionValue;
@@ -88,6 +95,49 @@ class PostingReaderTests {
 		assertThat(read.sections()).extracting(SectionValue::title).startsWith("회사 소개", "주요 업무", "필수 요건", "우대 사항");
 		// 항목의 "- " 글머리는 떼고 ※ 안내는 둔다
 		assertThat(read.sections().get(3).items()).contains("※ 본 채용은 채용 완료 시 조기 마감될 수 있습니다.");
+	}
+
+	@Test
+	void atMostThreeLinksAreReadAtOnce() throws Exception {
+		CountDownLatch inside = new CountDownLatch(PostingReader.MAX_READS);
+		CountDownLatch release = new CountDownLatch(1);
+		PostingReader slow = new PostingReader(new PageFetcher("test", PageFetcherTests.settings(Duration.ofSeconds(1), false)) {
+
+			@Override
+			Page html(String url, String referer) {
+				inside.countDown();
+				try {
+					release.await(10, TimeUnit.SECONDS);
+				}
+				catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+				}
+				return new Page(URI.create(url), resource(url.contains("view-detail") ? "saramin-sample-detail.html" : "saramin-sample.html"));
+			}
+
+		});
+		String url = "https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=10000001";
+		ExecutorService pool = Executors.newFixedThreadPool(PostingReader.MAX_READS);
+		try {
+			List<Future<PostingReadResponse>> running = new ArrayList<>();
+			for (int i = 0; i < PostingReader.MAX_READS; i++) {
+				running.add(pool.submit(() -> slow.fromUrl(url, TODAY)));
+			}
+			assertThat(inside.await(5, TimeUnit.SECONDS)).isTrue();
+			// 넷째는 기다리지 않고 바로 거절한다
+			assertThatThrownBy(() -> slow.fromUrl(url, TODAY)).isInstanceOf(ApiException.class)
+				.hasMessageContaining("읽고 있는 링크가 많습니다")
+				.extracting((ex) -> ((ApiException) ex).errorCode())
+				.isEqualTo(PostingReadErrorCode.FETCH_FAILED);
+			release.countDown();
+			for (Future<PostingReadResponse> read : running) {
+				assertThat(read.get(5, TimeUnit.SECONDS).company()).isEqualTo("예시랩");
+			}
+			assertThat(slow.fromUrl(url, TODAY).company()).isEqualTo("예시랩"); // 끝나면 다시 읽는다
+		}
+		finally {
+			pool.shutdownNow();
+		}
 	}
 
 	/** 페이지나 붙여넣은 글에 공백 5만 칸(보통 공백과 em 공백)이 있어도 읽기가 바로 끝난다. */

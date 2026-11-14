@@ -50,9 +50,9 @@ class FetchPlansTests {
 		URI base = URI.create("https://careers.example.com/jobs/1");
 		String html = "<iframe src=\"about:blank\"></iframe><iframe src=\"https://ads.example.net/x\"></iframe>"
 				+ "<iframe src=\"\" data-src=\"/jobs/1/detail\"></iframe><iframe src=\"/jobs/1/other\"></iframe>";
-		assertThat(FetchPlans.sameHostIframe(html, base)).contains("https://careers.example.com/jobs/1/detail");
-		assertThat(FetchPlans.sameHostIframe("<iframe src=\"https://other.example.com/a\"></iframe>", base)).isEmpty();
-		assertThat(FetchPlans.sameHostIframe("<p>no frames</p>", base)).isEmpty();
+		assertThat(FetchPlans.sameHostIframe(HtmlText.parse(html), base)).contains("https://careers.example.com/jobs/1/detail");
+		assertThat(FetchPlans.sameHostIframe(HtmlText.parse("<iframe src=\"https://other.example.com/a\"></iframe>"), base)).isEmpty();
+		assertThat(FetchPlans.sameHostIframe(HtmlText.parse("<p>no frames</p>"), base)).isEmpty();
 	}
 
 }

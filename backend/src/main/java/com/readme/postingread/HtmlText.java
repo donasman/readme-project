@@ -9,8 +9,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
+import org.jsoup.select.NodeFilter;
 import org.jsoup.select.NodeTraversor;
-import org.jsoup.select.NodeVisitor;
 
 /**
  * HTML → 보이는 글자. 태그와 스크립트를 걷어내고 글자는 바꾸지 않는다. jobfit 의 src/jobfit/clean/html2text.py 를 옮겼다.
@@ -25,7 +25,11 @@ import org.jsoup.select.NodeVisitor;
 final class HtmlText {
 
 	/** 통째로 버리는 태그. 글자가 아니거나(스크립트), 화면의 버튼·선택지이거나, 다른 문서(iframe)다. */
-	private static final String DROP = "script, style, noscript, template, svg, head, button, select, iframe";
+	private static final Set<String> DROP = Set.of("script", "style", "noscript", "template", "svg", "head", "button", "select",
+			"iframe");
+
+	/** 폭 없는 공백. 사람인 제목에 섞여 온다(jobfit 의 meta.py 는 HTML 에서 먼저 지운다). */
+	static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B-\\u200D\\u2060\\uFEFF]");
 
 	private static final Set<String> BLOCKS = Set.of("p", "div", "tr", "section", "article", "dt", "dd", "dl", "table",
 			"ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "header", "footer", "nav", "main", "aside", "form", "figure",
@@ -46,31 +50,50 @@ final class HtmlText {
 	}
 
 	static String toText(String html) {
-		Document document = Jsoup.parse(html, "", Parser.htmlParser().setTrackPosition(true));
-		document.select(DROP).remove();
+		return toText(parse(html), false);
+	}
+
+	/** 소스의 태그 자리를 기억하며 읽는다. 한 페이지는 한 번만 읽고 글자, 필수값, iframe 을 모두 이 문서에서 찾는다. */
+	static Document parse(String html) {
+		return Jsoup.parse(html, "", Parser.htmlParser().setTrackPosition(true));
+	}
+
+	/**
+	 * 문서의 보이는 글자. 문서는 바꾸지 않는다(버리는 태그는 건너뛴다).
+	 *
+	 * @param dropZeroWidth 폭 없는 공백을 지운 HTML 을 읽은 것과 같은 글자로. jobfit 의 meta.py 가 요약 칸을 읽는 글자다
+	 */
+	static String toText(Document document, boolean dropZeroWidth) {
 		StringBuilder out = new StringBuilder();
-		NodeTraversor.traverse(new NodeVisitor() {
+		NodeTraversor.filter(new NodeFilter() {
 
 			@Override
-			public void head(Node node, int depth) {
+			public FilterResult head(Node node, int depth) {
 				if (node instanceof TextNode text) {
 					out.append(text.getWholeText());
 				}
-				else if (node instanceof Element element && !element.sourceRange().isImplicit()) {
-					out.append(opening(element.normalName()));
+				else if (node instanceof Element element) {
+					if (DROP.contains(element.normalName())) {
+						return FilterResult.SKIP_ENTIRELY;
+					}
+					if (!element.sourceRange().isImplicit()) {
+						out.append(opening(element.normalName()));
+					}
 				}
+				return FilterResult.CONTINUE;
 			}
 
 			@Override
-			public void tail(Node node, int depth) {
+			public FilterResult tail(Node node, int depth) {
 				if (node instanceof Element element && BLOCKS.contains(element.normalName())
 						&& element.endSourceRange().isTracked() && !element.endSourceRange().isImplicit()) {
 					out.append('\n');
 				}
+				return FilterResult.CONTINUE;
 			}
 
 		}, document);
-		String text = SPACES.matcher(out).replaceAll(" ");
+		String text = SPACES.matcher(dropZeroWidth ? ZERO_WIDTH.matcher(out).replaceAll("") : out).replaceAll(" ");
 		text = LINE_EDGES.matcher(text).replaceAll("\n");
 		text = EMPTY_BULLETS.matcher(text).replaceAll("\n");
 		text = MANY_NL.matcher(text).replaceAll("\n\n");
