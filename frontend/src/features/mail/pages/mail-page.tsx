@@ -25,6 +25,7 @@ export function MailPage() {
   // 누른 메일은 목록에서 빠지므로 한 일을 화면 읽기에 알린다
   const [done, setDone] = useState("")
   const act = async (run: () => Promise<void>, message: string) => {
+    setDone("")
     await run()
     await revalidator.revalidate()
     setDone(message)

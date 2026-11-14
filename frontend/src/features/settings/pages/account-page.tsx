@@ -40,6 +40,8 @@ export function AccountPage() {
   async function save(event: FormEvent) {
     event.preventDefault()
     if (!name.trim()) return setNote({ kind: "error", text: "표시 이름을 넣어 주세요." })
+    // 같은 "저장했습니다."도 다시 알리도록 먼저 비운다
+    setNote(null)
     await renameMe(name.trim())
     // 헤더의 내 계정 동그라미(이름 첫 글자)도 새로 읽는다
     await revalidator.revalidate()

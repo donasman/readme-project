@@ -76,6 +76,8 @@ export function MailSettingsPage() {
           size="sm"
           className="self-start"
           onClick={async () => {
+            // 두 번째 새 주소도 다시 알리도록 먼저 비운다
+            setRenewed(false)
             await renewInboundAddress()
             setRenewed(true)
             setCopied(false)
