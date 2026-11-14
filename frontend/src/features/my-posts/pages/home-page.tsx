@@ -9,7 +9,7 @@ import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
-import { Panel } from "@/shared/components/panel"
+import { Panel, PanelRow } from "@/shared/components/panel"
 import { ArrowRightIcon } from "@/shared/icons"
 import { daysBetween, formatLongDate } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
@@ -85,7 +85,7 @@ export function HomePage() {
               {open.slice(0, UPCOMING).map((p, i) => {
                 const due = dueText(p, today)
                 return (
-                  <li key={p.id} className={joinClasses("flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-5 py-4", i > 0 ? "border-border-subtle" : "border-transparent")}>
+                  <PanelRow key={p.id} first={i === 0} className="gap-x-4 py-4">
                     <div className="flex w-22 flex-none flex-col items-start gap-1">
                       <DdayBadge text={due.main} soon={due.soon} />
                       <span className="text-xs text-text-secondary">{due.sub}</span>
@@ -95,7 +95,7 @@ export function HomePage() {
                       <MyStatusPill state={p} />
                       <span className="text-xs text-text-secondary">{p.groups.map((g) => g.name).join(", ")}</span>
                     </div>
-                  </li>
+                  </PanelRow>
                 )
               })}
             </Panel>

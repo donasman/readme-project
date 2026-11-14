@@ -1,10 +1,11 @@
 import { useState } from "react"
-import { Link, useLoaderData, useRevalidator, useSearchParams } from "react-router"
+import { useLoaderData, useRevalidator, useSearchParams } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button } from "@/components/ui/button"
 import { getMyGroups } from "@/domain/group/api"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
+import { PostingLink } from "@/domain/posting/posting-link"
 import type { Group } from "@/domain/group/types"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
@@ -12,7 +13,6 @@ import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel, PanelNote } from "@/shared/components/panel"
 import { CheckIcon, XIcon } from "@/shared/icons"
-import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings, updateMyState } from "../api"
@@ -70,12 +70,7 @@ export function BoardPage() {
                 </div>
                 {rows.map((p) => (
                   <div key={p.id} className={joinClasses(GRID, "border-t border-border-subtle px-5 py-3.5", p.id === selected?.id ? "bg-surface-muted" : "bg-transparent")}>
-                    <Link to={paths.myPost(p.id)} className="flex min-w-0 flex-col gap-0.5 text-foreground">
-                      <span className="text-label-sm text-text-secondary">
-                        {p.company} · {dueText(p, today).main}
-                      </span>
-                      <span className="font-bold">{p.title}</span>
-                    </Link>
+                    <PostingLink id={p.id} company={`${p.company} · ${dueText(p, today).main}`} title={p.title} />
                     {stageCells(p).map((cell, i) => (
                       <div key={STAGES[i]} className="flex min-h-8 items-center justify-center">
                         <StageCell cell={cell} stage={STAGES[i]} />

@@ -13,7 +13,7 @@ import { Avatar } from "@/shared/components/avatar"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
-import { Panel } from "@/shared/components/panel"
+import { Panel, PanelRow } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
 import { paths } from "@/shared/lib/paths"
@@ -73,9 +73,9 @@ export function GroupMembersPage() {
         <section aria-label="멤버 목록" className={joinClasses(mainColumn, "gap-3")}>
           <Panel as="ul" className="flex flex-col">
             {members.map((member, i) => (
-              <li
+              <PanelRow
                 key={member.id}
-                className={joinClasses("flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-5 py-4", i > 0 ? "border-border-subtle" : "border-transparent")}
+                first={i === 0} className="gap-x-3 py-4"
               >
                 <Avatar size={40}>{member.name.slice(0, 1)}</Avatar>
                 <div className="flex min-w-0 flex-[1_1_160px] flex-wrap items-center gap-x-2 gap-y-1.5">
@@ -84,7 +84,7 @@ export function GroupMembersPage() {
                   {member.id === group.leaderId && <RoleChip role="leader" />}
                 </div>
                 <span className="text-label-sm whitespace-nowrap text-text-secondary">{member.joinedAt} 들어옴</span>
-              </li>
+              </PanelRow>
             ))}
           </Panel>
           <p className="text-label-sm text-text-secondary">

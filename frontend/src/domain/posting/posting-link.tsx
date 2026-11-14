@@ -6,6 +6,7 @@ import { joinClasses } from "@/shared/lib/utils"
 interface PostingLinkProps {
   /** 내 공고 id */
   id: string
+  /** 위 줄. 보통 회사이고, 지원 현황은 "회사 · 마감"을 넣는다 */
   company: string
   title: string
   /** 줄 안의 폭이나 자리(flex-[…], [grid-area:…]) */
