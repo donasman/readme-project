@@ -7,9 +7,12 @@
 // 가짜 서버는 새로 불러올 때마다 처음 상태라, 장면마다 주소를 새로 열어 같은 화면을 찍는다.
 import { spawn } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 const OUT = join(import.meta.dirname, "..", ".regress")
+// Chrome 프로필은 프로젝트 밖에 둔다. 안에 두면 lint와 vitest가 프로필 속 확장 프로그램 파일까지 읽는다
+const PROFILE = join(tmpdir(), "readme-regress-profile")
 const APP = process.env.REGRESS_URL ?? "http://127.0.0.1:5173"
 const CHROME =
   process.env.CHROME_PATH ??
@@ -106,7 +109,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 async function openChrome() {
   if (!CHROME) throw new Error("Chrome을 찾지 못했다. CHROME_PATH에 chrome 실행 파일 경로를 넣어 주세요.")
   const port = 9336
-  const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${join(OUT, "profile")}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--force-color-profile=srgb", "--font-render-hinting=none", "--disable-gpu", "--disable-gpu-rasterization", "--disable-lcd-text", "--disable-partial-raster", "--disable-threaded-animation", "--disable-threaded-scrolling", "--num-raster-threads=1", "about:blank"], { stdio: "ignore" })
+  const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${PROFILE}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--force-color-profile=srgb", "--font-render-hinting=none", "--disable-gpu", "--disable-gpu-rasterization", "--disable-lcd-text", "--disable-partial-raster", "--disable-threaded-animation", "--disable-threaded-scrolling", "--num-raster-threads=1", "about:blank"], { stdio: "ignore" })
   let targets = []
   for (let i = 0; i < 75 && !targets.some((t) => t.type === "page"); i++) {
     try {
