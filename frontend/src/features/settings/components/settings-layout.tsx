@@ -1,15 +1,12 @@
 import { NavLink, Outlet } from "react-router"
 
 import { Heading } from "@/shared/components/heading"
+import { navPill } from "@/shared/components/nav-pill"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
-
-const item = "inline-flex min-h-control-sm items-center rounded-full px-4 text-sm font-bold whitespace-nowrap"
 
 /** 설정의 틀(시안 9차 "내 정보"): 제목, 왼쪽 메뉴, 오른쪽 720px 본문. */
 export function SettingsLayout() {
-  const link = ({ isActive }: { isActive: boolean }) =>
-    joinClasses(item, isActive ? "bg-accent-subtle text-accent-strong" : "text-text-secondary hover:bg-surface-muted hover:text-foreground")
+  const link = ({ isActive }: { isActive: boolean }) => navPill(isActive)
   return (
     <main className="mx-auto flex max-w-[1120px] flex-col gap-6 px-6 pt-10 pb-16">
       <Heading level={1} size="text-3xl">

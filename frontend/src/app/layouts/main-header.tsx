@@ -4,13 +4,9 @@ import { useViewer } from "@/domain/session/use-viewer"
 import { Avatar } from "@/shared/components/avatar"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
+import { navPill } from "@/shared/components/nav-pill"
 import { mainNavOf, type MainNav } from "@/shared/lib/main-nav"
 import { paths } from "@/shared/lib/paths"
-import { cn } from "@/shared/lib/utils"
-
-const navLink = "inline-flex min-h-control-sm items-center rounded-full px-4 text-sm font-bold whitespace-nowrap"
-const navState = (on: boolean) =>
-  on ? "bg-accent-subtle text-accent-strong" : "text-text-secondary hover:bg-surface-muted hover:text-foreground"
 
 /**
  * 그룹 밖 화면들의 위쪽 헤더(시안 3종의 "A · 카드 목록" 헤더): 로고, 스터디·정보공유·경험카드, 내 계정.
@@ -34,18 +30,18 @@ export function MainHeader() {
           <ul className="flex flex-wrap items-center gap-1">
             <li>
               {/* 스터디: 내 그룹 목록(시안 7차의 제안) */}
-              <Link to={paths.groups()} aria-current={current === "study" ? "page" : undefined} className={cn(navLink, navState(current === "study"))}>
+              <Link to={paths.groups()} aria-current={current === "study" ? "page" : undefined} className={navPill(current === "study")}>
                 스터디
               </Link>
             </li>
             <li>
               {/* shortcut: 정보공유는 화면이 없어 눌러도 아무 일이 없다, 시안이 나오면 Link로 바꾼다 */}
-              <PlaceholderLink aria-current={current === "info" ? "page" : undefined} className={cn(navLink, navState(current === "info"))}>
+              <PlaceholderLink aria-current={current === "info" ? "page" : undefined} className={navPill(current === "info")}>
                 정보공유
               </PlaceholderLink>
             </li>
             <li>
-              <Link to={paths.cards()} aria-current={current === "cards" ? "page" : undefined} className={cn(navLink, navState(current === "cards"))}>
+              <Link to={paths.cards()} aria-current={current === "cards" ? "page" : undefined} className={navPill(current === "cards")}>
                 경험카드
               </Link>
             </li>

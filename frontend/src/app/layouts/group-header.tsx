@@ -15,12 +15,9 @@ import type { GroupsPageState } from "@/features/groups"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Avatar } from "@/shared/components/avatar"
+import { navPill } from "@/shared/components/nav-pill"
 import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn } from "@/shared/lib/utils"
-
-const navLink =
-  "inline-flex min-h-control-sm items-center rounded-full px-4 text-sm leading-body font-bold whitespace-nowrap"
 
 /**
  * 그룹 화면들의 머리. Arc app-header 가 스크롤됐을 때의 값(바깥 여백 12px 16px, radius-panel, shadow-floating)으로
@@ -84,12 +81,7 @@ export function GroupHeader() {
               <Link
                 to={listPath}
                 aria-current={section === "posts" ? "page" : undefined}
-                className={cn(
-                  navLink,
-                  section === "posts"
-                    ? "bg-accent-subtle text-accent-strong"
-                    : "text-text-secondary hover:bg-surface-muted hover:text-foreground"
-                )}
+                className={navPill(section === "posts")}
               >
                 공고
               </Link>
@@ -98,12 +90,7 @@ export function GroupHeader() {
               <Link
                 to={membersPath}
                 aria-current={section === "members" ? "page" : undefined}
-                className={cn(
-                  navLink,
-                  section === "members"
-                    ? "bg-accent-subtle text-accent-strong"
-                    : "text-text-secondary hover:bg-surface-muted hover:text-foreground"
-                )}
+                className={navPill(section === "members")}
               >
                 멤버
               </Link>
