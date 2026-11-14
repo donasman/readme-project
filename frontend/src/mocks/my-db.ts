@@ -1,40 +1,13 @@
 // 가짜 서버의 내 공고 쪽: 관심을 켜거나 직접 넣은 공고와 내 지원 상태, 메모, 맞는 카드, 홈의 모음.
+// 내 지원 상태와 메모는 내 공고 행(user-postings.ts)에 있고, 그룹 공고와 메일 확인함도 같은 행을 읽고 쓴다.
 // 공고 본체(회사, 공고명, 마감, 내용)는 그룹 공고(db.ts)에서 그때그때 읽는다. 그룹에서 마감일을 넣으면 여기도 바뀐다.
 // 내 공고 조회 API는 아직 설계에 없다(화면 API 대응 3.3의 10번). 이 폴더는 shared와 타입만 불러온다.
 import type { GroupPostDetail } from "@/features/group-posts/types"
 import type { CardMatch, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup } from "@/features/my-posts/types"
-import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
 import { findPost, listGroups, today } from "./db"
-
-/** 내 공고 하나: 어느 그룹 공고들에 걸려 있는지와 내 상태. 시안 8차 "내 공고"의 9건이다. */
-interface Entry extends MyState {
-  id: string
-  /** [그룹, 그 그룹의 공고 id]. 첫 것을 본체로 읽는다 */
-  refs: [string, string][]
-  /** 그룹을 나가 본체를 못 읽을 때 쓰는 마지막 값 */
-  snapshot: Pick<MyPosting, "company" | "title" | "deadline"> | null
-  memo: string
-}
-
-const applied = (stage: MyState["stage"], result: MyState["result"]): MyState => ({ decision: "applied", stage, result })
-const decided = (decision: MyState["decision"]): MyState => ({ decision, stage: null, result: null })
-const entry = (id: string, ref: [string, string], s: MyState, memo = ""): Entry => ({ id, refs: [ref], snapshot: null, memo, ...s })
-
-function createEntries(): Entry[] {
-  return [
-    entry("p-mes1", ["mes", "mes1"], applied("document", "in_progress")),
-    entry("p-be1", ["be", "be1"], decided("undecided")),
-    entry("p-pub1", ["pub", "pub1"], applied("test", "in_progress"), "필기는 NCS와 전산 전공. 작년 기출 범위 다시 보기."),
-    entry("p-be2", ["be", "be2"], applied("document", "in_progress")),
-    entry("p-be3", ["be", "be3"], decided("hold")),
-    entry("p-be6", ["be", "be6"], decided("undecided")),
-    entry("p-be5", ["be", "be5"], decided("undecided")),
-    entry("p-be7", ["be", "be7"], applied("document", "failed")),
-    entry("p-be8", ["be", "be8"], applied("interview_1", "in_progress")),
-  ]
-}
+import { entries, rawEntry, type Entry } from "./user-postings"
 
 /** 상세에만 보이는 값. 예시 공사(시안 8차 "공고 상세")의 공고 내용과 맞는 카드를 옮겼다. 그 밖의 공고는 그룹 공고의 내용을 쓴다. */
 const DETAILS: Record<string, Partial<Pick<MyPostingDetail, "applyAt" | "sections" | "keywords" | "unmatched">> & { matches?: [number, string[]][] }> = {
@@ -61,15 +34,7 @@ const NEWS: { groupId: string; text: string; postId: string | null }[] = [
   { groupId: "pub", text: "나래 님이 예시 공사 공고에 댓글을 남겼습니다", postId: "pub1" },
 ]
 
-let store: Entry[] | null = null
-const entries = () => (store ??= createEntries())
 const copy = <T>(value: T): T => structuredClone(value)
-
-function rawEntry(id: string): Entry {
-  const found = entries().find((e) => e.id === id)
-  if (!found) throw new NotFoundError("공고")
-  return found
-}
 
 /** 내가 아직 속한 그룹의 공고들. 나간 그룹의 공고는 읽지 못한다. */
 function readPosts(e: Entry): { group: PostingGroup; post: GroupPostDetail }[] {
