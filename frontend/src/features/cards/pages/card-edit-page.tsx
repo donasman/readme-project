@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
+import { IconNote } from "@/shared/components/notice"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { ToggleButton } from "@/shared/components/toggle-button"
-import { CircleAlertIcon, LockIcon, PlusIcon, XIcon } from "@/shared/icons"
+import { LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses } from "@/shared/lib/utils"
 
@@ -127,10 +128,7 @@ export function CardEditPage() {
                 </Field>
               ))}
               {flagged.length > 0 && (
-                <p className="flex items-start gap-1.5 text-label-sm font-medium">
-                  <CircleAlertIcon aria-hidden="true" className="mt-px size-4 flex-none text-warning" />
-                  <span>결과의 {flagged.map((v) => `[확인 필요: ${v}]`).join(", ")}를 맞는 숫자로 고치거나 지워 주세요.</span>
-                </p>
+                <IconNote tone="warning">결과의 {flagged.map((v) => `[확인 필요: ${v}]`).join(", ")}를 맞는 숫자로 고치거나 지워 주세요.</IconNote>
               )}
             </Panel>
 

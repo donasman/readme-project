@@ -2,11 +2,12 @@ import { useState } from "react"
 import { Link, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { IconNote } from "@/shared/components/notice"
 import { MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { resendVerification } from "../api"
-import { AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthNote, AuthStrong, AuthText, StatusIcon } from "../components/auth-parts"
+import { AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthStrong, AuthText, StatusIcon } from "../components/auth-parts"
 
 /** 이메일 인증 · 메일 보냄(5차 "이메일 인증"). 가입한 이메일은 앞 화면이 주소 대신 이동 상태로 넘긴다. */
 export function SignupSentPage() {
@@ -43,7 +44,7 @@ export function SignupSentPage() {
             >
               메일 다시 보내기
             </Button>
-            {resent && <AuthNote tone="success">다시 보냈습니다. 안 보이면 스팸함도 확인해 주세요.</AuthNote>}
+            {resent && <IconNote tone="success">다시 보냈습니다. 안 보이면 스팸함도 확인해 주세요.</IconNote>}
           </div>
         )}
       </div>

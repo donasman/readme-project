@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Heading } from "@/shared/components/heading"
 import { LogoMark } from "@/shared/components/logo-mark"
-import { CircleAlertIcon, CircleCheckIcon } from "@/shared/icons"
+import { IconNote } from "@/shared/components/notice"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses } from "@/shared/lib/utils"
 
@@ -76,9 +76,9 @@ export function AuthField({ id, label, hint, error, className, ...input }: AuthF
         {...input}
       />
       {error ? (
-        <AuthNote id={noteId} tone="danger">
+        <IconNote id={noteId} tone="danger">
           {error}
-        </AuthNote>
+        </IconNote>
       ) : (
         hint && (
           <p id={noteId} className="text-label-sm text-text-secondary">
@@ -87,17 +87,6 @@ export function AuthField({ id, label, hint, error, className, ...input }: AuthF
         )
       )}
     </div>
-  )
-}
-
-/** 아이콘이 붙은 짧은 알림 줄: 오류(빨강) 또는 끝남(초록). */
-export function AuthNote({ id, tone, children }: { id?: string; tone: "danger" | "success"; children: ReactNode }) {
-  const Icon = tone === "danger" ? CircleAlertIcon : CircleCheckIcon
-  return (
-    <p id={id} role={tone === "success" ? "status" : undefined} className="flex items-start gap-1.5 text-label-sm font-medium">
-      <Icon aria-hidden="true" className={joinClasses("mt-px size-4 flex-none", tone === "danger" ? "text-danger" : "text-success")} />
-      <span>{children}</span>
-    </p>
   )
 }
 

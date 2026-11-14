@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Dot } from "@/shared/components/dot"
 import { FieldError, FormField, noteId } from "@/shared/components/form-field"
 import { sectionTitle, subLabel } from "@/shared/components/heading"
+import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { paths } from "@/shared/lib/paths"
 
@@ -71,12 +72,11 @@ export function WithdrawPage() {
       </Panel>
 
       {info.leads.map((g) => (
-        <div key={g.name} role="status" className="flex flex-col gap-2 rounded-control bg-highlight-subtle px-5 py-4 text-sm">
-          <strong className="font-bold">{g.name}의 그룹장입니다</strong>
+        <Notice key={g.name} title={`${g.name}의 그룹장입니다`}>
           <span>
             탈퇴하면 이 그룹은 그룹장 없이 남습니다. 멤버 {g.others}명은 그대로 쓸 수 있지만, 그룹장만 할 수 있는 일(남의 공고 내리기, 남의 댓글 지우기)은 아무도 할 수 없게 됩니다.
           </span>
-        </div>
+        </Notice>
       ))}
 
       <Panel aria-labelledby="wd-confirm" className="flex flex-col gap-4 p-6">
