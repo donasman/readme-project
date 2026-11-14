@@ -153,9 +153,11 @@ class PageFetcher {
 		}
 	}
 
-	/** 한 번 보낸다: 주소 검사, 차례 기다리기, 요청. */
+	/**
+	 * 한 번 보낸다: 차례 기다리기, 주소 검사, 요청. 주소 검사는 보내기 바로 앞이다. 기다린 뒤에 검사해야 검사와 연결 사이가
+	 * 밀리초로 짧다(앞에서 검사하면 기다리는 몇 초 동안 이름이 다른 주소로 바뀔 수 있다).
+	 */
 	private Response once(URI uri, String referer, boolean page) {
-		UrlGuard.requirePublic(uri, this.settings.allowLoopbackForTests());
 		waitTurn(uri.getHost().toLowerCase(Locale.ROOT));
 		HttpRequest.Builder request = HttpRequest.newBuilder(uri)
 			.timeout(this.settings.readTimeout())
@@ -166,6 +168,7 @@ class PageFetcher {
 		if (referer != null && !referer.isEmpty()) {
 			request.header("Referer", referer);
 		}
+		UrlGuard.requirePublic(uri, this.settings.allowLoopbackForTests());
 		CompletableFuture<HttpResponse<byte[]>> call = this.client.sendAsync(request.build(), (info) -> body(info, page));
 		try {
 			HttpResponse<byte[]> response = call.get(this.settings.connectTimeout().plus(this.settings.readTimeout()).toMillis(),

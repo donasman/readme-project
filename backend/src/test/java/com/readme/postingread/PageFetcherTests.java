@@ -184,6 +184,17 @@ class PageFetcherTests {
 	}
 
 	@Test
+	void addressIsCheckedAfterWaitingForTheHostsTurn() {
+		// 검사가 기다리기 앞에 있으면 기다리는 동안 이름이 바뀔 수 있다(DNS rebinding). 둘째 요청은 차례를 기다린 뒤에야 막혀야 한다
+		PageFetcher spaced = new PageFetcher(UA, new PostingReadProperties(Duration.ofSeconds(1), Duration.ofSeconds(1),
+				Duration.ofMillis(500), true));
+		assertFails(() -> spaced.html("http://10.0.0.1/a", ""), PostingReadErrorCode.FETCH_FAILED, "읽을 수 없는 주소");
+		long started = System.nanoTime();
+		assertFails(() -> spaced.html("http://10.0.0.1/b", ""), PostingReadErrorCode.FETCH_FAILED, "읽을 수 없는 주소");
+		assertThat(Duration.ofNanos(System.nanoTime() - started)).isGreaterThanOrEqualTo(Duration.ofMillis(400));
+	}
+
+	@Test
 	void privateAddressesAreRefusedBeforeConnecting() {
 		for (String url : new String[] { "http://10.0.0.1/", "http://192.168.0.1/admin", "http://169.254.169.254/latest/meta-data/",
 				"http://[fd00::1]/", "http://[::ffff:10.0.0.1]/", "ftp://example.com/x" }) {

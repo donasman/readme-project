@@ -64,9 +64,11 @@ final class UrlGuard {
 	/**
 	 * 호스트 이름을 풀어 나온 주소가 모두 공개 주소인지 본다. 이름을 풀지 못해도 422 FETCH_FAILED.
 	 *
-	 * <p>shortcut: 여기서 푼 뒤 HttpClient 가 이름을 다시 푼다. JVM 이 성공한 조회를 30초 동안 기억하므로(networkaddress.cache.ttl
-	 * 기본값) 같은 답이 나오지만, 그 사이에 기억이 끝나는 아주 짧은 틈에 이름이 사설 주소로 바뀌면(DNS rebinding) 막지 못한다.
-	 * 서버와 같은 망에 내부 서비스를 두게 되면 나가는 요청을 공개 주소로만 보내는 프록시나 방화벽을 더한다.
+	 * <p>shortcut: PageFetcher 는 보내기 바로 앞에 이것을 부르고, 몇 밀리초 뒤 HttpClient 가 이름을 다시 푼다. 그 조회는 대개 JVM 이
+	 * 30초 동안 기억한 답(networkaddress.cache.ttl 기본값), 곧 여기서 검사한 주소를 받는다. 남은 틈: 앞선 조회로 생긴 기억이 바로 그
+	 * 몇 밀리초 안에 끝나면 HttpClient 가 새로 묻고, 그때 이름이 사설 주소로 바뀌어 있으면(DNS rebinding) 막지 못한다. 공격자는 이
+	 * 순간을 맞히려 되풀이해 볼 수 있다. 검사한 주소로 바로 연결하거나, 나가는 요청을 공개 주소로만 보내는 프록시·방화벽을 두면 닫힌다.
+	 * AWS 에서는 인스턴스 메타데이터를 IMDSv2 만(토큰 필수, hop limit 1) 받게 해 GET 만 보내는 이 요청으로는 읽지 못하게 한다.
 	 */
 	static void requirePublic(URI uri, boolean allowLoopback) {
 		InetAddress[] addresses;
