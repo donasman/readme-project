@@ -5,6 +5,7 @@ import static com.readme.TestRequests.loginAs;
 import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -137,6 +138,35 @@ class GroupPostUploadTests {
 		assertThat(upload(this.group, this.other, unknown)).hasStatus(HttpStatus.CONFLICT);
 		// 마감일이 다르면 다른 공고다
 		assertThat(upload(this.group, this.other, dated)).hasStatus(HttpStatus.CREATED);
+	}
+
+	@Test
+	void aLinkTooLongForAKeyMakesANewJobEachTime() throws Exception {
+		// 공고키 칸(300자)보다 긴 키가 나오는 주소는 키 없이 넣는다(엔티티로 넣는 유일한 길).
+		// 같은 공고인지 알아볼 수 없으므로 같은 그룹에 다시 올려도 409 가 아니라 새 공고다.
+		String url = "https://careers.example.com/jobs/" + "a".repeat(400);
+		String body = """
+				{ "company": "긴 주소 회사", "title": "백엔드", "deadline": { "kind": "date", "date": "2026-11-20" },
+				  "deadlineName": "서류 마감", "applyAt": "홈페이지", "sourceUrl": "%s" }
+				""".formatted(url);
+
+		MvcTestResult first = upload(this.group, this.me, body).exchange();
+		MvcTestResult second = upload(this.group, this.other, body).exchange();
+
+		assertThat(first).hasStatus(HttpStatus.CREATED);
+		assertThat(second).hasStatus(HttpStatus.CREATED);
+		long firstId = postIdOf(first);
+		assertThat(postIdOf(second)).isNotEqualTo(firstId);
+		assertThat(this.jdbc.sql("select count(*) from postings where id in (:ids) and posting_key is null")
+			.param("ids", List.of(firstId, postIdOf(second)))
+			.query(Integer.class)
+			.single()).isEqualTo(2);
+		// 엔티티로 넣은 값도 다른 공고와 같은 응답으로 읽힌다
+		assertThat(first).bodyJson().isLenientlyEqualTo("""
+				{ "post": { "id": %d, "company": "긴 주소 회사", "title": "백엔드",
+				  "deadline": { "kind": "date", "date": "2026-11-20" }, "deadlineName": "서류 마감", "applyAt": "홈페이지",
+				  "sourceUrl": "%s", "postedBy": { "id": %d }, "postedAt": "2026-11-13" } }
+				""".formatted(firstId, url, this.me));
 	}
 
 	@Test
