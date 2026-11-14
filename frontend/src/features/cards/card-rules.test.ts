@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { countUnverified, DEFAULT_CARD_FILTERS, filterCards, orderTags, orgAndRole, startFrom, type CardFilters } from "./card-rules"
+import { countUnverified, DEFAULT_CARD_FILTERS, filterCards, knownTag, orderTags, orgAndRole, startFrom, type CardFilters } from "./card-rules"
 import type { ExperienceCard } from "./types"
 
 let seq = 0
@@ -65,5 +65,14 @@ describe("startFrom", () => {
   it("첫 카드나 없는 id면 그대로", () => {
     expect(startFrom(cards, 1).map((c) => c.id)).toEqual([1, 2, 3])
     expect(startFrom(cards, 9).map((c) => c.id)).toEqual([1, 2, 3])
+  })
+})
+
+describe("knownTag", () => {
+  const tags = [{ name: "Java", count: 2 }, { name: "Redis", count: 1 }]
+  it("지금 없는 태그는 거르지 않는다", () => {
+    expect(knownTag("Kotlin", tags)).toBe("")
+    expect(knownTag("Redis", tags)).toBe("Redis")
+    expect(knownTag("", tags)).toBe("")
   })
 })

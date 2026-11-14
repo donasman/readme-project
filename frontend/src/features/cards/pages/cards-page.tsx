@@ -11,7 +11,7 @@ import { ArrowRightIcon, CircleAlertIcon, FileUpIcon, PlusIcon } from "@/shared/
 import { paths } from "@/shared/lib/paths"
 
 import { getCards } from "../api"
-import { CARD_STATUS_LABELS, countUnverified, filterCards, orderTags, type CardStatus } from "../card-rules"
+import { CARD_STATUS_LABELS, countUnverified, filterCards, knownTag, orderTags, type CardStatus } from "../card-rules"
 import { CardItem } from "../components/card-item"
 import { useCardFilters } from "../use-card-filters"
 
@@ -24,7 +24,9 @@ const STATUS_OPTIONS = (Object.keys(CARD_STATUS_LABELS) as CardStatus[]).map((va
 /** 경험카드 목록(시안 3종의 "A · 카드 목록"). */
 export function CardsPage() {
   const { cards, tags } = useLoaderData<typeof cardsLoader>()
-  const [filters, setFilters] = useCardFilters()
+  const [urlFilters, setFilters] = useCardFilters()
+  const tag = knownTag(urlFilters.tag, tags)
+  const filters = useMemo(() => ({ ...urlFilters, tag }), [urlFilters, tag])
   const shown = useMemo(() => filterCards(cards, filters), [cards, filters])
   const orderedTags = useMemo(() => orderTags(tags), [tags])
   const unverified = countUnverified(cards)

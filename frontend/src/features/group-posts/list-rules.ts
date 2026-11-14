@@ -112,3 +112,8 @@ export function buildPostList(posts: GroupPost[], filters: ListFilters, today: s
     sections: sections.filter((s) => s.rows.length > 0),
   }
 }
+
+/** 주소의 멤버가 나("me")나 지금 멤버가 아니면(나간 멤버, 손으로 고친 주소) 전체로 본다. 고른 멤버가 없어 끌 수 없기 때문이다. */
+export function knownMember(member: string, members: Member[]): string {
+  return member === "me" || members.some((m) => m.id === member) ? member : ""
+}
