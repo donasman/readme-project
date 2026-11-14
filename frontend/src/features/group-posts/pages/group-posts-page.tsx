@@ -18,7 +18,7 @@ import { AppliedBadge } from "../components/chips"
 import { ListToolbar } from "../components/list-toolbar"
 import { DeadlineDialog } from "../components/post-dialogs"
 import { POST_GRID, PostRow } from "../components/post-row"
-import { buildPostList } from "../list-rules"
+import { buildPostList, knownMember } from "../list-rules"
 import { useInterest } from "../use-interest"
 import type { GroupPost } from "../types"
 import { useListFilters } from "../use-list-filters"
@@ -32,7 +32,7 @@ export function GroupPostsPage() {
   const { today, posts } = useLoaderData<typeof groupPostsLoader>()
   const viewer = useViewer()
   const { group } = useGroup()
-  const [filters, setFilters] = useListFilters()
+  const [urlFilters, setFilters] = useListFilters()
   const interest = useInterest(group.id)
   const revalidator = useRevalidator()
   const location = useLocation()
@@ -46,11 +46,13 @@ export function GroupPostsPage() {
     if (location.state) navigate(location.pathname + location.search, { replace: true, state: null, preventScrollReset: true })
   }
 
+  const others = group.members.filter((m) => m.id !== viewer.id)
+  const member = knownMember(urlFilters.member, others)
+  const filters = useMemo(() => ({ ...urlFilters, member }), [urlFilters, member])
   const list = useMemo(
     () => buildPostList(posts.map(interest.apply), filters, today),
     [posts, interest.apply, filters, today]
   )
-  const others = group.members.filter((m) => m.id !== viewer.id)
 
   return (
     <Page className="gap-6 pt-10">

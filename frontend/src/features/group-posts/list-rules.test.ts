@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { Member } from "@/domain/group/types"
 
-import { buildPostList, DEFAULT_FILTERS, matchesFilters, toRow, type ListFilters } from "./list-rules"
+import { buildPostList, DEFAULT_FILTERS, knownMember, matchesFilters, toRow, type ListFilters } from "./list-rules"
 import type { Deadline, GroupPost } from "./types"
 
 const TODAY = "2026-11-13"
@@ -110,5 +110,14 @@ describe("buildPostList", () => {
       post({ company: "없음" }),
     ]
     expect(ids(buildPostList(list, filters({ sort: "fans" }), TODAY))).toEqual([["", ["두 명(나 포함)", "한 명", "없음"]]])
+  })
+})
+
+describe("knownMember", () => {
+  const members: Member[] = [{ id: "garam", name: "가람" }]
+  it("나와 지금 멤버만 거르고, 나간 멤버나 틀린 값은 전체로 본다", () => {
+    expect(knownMember("garam", members)).toBe("garam")
+    expect(knownMember("me", members)).toBe("me")
+    expect(knownMember("xyz", members)).toBe("")
   })
 })

@@ -57,3 +57,8 @@ export function startFrom<T extends { id: number }>(cards: T[], id: number): T[]
   const i = cards.findIndex((c) => c.id === id)
   return i <= 0 ? cards : [...cards.slice(i), ...cards.slice(0, i)]
 }
+
+/** 주소의 태그가 지금 태그 목록에 없으면(지운 태그, 손으로 고친 주소) 거르지 않는다. 눌린 버튼이 없어 끌 수 없기 때문이다. */
+export function knownTag(tag: string, tags: CardTag[]): string {
+  return tags.some((t) => t.name === tag) ? tag : ""
+}
