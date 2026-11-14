@@ -1,5 +1,5 @@
-// 내 공고의 데이터 모양(관심을 켜거나 직접 넣은 공고와 내 지원 상태). 서버의 내 공고 조회는 아직 설계에 없다
-// (화면 API 대응 3.3의 10번). 상태 값의 글자는 정했다: 소문자로 주고받는다(그룹 설계 4.3 아래 "정함").
+// 내 공고의 데이터 모양(관심을 켜거나 직접 넣은 공고와 내 지원 상태). 상태 값의 글자는 정했다: 소문자로 주고받는다(그룹 설계 4.3 아래 "정함").
+// shortcut: 내 공고 조회와 메모가 설계에 없어 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.3의 10, 12번)
 import type { Disclosure } from "@/domain/group/types"
 import type { MyState } from "@/domain/posting/my-state"
 import type { Deadline, PostSection } from "@/domain/posting/types"
@@ -34,7 +34,8 @@ export interface PostingGroupState extends PostingGroup {
   disclosure: Disclosure
 }
 
-/** 맞는 카드: 카드 제목과 겹치는 태그·키워드. 맞추기 규칙은 아직 없다(화면 API 대응 3.3의 13번). */
+// shortcut: 맞추기 규칙이 없어 가짜 서버가 태그 겹침으로 흉내 낸다, 매칭이 설계되면 맞춘다(화면 API 대응 3.3의 13번)
+/** 맞는 카드: 카드 제목과 겹치는 태그·키워드. */
 export interface CardMatch {
   cardId: number
   title: string
@@ -55,7 +56,8 @@ export interface MyPostingDetail extends MyPosting {
   groupStates: PostingGroupState[]
 }
 
-/** 홈의 "그룹 소식" 한 줄. 무엇을 소식으로 볼지는 아직 정하지 않았다(화면 API 대응 3.3의 14번). */
+// shortcut: 무엇을 소식으로 볼지 정하지 않아 예시만 보인다, 정해지면 맞춘다(화면 API 대응 3.3의 14번)
+/** 홈의 "그룹 소식" 한 줄. */
 export interface GroupNews {
   group: GroupLabel
   text: string
@@ -63,7 +65,8 @@ export interface GroupNews {
   postId: string | null
 }
 
-/** 홈에 모으는 것. 홈 전용 API를 둘지 화면이 여러 API를 부를지는 아직 정하지 않았다(3.3의 14번). */
+// shortcut: 홈 전용 API 하나로 받는다고 보고 짰다, 화면이 여러 API를 부르기로 하면 바꾼다(화면 API 대응 3.3의 14번)
+/** 홈에 모으는 것. */
 export interface HomeData {
   today: string
   postings: MyPosting[]

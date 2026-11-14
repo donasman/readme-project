@@ -1,5 +1,5 @@
-// 그룹을 읽고 바꾸는 곳 가운데 두 기능 이상이 쓰는 것. 지금은 가짜 서버(mocks/db.ts)를 부르고,
-// 백엔드를 연결하면 함수 안만 fetch로 바꾼다.
+// 그룹을 읽고 바꾸는 곳 가운데 두 기능 이상이 쓰는 것.
+// shortcut: 가짜 서버(mocks/db.ts)를 부른다, 백엔드를 연결하면 함수 안만 fetch로 바꾼다(서버에 이미 있는 API다)
 import * as db from "@/mocks/db"
 
 import type { Disclosure, Group } from "./types"

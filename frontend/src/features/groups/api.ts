@@ -1,5 +1,5 @@
 // 내 그룹과 멤버 화면이 서버와 주고받는 곳(그룹 설계 4.1, 화면 API 대응 2.3).
-// 지금은 가짜 서버(mocks/db.ts)를 부른다. 서버가 생기면 함수 안만 /api/groups 호출로 바꾼다.
+// shortcut: 가짜 서버(mocks/db.ts)를 부른다, 백엔드를 연결하면 함수 안만 /api/groups 호출로 바꾼다(서버에 이미 있는 API다)
 import { getMyGroups } from "@/domain/group/api"
 import type { Group } from "@/domain/group/types"
 import * as db from "@/mocks/db"

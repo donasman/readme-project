@@ -1,6 +1,7 @@
 // 가짜 서버. 백엔드를 연결하기 전까지 각 층의 api.ts가 이 함수들을 부른다.
 // 예시 데이터를 처음 한 번 만들어 메모리에 두고 읽고 고친다. 새로 고치면 처음 상태로 돌아간다.
-// 서버가 할 일(열린 공고 수 세기, 댓글 링크 나누기)도 여기서 흉내 낸다. 백엔드를 연결하면 이 폴더를 지운다.
+// 서버가 할 일(열린 공고 수 세기, 댓글 링크 나누기)도 여기서 흉내 낸다.
+// shortcut: 이 폴더 전체가 가짜 서버다, 백엔드를 연결하면 각 api.ts를 fetch로 바꾸고 이 폴더를 지운다
 // 이 폴더는 shared와 타입(import type)만 불러온다.
 import type { Disclosure, Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"

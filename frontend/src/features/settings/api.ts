@@ -1,4 +1,5 @@
-// 설정 화면이 서버와 주고받는 곳. 지금은 가짜 서버(mocks/account-db.ts)를 부른다.
+// 설정 화면이 서버와 주고받는 곳. 읽기(GET /api/me)와 로그아웃만 설계에 있다.
+// shortcut: 내 정보 고치기, 메일 자동화, 탈퇴는 설계에 없어 가짜 서버(mocks/account-db.ts)를 부른다, 설계가 생기면 함수 안만 그 API로 바꾼다(화면 API 대응 3.4의 16~18번)
 import * as db from "@/mocks/account-db"
 
 import type { AccountInfo, MailSettings, WithdrawInfo } from "./types"

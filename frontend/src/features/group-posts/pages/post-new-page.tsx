@@ -24,6 +24,7 @@ const VIAS: { value: Via; label: string }[] = [
   { value: "text", label: "본문 붙여넣기" },
   { value: "file", label: "파일" },
 ]
+// shortcut: 크기(20MB)는 안내 글뿐이고 막지 않는다, 서버가 받는 형식과 크기를 정하면 여기서도 막는다(화면 API 대응 3.2의 7번)
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
 
 type Notice = Exclude<ReadPostResult, { status: "ok" }>

@@ -53,7 +53,7 @@ export function MyPostPage() {
               <ExternalLinkIcon aria-hidden="true" className="size-4" />
             </a>
           ) : (
-            // 예시 데이터에 원문 주소가 없다: 자리만 둔다
+            // shortcut: 원문 주소가 없으면 눌러도 아무 일이 없는 자리만 둔다, 서버를 붙일 때 주소 없는 공고에서 감출지 정한다
             <PlaceholderLink className={sourceLink}>
               <span>원문 보기</span>
               <ExternalLinkIcon aria-hidden="true" className="size-4" />

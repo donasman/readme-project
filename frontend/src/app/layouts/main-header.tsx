@@ -39,7 +39,7 @@ export function MainHeader() {
               </Link>
             </li>
             <li>
-              {/* 정보공유: 아직 화면이 없다 */}
+              {/* shortcut: 정보공유는 화면이 없어 눌러도 아무 일이 없다, 시안이 나오면 Link로 바꾼다 */}
               <PlaceholderLink aria-current={current === "info" ? "page" : undefined} className={cn(navLink, navState(current === "info"))}>
                 정보공유
               </PlaceholderLink>

@@ -38,6 +38,7 @@ const unreadInput = "border-2 border-highlight-strong bg-highlight-subtle dark:b
 
 /** 칸 확인(시안 7차): 읽어 온 칸을 고치고 그룹에 올린다. 오른쪽에 읽어 온 원문을 둔다. */
 export function PostCheckPage() {
+  // shortcut: 읽은 결과를 주소 상태로만 들고 와서 새로 고치면 공고 올리기로 돌아간다, 결과를 어디에 둘지 정하면 바꾼다(화면 API 대응 3.2의 7번)
   const draft = (useLocation().state as PostCheckState | null)?.draft
   const { group } = useGroup()
   if (!draft) return <Navigate to={paths.groupPostNew(group.id)} replace />

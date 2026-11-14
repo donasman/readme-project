@@ -80,7 +80,7 @@ export function InvitePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {/* 로그인·가입을 마친 뒤 이 화면으로 돌아오는 길은 아직 정하지 않았다(화면 API 대응 3.1의 2번) */}
+            {/* shortcut: 로그인·가입을 마친 뒤 이 화면으로 돌아오는 길이 없다, 돌아갈 주소를 누가 들고 있을지 정하면 만든다(화면 API 대응 3.1의 2번) */}
             <Link to={paths.login()} className={buttonVariants({ className: "w-full" })}>
               로그인하고 들어가기
             </Link>

@@ -1,10 +1,10 @@
-// 계정 화면(가입, 이메일 인증, 비밀번호 재설정)이 서버와 주고받는 유일한 곳.
-// 지금은 가짜 서버(mocks/db.ts)를 부른다. 서버가 생기면 함수 안만 docs/리드미_설계_로그인_경험카드.md 4.1의
-// /api/auth/* 호출로 바꾸고, 함수 이름과 돌려주는 모양은 그대로 둔다.
+// 계정 화면(가입, 이메일 인증, 비밀번호 재설정, 초대)이 서버와 주고받는 유일한 곳. 함수 이름과 돌려주는 모양은 서버를 붙여도 그대로 둔다.
+// shortcut: 가짜 서버(mocks/db.ts)를 부른다, 서버가 생기면 함수 안만 docs/리드미_설계_로그인_경험카드.md 4.1의 /api/auth/* 호출로 바꾼다
 import * as db from "@/mocks/db"
 
 import type { AcceptInviteResult, InviteView } from "./types"
 
+// shortcut: 오류 이름 EMAIL_TAKEN은 프런트가 정했다, 로그인 설계에 오류 이름이 정해지면 맞춘다(화면 API 대응 3.4의 19번)
 export type SignupResult = { ok: true } | { ok: false; error: "EMAIL_TAKEN" }
 
 /** 이메일로 가입한다. 확인 메일은 서버가 보낸다. */
@@ -27,6 +27,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
   db.requestPasswordReset(email)
 }
 
+// shortcut: 토큰 확인 API는 설계에 없다, 설계에 들어오면 그 주소로 바꾼다(화면 API 대응 3.4의 20번)
 /** 재설정 링크를 아직 쓸 수 있는지. */
 export async function checkResetToken(token: string | null): Promise<boolean> {
   return db.checkResetToken(token)
@@ -37,6 +38,7 @@ export async function resetPassword(token: string | null, password: string): Pro
   return db.resetPassword(token, password)
 }
 
+// shortcut: 초대 내용 조회는 설계에 없다, 로그인 없이 열지 정해지면 그 API로 바꾼다(화면 API 대응 3.1의 1번)
 /** 초대 링크의 내용(그룹 이름, 만든 사람, 멤버 수). 없거나 지난 링크는 expired. 로그인하지 않아도 읽는다. */
 export async function getInvite(token: string): Promise<InviteView> {
   return db.getInvite(token)
