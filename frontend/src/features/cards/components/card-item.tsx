@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 
 import { Chip } from "@/shared/components/chip"
+import { sectionTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { paths } from "@/shared/lib/paths"
 
@@ -18,7 +19,7 @@ export function CardItem({ card }: { card: ExperienceCard }) {
         {card.period && <span className="text-xs whitespace-nowrap text-text-secondary">{card.period}</span>}
       </div>
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-lg font-bold">
+        <h2 className={sectionTitle}>
           {/* 카드 어디를 눌러도 상세로 간다(링크의 ::after가 카드를 덮는다) */}
           <Link to={paths.card(card.id)} className="after:absolute after:inset-0 after:rounded-panel">
             {card.title}

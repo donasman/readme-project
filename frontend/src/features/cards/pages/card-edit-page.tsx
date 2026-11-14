@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-route
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { subpageTitle } from "@/shared/components/heading"
+import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
@@ -16,7 +16,7 @@ import { cn, joinClasses } from "@/shared/lib/utils"
 import { getCard, suggestKeywords, updateCard } from "../api"
 import { STAR_PARTS } from "../card-rules"
 import { flaggedValues, SUMMARY_LIMIT } from "../card-text"
-import { CardsSubpage, sectionTitle } from "../components/card-bits"
+import { CardsSubpage } from "../components/card-bits"
 import { QUESTION_TYPES, type KeywordSuggestion, type QuestionType } from "../types"
 
 export function cardEditLoader({ params }: LoaderFunctionArgs) {

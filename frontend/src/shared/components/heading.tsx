@@ -12,6 +12,12 @@ interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
 /** 앞 화면에서 들어온 화면(카드 상세, 공고 올리기 …)의 제목: 32px, 줄 간격 1.15. h1에 그대로 붙인다. */
 export const subpageTitle = "font-heading text-[32px] leading-[1.15] font-bold tracking-display"
 
+/** 패널과 칸 묶음의 제목(18px 굵게): "확인 필요 3", "STAR", "내 메모" …. h2·h3에 붙인다. */
+export const sectionTitle = "text-lg font-bold"
+
+/** 칸 이름(13px 굵은 회색): "상황", "태그", "지워지는 것" …. */
+export const subLabel = "text-label-sm font-bold text-text-secondary"
+
 /** 제목: 제목 글꼴, 굵게, 제목용 줄 간격과 자간. */
 export function Heading({ level = 2, size = "text-xl", className, ...props }: HeadingProps) {
   const Tag = `h${level}` as "h1" | "h2" | "h3"

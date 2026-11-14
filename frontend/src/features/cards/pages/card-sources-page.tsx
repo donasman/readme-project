@@ -3,7 +3,7 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { subpageTitle } from "@/shared/components/heading"
+import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
@@ -12,7 +12,7 @@ import { cn, joinClasses } from "@/shared/lib/utils"
 
 import { deleteSource, getExtractionJob, getSources, startExtraction, uploadSource } from "../api"
 import { formatChars } from "../card-text"
-import { CardsSubpage, ProgressBar, sectionTitle, StatBox } from "../components/card-bits"
+import { CardsSubpage, ProgressBar, StatBox } from "../components/card-bits"
 import type { CardSource, ExtractionJob } from "../types"
 
 export function cardSourcesLoader() {

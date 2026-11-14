@@ -9,7 +9,7 @@ import { useGroup } from "@/domain/group/use-group"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
-import { subpageTitle } from "@/shared/components/heading"
+import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
@@ -130,7 +130,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
           )}
 
           <Panel aria-labelledby="pc-must" className="flex flex-col gap-4 p-6">
-            <h2 id="pc-must" className="text-lg font-bold">
+            <h2 id="pc-must" className={sectionTitle}>
               꼭 있어야 하는 칸
             </h2>
             {field("company", "회사명", company, setCompany)}
@@ -184,7 +184,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
 
           <Panel aria-labelledby="pc-more" className="flex flex-col gap-4 p-6">
             <div className="flex flex-col gap-1">
-              <h2 id="pc-more" className="text-lg font-bold">
+              <h2 id="pc-more" className={sectionTitle}>
                 더 있으면 좋은 칸
               </h2>
               <p className="text-sm text-text-secondary">비워 두어도 올릴 수 있습니다.</p>
@@ -229,7 +229,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
         </form>
 
         <aside aria-labelledby="pc-src" className={joinClasses(sideColumn(320), "gap-3")}>
-          <h2 id="pc-src" className="text-lg font-bold">
+          <h2 id="pc-src" className={sectionTitle}>
             읽어 온 원문
           </h2>
           <div className="flex flex-col gap-3 rounded-panel bg-surface-muted p-5 text-sm">

@@ -2,7 +2,7 @@ import { Link, useLoaderData, useSearchParams } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { PostingLink } from "@/domain/posting/posting-link"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
@@ -104,7 +104,7 @@ export function CalendarPage() {
       </Panel>
 
       <section aria-labelledby="cal-list" className="flex flex-col gap-3">
-        <h2 id="cal-list" className="text-lg font-bold">
+        <h2 id="cal-list" className={sectionTitle}>
           {monthNumber}월의 마감
         </h2>
         {events.length > 0 ? (

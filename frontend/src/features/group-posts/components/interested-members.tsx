@@ -3,6 +3,7 @@ import type { Disclosure } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
 import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
+import { PanelNote } from "@/shared/components/panel"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { textLink } from "@/shared/components/text-link"
 import { joinClasses } from "@/shared/lib/utils"
@@ -54,12 +55,12 @@ export function InterestedMembers({ post, viewer, myDisclosure, onChangeDisclosu
           <li className="border-t border-border-subtle py-2.5 text-label-sm text-text-secondary">아직 없음</li>
         )}
       </ul>
-      <p className="mt-3 border-t border-border-subtle pt-3 text-label-sm text-text-secondary">
+      <PanelNote className="mt-3 pt-3">
         지원 상태는 멤버마다 이 그룹에 정한 공개 범위만큼 보입니다. 내 공개 범위는 {DISCLOSURE_LABELS[myDisclosure]}입니다.{" "}
         <button type="button" onClick={onChangeDisclosure} className={joinClasses(textLink, "cursor-pointer whitespace-nowrap")}>
           공개 범위 바꾸기
         </button>
-      </p>
+      </PanelNote>
     </SurfaceCard>
   )
 }

@@ -5,7 +5,7 @@ import { getMyGroups } from "@/domain/group/api"
 import { PostingLink } from "@/domain/posting/posting-link"
 import type { FillDeadlineState } from "@/domain/posting/types"
 import { Avatar } from "@/shared/components/avatar"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
@@ -72,7 +72,7 @@ export function HomePage() {
       <div className={columns}>
         <section aria-labelledby="home-due" className={joinClasses(mainColumn, "gap-3")}>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-            <h2 id="home-due" className="text-lg font-bold">
+            <h2 id="home-due" className={sectionTitle}>
               다가오는 마감
             </h2>
             <Link to={paths.myPosts()} className="inline-flex min-h-control-md items-center gap-1 text-sm font-bold whitespace-nowrap text-primary">
@@ -106,7 +106,7 @@ export function HomePage() {
 
         <aside className={joinClasses(sideColumn(320), "gap-6")}>
           <section aria-labelledby="home-todo" className="flex flex-col gap-3 rounded-panel bg-highlight-subtle p-5">
-            <h2 id="home-todo" className="text-lg font-bold">
+            <h2 id="home-todo" className={sectionTitle}>
               확인 필요 {todos.length}
             </h2>
             {todos.length > 0 ? (
@@ -126,7 +126,7 @@ export function HomePage() {
           </section>
 
           <Panel aria-labelledby="home-news" className="flex flex-col gap-4 p-6">
-            <h2 id="home-news" className="text-lg font-bold">
+            <h2 id="home-news" className={sectionTitle}>
               그룹 소식
             </h2>
             {news.length > 0 ? (
