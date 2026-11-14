@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { buttonVariants } from "@/components/ui/button"
@@ -33,6 +33,8 @@ export function MyPostPage() {
   const { today, posting } = useLoaderData<typeof myPostLoader>()
   const due = dueText(posting, today)
   const [memo, setMemo] = useState(posting.memo)
+  // 저장한 값과 비교한다. loader의 posting.memo는 저장해도 다시 읽지 않아 처음 값에 머문다
+  const lastSaved = useRef(posting.memo)
   const [saved, setSaved] = useState(false)
   const full = posting.deadline.kind === "date" ? `${formatDateWeekday(posting.deadline.date)} 마감` : due.sub
 
@@ -127,8 +129,9 @@ export function MyPostPage() {
                 setSaved(false)
               }}
               onBlur={async () => {
-                if (memo === posting.memo) return
+                if (memo === lastSaved.current) return
                 await saveMemo(posting.id, memo)
+                lastSaved.current = memo
                 setSaved(true)
               }}
               className="min-h-24"
