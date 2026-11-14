@@ -23,12 +23,15 @@ export function flaggedValues(text: string): string[] {
   return [...text.matchAll(FLAG)].map((m) => m[1])
 }
 
-/** "확인 필요" 표시가 든 문장을 지운다(카드 확인의 "이 문장 지우기"). 문장은 마침표·물음표·느낌표로 나눈다. */
+/**
+ * "확인 필요" 표시가 든 문장을 지운다(카드 확인의 "이 문장 지우기").
+ * 문장은 마침표·물음표·느낌표 뒤의 빈칸에서 나눈다(가짜 서버의 moveStarNumbers와 같은 규칙). 1.5 같은 소수점에서는 끊지 않는다.
+ */
 export function dropFlaggedSentences(text: string): string {
-  const sentences = text.match(/[^.?!]+[.?!]?/g) ?? []
-  return sentences
+  return text
+    .split(/(?<=[.?!])\s+/)
     .filter((s) => !new RegExp(FLAG.source).test(s))
-    .join("")
+    .join(" ")
     .trim()
 }
 

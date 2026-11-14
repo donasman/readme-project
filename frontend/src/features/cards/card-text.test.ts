@@ -21,6 +21,11 @@ describe("확인 필요 표시", () => {
     expect(dropFlaggedSentences(RESULT)).toBe("p95 응답 시간이 0.4초로 줄었고 주문 1건당 쿼리가 21회에서 1회가 됐다.")
     expect(dropFlaggedSentences("그대로다.")).toBe("그대로다.")
   })
+  it("소수점과 겹친 문장부호에서는 문장을 끊지 않는다", () => {
+    expect(dropFlaggedSentences("응답이 [확인 필요: 1.5배] 빨라졌다. 그대로다.")).toBe("그대로다.")
+    expect(dropFlaggedSentences("문의가 [확인 필요: 30%] 줄었고 응답은 0.4초다. 끝.")).toBe("끝.")
+    expect(dropFlaggedSentences("정말?! 좋다.")).toBe("정말?! 좋다.")
+  })
 })
 
 describe("markUsedNumbers", () => {
