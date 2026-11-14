@@ -37,6 +37,8 @@ export function PostNewPage() {
   const [via, setVia] = useState<Via>("url")
   const [notice, setNotice] = useState<ReadNotice | null>(null)
   const [busy, setBusy] = useState(false)
+  // 읽지 못한 링크. 본문 붙여넣기의 원문 링크와, 링크 탭으로 돌아왔을 때의 칸에 다시 넣는다
+  const [failedUrl, setFailedUrl] = useState("")
 
   async function read(input: PostReadInput) {
     setBusy(true)
@@ -48,7 +50,10 @@ export function PostNewPage() {
       }
       setNotice(result)
       // 링크를 읽지 못하면 본문을 붙여넣게 한다
-      if (result.status === "failed") setVia("text")
+      if (result.status === "failed") {
+        if (input.kind === "url") setFailedUrl(input.url)
+        setVia("text")
+      }
     } finally {
       setBusy(false)
     }
@@ -83,8 +88,8 @@ export function PostNewPage() {
 
       <Panel aria-label="공고 넣기" className="flex flex-col gap-5 p-6">
         <SegmentedControl label="넣는 방법" value={via} onValueChange={(value) => setVia(value as Via)} options={VIAS} />
-        {via === "url" && <UrlForm busy={busy} onRead={read} />}
-        {via === "text" && <TextForm busy={busy} onRead={read} />}
+        {via === "url" && <UrlForm busy={busy} onRead={read} initialUrl={failedUrl} />}
+        {via === "text" && <TextForm busy={busy} onRead={read} initialUrl={failedUrl} />}
         {via === "file" && <FileDrop busy={busy} onRead={read} />}
       </Panel>
 
@@ -98,8 +103,11 @@ interface ReadProps {
   onRead: (input: PostReadInput) => Promise<void>
 }
 
-function UrlForm({ busy, onRead }: ReadProps) {
-  const [url, setUrl] = useState("")
+/** 링크와 본문 붙여넣기: 읽지 못한 링크가 있으면 그 주소로 칸을 채운다 */
+type UrlReadProps = ReadProps & { initialUrl: string }
+
+function UrlForm({ busy, onRead, initialUrl }: UrlReadProps) {
+  const [url, setUrl] = useState(initialUrl)
   const [error, setError] = useState<string>()
 
   function submit(event: FormEvent) {
@@ -137,9 +145,9 @@ function UrlForm({ busy, onRead }: ReadProps) {
   )
 }
 
-function TextForm({ busy, onRead }: ReadProps) {
+function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
   const [text, setText] = useState("")
-  const [sourceUrl, setSourceUrl] = useState("")
+  const [sourceUrl, setSourceUrl] = useState(initialUrl)
   const [error, setError] = useState<{ text?: string; url?: string }>({})
 
   function submit(event: FormEvent) {
