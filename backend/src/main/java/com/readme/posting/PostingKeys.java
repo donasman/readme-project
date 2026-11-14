@@ -16,13 +16,13 @@ import java.util.regex.Pattern;
  * 공고키(postings.posting_key). 같은 공고를 알아보는 키다(설계 그룹·공고 가정 3).
  *
  * <p>jobfit 의 src/jobfit/jobkey.py(derive, normalize_url)를 옮겼다. 같은 입력이면 jobfit 과 같은 키가 나온다.
- * 다른 점 하나: 사이트 호스트를 점 경계로 본다(SITE_RULES 의 설명).
+ * 다른 점 둘: 사이트 호스트를 점 경계로 본다(SITE_RULES 의 설명). # 뒤가 / 로 시작하면 키에 넣는다(normalizeUrl 의 설명).
  * Python 의 urlsplit, parse_qsl, urlencode 가 하는 일을 그대로 따라 한다(아래의 split, parseQuery, quotePlus).
  * 게시처 판정(kind)은 아직 쓰는 곳이 없어 옮기지 않았다.
  *
  * <ul>
  * <li>{@code <사이트>:<공고번호>}: 사람인·잡코리아·원티드·점핏·리멤버·프로그래머스·토스</li>
- * <li>{@code url:<호스트/경로?남은 값>}: 모르는 사이트. 추적값과 # 뒤를 뺀 주소</li>
+ * <li>{@code url:<호스트/경로?남은 값>}: 모르는 사이트. 추적값과 # 뒤를 뺀 주소. # 뒤가 / 로 시작하면 {@code #/…}를 붙인다</li>
  * <li>{@code local:<해시 8자>}: 링크가 없을 때. 회사명|직무|마감일의 SHA-1</li>
  * </ul>
  */
@@ -76,19 +76,42 @@ public final class PostingKeys {
 		return new PostingKey("local:" + sha1Hex(seed).substring(0, 8), "local", "");
 	}
 
-	/** 추적값과 # 뒤를 빼고 호스트의 www. 이나 m. 을 뗀 "호스트/경로?남은 값". */
+	/**
+	 * 추적값과 # 뒤를 빼고 호스트의 www. 이나 m. 을 뗀 "호스트/경로?남은 값".
+	 *
+	 * <p>jobfit 과 다른 점: # 뒤가 / 로 시작하면(해시로 화면을 바꾸는 채용 사이트의 {@code #/jobs/101}) 공고마다 다른
+	 * 주소이므로 경로처럼 다듬어 붙인다. jobfit 은 이것도 빼서 그 사이트의 공고가 모두 같은 키가 된다.
+	 */
 	public static String normalizeUrl(String url) {
 		UrlParts parts = split(strip(url));
 		String host = HOST_PREFIX.matcher(parts.netloc().toLowerCase(Locale.ROOT)).replaceFirst("");
-		String path = parts.path().replaceAll("/+$", "");
+		return host + pathAndQuery(parts.path(), parts.query()) + hashRoute(parts.fragment());
+	}
+
+	/** 끝의 / 를 뗀 경로와, 추적값을 뺀 쿼리. */
+	private static String pathAndQuery(String path, String query) {
 		List<String> kept = new ArrayList<>();
-		for (String[] pair : parseQuery(parts.query())) {
+		for (String[] pair : parseQuery(query)) {
 			if (!isTracking(pair[0])) {
 				kept.add(quotePlus(pair[0]) + "=" + quotePlus(pair[1]));
 			}
 		}
-		String query = String.join("&", kept);
-		return host + path + (query.isEmpty() ? "" : "?" + query);
+		String keptQuery = String.join("&", kept);
+		return path.replaceAll("/+$", "") + (keptQuery.isEmpty() ? "" : "?" + keptQuery);
+	}
+
+	/** # 뒤가 / 로 시작하면 "#/경로?남은 값". 아니면(문서 안의 위치, #!) 또는 첫 화면(#/)이면 "". */
+	private static String hashRoute(String fragment) {
+		if (!fragment.startsWith("/")) {
+			return "";
+		}
+		int question = fragment.indexOf('?');
+		String route = (question >= 0) ? pathAndQuery(fragment.substring(0, question), fragment.substring(question + 1))
+				: pathAndQuery(fragment, "");
+		if (route.isEmpty()) {
+			return "";
+		}
+		return "#" + (route.startsWith("/") ? route : "/" + route);
 	}
 
 	private static PostingKey fromUrl(String url) {
@@ -121,7 +144,7 @@ public final class PostingKeys {
 
 	// ── Python urllib.parse 를 따라 한 것 ──────────────────────────────────
 
-	/** urlsplit: 스킴, //호스트, 경로, ?쿼리, #조각으로 나눈다. 잘못된 주소에서도 오류 없이 나눈다. */
+	/** urlsplit: 스킴, //호스트, 경로, ?쿼리, #조각(# 를 뺀 뒤쪽 전부)으로 나눈다. 잘못된 주소에서도 오류 없이 나눈다. */
 	static UrlParts split(String url) {
 		String rest = url.replaceAll("[\\t\\r\\n]", "");
 		Matcher scheme = SCHEME.matcher(rest);
@@ -140,8 +163,10 @@ public final class PostingKeys {
 			netloc = rest.substring(2, end);
 			rest = rest.substring(end);
 		}
+		String fragment = "";
 		int hash = rest.indexOf('#');
 		if (hash >= 0) {
+			fragment = rest.substring(hash + 1);
 			rest = rest.substring(0, hash);
 		}
 		String query = "";
@@ -150,7 +175,7 @@ public final class PostingKeys {
 			query = rest.substring(question + 1);
 			rest = rest.substring(0, question);
 		}
-		return new UrlParts(netloc, rest, query);
+		return new UrlParts(netloc, rest, query, fragment);
 	}
 
 	/** parse_qsl(keep_blank_values=True): & 로 나누고, = 가 없으면 값은 "", + 는 공백, % 는 풀어 읽는다. */
@@ -230,7 +255,7 @@ public final class PostingKeys {
 		}
 	}
 
-	record UrlParts(String netloc, String path, String query) {
+	record UrlParts(String netloc, String path, String query, String fragment) {
 	}
 
 	private record SiteRule(String site, Pattern host, List<Pattern> numbers) {
