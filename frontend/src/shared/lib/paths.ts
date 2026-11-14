@@ -14,7 +14,6 @@ export const paths = {
   board: (postingId?: string) => (postingId === undefined ? "/board" : `/board?posting=${seg(postingId)}`),
   calendar: () => "/calendar",
   /** 설정: 내 정보, 메일 자동화, 탈퇴 */
-  settings: () => "/settings",
   account: () => "/settings/account",
   mailSettings: () => "/settings/mail",
   withdraw: () => "/settings/withdraw",
@@ -26,7 +25,6 @@ export const paths = {
   passwordResetSent: () => "/password-reset/sent",
   /** 내 그룹 목록 */
   groups: () => "/groups",
-  group: (groupId: string) => `/groups/${seg(groupId)}`,
   groupPosts: (groupId: string) => `/groups/${seg(groupId)}/posts`,
   groupPost: (groupId: string, postId: string) => `/groups/${seg(groupId)}/posts/${seg(postId)}`,
   /** 공고 올리기와 그 다음 칸 확인 */
@@ -41,5 +39,4 @@ export const paths = {
   cardSources: () => "/cards/sources",
   /** 카드 확인. cardId를 주면 그 카드부터 본다 */
   cardReview: (cardId?: number) => (cardId === undefined ? "/cards/review" : `/cards/review?card=${cardId}`),
-  devComponents: () => "/dev/components",
 }

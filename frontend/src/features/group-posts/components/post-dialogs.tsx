@@ -25,7 +25,7 @@ interface TargetDialogProps<T> {
 const postName = (post: Pick<GroupPost, "company" | "title">) => `${post.company} · ${post.title}`
 
 /** 마감일 넣기: 날짜 하나, 또는 "날짜 없이 상시 채용". 한 번 넣으면 바꿀 수 없다. */
-export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<GroupPost & { sourceUrl?: string | null }> & { onSave: (deadline: Deadline) => Promise<void> }) {
+export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<GroupPost> & { onSave: (deadline: Deadline) => Promise<void> }) {
   return (
     <AppDialog
       open={target !== null}
@@ -41,12 +41,12 @@ export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<Gr
         </>
       }
     >
-      {target && <DeadlineForm key={target.id} sourceUrl={target.sourceUrl ?? null} onSave={onSave} />}
+      {target && <DeadlineForm key={target.id} onSave={onSave} />}
     </AppDialog>
   )
 }
 
-function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave: (deadline: Deadline) => Promise<void> }) {
+function DeadlineForm({ onSave }: { onSave: (deadline: Deadline) => Promise<void> }) {
   const [date, setDate] = useState("")
   const [always, setAlways] = useState(false)
   const [missing, setMissing] = useState(false)
@@ -89,14 +89,8 @@ function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave:
       </label>
       <p className="text-label-sm text-text-secondary">
         넣은 날짜는 이 공고가 올라간 모든 그룹에 보이고, 한 번 넣으면 바꿀 수 없습니다.{" "}
-        {sourceUrl ? (
-          <a href={sourceUrl} target="_blank" rel="noreferrer" className={sourceLink}>
-            원문 열기
-          </a>
-        ) : (
-          // shortcut: 원문 주소가 없으면 눌러도 아무 일이 없는 자리만 둔다, 서버를 붙일 때 주소 없는 공고에서 감출지 정한다
-          <PlaceholderLink className={sourceLink}>원문 열기</PlaceholderLink>
-        )}
+        {/* shortcut: 목록 응답(GET …/posts)에 원문 주소가 없어 눌러도 아무 일이 없는 자리만 둔다, 서버가 목록에 원문 주소를 싣기로 하면 링크로 바꾼다 */}
+        <PlaceholderLink className={sourceLink}>원문 열기</PlaceholderLink>
       </p>
     </form>
   )

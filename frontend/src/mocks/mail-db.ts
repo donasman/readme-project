@@ -44,11 +44,10 @@ function createMailbox(): { pending: StoredMail[]; added: MailAdded[] } {
 
 let store: ReturnType<typeof createMailbox> | null = null
 const box = () => (store ??= createMailbox())
-const copy = <T>(value: T): T => structuredClone(value)
 
 /** 메일 확인함. 바뀌기 전 상태는 지금 내 공고의 상태다. */
 export function getMailbox(): Mailbox {
-  const { pending, added } = copy(box())
+  const { pending, added } = structuredClone(box())
   return { pending: pending.map((m) => ({ ...m, before: stateOf(m.postingId) })), added }
 }
 
@@ -81,5 +80,5 @@ export function revertAdded(id: string): MailAdded {
   const found = box().added.find((a) => a.id === id)
   if (!found) throw new NotFoundError("메일")
   box().added = box().added.filter((a) => a !== found)
-  return copy(found)
+  return structuredClone(found)
 }

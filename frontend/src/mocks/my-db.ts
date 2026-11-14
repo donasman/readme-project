@@ -34,7 +34,6 @@ const NEWS: { groupId: string; text: string; postId: string | null }[] = [
   { groupId: "pub", text: "나래 님이 예시 공사 공고에 댓글을 남겼습니다", postId: "pub1" },
 ]
 
-const copy = <T>(value: T): T => structuredClone(value)
 
 /** 내가 아직 속한 그룹의 공고들. 나간 그룹의 공고는 읽지 못한다. */
 function readPosts(e: Entry): { group: PostingGroup; post: GroupPostDetail }[] {
@@ -53,7 +52,7 @@ function readPosts(e: Entry): { group: PostingGroup; post: GroupPostDetail }[] {
 function toPosting(e: Entry): MyPosting {
   const found = readPosts(e)
   const body = found[0]?.post
-  if (body) e.snapshot = { company: body.company, title: body.title, deadline: copy(body.deadline) }
+  if (body) e.snapshot = { company: body.company, title: body.title, deadline: structuredClone(body.deadline) }
   const { company, title, deadline } = e.snapshot ?? { company: "", title: "", deadline: { kind: "unknown" as const } }
   return { id: e.id, company, title, deadline, groups: found.map((f) => f.group), decision: e.decision, stage: e.stage, result: e.result }
 }
@@ -84,7 +83,7 @@ export function getMyPosting(id: string): MyPostingDetail {
     ...posting,
     applyAt: extra.applyAt ?? body?.applyAt ?? null,
     sourceUrl: body?.sourceUrl ?? null,
-    sections: copy(extra.sections ?? body?.sections ?? []),
+    sections: structuredClone(extra.sections ?? body?.sections ?? []),
     keywords: [...keywords],
     memo: e.memo,
     matches,
