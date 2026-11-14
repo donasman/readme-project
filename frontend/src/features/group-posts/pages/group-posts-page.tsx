@@ -33,6 +33,8 @@ export function GroupPostsPage() {
   const viewer = useViewer()
   const { group } = useGroup()
   const [urlFilters, setFilters] = useListFilters()
+  // 검색 칸의 값은 화면 상태로 둔다. 주소(?q=)만 따르면 라우터가 값을 늦게 돌려줘 한글 조합이 깨지고 커서가 끝으로 튄다
+  const [query, setQuery] = useState(urlFilters.query)
   const interest = useInterest(group.id)
   const revalidator = useRevalidator()
   const location = useLocation()
@@ -75,8 +77,11 @@ export function GroupPostsPage() {
               id="post-search"
               type="search"
               placeholder="회사명, 공고명"
-              value={filters.query}
-              onChange={(event) => setFilters({ query: event.target.value })}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setFilters({ query: event.target.value })
+              }}
               className="pl-10 md:text-base"
             />
           </div>
