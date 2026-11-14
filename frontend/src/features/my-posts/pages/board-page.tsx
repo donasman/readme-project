@@ -17,7 +17,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings, updateMyState } from "../api"
 import { BigStat } from "../components/my-bits"
-import { DECISION_LABELS, DECISIONS, dueText, RESULT_LABELS, RESULTS, sortBoard, STAGE_LABELS, STAGES, stageCells, withDecision } from "../status"
+import { boardCounts, DECISION_LABELS, DECISIONS, dueText, RESULT_LABELS, RESULTS, sortBoard, STAGE_LABELS, STAGES, stageCells, withDecision } from "../status"
 import type { Decision, MyPosting, MyState, Result, Stage } from "../types"
 
 export async function boardLoader() {
@@ -35,7 +35,7 @@ export function BoardPage() {
   // ?posting=이 없을 때 처음 고른 첫 줄을 기억한다. 저장 뒤 다시 읽으면 줄 순서가 바뀌어 첫 줄이 다른 공고가 된다
   const [firstRow] = useState(rows[0]?.id)
   const selected = postings.find((p) => p.id === (params.get("posting") ?? firstRow)) ?? rows[0] ?? null
-  const appliedList = postings.filter((p) => p.decision === "applied")
+  const counts = boardCounts(postings)
 
   const pick = (id: string) => setParams({ posting: id }, { replace: true, preventScrollReset: true })
 
@@ -50,10 +50,10 @@ export function BoardPage() {
       </div>
 
       <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-3">
-        <BigStat label="지원함" value={appliedList.length} />
-        <BigStat label="진행 중" value={appliedList.filter((p) => (p.result ?? "in_progress") === "in_progress").length} />
-        <BigStat label="최종 합격" value={appliedList.filter((p) => p.stage === "final" && p.result === "passed").length} />
-        <BigStat label="불합격" value={appliedList.filter((p) => p.result === "failed").length} />
+        <BigStat label="지원함" value={counts.applied} />
+        <BigStat label="진행 중" value={counts.active} />
+        <BigStat label="최종 합격" value={counts.passed} />
+        <BigStat label="불합격" value={counts.failed} />
       </dl>
 
       <div className={columns}>

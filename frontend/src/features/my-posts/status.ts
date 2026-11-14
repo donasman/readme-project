@@ -76,3 +76,14 @@ export function filterPostings(postings: MyPosting[], filters: MyFilters, today:
   )
   return { rows, open: openList.length, closed: closedList.length }
 }
+
+/**
+ * 지원 현황의 숫자 넷. 지원함 = 진행 중 + 최종 합격 + 불합격이 늘 맞는다.
+ * 최종 단계의 합격은 최종 합격, 어느 단계든 불합격은 불합격, 나머지 지원함(최종이 아닌 단계의 합격 포함)은 진행 중이다.
+ */
+export function boardCounts(postings: MyState[]): { applied: number; active: number; passed: number; failed: number } {
+  const applied = postings.filter((p) => p.decision === "applied")
+  const passed = applied.filter((p) => p.stage === "final" && p.result === "passed").length
+  const failed = applied.filter((p) => p.result === "failed").length
+  return { applied: applied.length, active: applied.length - passed - failed, passed, failed }
+}
