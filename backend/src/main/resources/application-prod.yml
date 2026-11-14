@@ -36,3 +36,4 @@ server:
 app:
   frontend-origin: ${FRONTEND_ORIGIN}           # 예: https://app.도메인
   csrf-cookie-domain: ${CSRF_COOKIE_DOMAIN}     # 예: 도메인 (app. 과 api. 의 상위 도메인)
+  mail-from: ${MAIL_FROM}                       # 예: 리드미 <no-reply@도메인>. 메일 발송 서비스에서 인증한 주소

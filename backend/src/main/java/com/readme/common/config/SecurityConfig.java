@@ -9,10 +9,13 @@ import tools.jackson.databind.json.JsonMapper;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -34,9 +37,9 @@ import com.readme.common.error.ErrorCode;
 /**
  * 로그인 확인은 서버 세션 쿠키로 한다(Spring Session JDBC).
  *
- * <p>지금 들어 있는 것: CORS, CSRF, 로그인이 필요한 주소 구분, 보안 필터가 막은 요청의 오류 응답(401, 403).
- * 로그인 세션을 만드는 것은 auth 의 LoginSession 이다.
- * <p>로그인 기능을 만들 때 더할 것: 이메일·비밀번호 로그인(/api/auth/login), 구글 로그인(oauth2Login), 로그아웃.
+ * <p>지금 들어 있는 것: CORS, CSRF, 로그인이 필요한 주소 구분, 로그아웃, 비밀번호 해시, 보안 필터가 막은 요청의 오류 응답(401, 403).
+ * 이메일·비밀번호 로그인은 auth 의 AuthController 가, 로그인 세션을 만드는 것은 auth 의 LoginSession 이 한다.
+ * <p>더할 것: 구글 로그인(oauth2Login). Google Cloud 의 OAuth 클라이언트가 생기면 붙인다.
  */
 @Configuration
 @EnableWebSecurity
@@ -57,7 +60,14 @@ public class SecurityConfig {
 		http
 			.cors(Customizer.withDefaults())
 			// spa(): CSRF 토큰을 XSRF-TOKEN 쿠키로 내려 주고, 프런트가 X-XSRF-TOKEN 헤더로 돌려보낸 값을 확인한다.
+			// 쿠키는 읽기 요청의 응답에도 실린다(요청에 없을 때). 그래서 프런트의 첫 로그인 요청도 토큰을 보낼 수 있다(LoginTests).
 			.csrf((csrf) -> csrf.spa().csrfTokenRepository(csrfTokenRepository))
+			// 로그아웃: 세션을 지우고(세션 행과 쿠키) 204 를 준다. 다음 로그인에 쓸 새 XSRF-TOKEN 쿠키도 준다.
+			.logout((logout) -> logout.logoutUrl("/api/auth/logout")
+				.logoutSuccessHandler((request, response, authentication) -> {
+					csrfTokenRepository.saveToken(csrfTokenRepository.generateToken(request), request, response);
+					response.setStatus(HttpStatus.NO_CONTENT.value());
+				}))
 			.securityContext((context) -> context.securityContextRepository(securityContextRepository))
 			.authorizeHttpRequests((auth) -> auth
 				.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
@@ -109,6 +119,12 @@ public class SecurityConfig {
 			repository.setCookieCustomizer((cookie) -> cookie.domain(this.app.csrfCookieDomain()));
 		}
 		return repository;
+	}
+
+	/** 비밀번호 해시. 지금은 BCrypt 이고, 해시 앞에 {bcrypt} 가 붙어 나중에 방식을 바꿀 수 있다. */
+	@Bean
+	PasswordEncoder passwordEncoder() {
+		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
 
 	private void writeError(HttpServletResponse response, ErrorCode code) throws IOException {

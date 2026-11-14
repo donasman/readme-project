@@ -11,3 +11,4 @@ spring:
 app:
   frontend-origin: http://localhost:5173
   csrf-cookie-domain:        # 개발에서는 비워 둔다
+  mail-from: 리드미 <no-reply@readme.local>

@@ -40,7 +40,8 @@ class CsrfCookieTests {
 
 	/** SecurityConfig 의 저장소로 토큰을 새로 만들어 저장하고, 응답에 실린 XSRF-TOKEN 쿠키를 돌려준다. */
 	private static Cookie issueCookie(String csrfCookieDomain) {
-		SecurityConfig config = new SecurityConfig(new AppProperties("https://app.readme.example", csrfCookieDomain),
+		SecurityConfig config = new SecurityConfig(
+				new AppProperties("https://app.readme.example", csrfCookieDomain, "리드미 <no-reply@readme.example>"),
 				JsonMapper.builder().build());
 		CsrfTokenRepository repository = config.csrfTokenRepository();
 		MockHttpServletRequest request = new MockHttpServletRequest();

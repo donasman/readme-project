@@ -51,10 +51,10 @@
 - 로그인은 어느 방식이든 사람을 확인한 뒤 `auth/LoginSession.start(userId, request, response)`를 부른다. 세션 id 를 바꾸고, CSRF 토큰을 새로 만들고, 로그인 정보를 세션(spring_session)에 저장한다.
 - 그룹 안의 것을 다루는 API 는 먼저 `group/GroupAccess.requireMember`로 멤버인지 본다. 멤버가 아니면 그룹이 없을 때와 같은 404 `GROUP_NOT_FOUND`다.
 
-## 임시 로그인 (실제 로그인을 만들 때 걷어낼 것)
+## 예시 데이터 (dev 프로필)
 
-- dev 프로필에만 임시 로그인(`POST /api/auth/dev-login`)이 있다. 실제 로그인(로그인 설계 4절)을 만들 때 걷어낸다. 지울 것과 남길 것은 구조 문서 6.2에 있다.
-- 임시 로그인과 예시 데이터는 `dev` 패키지에만 두고 `@Profile("dev & !prod")`를 붙인다.
+- dev 프로필은 빈 DB에 예시 사용자와 그룹·공고를 넣는다. 예시 사용자는 개발용 비밀번호 `readme1234`로 실제 로그인을 한다(구조 문서 6.2).
+- 예시 데이터와 개발용으로만 쓰는 것은 `dev` 패키지에만 두고 `@Profile("dev & !prod")`를 붙인다. 비밀번호 없이 들어가는 길(임시 로그인)은 다시 만들지 않는다.
 
 ## 응답에 싣는 값
 
@@ -100,12 +100,13 @@
 - DB 가 필요한 테스트는 PostgreSQL(Testcontainers)로 돌린다. H2 로 바꾸지 않는다.
 - 규칙만 있는 코드(상태 글자, 공개 범위 자르기, 댓글 링크 나누기, 공고키, 카드 검사)는 Spring 없이 JUnit 으로 테스트한다.
 - API 와 DB 를 거치는 테스트는 `@IntegrationTest`를 붙이고 주입받은 `MockMvcTester`로 요청한다. 이 표시를 붙인 테스트는 서버와 DB 를 한 번만 띄워 나눠 쓴다. 테스트 클래스에 설정(`@ActiveProfiles`, `@Import`, `@MockitoBean`, `@TestPropertySource`)을 더하면 그 클래스만 따로 띄우게 되니 꼭 필요할 때만 더한다.
-- `@IntegrationTest`의 프로필은 `test`다(`src/test/resources/application-test.yml`). dev 의 설정, 예시 데이터, 임시 로그인은 없다.
+- `@IntegrationTest`의 프로필은 `test`다(`src/test/resources/application-test.yml`). dev 의 설정과 예시 데이터는 없다.
+- 메일은 보내지 않고 `TestMailbox`에 모인다. 주입받아 받는 주소로 골라 읽고, 링크의 토큰은 `lastTokenTo`로 꺼낸다.
 - 시계는 2026-11-13 00:30(서울)에 멈춰 있다(`FixedClockConfiguration`의 `NOW`, `TODAY`). UTC 로는 11-12 라서 날짜를 UTC 로 구하는 실수가 테스트에 걸린다. 테스트 데이터의 날짜도 이 둘을 기준으로 잡는다.
 - 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고(`Fixtures`), 다른 테스트가 만든 데이터에 기대지 않는다. DB 전체에서 유일한 값(이메일, 공고키)은 테스트마다 다르게 만든다.
 - `Fixtures`가 넣는 순서용 시각(들어온 때, 관심을 켠 때)은 멈춘 시계의 `NOW`보다 앞이다. 테스트 안에서 API 로 만든 것은 `NOW`라 늘 뒤에 온다.
-- 로그인한 요청은 `TestRequests.loginAs(userId)`로 만든다. 세션을 실제로 만들고 읽는 것은 dev 프로필 테스트(`DevLoginTests`)가 본다.
-- 세션 쿠키의 속성(수명, `HttpOnly`, `SameSite`)은 `@IntegrationTest`(가짜 서버)에서 `application.yml`을 따르지 않는다. Boot 가 WAR 배포로 보기 때문이다. 쿠키 속성은 내장 서버로 띄우는 `DevLoginTests`에서 확인한다.
+- 로그인한 요청은 `TestRequests.loginAs(userId)`로 만든다. 세션을 실제로 만들고 읽는 것은 실제 로그인을 부르는 `auth/LoginTests`가 본다. 실제 로그인을 할 사람은 `Fixtures.passwordUser`로 만든다.
+- 세션 쿠키의 속성(수명, `HttpOnly`, `SameSite`)은 `@IntegrationTest`(가짜 서버)에서 `application.yml`을 따르지 않는다. Boot 가 WAR 배포로 보기 때문이다. 쿠키 속성은 내장 서버로 띄우는 `dev/DevProfileTests`에서 확인한다.
 - 바꾸는 요청에는 `TestRequests.xsrf()`를 붙인다. spring-security-test 의 `csrf()`는 쓰지 않는다. 처음 부를 때 CSRF 토큰 저장소를 세션 방식으로 바꿔 끼워, 같은 서버를 쓰는 뒤의 테스트까지 달라진다.
 
 ## 아직 정하지 않은 것
