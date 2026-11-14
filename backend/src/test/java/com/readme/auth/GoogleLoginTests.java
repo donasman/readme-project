@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -65,6 +66,9 @@ class GoogleLoginTests {
 
 	private static final String PASSWORD = "correct horse";
 
+	/** 브라우저가 구글에 가기 전부터 들고 있던 CSRF 토큰. */
+	private static final String OLD_XSRF_TOKEN = "old";
+
 	@Autowired
 	MockMvcTester mvc;
 
@@ -99,10 +103,13 @@ class GoogleLoginTests {
 	@Test
 	void aNewPersonGetsAVerifiedAccountWithoutAPasswordAndALoginSession() {
 		String email = newEmail();
+		MvcTestResult start = this.mvc.get().uri("/oauth2/authorization/google").exchange();
 
-		MvcTestResult back = googleLogin(newSub(), email, true, "구글 가람");
+		MvcTestResult back = googleLogin(start, newSub(), email, true, "구글 가람");
 
 		assertThat(back).hasStatus(HttpStatus.FOUND).hasRedirectedUrl(HOME);
+		// 구글로 가기 전에 만든 세션의 id 는 쓰지 않는다(세션 고정 공격 막기)
+		assertThat(setCookie(back, "SESSION")).isNotNull().isNotEqualTo(setCookie(start, "SESSION"));
 		assertThat(me(back)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
 				{ "name": "구글 가람", "email": "%s", "hasPassword": false, "providers": ["google"] }
 				""".formatted(email));
@@ -111,8 +118,14 @@ class GoogleLoginTests {
 			.query(Boolean.class).single()).isTrue();
 		// 세션의 주인은 구글 계정이 아니라 사용자 id 다. 비밀번호를 재설정하면 이 이름으로 세션을 찾아 끊는다.
 		assertThat(sessionsOf(String.valueOf(user))).isEqualTo(1);
-		// 프런트가 로그인 직후 보낼 요청에 쓸 새 CSRF 토큰
-		assertThat(setCookie(back, "XSRF-TOKEN")).isNotNull();
+		// 프런트가 로그인 직후 보낼 요청에 쓸 새 CSRF 토큰. 토큰을 지우는 빈 쿠키가 앞에 실리므로 마지막 쿠키를 본다.
+		// setCookie 는 빈 값을 건너뛰어 마지막이 지우는 쿠키여도 잡지 못하므로 헤더를 직접 읽는다.
+		List<String> xsrfCookies = back.getResponse().getHeaders(HttpHeaders.SET_COOKIE).stream()
+			.filter((header) -> header.startsWith("XSRF-TOKEN="))
+			.toList();
+		assertThat(xsrfCookies).isNotEmpty();
+		String last = xsrfCookies.getLast();
+		assertThat(last.substring("XSRF-TOKEN=".length(), last.indexOf(';'))).isNotEmpty().isNotEqualTo(OLD_XSRF_TOKEN);
 	}
 
 	@Test
@@ -227,7 +240,14 @@ class GoogleLoginTests {
 
 	/** 구글로 보낸 뒤, 구글이 이 사람을 확인하고 돌려보낸 것처럼 돌아오는 주소를 부른다. */
 	private MvcTestResult googleLogin(String sub, String email, boolean emailVerified, String name) {
-		MvcTestResult start = this.mvc.get().uri("/oauth2/authorization/google").exchange();
+		return googleLogin(this.mvc.get().uri("/oauth2/authorization/google").exchange(), sub, email, emailVerified, name);
+	}
+
+	/**
+	 * start(구글로 보낸 응답)의 세션으로 돌아온다. 브라우저처럼 전에 받은 XSRF-TOKEN 쿠키도 보낸다. 그래서 돌아올 때
+	 * CSRF 토큰을 지우고 새로 만드는 일(구글 필터, LoginSession)이 실제처럼 두 번 돈다.
+	 */
+	private MvcTestResult googleLogin(MvcTestResult start, String sub, String email, boolean emailVerified, String name) {
 		Map<String, String> query = query(start);
 		Map<String, Object> idToken = new HashMap<>();
 		idToken.put("sub", sub);
@@ -242,7 +262,7 @@ class GoogleLoginTests {
 		return this.mvc.get().uri("/login/oauth2/code/google")
 			.param("code", "test-code")
 			.param("state", query.get("state"))
-			.cookie(new Cookie("SESSION", setCookie(start, "SESSION")))
+			.cookie(new Cookie("SESSION", setCookie(start, "SESSION")), new Cookie("XSRF-TOKEN", OLD_XSRF_TOKEN))
 			.exchange();
 	}
 
