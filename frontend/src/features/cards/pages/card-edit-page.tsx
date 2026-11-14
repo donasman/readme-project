@@ -267,7 +267,8 @@ function TagInput({ onAdd }: { onAdd: (tag: string) => void }) {
         aria-describedby="edit-tag-hint"
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          // 한글 조합 중의 Enter는 글자를 확정할 뿐이다. 그때 더하면 마지막 글자가 칸에 남는다
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) {
             e.preventDefault()
             add(shown[0]?.label ?? text)
           }

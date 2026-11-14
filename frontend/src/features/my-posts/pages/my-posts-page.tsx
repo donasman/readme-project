@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
@@ -34,6 +35,8 @@ const ROW_GRID =
 export function MyPostsPage() {
   const { today, postings } = useLoaderData<typeof myPostsLoader>()
   const [filters, setFilters] = useMyFilters()
+  // 검색 칸의 값은 화면 상태로 둔다. 주소(?q=)만 따르면 라우터가 값을 늦게 돌려줘 한글 조합이 깨지고 커서가 끝으로 튄다
+  const [query, setQuery] = useState(filters.query)
   const { rows, open, closed } = filterPostings(postings, filters, today)
 
   return (
@@ -56,8 +59,11 @@ export function MyPostsPage() {
               id="my-search"
               type="search"
               placeholder="회사명, 공고명"
-              value={filters.query}
-              onChange={(e) => setFilters({ query: e.target.value })}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setFilters({ query: e.target.value })
+              }}
               className="pl-10 md:text-base"
             />
           </div>
