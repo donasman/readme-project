@@ -161,7 +161,7 @@ public final class Numbers {
 		s = maskHttpCodes(s);
 		List<NumToken> numbers = new ArrayList<>();
 		for (Matcher m = MIXED.matcher(s); m.find();) {
-			long value = mixedValue(m.group("parts"));
+			double value = mixedValue(m.group("parts"));
 			if (value != 0) {
 				numbers.add(new NumToken(value, unit(m.group("unit")), m.group().strip()));
 			}
@@ -234,13 +234,18 @@ public final class Numbers {
 		return total + section + num;
 	}
 
-	/** "4만 3천" → 43000, "1억 2천만" → 120000000, "3만 5000" → 35000. 큰 단위가 앞에 와야 한다("3만 2억"은 0). */
-	private static long mixedValue(String parts) {
-		long total = 0;
-		long section = 0;
+	/**
+	 * "4만 3천" → 43000, "1억 2천만" → 120000000, "3만 5000" → 35000. 큰 단위가 앞에 와야 한다("3만 2억"은 0).
+	 *
+	 * <p>double 로 더한다. jobfit 도 끝에 float 로 바꾸고, long 이면 아주 큰 수("1만 12345678901234567890")에서 넘치거나 실패한다.
+	 * shortcut: 2^53 을 넘는 수는 마지막 자리가 jobfit(정수로 다 더한 뒤 바꿈)과 다를 수 있다, 그런 값을 견줘야 하면 BigInteger 로 더한다.
+	 */
+	private static double mixedValue(String parts) {
+		double total = 0;
+		double section = 0;
 		Integer lastBig = null;
 		for (Matcher m = MIXED_PART.matcher(parts); m.find();) {
-			long n = Long.parseLong(m.group(1));
+			double n = Double.parseDouble(m.group(1));
 			String mult = (m.group(2) != null) ? m.group(2) : "";
 			if (mult.equals("억") || mult.equals("만")) {
 				int big = MULT.get(mult);
