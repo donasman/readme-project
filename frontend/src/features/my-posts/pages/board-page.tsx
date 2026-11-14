@@ -32,7 +32,9 @@ export function BoardPage() {
   const { today, postings, groups } = useLoaderData<typeof boardLoader>()
   const [params, setParams] = useSearchParams()
   const rows = sortBoard(postings)
-  const selected = postings.find((p) => p.id === params.get("posting")) ?? rows[0] ?? null
+  // ?posting=이 없을 때 처음 고른 첫 줄을 기억한다. 저장 뒤 다시 읽으면 줄 순서가 바뀌어 첫 줄이 다른 공고가 된다
+  const [firstRow] = useState(rows[0]?.id)
+  const selected = postings.find((p) => p.id === (params.get("posting") ?? firstRow)) ?? rows[0] ?? null
   const appliedList = postings.filter((p) => p.decision === "applied")
 
   const pick = (id: string) => setParams({ posting: id }, { replace: true, preventScrollReset: true })
