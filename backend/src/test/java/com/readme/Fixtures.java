@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * 통합 테스트가 자기 데이터를 DB 에 직접 넣는 도우미. @IntegrationTest 를 붙인 테스트에서 주입받아 쓴다.
@@ -20,14 +21,18 @@ public class Fixtures {
 
 	private final JdbcClient jdbc;
 
+	private final PasswordEncoder passwordEncoder;
+
 	private final AtomicLong ticks = new AtomicLong();
 
-	Fixtures(JdbcClient jdbc) {
+	Fixtures(JdbcClient jdbc, PasswordEncoder passwordEncoder) {
 		this.jdbc = jdbc;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	// ── 사람 ───────────────────────────────────────────────────────────
 
+	/** 이메일 인증을 마쳤고 비밀번호가 없는(구글로만 가입한 것과 같은) 사람. 로그인은 TestRequests.loginAs 로 한다. */
 	public long user(String name) {
 		return this.jdbc.sql("""
 				insert into users (email, display_name, email_verified_at)
@@ -35,6 +40,20 @@ public class Fixtures {
 				""")
 			.param("email", UUID.randomUUID() + "@example.test")
 			.param("name", name)
+			.query(Long.class)
+			.single();
+	}
+
+	/** 이 비밀번호로 실제 로그인(POST /api/auth/login)을 할 수 있는 사람. verified 가 false 면 인증 전이다. */
+	public long passwordUser(String name, String password, boolean verified) {
+		return this.jdbc.sql("""
+				insert into users (email, display_name, password_hash, email_verified_at)
+				values (:email, :name, :hash, case when :verified then now() end) returning id
+				""")
+			.param("email", UUID.randomUUID() + "@example.test")
+			.param("name", name)
+			.param("hash", this.passwordEncoder.encode(password))
+			.param("verified", verified)
 			.query(Long.class)
 			.single();
 	}

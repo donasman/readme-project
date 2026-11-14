@@ -1,5 +1,6 @@
-# 통합 테스트(@IntegrationTest)가 쓰는 설정. dev 프로필의 설정(내 PC 의 DB, 예시 데이터, 임시 로그인)은 읽지 않는다.
-# DB 는 Testcontainers 가 정한다(TestcontainersConfiguration).
+# 통합 테스트(@IntegrationTest)가 쓰는 설정. dev 프로필의 설정(내 PC 의 DB, 메일 수신기, 예시 데이터)은 읽지 않는다.
+# DB 는 Testcontainers 가 정한다(TestcontainersConfiguration). 메일은 보내지 않고 TestMailbox 에 모은다.
 app:
   frontend-origin: http://localhost:5173
   csrf-cookie-domain:
+  mail-from: 리드미 <no-reply@readme.test>

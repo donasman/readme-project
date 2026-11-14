@@ -1,0 +1,43 @@
+package com.readme.auth;
+
+import org.springframework.http.HttpStatus;
+
+import com.readme.common.error.ErrorCode;
+
+/**
+ * 로그인·가입·재설정의 오류(로그인 설계 4절). 규칙에 맞지 않는 비밀번호는 공통 코드 INVALID_INPUT 이다.
+ */
+public enum AuthErrorCode implements ErrorCode {
+
+	/** 인증을 마친 계정이 이미 그 이메일을 쓴다. 인증 전 계정이면 새로 넣은 값으로 덮어쓰고 가입을 받는다. */
+	EMAIL_TAKEN(HttpStatus.CONFLICT, "이미 가입된 이메일입니다"),
+
+	/** 이메일이나 비밀번호가 틀렸다. 계정이 없을 때와 비밀번호가 틀릴 때를 구분하지 않는다. */
+	INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일이나 비밀번호가 맞지 않습니다"),
+
+	/** 비밀번호는 맞지만 이메일 인증을 마치지 않았다(가정 L4). */
+	EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "이메일 인증을 마친 뒤 로그인할 수 있습니다"),
+
+	/** 가입 확인이나 비밀번호 재설정 링크가 지났거나, 이미 썼거나, 없다. 셋을 구분하지 않는다. */
+	LINK_EXPIRED(HttpStatus.GONE, "쓸 수 없는 링크입니다. 메일을 다시 받아 주세요");
+
+	private final HttpStatus status;
+
+	private final String message;
+
+	AuthErrorCode(HttpStatus status, String message) {
+		this.status = status;
+		this.message = message;
+	}
+
+	@Override
+	public HttpStatus status() {
+		return this.status;
+	}
+
+	@Override
+	public String message() {
+		return this.message;
+	}
+
+}
