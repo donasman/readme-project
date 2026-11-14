@@ -159,55 +159,63 @@ async function shoot(label) {
   const out = join(OUT, label)
   mkdirSync(out, { recursive: true })
   const c = await openChrome()
-  await c.send("Page.navigate", { url: APP + "/welcome" })
-  await sleep(1000)
-  for (const s of SCENARIOS) {
-    const scale = s.scale ?? 1
-    await c.send("Emulation.setDeviceMetricsOverride", { width: s.width, height: 900, deviceScaleFactor: scale, mobile: s.width < 500 })
-    await c.evaluate(`localStorage.setItem("theme", "${s.theme ?? "light"}")`)
-    await c.send("Page.navigate", { url: APP + s.path })
-    // 개발 서버는 처음 여는 화면을 그때 번역하므로 고정 시간 대신 main이 뜰 때까지 기다린다
-    for (let i = 0; i < 50 && !(await c.evaluate(`document.readyState === "complete" && !!document.querySelector("main")`)); i++) await sleep(200)
-    await sleep(400)
-    await c.evaluate(SETTLE)
-    for (const st of s.steps ?? []) await step(c, st)
-    const height = Math.max(await c.evaluate("document.documentElement.scrollHeight"), s.width < 500 ? 844 : 800)
-    await c.send("Emulation.setDeviceMetricsOverride", { width: s.width, height, deviceScaleFactor: scale, mobile: s.width < 500 })
-    await sleep(400)
-    await c.evaluate(SETTLE)
-    const shot = await c.send("Page.captureScreenshot", { format: "png" })
-    writeFileSync(join(out, s.name + ".png"), Buffer.from(shot.result.data, "base64"))
-    console.log("shot", s.name, `${s.width}x${height}@${scale}`)
+  // 장면이 실패해도 Chrome을 닫는다. 남으면 다음 실행이 그 Chrome의 포트와 프로필에 붙는다
+  try {
+    await c.send("Page.navigate", { url: APP + "/welcome" })
+    await sleep(1000)
+    for (const s of SCENARIOS) {
+      const scale = s.scale ?? 1
+      await c.send("Emulation.setDeviceMetricsOverride", { width: s.width, height: 900, deviceScaleFactor: scale, mobile: s.width < 500 })
+      await c.evaluate(`localStorage.setItem("theme", "${s.theme ?? "light"}")`)
+      await c.send("Page.navigate", { url: APP + s.path })
+      // 개발 서버는 처음 여는 화면을 그때 번역하므로 고정 시간 대신 main이 뜰 때까지 기다린다
+      for (let i = 0; i < 50 && !(await c.evaluate(`document.readyState === "complete" && !!document.querySelector("main")`)); i++) await sleep(200)
+      await sleep(400)
+      await c.evaluate(SETTLE)
+      for (const st of s.steps ?? []) await step(c, st)
+      const height = Math.max(await c.evaluate("document.documentElement.scrollHeight"), s.width < 500 ? 844 : 800)
+      await c.send("Emulation.setDeviceMetricsOverride", { width: s.width, height, deviceScaleFactor: scale, mobile: s.width < 500 })
+      await sleep(400)
+      await c.evaluate(SETTLE)
+      const shot = await c.send("Page.captureScreenshot", { format: "png" })
+      writeFileSync(join(out, s.name + ".png"), Buffer.from(shot.result.data, "base64"))
+      console.log("shot", s.name, `${s.width}x${height}@${scale}`)
+    }
+    await c.evaluate(`localStorage.removeItem("theme")`)
+    console.log(c.problems.length ? "PROBLEMS:\n" + [...new Set(c.problems)].join("\n") : "no console errors, warnings or exceptions")
+  } finally {
+    c.close()
   }
-  await c.evaluate(`localStorage.removeItem("theme")`)
-  console.log(c.problems.length ? "PROBLEMS:\n" + [...new Set(c.problems)].join("\n") : "no console errors, warnings or exceptions")
-  c.close()
 }
 
 async function compare(la, lb) {
   const c = await openChrome()
-  let changed = 0
-  for (const s of SCENARIOS) {
-    const fa = join(OUT, la, s.name + ".png")
-    const fb = join(OUT, lb, s.name + ".png")
-    if (!existsSync(fa) || !existsSync(fb)) { changed++; console.log(s.name.padEnd(24), "missing"); continue }
-    // PNG를 브라우저에서 풀어 화소를 비교한다(이미지 패키지 없이)
-    const r = await c.evaluate(`(async () => {
-      const load = (d) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = "data:image/png;base64," + d })
-      const [x, y] = await Promise.all([load(${JSON.stringify(readFileSync(fa).toString("base64"))}), load(${JSON.stringify(readFileSync(fb).toString("base64"))})])
-      if (x.width !== y.width || x.height !== y.height) return { size: [x.width + "x" + x.height, y.width + "x" + y.height] }
-      const px = (img) => { const cv = new OffscreenCanvas(img.width, img.height); const g = cv.getContext("2d"); g.drawImage(img, 0, 0); return g.getImageData(0, 0, img.width, img.height).data }
-      const p = px(x), q = px(y); let diff = 0, big = 0, max = 0, top = -1, bottom = -1
-      for (let i = 0; i < p.length; i += 4) { const d = Math.max(Math.abs(p[i] - q[i]), Math.abs(p[i+1] - q[i+1]), Math.abs(p[i+2] - q[i+2])); if (d) { diff++; if (d > max) max = d; if (d > 16) big++; const row = Math.floor(i / 4 / x.width); if (top < 0) top = row; bottom = row } }
-      return { diff, big, max, total: x.width * x.height, top, bottom }
-    })()`)
-    if (r.size) { changed++; console.log(s.name.padEnd(24), "SIZE", r.size.join(" -> ")); continue }
-    if (r.diff) changed++
-    console.log(s.name.padEnd(24), r.diff ? `DIFF ${r.diff} px (${((r.diff / r.total) * 100).toFixed(3)}%) max ${r.max}, >16: ${r.big}, rows ${r.top}-${r.bottom}` : "same")
+  // 장면이 실패해도 Chrome을 닫는다. 남으면 다음 실행이 그 Chrome의 포트와 프로필에 붙는다
+  try {
+    let changed = 0
+    for (const s of SCENARIOS) {
+      const fa = join(OUT, la, s.name + ".png")
+      const fb = join(OUT, lb, s.name + ".png")
+      if (!existsSync(fa) || !existsSync(fb)) { changed++; console.log(s.name.padEnd(24), "missing"); continue }
+      // PNG를 브라우저에서 풀어 화소를 비교한다(이미지 패키지 없이)
+      const r = await c.evaluate(`(async () => {
+        const load = (d) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = "data:image/png;base64," + d })
+        const [x, y] = await Promise.all([load(${JSON.stringify(readFileSync(fa).toString("base64"))}), load(${JSON.stringify(readFileSync(fb).toString("base64"))})])
+        if (x.width !== y.width || x.height !== y.height) return { size: [x.width + "x" + x.height, y.width + "x" + y.height] }
+        const px = (img) => { const cv = new OffscreenCanvas(img.width, img.height); const g = cv.getContext("2d"); g.drawImage(img, 0, 0); return g.getImageData(0, 0, img.width, img.height).data }
+        const p = px(x), q = px(y); let diff = 0, big = 0, max = 0, top = -1, bottom = -1
+        for (let i = 0; i < p.length; i += 4) { const d = Math.max(Math.abs(p[i] - q[i]), Math.abs(p[i+1] - q[i+1]), Math.abs(p[i+2] - q[i+2])); if (d) { diff++; if (d > max) max = d; if (d > 16) big++; const row = Math.floor(i / 4 / x.width); if (top < 0) top = row; bottom = row } }
+        return { diff, big, max, total: x.width * x.height, top, bottom }
+      })()`)
+      if (r.size) { changed++; console.log(s.name.padEnd(24), "SIZE", r.size.join(" -> ")); continue }
+      if (r.diff) changed++
+      console.log(s.name.padEnd(24), r.diff ? `DIFF ${r.diff} px (${((r.diff / r.total) * 100).toFixed(3)}%) max ${r.max}, >16: ${r.big}, rows ${r.top}-${r.bottom}` : "same")
+    }
+    console.log(changed ? `${changed} scenario(s) differ` : "all scenarios pixel-identical")
+    process.exitCode = changed ? 1 : 0
+  } finally {
+    c.close()
   }
-  console.log(changed ? `${changed} scenario(s) differ` : "all scenarios pixel-identical")
-  c.close()
-  process.exitCode = changed ? 1 : 0
 }
 
 if (mode === "shoot" && a) await shoot(a)
