@@ -88,7 +88,7 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 - 커밋 전에 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`를 돌린다.
 - 화면과 무관한 규칙(순수 함수)을 만들거나 고치면 옆에 `*.test.ts`를 두고 Vitest로 확인한다. 버그를 고치면 그 버그에서 실패하는 테스트를 하나 더한다. Vitest는 Node 22.12 이상에서 돈다(이 저장소는 `.nvmrc`의 24).
 - 층 규칙은 lint가 본다. 새 층이나 새 도메인을 만들면 `eslint.layers.js`에 더한다.
-- 화면 회귀 검사: 모양이 바뀌면 안 되는 변경(공용 부품 뽑기, 구조 바꾸기)은 개발 서버(`npm run dev`)를 띄운 채 고치기 전에 `npm run regress -- shoot before`, 고친 뒤 `npm run regress -- shoot after`를 돌리고 `npm run regress -- compare before after`가 "all scenarios pixel-identical"이어야 한다. 장면(모든 화면과 창, 66개)은 `scripts/regress.mjs`에 있고, 새 화면이나 창을 만들면 장면을 더한다. 결과는 `.regress/`에 남고 git에 올리지 않는다.
+- 화면 회귀 검사: 모양이 바뀌면 안 되는 변경(공용 부품 뽑기, 구조 바꾸기)은 개발 서버(`npm run dev`)를 띄운 채 고치기 전에 `npm run regress -- shoot before`, 고친 뒤 `npm run regress -- shoot after`를 돌리고 `npm run regress -- compare before after`가 "all scenarios pixel-identical"이어야 한다. 장면(모든 화면과 창, 67개)은 `scripts/regress.mjs`에 있고, 새 화면이나 창을 만들면 장면을 더한다. 결과는 `.regress/`에 남고 git에 올리지 않는다.
 - 병합 전 리뷰: 코드를 바꾼 작업 브랜치는 dev에 넣기 전에 ponytail의 `/ponytail-review`로 그 브랜치를 본다. "Must fix"가 없어야 넣는다. "Should fix"는 고치거나 보고에 적는다. 주석이나 문서만 바꾼 브랜치는 하지 않는다.
 - 묶음 점검: 시안 한 차수(또는 화면 묶음)를 끝내면 `/ponytail-audit`을 한 번 돌린다. 나온 것은 고칠 것(작업 브랜치), 2곳 모양(계획 문서 6절), 미뤄 둘 것(`shortcut:` 표시)으로 나눈다.
 - ponytail 플러그인이 없는 세션에서는 같은 순서(맞는가, 안전한가, 테스트가 있는가, 군더더기가 없는가)로 직접 본다.

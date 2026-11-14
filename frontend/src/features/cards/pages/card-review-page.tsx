@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Chip } from "@/shared/components/chip"
 import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
@@ -33,6 +34,7 @@ export function CardReviewPage() {
   const [edited, setEdited] = useState<Record<number, CardDetail>>({})
   const [counts, setCounts] = useState({ verified: 0, later: 0, dropped: 0 })
   const [busy, setBusy] = useState(false)
+  const [dropping, setDropping] = useState(false)
   const total = cards.length
   const card = index < total ? (edited[cards[index].id] ?? cards[index]) : null
 
@@ -185,7 +187,7 @@ export function CardReviewPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-border pt-6">
-          <Button type="button" variant="ghost" className="px-4" disabled={busy} onClick={() => void next("dropped", () => deleteCard(card.id))}>
+          <Button type="button" variant="ghost" className="px-4" disabled={busy} onClick={() => setDropping(true)}>
             <Trash2Icon aria-hidden="true" className="text-danger" />
             이 카드 버리기
           </Button>
@@ -205,6 +207,31 @@ export function CardReviewPage() {
           </div>
         </div>
       </div>
+
+      {/* 카드 상세의 "카드 지우기" 창과 같은 창이다. 지우면 다음 카드로 넘어간다 */}
+      <AppDialog
+        open={dropping}
+        onOpenChange={setDropping}
+        title="카드를 지울까요?"
+        actions={
+          <>
+            <DialogCancel />
+            <Button
+              type="button"
+              variant="danger"
+              disabled={busy}
+              onClick={() => {
+                setDropping(false)
+                void next("dropped", () => deleteCard(card.id))
+              }}
+            >
+              지우기
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm">"{card.title}" 카드가 지워집니다. 되돌릴 수 없습니다. 뽑아 온 자료는 남습니다.</p>
+      </AppDialog>
     </CardsSubpage>
   )
 }

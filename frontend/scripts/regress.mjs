@@ -52,6 +52,7 @@ const SCENARIOS = [
   { name: "dialog-comment-delete", path: BE1, width: 1280, steps: [["press", "삭제"]] },
   { name: "dialog-disclosure", path: BE1, width: 1280, steps: [["press", "공개 범위 바꾸기"]] },
   { name: "dialog-card-delete", path: "/cards/1", width: 1280, steps: [["press", "삭제"]] },
+  { name: "dialog-review-drop", path: "/cards/review", width: 1280, steps: [["press", "이 카드 버리기"]] },
   { name: "dialog-leave", path: "/groups/be/members", width: 1280, steps: [["press", "그룹 나가기"]] },
   { name: "dialog-create-group", path: "/groups", width: 1280, steps: [["press", "그룹 만들기"]] },
   // 공고 올리기(7차)
