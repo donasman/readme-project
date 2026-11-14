@@ -43,4 +43,12 @@ public class AccountQueries {
 			.optional();
 	}
 
+	/** 이 구글 계정(ID 토큰의 sub)이 연결된 계정의 id. */
+	Optional<Long> findGoogleUser(String sub) {
+		return this.jdbc.sql("select user_id from user_identities where provider = 'GOOGLE' and provider_user_id = :sub")
+			.param("sub", sub)
+			.query(Long.class)
+			.optional();
+	}
+
 }

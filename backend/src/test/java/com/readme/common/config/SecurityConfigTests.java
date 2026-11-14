@@ -57,6 +57,16 @@ class SecurityConfigTests {
 	}
 
 	@Test
+	void withoutAGoogleClientTheGoogleAddressesAre404() {
+		// test 프로필에는 구글 클라이언트 값이 없다. 켠 때는 auth 의 GoogleLoginTests 가 본다.
+		for (String uri : new String[] { "/oauth2/authorization/google", "/login/oauth2/code/google?code=x&state=y" }) {
+			assertThat(this.mvc.get().uri(uri))
+				.hasStatus(HttpStatus.NOT_FOUND)
+				.bodyJson().extractingPath("$.code").isEqualTo("NOT_FOUND");
+		}
+	}
+
+	@Test
 	void csrfCookieAndHeaderPassButLoginIsStillRequired() {
 		// 프런트처럼 쿠키와 헤더를 같은 값으로 보내면 CSRF 검사는 통과하고, 로그인 검사에서 401 이 된다.
 		assertThat(this.mvc.post().uri("/api/groups").with(xsrf()).contentType(MediaType.APPLICATION_JSON).content("{}"))

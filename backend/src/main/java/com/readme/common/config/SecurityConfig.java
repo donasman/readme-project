@@ -7,6 +7,7 @@ import java.util.List;
 import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.databind.json.JsonMapper;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -16,7 +17,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
@@ -37,9 +41,10 @@ import com.readme.common.error.ErrorCode;
 /**
  * 로그인 확인은 서버 세션 쿠키로 한다(Spring Session JDBC).
  *
- * <p>지금 들어 있는 것: CORS, CSRF, 로그인이 필요한 주소 구분, 로그아웃, 비밀번호 해시, 보안 필터가 막은 요청의 오류 응답(401, 403).
- * 이메일·비밀번호 로그인은 auth 의 AuthController 가, 로그인 세션을 만드는 것은 auth 의 LoginSession 이 한다.
- * <p>더할 것: 구글 로그인(oauth2Login). Google Cloud 의 OAuth 클라이언트가 생기면 붙인다.
+ * <p>지금 들어 있는 것: CORS, CSRF, 로그인이 필요한 주소 구분, 로그아웃, 비밀번호 해시, 보안 필터가 막은 요청의 오류 응답(401, 403),
+ * 구글 로그인(oauth2Login, 구글 클라이언트 값이 있을 때만).
+ * 이메일·비밀번호 로그인은 auth 의 AuthController 가, 구글 로그인의 끝은 auth 의 GoogleLoginHandler 가,
+ * 로그인 세션을 만드는 것은 auth 의 LoginSession 이 한다.
  */
 @Configuration
 @EnableWebSecurity
@@ -54,9 +59,16 @@ public class SecurityConfig {
 		this.jsonMapper = jsonMapper;
 	}
 
+	/**
+	 * @param googleClient       구글 클라이언트(spring.security.oauth2.client.registration.google). 값을 넣었을 때만 있다
+	 * @param googleLoginSuccess 구글 로그인의 끝(auth 의 GoogleLoginHandler)
+	 * @param googleLoginFailure 같은 것
+	 */
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository,
-			SecurityContextRepository securityContextRepository) throws Exception {
+			SecurityContextRepository securityContextRepository, ObjectProvider<ClientRegistrationRepository> googleClient,
+			AuthenticationSuccessHandler googleLoginSuccess, AuthenticationFailureHandler googleLoginFailure)
+			throws Exception {
 		http
 			.cors(Customizer.withDefaults())
 			// spa(): CSRF 토큰을 XSRF-TOKEN 쿠키로 내려 주고, 프런트가 X-XSRF-TOKEN 헤더로 돌려보낸 값을 확인한다.
@@ -73,6 +85,8 @@ public class SecurityConfig {
 				.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 				.requestMatchers("/error").permitAll()
 				.requestMatchers("/api/auth/**").permitAll()
+				// 구글 로그인의 두 주소(로그인 설계 4절). 켜져 있으면 아래 oauth2Login 의 필터가 먼저 받는다. 꺼져 있으면 404 다.
+				.requestMatchers("/oauth2/authorization/google", "/login/oauth2/code/google").permitAll()
 				.anyRequest().authenticated())
 			// 로그인 전 요청을 세션에 저장해 두지 않는다. 로그인 뒤 돌아갈 화면은 프런트가 정하고,
 			// 저장해 두면 로그인 전 요청마다 세션 행이 생긴다.
@@ -84,6 +98,14 @@ public class SecurityConfig {
 					writeError(response, CommonErrorCode.UNAUTHENTICATED))
 				.accessDeniedHandler((request, response, exception) ->
 					writeError(response, (exception instanceof CsrfException) ? CommonErrorCode.CSRF_INVALID : CommonErrorCode.FORBIDDEN)));
+		// 구글 로그인: 구글 클라이언트 값을 넣었을 때만 켠다(개발은 backend/application-local.yml, 운영은 환경 변수).
+		// GET /oauth2/authorization/google 이 구글로 보내고(state 를 세션에 둔다), 구글은 /login/oauth2/code/google 로 돌아온다.
+		// 사람을 확인한 뒤의 일과 돌려보낼 곳은 googleLoginSuccess·Failure 가 정한다.
+		// shortcut: Spring 이 구글의 access token 을 구글 계정마다 메모리에 하나씩 둔다(쓰지 않고, 서버를 다시 띄우면 사라진다),
+		// 구글 사용자가 많아지면 oauth2Login 의 authorizedClientRepository 에 아무것도 두지 않는 것을 넣는다.
+		if (googleClient.getIfAvailable() != null) {
+			http.oauth2Login((google) -> google.successHandler(googleLoginSuccess).failureHandler(googleLoginFailure));
+		}
 		return http.build();
 	}
 
