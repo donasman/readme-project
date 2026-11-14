@@ -13,7 +13,7 @@ import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { UploadIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn, isHttpUrl } from "@/shared/lib/utils"
+import { cn, isHttpUrl, matchesAccept } from "@/shared/lib/utils"
 
 import { readPost } from "../api"
 import type { PostReadInput, ReadPostResult } from "../types"
@@ -203,12 +203,19 @@ function TextForm({ busy, onRead }: ReadProps) {
 function FileDrop({ busy, onRead }: ReadProps) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
+  const [wrongType, setWrongType] = useState(false)
+
+  const take = (file: File | undefined) => {
+    if (!file) return
+    const ok = matchesAccept(file.name, ACCEPT)
+    setWrongType(!ok)
+    if (ok) void onRead({ kind: "file", file })
+  }
 
   const drop = (event: DragEvent) => {
     event.preventDefault()
     setDragging(false)
-    const file = event.dataTransfer.files[0]
-    if (file) void onRead({ kind: "file", file })
+    take(event.dataTransfer.files[0])
   }
 
   return (
@@ -234,14 +241,16 @@ function FileDrop({ busy, onRead }: ReadProps) {
         className="sr-only"
         tabIndex={-1}
         aria-hidden="true"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) void onRead({ kind: "file", file })
-        }}
+        onChange={(e) => take(e.target.files?.[0])}
       />
-      <Button type="button" disabled={busy} onClick={() => fileInput.current?.click()}>
+      <Button type="button" disabled={busy} aria-describedby={wrongType ? noteId("pn-file") : undefined} onClick={() => fileInput.current?.click()}>
         파일 고르기
       </Button>
+      {wrongType && (
+        <div role="alert">
+          <FieldError id="pn-file">PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.</FieldError>
+        </div>
+      )}
     </div>
   )
 }

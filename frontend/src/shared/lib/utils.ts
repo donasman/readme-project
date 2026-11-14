@@ -16,3 +16,12 @@ export function isHttpUrl(value: string): boolean {
     return false
   }
 }
+
+/**
+ * 파일 이름이 input의 accept(".pdf,.docx" 같은 확장자 목록)에 맞는가.
+ * accept는 고르기 창만 거르므로, 끌어 놓은 파일과 "모든 파일"로 고른 파일은 이것으로 본다.
+ */
+export function matchesAccept(fileName: string, accept: string): boolean {
+  const name = fileName.toLowerCase()
+  return accept.split(",").some((ext) => name.endsWith(ext.trim().toLowerCase()))
+}

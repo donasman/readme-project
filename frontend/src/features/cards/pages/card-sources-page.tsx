@@ -3,12 +3,13 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { FieldError, noteId } from "@/shared/components/form-field"
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn, joinClasses } from "@/shared/lib/utils"
+import { cn, joinClasses, matchesAccept } from "@/shared/lib/utils"
 
 import { deleteSource, getExtractionJob, getSources, startExtraction, uploadSource } from "../api"
 import { formatChars } from "../card-text"
@@ -191,12 +192,19 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
   const [text, setText] = useState("")
   const [empty, setEmpty] = useState(false)
   const [dragging, setDragging] = useState(false)
+  const [wrongType, setWrongType] = useState(false)
+
+  const take = (file: File | undefined) => {
+    if (!file) return
+    const ok = matchesAccept(file.name, ACCEPT)
+    setWrongType(!ok)
+    if (ok) void onRead({ file })
+  }
 
   const drop = (event: DragEvent) => {
     event.preventDefault()
     setDragging(false)
-    const file = event.dataTransfer.files[0]
-    if (file) void onRead({ file })
+    take(event.dataTransfer.files[0])
   }
 
   return (
@@ -226,14 +234,16 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
           className="sr-only"
           tabIndex={-1}
           aria-hidden="true"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) void onRead({ file })
-          }}
+          onChange={(e) => take(e.target.files?.[0])}
         />
-        <Button type="button" onClick={() => fileInput.current?.click()}>
+        <Button type="button" aria-describedby={wrongType ? noteId("src-file") : undefined} onClick={() => fileInput.current?.click()}>
           파일 고르기
         </Button>
+        {wrongType && (
+          <div role="alert">
+            <FieldError id="src-file">PDF, DOCX, HWPX, PPTX, TXT, MD 파일만 올릴 수 있습니다.</FieldError>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-3 text-xs text-text-secondary">
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
