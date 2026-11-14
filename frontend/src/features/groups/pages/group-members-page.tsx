@@ -12,6 +12,7 @@ import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
+import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
@@ -55,7 +56,7 @@ export function GroupMembersPage() {
 
   return (
     <Page className="gap-6 pt-10">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-sm text-text-secondary">
             {group.name} · 멤버 {group.members.length}명
@@ -70,8 +71,8 @@ export function GroupMembersPage() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <section aria-label="멤버 목록" className="flex min-w-0 flex-[999_1_560px] flex-col gap-3">
+      <div className={columns}>
+        <section aria-label="멤버 목록" className={joinClasses(mainColumn, "gap-3")}>
           <Panel as="ul" className="flex flex-col">
             {members.map((member, i) => (
               <li
@@ -93,7 +94,7 @@ export function GroupMembersPage() {
           </p>
         </section>
 
-        <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-6">
+        <aside className={joinClasses(sideColumn(320), "gap-6")}>
           <Panel aria-labelledby="members-disclosure" className="flex flex-col gap-4 p-6">
             <div className="flex flex-col gap-1">
               <h2 id="members-disclosure" className={sectionTitle}>

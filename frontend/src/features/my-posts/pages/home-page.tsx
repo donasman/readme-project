@@ -6,6 +6,8 @@ import type { FillDeadlineState } from "@/domain/posting/types"
 import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
+import { Page } from "@/shared/components/page"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { ArrowRightIcon } from "@/shared/icons"
 import { daysBetween, formatLongDate } from "@/shared/lib/date"
@@ -13,7 +15,7 @@ import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
 import { getHome } from "../api"
-import { BigStat, DdayBadge, myMain, MyStatusPill } from "../components/my-bits"
+import { BigStat, DdayBadge, MyStatusPill } from "../components/my-bits"
 import { dueText, isPostingClosed, sortPostings } from "../status"
 
 /** 그룹이 없으면 홈 대신 내 그룹(빈 상태)으로 보낸다(시안 7차의 제안). */
@@ -50,7 +52,7 @@ export function HomePage() {
   ]
 
   return (
-    <main className={myMain}>
+    <Page narrow className="gap-6 pt-10">
       <MySpaceNav current="home" />
       <div className="flex flex-col gap-2">
         <p className="text-sm text-text-secondary">{formatLongDate(today)}</p>
@@ -66,8 +68,8 @@ export function HomePage() {
         <BigStat label="아직 정하지 않은 공고" value={postings.filter((p) => p.decision === "undecided").length} />
       </dl>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <section aria-labelledby="home-due" className="flex min-w-0 flex-[999_1_560px] flex-col gap-3">
+      <div className={columns}>
+        <section aria-labelledby="home-due" className={joinClasses(mainColumn, "gap-3")}>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <h2 id="home-due" className="text-lg font-bold">
               다가오는 마감
@@ -104,7 +106,7 @@ export function HomePage() {
           )}
         </section>
 
-        <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-6">
+        <aside className={joinClasses(sideColumn(320), "gap-6")}>
           <section aria-labelledby="home-todo" className="flex flex-col gap-3 rounded-panel bg-highlight-subtle p-5">
             <h2 id="home-todo" className="text-lg font-bold">
               확인 필요 {todos.length}
@@ -151,6 +153,6 @@ export function HomePage() {
           </Panel>
         </aside>
       </div>
-    </main>
+    </Page>
   )
 }

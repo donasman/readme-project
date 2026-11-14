@@ -5,6 +5,8 @@ import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
+import { Page } from "@/shared/components/page"
+import { pageHead } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ToggleButton } from "@/shared/components/toggle-button"
@@ -12,7 +14,7 @@ import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { getMyPostings } from "../api"
-import { myMain, MyStatusPill } from "../components/my-bits"
+import { MyStatusPill } from "../components/my-bits"
 import { DECISION_LABELS, dueText, filterPostings, type MyFilters } from "../status"
 import type { Decision } from "../types"
 import { useMyFilters } from "../use-my-filters"
@@ -34,9 +36,9 @@ export function MyPostsPage() {
   const { rows, open, closed } = filterPostings(postings, filters, today)
 
   return (
-    <main className={myMain}>
+    <Page narrow className="gap-6 pt-10">
       <MySpaceNav current="posts" />
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <div className={pageHead}>
         <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-2">
           <Heading level={1} size="text-3xl">
             내 공고
@@ -113,6 +115,6 @@ export function MyPostsPage() {
         })}
       </Panel>
       {rows.length === 0 && <p className="text-sm text-text-secondary">이 조건에 맞는 공고가 없습니다.</p>}
-    </main>
+    </Page>
   )
 }

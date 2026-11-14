@@ -4,6 +4,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { statusLabel } from "@/domain/posting/my-state"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
+import { Page } from "@/shared/components/page"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { ArrowRightIcon, MailIcon } from "@/shared/icons"
@@ -25,7 +26,7 @@ export function MailPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-[1120px] flex-col gap-6 px-6 pt-10 pb-16">
+    <Page narrow className="gap-6 pt-10">
       <MySpaceNav current="mail" />
       <div className="flex flex-col gap-2">
         <Heading level={1} size="text-3xl">
@@ -124,6 +125,6 @@ export function MailPage() {
           </section>
         </>
       )}
-    </main>
+    </Page>
   )
 }

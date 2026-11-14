@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 
 import { BackLink } from "@/shared/components/back-link"
 import { Dot } from "@/shared/components/dot"
+import { Page } from "@/shared/components/page"
 import { CircleAlertIcon, CircleCheckIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
@@ -12,10 +13,10 @@ import { splitFlagged } from "../card-text"
 /** 카드 아래 화면들의 틀: 1120px 본문, 맨 위 "경험카드"로 돌아가는 링크. */
 export function CardsSubpage({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto flex max-w-[1120px] flex-col gap-6 px-6 pt-6 pb-16">
+    <Page narrow className="gap-6 pt-6">
       <BackLink to={paths.cards()}>경험카드</BackLink>
       {children}
-    </main>
+    </Page>
   )
 }
 

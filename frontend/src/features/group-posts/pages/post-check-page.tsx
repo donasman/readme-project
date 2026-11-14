@@ -11,6 +11,7 @@ import { Chip } from "@/shared/components/chip"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { subpageTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CircleAlertIcon } from "@/shared/icons"
 import { objectParticle } from "@/shared/lib/korean"
@@ -117,8 +118,8 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
         <p className="text-text-secondary">읽어 온 내용이 맞는지 보고 고칩니다. 노란 칸은 읽지 못한 칸입니다.</p>
       </div>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <form onSubmit={submit} noValidate className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
+      <div className={columns}>
+        <form onSubmit={submit} noValidate className={joinClasses(mainColumn, "gap-6")}>
           {already && (
             <div role="status" className="flex flex-col gap-2 rounded-control bg-highlight-subtle px-5 py-4 text-sm">
               <strong className="font-bold">이미 이 그룹에 있는 공고입니다</strong>
@@ -227,7 +228,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
           </div>
         </form>
 
-        <aside aria-labelledby="pc-src" className="flex min-w-0 flex-[1_1_320px] flex-col gap-3">
+        <aside aria-labelledby="pc-src" className={joinClasses(sideColumn(320), "gap-3")}>
           <h2 id="pc-src" className="text-lg font-bold">
             읽어 온 원문
           </h2>

@@ -9,6 +9,8 @@ import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
 import { Dot } from "@/shared/components/dot"
 import { Heading } from "@/shared/components/heading"
+import { Page } from "@/shared/components/page"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ExternalLinkIcon } from "@/shared/icons"
@@ -17,7 +19,7 @@ import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPosting, saveMemo } from "../api"
-import { DdayBadge, myMain } from "../components/my-bits"
+import { DdayBadge } from "../components/my-bits"
 import { dueText, statusDetail } from "../status"
 
 export function myPostLoader({ params }: LoaderFunctionArgs) {
@@ -36,7 +38,7 @@ export function MyPostPage() {
   const full = posting.deadline.kind === "date" ? `${formatDateWeekday(posting.deadline.date)} 마감` : due.sub
 
   return (
-    <main className={myMain}>
+    <Page narrow className="gap-6 pt-10">
       <BackLink to={paths.myPosts()}>내 공고</BackLink>
       <div className="flex flex-col gap-3">
         <p className="text-sm text-text-secondary">{posting.company}</p>
@@ -62,8 +64,8 @@ export function MyPostPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
+      <div className={columns}>
+        <div className={joinClasses(mainColumn, "gap-6")}>
           <Panel aria-labelledby="mp-state" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 p-6">
             <div className="flex flex-col gap-1">
               <h2 id="mp-state" className={subLabel}>
@@ -138,7 +140,7 @@ export function MyPostPage() {
           </Panel>
         </div>
 
-        <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-6">
+        <aside className={joinClasses(sideColumn(320), "gap-6")}>
           <Panel aria-labelledby="mp-match" className="flex flex-col gap-4 p-6">
             <div className="flex flex-col gap-1">
               <h2 id="mp-match" className="text-lg font-bold">
@@ -189,6 +191,6 @@ export function MyPostPage() {
           </Panel>
         </aside>
       </div>
-    </main>
+    </Page>
   )
 }

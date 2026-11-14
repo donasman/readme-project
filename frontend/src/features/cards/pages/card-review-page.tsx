@@ -4,9 +4,11 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Chip } from "@/shared/components/chip"
 import { subpageTitle } from "@/shared/components/heading"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
@@ -103,8 +105,8 @@ export function CardReviewPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-start gap-6">
-          <Panel as="article" aria-labelledby="review-title" className="flex min-w-0 flex-[999_1_560px] flex-col gap-5 p-6">
+        <div className={columns}>
+          <Panel as="article" aria-labelledby="review-title" className={joinClasses(mainColumn, "gap-5 p-6")}>
             <div className="flex flex-col gap-2">
               {card.period && <span className="text-label-sm text-text-secondary">{card.period}</span>}
               <h2 id="review-title" className="text-[22px] leading-[1.3] font-bold tracking-[-0.02em]">
@@ -154,7 +156,7 @@ export function CardReviewPage() {
             </div>
           </Panel>
 
-          <aside aria-labelledby="review-source" className="flex min-w-0 flex-[1_1_320px] flex-col gap-3">
+          <aside aria-labelledby="review-source" className={joinClasses(sideColumn(320), "gap-3")}>
             <h2 id="review-source" className={sectionTitle}>
               자료 원문
             </h2>

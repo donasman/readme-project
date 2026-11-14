@@ -3,6 +3,8 @@ import { Link, useLoaderData, useSearchParams } from "react-router"
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
+import { Page } from "@/shared/components/page"
+import { pageHead } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/icons"
@@ -12,7 +14,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings } from "../api"
 import { addMonths, agendaDate, formatMonth, isMonth, monthCells, monthEvents, monthOf } from "../calendar"
-import { DdayBadge, myMain } from "../components/my-bits"
+import { DdayBadge } from "../components/my-bits"
 
 export function calendarLoader() {
   return getMyPostings()
@@ -32,9 +34,9 @@ export function CalendarPage() {
   const monthNumber = Number(month.slice(5))
 
   return (
-    <main className={myMain}>
+    <Page narrow className="gap-6 pt-10">
       <MySpaceNav current="calendar" />
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <div className={pageHead}>
         <div className="flex flex-col gap-2">
           <Heading level={1} size="text-3xl">
             달력
@@ -122,6 +124,6 @@ export function CalendarPage() {
         )}
         <p className="text-label-sm text-text-secondary">상시 채용과 마감일을 모르는 공고는 달력에 놓이지 않습니다. 내 공고에서 봅니다.</p>
       </section>
-    </main>
+    </Page>
   )
 }

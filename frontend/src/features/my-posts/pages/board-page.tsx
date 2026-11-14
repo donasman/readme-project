@@ -8,13 +8,15 @@ import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import type { Group } from "@/domain/group/types"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
+import { Page } from "@/shared/components/page"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings, updateMyState } from "../api"
-import { BigStat, myMain } from "../components/my-bits"
+import { BigStat } from "../components/my-bits"
 import { DECISION_LABELS, DECISIONS, dueText, RESULT_LABELS, RESULTS, sortBoard, STAGE_LABELS, STAGES, stageCells, withDecision } from "../status"
 import type { Decision, MyPosting, MyState, Result, Stage } from "../types"
 
@@ -36,7 +38,7 @@ export function BoardPage() {
   const pick = (id: string) => setParams({ posting: id }, { replace: true, preventScrollReset: true })
 
   return (
-    <main className={myMain}>
+    <Page narrow className="gap-6 pt-10">
       <MySpaceNav current="board" />
       <div className="flex flex-col gap-2">
         <Heading level={1} size="text-3xl">
@@ -52,8 +54,8 @@ export function BoardPage() {
         <BigStat label="불합격" value={appliedList.filter((p) => p.result === "failed").length} />
       </dl>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <section aria-label="지원한 공고" className="flex min-w-0 flex-[999_1_560px] flex-col gap-3">
+      <div className={columns}>
+        <section aria-label="지원한 공고" className={joinClasses(mainColumn, "gap-3")}>
           {rows.length > 0 ? (
             <Panel as="div" className="overflow-x-auto">
               <div className="flex min-w-[760px] flex-col">
@@ -92,11 +94,11 @@ export function BoardPage() {
           <p className="text-label-sm text-text-secondary">지금 단계와 그 결과만 적습니다. 앞 단계는 통과한 것으로 보여 줍니다.</p>
         </section>
 
-        <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-6">
+        <aside className={joinClasses(sideColumn(320), "gap-6")}>
           {selected && <StateEditor key={selected.id} posting={selected} groups={groups} />}
         </aside>
       </div>
-    </main>
+    </Page>
   )
 }
 

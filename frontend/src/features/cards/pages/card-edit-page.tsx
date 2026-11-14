@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { subpageTitle } from "@/shared/components/heading"
 import { FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { CircleAlertIcon, LockIcon, PlusIcon, XIcon } from "@/shared/icons"
@@ -77,8 +78,8 @@ export function CardEditPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
+        <div className={columns}>
+          <div className={joinClasses(mainColumn, "gap-6")}>
             <Panel aria-labelledby="edit-basic" className="flex flex-col gap-4 p-6">
               <h2 id="edit-basic" className={sectionTitle}>
                 기본
@@ -164,7 +165,7 @@ export function CardEditPage() {
             </Panel>
           </div>
 
-          <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
+          <aside className={joinClasses(sideColumn(300), "gap-6")}>
             <Panel aria-labelledby="edit-tags" className="flex flex-col gap-3 p-6">
               <h2 id="edit-tags" className={sectionTitle}>
                 태그

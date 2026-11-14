@@ -4,10 +4,11 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { subpageTitle } from "@/shared/components/heading"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn } from "@/shared/lib/utils"
+import { cn, joinClasses } from "@/shared/lib/utils"
 
 import { deleteSource, getExtractionJob, getSources, startExtraction, uploadSource } from "../api"
 import { formatChars } from "../card-text"
@@ -60,8 +61,8 @@ export function CardSourcesPage() {
         <p className="text-text-secondary">이력서나 포트폴리오를 올리면 경험을 카드로 뽑습니다. 뽑은 카드는 하나씩 확인한 뒤에 씁니다.</p>
       </div>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
+      <div className={columns}>
+        <div className={joinClasses(mainColumn, "gap-6")}>
           {step.kind === "upload" && <UploadStep onRead={read} />}
           {step.kind === "ready" && (
             <Panel aria-labelledby="src-ready" className="flex flex-col gap-5 p-6">
@@ -147,7 +148,7 @@ export function CardSourcesPage() {
           )}
         </div>
 
-        <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-3">
+        <aside className={joinClasses(sideColumn(300), "gap-3")}>
           <h2 className={sectionTitle}>올린 자료</h2>
           {sources.length > 0 ? (
             <Panel as="ul" className="flex flex-col">

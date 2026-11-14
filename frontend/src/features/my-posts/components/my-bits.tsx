@@ -39,6 +39,3 @@ export function BigStat({ label, value, highlight = false }: { label: string; va
     </div>
   )
 }
-
-/** 내 공간 화면의 본문 틀: 1120px, 위 40px, 세로 24px 간격. */
-export const myMain = "mx-auto flex max-w-[1120px] flex-col gap-6 px-6 pt-10 pb-16"

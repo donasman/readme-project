@@ -8,6 +8,7 @@ import type { FillDeadlineState } from "@/domain/posting/types"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
+import { pageHead } from "@/shared/components/page-layout"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -53,7 +54,7 @@ export function GroupPostsPage() {
 
   return (
     <Page className="gap-6 pt-10">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-sm text-text-secondary">
             {group.name} · 멤버 {group.members.length}명
