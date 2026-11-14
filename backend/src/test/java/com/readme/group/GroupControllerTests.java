@@ -5,6 +5,8 @@ import static com.readme.FixedClockConfiguration.TODAY;
 import static com.readme.TestRequests.loginAs;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
@@ -91,6 +93,20 @@ class GroupControllerTests {
 	}
 
 	@Test
+	void onTheSameDayTheNearestDeadlineIsTheNewerPostLikeThePostList() {
+		long me = this.fixtures.user("다온");
+		long group = this.fixtures.group("같은 날", me);
+		// 넣는 순서와 올린 시각의 순서를 다르게 둔다. 가장 늦게 올린 공고를 가운데에 넣어,
+		// 올린 시각을 보지 않고 id 로만 고르거나(마지막에 넣은 것) 순서 없이 고르면(처음 넣은 것) 다른 공고가 나온다
+		postedAt(group, me, "먼저 올린 회사", NOW.minus(Duration.ofHours(2)));
+		postedAt(group, me, "나중에 올린 회사", NOW);
+		postedAt(group, me, "중간에 올린 회사", NOW.minus(Duration.ofHours(1)));
+
+		assertThat(this.mvc.get().uri("/api/groups").with(loginAs(me))).hasStatusOk().bodyJson()
+			.extractingPath("$[0].nearestDeadline.company").isEqualTo("나중에 올린 회사");
+	}
+
+	@Test
 	void groupsComeInTheOrderIJoined() {
 		long me = this.fixtures.user("다온");
 		long first = this.fixtures.group("먼저", me);
@@ -133,6 +149,11 @@ class GroupControllerTests {
 		long posting = this.fixtures.posting(company, "예시 공고", deadlineKind, deadlineDate);
 		this.fixtures.post(group, posting, postedBy, NOW);
 		return posting;
+	}
+
+	/** 오늘 마감인 공고를 이 시각에 올린다. */
+	private void postedAt(long group, long postedBy, String company, Instant postedAt) {
+		this.fixtures.post(group, this.fixtures.posting(company, "예시 공고", "DATE", TODAY), postedBy, postedAt);
 	}
 
 }
