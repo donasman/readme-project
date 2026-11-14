@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { paths } from "@/shared/lib/paths"
+import { firstChar } from "@/shared/lib/utils"
 
 import { createGroup, createInvite } from "../api"
 import type { MembersPageState } from "../pages/group-members-page"
@@ -91,7 +92,7 @@ export function CreateGroupDialog({ open, onOpenChange }: { open: boolean; onOpe
             id="gc-mark"
             value={mark}
             maxLength={2}
-            placeholder={name.trim().slice(0, 1) || "백"}
+            placeholder={firstChar(name.trim()) || "백"}
             aria-describedby={noteId("gc-mark")}
             onChange={(e) => setMark(e.target.value)}
             className="max-w-30 md:text-base"

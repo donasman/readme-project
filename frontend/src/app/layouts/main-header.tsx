@@ -7,6 +7,7 @@ import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { navPill } from "@/shared/components/nav-pill"
 import { mainNavOf, type MainNav } from "@/shared/lib/main-nav"
 import { paths } from "@/shared/lib/paths"
+import { firstChar } from "@/shared/lib/utils"
 
 /**
  * 그룹 밖 화면들의 위쪽 헤더(시안 3종의 "A · 카드 목록" 헤더): 로고, 스터디·정보공유·경험카드, 내 계정.
@@ -49,7 +50,7 @@ export function MainHeader() {
         </nav>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           <Link to={paths.account()} aria-label="내 계정" className="flex-none rounded-full">
-            <Avatar>{viewer.name.slice(0, 1)}</Avatar>
+            <Avatar>{firstChar(viewer.name)}</Avatar>
           </Link>
         </div>
       </div>
