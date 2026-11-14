@@ -8,10 +8,10 @@ import { Avatar } from "@/shared/components/avatar"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
 import { Dot } from "@/shared/components/dot"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
-import { Panel } from "@/shared/components/panel"
+import { Panel, PanelNote } from "@/shared/components/panel"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ExternalLinkIcon } from "@/shared/icons"
 import { formatDateWeekday } from "@/shared/lib/date"
@@ -26,7 +26,6 @@ export function myPostLoader({ params }: LoaderFunctionArgs) {
   return getMyPosting(params.postingId ?? "")
 }
 
-const subLabel = "text-label-sm font-bold text-text-secondary"
 const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-bold whitespace-nowrap text-primary"
 
 /** 공고 상세(시안 8차, 내 공고): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
@@ -79,7 +78,7 @@ export function MyPostPage() {
           </Panel>
 
           <Panel aria-labelledby="mp-body" className="flex flex-col gap-5 p-6">
-            <h2 id="mp-body" className="text-lg font-bold">
+            <h2 id="mp-body" className={sectionTitle}>
               공고 내용
             </h2>
             {posting.sections.length === 0 && posting.keywords.length === 0 && <p className="text-sm text-text-secondary">아직 정리된 공고 내용이 없습니다.</p>}
@@ -110,7 +109,7 @@ export function MyPostPage() {
 
           <Panel aria-labelledby="mp-memo" className="flex flex-col gap-4 p-6">
             <div className="flex flex-col gap-1">
-              <h2 id="mp-memo" className="text-lg font-bold">
+              <h2 id="mp-memo" className={sectionTitle}>
                 나만 보는 메모
               </h2>
               <p className="text-sm text-text-secondary">그룹에는 보이지 않습니다.</p>
@@ -143,7 +142,7 @@ export function MyPostPage() {
         <aside className={joinClasses(sideColumn(320), "gap-6")}>
           <Panel aria-labelledby="mp-match" className="flex flex-col gap-4 p-6">
             <div className="flex flex-col gap-1">
-              <h2 id="mp-match" className="text-lg font-bold">
+              <h2 id="mp-match" className={sectionTitle}>
                 맞는 카드
               </h2>
               <p className="text-sm text-text-secondary">공고의 요건·키워드와 카드의 태그가 겹치는 순서입니다.</p>
@@ -163,12 +162,12 @@ export function MyPostPage() {
               <p className="text-sm text-text-secondary">겹치는 카드가 없습니다.</p>
             )}
             {posting.unmatched.length > 0 && (
-              <p className="border-t border-border-subtle pt-3 text-label-sm text-text-secondary">카드로 답하지 못한 요건: {posting.unmatched.join(", ")}</p>
+              <PanelNote className="pt-3">카드로 답하지 못한 요건: {posting.unmatched.join(", ")}</PanelNote>
             )}
           </Panel>
 
           <Panel aria-labelledby="mp-groups" className="flex flex-col gap-4 p-6">
-            <h2 id="mp-groups" className="text-lg font-bold">
+            <h2 id="mp-groups" className={sectionTitle}>
               이 공고가 있는 그룹
             </h2>
             {posting.groupStates.length > 0 ? (

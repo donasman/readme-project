@@ -10,7 +10,7 @@ import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Avatar } from "@/shared/components/avatar"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
@@ -26,8 +26,6 @@ import { RoleChip } from "../components/role-chip"
 export interface MembersPageState {
   invite?: { token: string; expiresAt: string }
 }
-
-const sectionTitle = "text-lg font-bold"
 
 /** 멤버·초대 관리(시안 7차 "멤버"): 멤버 목록, 내 공개 범위, 초대 링크, 그룹 나가기. */
 export function GroupMembersPage() {

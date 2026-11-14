@@ -4,6 +4,7 @@ import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
+import { sectionTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { paths } from "@/shared/lib/paths"
@@ -47,7 +48,7 @@ export function AccountPage() {
   return (
     <>
       <Panel aria-labelledby="ac-profile" className="flex flex-col gap-4 p-6">
-        <h2 id="ac-profile" className="text-lg font-bold">
+        <h2 id="ac-profile" className={sectionTitle}>
           프로필
         </h2>
         <form onSubmit={save} noValidate>

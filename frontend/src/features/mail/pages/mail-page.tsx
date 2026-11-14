@@ -3,7 +3,7 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { statusLabel } from "@/domain/posting/my-state"
 import { PostingLink } from "@/domain/posting/posting-link"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { Panel } from "@/shared/components/panel"
@@ -40,7 +40,7 @@ export function MailPage() {
         <section aria-labelledby="mail-empty" className="flex flex-col items-start gap-4 rounded-panel border-[1.5px] border-dashed border-border-strong px-8 py-10">
           <MailIcon aria-hidden="true" className="size-7 text-text-secondary" />
           <div className="flex flex-col gap-2">
-            <h2 id="mail-empty" className="text-lg font-bold">
+            <h2 id="mail-empty" className={sectionTitle}>
               아직 들어온 메일이 없습니다
             </h2>
             <p className="text-text-secondary">채용 메일을 내 수신 주소로 자동 전달하면 여기에 모입니다.</p>
@@ -53,7 +53,7 @@ export function MailPage() {
         <>
           {pending.length > 0 && (
             <section aria-labelledby="mail-todo" className="flex flex-col gap-3">
-              <h2 id="mail-todo" className="text-lg font-bold">
+              <h2 id="mail-todo" className={sectionTitle}>
                 확인 필요 {pending.length}
               </h2>
               <ul className="flex flex-col gap-4">
@@ -94,7 +94,7 @@ export function MailPage() {
           )}
 
           <section aria-labelledby="mail-auto" className="flex flex-col gap-3">
-            <h2 id="mail-auto" className="text-lg font-bold">
+            <h2 id="mail-auto" className={sectionTitle}>
               자동으로 넣은 것
             </h2>
             {added.length > 0 ? (

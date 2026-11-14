@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dot } from "@/shared/components/dot"
 import { FieldError } from "@/shared/components/form-field"
+import { sectionTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
@@ -45,7 +46,7 @@ export function MailSettingsPage() {
     <>
       <Panel aria-labelledby="ma-addr" className="flex flex-col gap-4 p-6">
         <div className="flex flex-col gap-1">
-          <h2 id="ma-addr" className="text-lg font-bold">
+          <h2 id="ma-addr" className={sectionTitle}>
             내 수신 주소
           </h2>
           <p className="text-sm text-text-secondary">채용 메일을 이 주소로 보내면 내 공고와 지원 상태에 반영할 것을 읽어 냅니다.</p>
@@ -90,7 +91,7 @@ export function MailSettingsPage() {
 
       <Panel aria-labelledby="ma-from" className="flex flex-col gap-4 p-6">
         <div className="flex flex-col gap-1">
-          <h2 id="ma-from" className="text-lg font-bold">
+          <h2 id="ma-from" className={sectionTitle}>
             보내는 주소
           </h2>
           <p className="text-sm text-text-secondary">여기 적힌 주소에서 온 메일만 받습니다.</p>
@@ -145,7 +146,7 @@ export function MailSettingsPage() {
       </Panel>
 
       <Panel aria-labelledby="ma-how" className="flex flex-col gap-4 p-6">
-        <h2 id="ma-how" className="text-lg font-bold">
+        <h2 id="ma-how" className={sectionTitle}>
           자동 전달 설정하기
         </h2>
         <ol className="flex flex-col gap-4">
@@ -161,7 +162,7 @@ export function MailSettingsPage() {
       </Panel>
 
       <Panel aria-labelledby="ma-rule" className="flex flex-col gap-4 p-6">
-        <h2 id="ma-rule" className="text-lg font-bold">
+        <h2 id="ma-rule" className={sectionTitle}>
           들어온 메일은 이렇게 다룹니다
         </h2>
         <ul className="flex flex-col gap-2.5 text-sm">

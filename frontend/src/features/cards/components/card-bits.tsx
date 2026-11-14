@@ -20,12 +20,6 @@ export function CardsSubpage({ children }: { children: ReactNode }) {
   )
 }
 
-/** 칸 이름(13px 굵은 회색): "상황", "태그", "근거 숫자" … */
-export const subLabel = "text-label-sm font-bold text-text-secondary"
-
-/** 칸 묶음 제목(18px 굵게): "STAR", "근거 숫자" … */
-export const sectionTitle = "text-lg font-bold"
-
 /** 확인 필요(하이라이트 알약) / 확인됨(초록 체크). */
 export function CardStatusBadge({ verified }: { verified: boolean }) {
   return verified ? (

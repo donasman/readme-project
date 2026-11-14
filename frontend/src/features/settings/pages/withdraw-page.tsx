@@ -5,6 +5,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dot } from "@/shared/components/dot"
 import { FieldError, FormField, noteId } from "@/shared/components/form-field"
+import { sectionTitle, subLabel } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { paths } from "@/shared/lib/paths"
 
@@ -13,8 +14,6 @@ import { getWithdrawInfo, withdraw } from "../api"
 export function withdrawLoader() {
   return getWithdrawInfo()
 }
-
-const subLabel = "text-label-sm font-bold text-text-secondary"
 
 /** 탈퇴(시안 9차): 지워지는 것과 남는 것, 내가 그룹장인 그룹, 비밀번호와 확인 표시. */
 export function WithdrawPage() {
@@ -44,7 +43,7 @@ export function WithdrawPage() {
     <>
       <Panel aria-labelledby="wd-what" className="flex flex-col gap-5 p-6">
         <div className="flex flex-col gap-1">
-          <h2 id="wd-what" className="text-lg font-bold">
+          <h2 id="wd-what" className={sectionTitle}>
             탈퇴
           </h2>
           <p className="text-sm text-text-secondary">탈퇴하면 계정과 내 자료가 지워지고 되돌릴 수 없습니다.</p>
@@ -81,7 +80,7 @@ export function WithdrawPage() {
       ))}
 
       <Panel aria-labelledby="wd-confirm" className="flex flex-col gap-4 p-6">
-        <h2 id="wd-confirm" className="text-lg font-bold">
+        <h2 id="wd-confirm" className={sectionTitle}>
           탈퇴 확인
         </h2>
         <form onSubmit={submit} noValidate className="contents">

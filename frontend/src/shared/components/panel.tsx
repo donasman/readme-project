@@ -14,3 +14,8 @@ interface PanelProps extends HTMLAttributes<HTMLElement> {
 export function Panel({ as: Tag = "section", className, ...props }: PanelProps) {
   return <Tag className={joinClasses("rounded-panel border border-border bg-surface shadow-resting", className)} {...props} />
 }
+
+/** 패널 맨 아래 덧말: 가는 줄 위 13px 회색 글. 줄과의 간격(pt-…)은 className으로 준다. */
+export function PanelNote({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={joinClasses("border-t border-border-subtle text-label-sm text-text-secondary", className)} {...props} />
+}

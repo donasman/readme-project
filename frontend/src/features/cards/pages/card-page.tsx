@@ -4,7 +4,7 @@ import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react
 import { Button, buttonVariants } from "@/components/ui/button"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Chip } from "@/shared/components/chip"
-import { subpageTitle } from "@/shared/components/heading"
+import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, PencilIcon, Trash2Icon } from "@/shared/icons"
@@ -13,7 +13,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
-import { CardStatusBadge, CardsSubpage, FactList, FlaggedText, sectionTitle, subLabel } from "../components/card-bits"
+import { CardStatusBadge, CardsSubpage, FactList, FlaggedText } from "../components/card-bits"
 
 export function cardLoader({ params }: LoaderFunctionArgs) {
   return getCard(Number(params.cardId))

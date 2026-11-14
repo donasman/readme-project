@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import type { Group } from "@/domain/group/types"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Avatar } from "@/shared/components/avatar"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
@@ -73,7 +73,7 @@ export function GroupsPage() {
         >
           <UsersIcon aria-hidden="true" className="size-7 text-text-secondary" />
           <div className="flex flex-col gap-2">
-            <h2 id="groups-empty" className="text-lg font-bold">
+            <h2 id="groups-empty" className={sectionTitle}>
               아직 들어간 그룹이 없습니다
             </h2>
             <p className="text-text-secondary">그룹을 만들어 사람들을 초대하거나, 받은 초대 링크를 열어 들어가세요.</p>
@@ -100,7 +100,7 @@ function GroupCard({ group, today }: { group: Group; today: string }) {
           {group.mark}
         </Avatar>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h2 className="text-lg font-bold">
+          <h2 className={sectionTitle}>
             {/* 칸 어디를 눌러도 그룹으로 간다(링크의 ::after가 칸을 덮는다) */}
             <Link to={paths.groupPosts(group.id)} className="after:absolute after:inset-0 after:rounded-panel">
               {group.name}

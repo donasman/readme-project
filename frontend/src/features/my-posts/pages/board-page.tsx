@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 import { getMyGroups } from "@/domain/group/api"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import type { Group } from "@/domain/group/types"
-import { Heading } from "@/shared/components/heading"
+import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
-import { Panel } from "@/shared/components/panel"
+import { Panel, PanelNote } from "@/shared/components/panel"
 import { CheckIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
@@ -144,7 +144,7 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
   return (
     <Panel aria-labelledby="board-edit" className="flex flex-col gap-5 p-6">
       <div className="flex flex-col gap-1">
-        <h2 id="board-edit" className="text-lg font-bold">
+        <h2 id="board-edit" className={sectionTitle}>
           상태 바꾸기
         </h2>
         <p className="text-sm text-text-secondary">
@@ -190,13 +190,13 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
       <Button type="button" className="self-end px-6" disabled={saving} onClick={() => void save()}>
         저장
       </Button>
-      <p className="border-t border-border-subtle pt-4 text-label-sm text-text-secondary">
+      <PanelNote className="pt-4">
         {where.length === 0
           ? "이 공고가 있는 그룹이 없습니다. 상태는 나만 봅니다."
           : where.length === 1
             ? `이 공고는 ${where[0].name}에 있습니다. 그 그룹에는 내 공개 범위(${DISCLOSURE_LABELS[where[0].myDisclosure]})만큼만 보입니다.`
             : `이 공고는 ${where.map((g) => g.name).join(", ")}에 있습니다. 그룹마다 정한 내 공개 범위만큼만 보입니다.`}
-      </p>
+      </PanelNote>
     </Panel>
   )
 }

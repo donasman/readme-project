@@ -3,7 +3,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Chip } from "@/shared/components/chip"
-import { subpageTitle } from "@/shared/components/heading"
+import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, Trash2Icon } from "@/shared/icons"
@@ -13,7 +13,7 @@ import { joinClasses } from "@/shared/lib/utils"
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
 import { dropFlaggedSentences, flaggedValues, markUsedNumbers } from "../card-text"
-import { CardsSubpage, FactList, FlaggedText, ProgressBar, sectionTitle, StatBox, subLabel } from "../components/card-bits"
+import { CardsSubpage, FactList, FlaggedText, ProgressBar, StatBox } from "../components/card-bits"
 import type { CardDetail } from "../types"
 
 /** 확인을 기다리는 카드를 읽는다. ?card=id 가 있으면 그 카드부터 본다. */

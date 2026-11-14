@@ -3,7 +3,7 @@ import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Heading } from "@/shared/components/heading"
+import { Heading, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
 import { ToggleButton } from "@/shared/components/toggle-button"
@@ -82,7 +82,7 @@ export function CardsPage() {
         />
         {orderedTags.length > 0 && (
           <div role="group" aria-label="태그로 거르기" className="flex flex-wrap items-center gap-2">
-            <span className="text-label-sm font-bold text-text-secondary">태그</span>
+            <span className={subLabel}>태그</span>
             {orderedTags.map((tag) => {
               const on = filters.tag === tag.name
               return (
