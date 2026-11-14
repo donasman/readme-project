@@ -30,8 +30,7 @@ class LoginThrottleTests {
 		failTenTimes(EMAIL);
 
 		assertBlocked(EMAIL);
-		// 대소문자는 가리지 않고, 다른 이메일은 따로 센다
-		assertBlocked("Garam@Example.TEST");
+		// 다른 이메일은 따로 센다. 대소문자는 부르는 쪽이 맞춘다(LoginTests)
 		assertThatNoException().isThrownBy(() -> this.throttle.countAttempt("narae@example.test"));
 	}
 
@@ -76,7 +75,7 @@ class LoginThrottleTests {
 	void clearForgetsTheFailures() {
 		failTenTimes(EMAIL);
 
-		this.throttle.clear("GARAM@example.test");
+		this.throttle.clear(EMAIL);
 
 		failTenTimes(EMAIL);
 	}

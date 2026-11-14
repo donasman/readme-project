@@ -3,6 +3,7 @@ package com.readme.auth;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.session.FindByIndexNameSessionRepository;
@@ -110,8 +111,12 @@ class AccountService {
 	 */
 	@Transactional
 	long login(String email, String password) {
-		this.loginThrottle.countAttempt(email);
-		Credentials account = this.queries.findCredentials(email).orElse(null);
+		// 세는 글자와 계정을 찾는 글자가 같아야 한다. "İ"를 자바는 i 와 위 점(U+0307)으로, PostgreSQL 은 i 로 낮춘다.
+		// 따로 낮추면 같은 계정을 두고 세는 칸만 새로 생긴다
+
+		String key = email.toLowerCase(Locale.ROOT);
+		this.loginThrottle.countAttempt(key);
+		Credentials account = this.queries.findCredentials(key).orElse(null);
 		String hash = (account != null) ? account.passwordHash() : null;
 		boolean matches = PasswordRule.Validator.fitsHash(password)
 				&& this.passwordEncoder.matches(password, (hash != null) ? hash : this.dummyHash) && hash != null;
@@ -121,7 +126,7 @@ class AccountService {
 		if (!account.verified()) {
 			throw new ApiException(AuthErrorCode.EMAIL_NOT_VERIFIED);
 		}
-		this.loginThrottle.clear(email);
+		this.loginThrottle.clear(key);
 		this.accounts.recordLogin(account.id(), this.clock.instant());
 		return account.id();
 	}

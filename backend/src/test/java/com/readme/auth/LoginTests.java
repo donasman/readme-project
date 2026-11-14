@@ -195,6 +195,24 @@ class LoginTests {
 	}
 
 	@Test
+	void aDottedCapitalIDoesNotGetAroundTheBlock() {
+		long user = this.fixtures.passwordUser("민지", PASSWORD, true);
+		// Fixtures 의 이메일(UUID)에는 i 가 없다
+		String email = "minji-" + UUID.randomUUID() + "@example.test";
+		this.jdbc.sql("update users set email = :email where id = :id").param("email", email).param("id", user).update();
+		String dotted = email.replaceFirst("i", "İ");
+		// PostgreSQL 은 둘을 같은 이메일로 본다. 자바는 "İ"를 i 와 위 점으로 낮춰 다른 글자가 된다
+		assertThat(this.jdbc.sql("select lower(:a) = lower(:b)").param("a", email).param("b", dotted)
+			.query(Boolean.class).single()).isTrue();
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
+			assertThat(login(email, "wrong password", null)).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+
+		// 새 칸으로 세어 막히지 않더라도, 그 글자로는 계정을 찾지 못한다
+		assertThat(login(dotted, PASSWORD, null)).hasStatus(HttpStatus.UNAUTHORIZED);
+	}
+
+	@Test
 	void anEmailWithoutAnAccountIsBlockedTheSameWay() {
 		String nobody = "nobody-" + UUID.randomUUID() + "@example.test";
 		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
