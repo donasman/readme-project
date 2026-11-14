@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { dueText, filterPostings, sortBoard, sortPostings, stageCells, withDecision } from "./status"
+import { boardCounts, dueText, filterPostings, sortBoard, sortPostings, stageCells, withDecision } from "./status"
 import type { MyPosting, MyState } from "./types"
 
 const TODAY = "2026-11-13"
@@ -66,5 +66,20 @@ describe("내 공고 거르기", () => {
   it("결정과 검색어로 거른다", () => {
     expect(filterPostings(list, { view: "open", decision: "applied", query: "" }, TODAY).rows.map((p) => p.id)).toEqual(["공사"])
     expect(filterPostings(list, { view: "open", decision: "all", query: "물" }, TODAY).rows.map((p) => p.id)).toEqual(["물류"])
+  })
+})
+
+describe("지원 현황의 숫자", () => {
+  it("최종이 아닌 단계의 합격은 진행 중에 세고, 넷이 맞아떨어진다", () => {
+    const counts = boardCounts([
+      state("applied", "document", "passed"),
+      state("applied", "test", "in_progress"),
+      state("applied", "final", "passed"),
+      state("applied", "interview_1", "failed"),
+      state("applied", "final", "failed"),
+      state("hold"),
+    ])
+    expect(counts).toEqual({ applied: 5, active: 2, passed: 1, failed: 2 })
+    expect(counts.active + counts.passed + counts.failed).toBe(counts.applied)
   })
 })
