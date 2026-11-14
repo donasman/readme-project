@@ -91,7 +91,20 @@ class PageFetcher {
 
 	@Autowired
 	PageFetcher(AppProperties app, PostingReadProperties settings) {
-		this(NAME + " (+" + app.frontendOrigin() + ")", settings);
+		this(userAgent(settings.contact(), app.frontendOrigin()), settings);
+	}
+
+	/**
+	 * "ReadmeFetcher/1.0 (+연락처)". 연락처가 비어 있으면 프런트 주소. 머리 값으로 보낼 수 없는 글자가 있으면 서버가 뜨지 않는다.
+	 * 프런트 주소는 로그인 화면이라 운영에서는 공개 연락처(app.posting-read.contact)를 넣는다.
+	 */
+	static String userAgent(String contact, String frontendOrigin) {
+		String to = (contact != null && !contact.isBlank()) ? contact.strip() : frontendOrigin;
+		String userAgent = NAME + " (+" + to + ")";
+		if (!isPrintableAscii(userAgent)) {
+			throw new IllegalStateException("app.posting-read.contact 에는 ASCII 로 쓴 주소를 넣는다: " + to);
+		}
+		return userAgent;
 	}
 
 	PageFetcher(String userAgent, PostingReadProperties settings) {

@@ -46,6 +46,18 @@ class PageFetcherTests {
 	}
 
 	@Test
+	void userAgentCarriesAPublicContact() {
+		assertThat(PageFetcher.userAgent("mailto:fetcher@readme.example", "https://app.readme.example"))
+			.isEqualTo("ReadmeFetcher/1.0 (+mailto:fetcher@readme.example)");
+		// 개발: 연락처를 넣지 않으면 프런트 주소
+		assertThat(PageFetcher.userAgent(null, "http://localhost:5173")).isEqualTo("ReadmeFetcher/1.0 (+http://localhost:5173)");
+		assertThat(PageFetcher.userAgent("  ", "http://localhost:5173")).isEqualTo("ReadmeFetcher/1.0 (+http://localhost:5173)");
+		// 머리 값으로 보낼 수 없는 연락처는 서버가 뜰 때 막는다
+		assertThatThrownBy(() -> PageFetcher.userAgent("https://리드미.example/연락", "http://localhost:5173"))
+			.isInstanceOf(IllegalStateException.class);
+	}
+
+	@Test
 	void sendsTheRefererThePlanAsksFor() {
 		this.site.html("/detail", "<p>상세</p>");
 		this.fetcher.html(this.site.url("/detail"), "https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=1");
@@ -214,7 +226,7 @@ class PageFetcherTests {
 	void addressIsCheckedAfterWaitingForTheHostsTurn() {
 		// 검사가 기다리기 앞에 있으면 기다리는 동안 이름이 바뀔 수 있다(DNS rebinding). 둘째 요청은 차례를 기다린 뒤에야 막혀야 한다
 		PageFetcher spaced = new PageFetcher(UA, new PostingReadProperties(Duration.ofSeconds(1), Duration.ofSeconds(1),
-				Duration.ofMillis(500), true));
+				Duration.ofMillis(500), true, null));
 		assertFails(() -> spaced.html("http://10.0.0.1/a", ""), PostingReadErrorCode.FETCH_FAILED, "읽을 수 없는 주소");
 		long started = System.nanoTime();
 		assertFails(() -> spaced.html("http://10.0.0.1/b", ""), PostingReadErrorCode.FETCH_FAILED, "읽을 수 없는 주소");
@@ -257,7 +269,7 @@ class PageFetcherTests {
 	}
 
 	static PostingReadProperties settings(Duration readTimeout, boolean allowLoopback) {
-		return new PostingReadProperties(Duration.ofSeconds(1), readTimeout, Duration.ZERO, allowLoopback);
+		return new PostingReadProperties(Duration.ofSeconds(1), readTimeout, Duration.ZERO, allowLoopback, null);
 	}
 
 	private static void assertFails(ThrowingCallable call, ErrorCode code, String why) {
