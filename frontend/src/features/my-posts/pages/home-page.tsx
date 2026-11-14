@@ -7,7 +7,6 @@ import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Panel } from "@/shared/components/panel"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ArrowRightIcon } from "@/shared/icons"
 import { daysBetween, formatLongDate } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
@@ -35,7 +34,7 @@ export function HomePage() {
   const unknown = open.filter((p) => p.deadline.kind === "unknown")
 
   // 확인 필요: 확인을 기다리는 카드, 마감일을 못 읽은 공고, 메일에서 온 변경
-  const todos: { key: string; content: ReactNode; to: string | null; state?: FillDeadlineState }[] = [
+  const todos: { key: string; content: ReactNode; to: string; state?: FillDeadlineState }[] = [
     ...(unverifiedCards > 0
       ? [{ key: "cards", to: paths.cardReview(), content: <><strong className="font-bold">카드 {unverifiedCards}장</strong>이 확인을 기다립니다</> }]
       : []),
@@ -112,26 +111,14 @@ export function HomePage() {
             </h2>
             {todos.length > 0 ? (
               <ul className="flex flex-col gap-1">
-                {todos.map((todo) => {
-                  const inner = (
-                    <>
+                {todos.map((todo) => (
+                  <li key={todo.key}>
+                    <Link to={todo.to} state={todo.state} className="flex min-h-11 items-center justify-between gap-3 text-sm text-foreground">
                       <span>{todo.content}</span>
                       <ArrowRightIcon aria-hidden="true" className="size-4 flex-none" />
-                    </>
-                  )
-                  const cls = "flex min-h-11 items-center justify-between gap-3 text-sm text-foreground"
-                  return (
-                    <li key={todo.key}>
-                      {todo.to ? (
-                        <Link to={todo.to} state={todo.state} className={cls}>
-                          {inner}
-                        </Link>
-                      ) : (
-                        <PlaceholderLink className={cls}>{inner}</PlaceholderLink>
-                      )}
-                    </li>
-                  )
-                })}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             ) : (
               <p className="text-sm">지금 확인할 것이 없습니다.</p>
