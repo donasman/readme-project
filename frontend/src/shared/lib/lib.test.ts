@@ -6,7 +6,7 @@ import { NotFoundError } from "./errors"
 import { objectParticle, subjectParticle } from "./korean"
 import { paths } from "./paths"
 import { revalidateOnParams } from "./router"
-import { isHttpUrl, matchesAccept } from "./utils"
+import { firstChar, isHttpUrl, matchesAccept } from "./utils"
 
 describe("date", () => {
   it("daysBetween: 달과 해를 넘어도 날 수", () => {
@@ -109,5 +109,15 @@ describe("matchesAccept", () => {
     expect(matchesAccept("공고.PDF", ".pdf,.docx")).toBe(true)
     expect(matchesAccept("photo.png", ".pdf,.docx")).toBe(false)
     expect(matchesAccept("report.pdf.exe", ".pdf,.docx")).toBe(false)
+  })
+})
+
+describe("firstChar", () => {
+  it("이모지와 조합형 한글도 한 글자로 자른다", () => {
+    expect(firstChar("다온")).toBe("다")
+    expect(firstChar("🐳 스터디")).toBe("🐳")
+    expect(firstChar("👨‍👩‍👧 가족")).toBe("👨‍👩‍👧")
+    expect(firstChar("다온".normalize("NFD"))).toBe("다".normalize("NFD"))
+    expect(firstChar("")).toBe("")
   })
 })

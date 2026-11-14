@@ -6,7 +6,7 @@ import { Heading } from "@/shared/components/heading"
 import { PanelNote } from "@/shared/components/panel"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { textLink } from "@/shared/components/text-link"
-import { joinClasses } from "@/shared/lib/utils"
+import { firstChar, joinClasses } from "@/shared/lib/utils"
 
 import { isInterestedOrApplied } from "../my-state"
 import type { GroupPostDetail } from "../types"
@@ -41,13 +41,13 @@ export function InterestedMembers({ post, viewer, myDisclosure, onChangeDisclosu
       </div>
       <ul className="flex flex-col">
         {meOn && (
-          <MemberRow name={`${viewer.name} (나)`} initial={viewer.name.slice(0, 1)} me state={mine} />
+          <MemberRow name={`${viewer.name} (나)`} initial={firstChar(viewer.name)} me state={mine} />
         )}
         {post.interests.map((i) => (
           <MemberRow
             key={i.member.id}
             name={i.member.name}
-            initial={i.member.name.slice(0, 1)}
+            initial={firstChar(i.member.name)}
             state={i.applied ? (i.progress ? `지원함 · ${i.progress}` : "지원함") : null}
           />
         ))}

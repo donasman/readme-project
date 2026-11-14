@@ -25,3 +25,11 @@ export function matchesAccept(fileName: string, accept: string): boolean {
   const name = fileName.toLowerCase()
   return accept.split(",").some((ext) => name.endsWith(ext.trim().toLowerCase()))
 }
+
+const graphemes = new Intl.Segmenter()
+
+/** 첫 글자 하나(이름·그룹 이름의 동그라미). 이모지와 조합형 한글도 반쪽으로 자르지 않는다. */
+export function firstChar(text: string): string {
+  for (const { segment } of graphemes.segment(text)) return segment
+  return ""
+}

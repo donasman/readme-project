@@ -18,6 +18,7 @@ import { Avatar } from "@/shared/components/avatar"
 import { navPill } from "@/shared/components/nav-pill"
 import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { firstChar } from "@/shared/lib/utils"
 
 /**
  * 그룹 화면들의 머리. Arc app-header 가 스크롤됐을 때의 값(바깥 여백 12px 16px, radius-panel, shadow-floating)으로
@@ -100,7 +101,7 @@ export function GroupHeader() {
 
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           <Link to={paths.account()} aria-label="내 계정" className="flex-none rounded-full">
-            <Avatar>{viewer.name.slice(0, 1)}</Avatar>
+            <Avatar>{firstChar(viewer.name)}</Avatar>
           </Link>
           {/* 768px 미만에서만: 숨은 그룹 메뉴를 여기서 연다 */}
           <DropdownMenu>

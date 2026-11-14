@@ -17,7 +17,7 @@ import { Panel, PanelRow } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { firstChar, joinClasses } from "@/shared/lib/utils"
 
 import { createInvite, leaveGroup } from "../api"
 import { RoleChip } from "../components/role-chip"
@@ -77,7 +77,7 @@ export function GroupMembersPage() {
                 key={member.id}
                 first={i === 0} className="gap-x-3 py-4"
               >
-                <Avatar size={40}>{member.name.slice(0, 1)}</Avatar>
+                <Avatar size={40}>{firstChar(member.name)}</Avatar>
                 <div className="flex min-w-0 flex-[1_1_160px] flex-wrap items-center gap-x-2 gap-y-1.5">
                   <span className="font-bold">{member.name}</span>
                   {member.id === viewer.id && <RoleChip role="me" />}
