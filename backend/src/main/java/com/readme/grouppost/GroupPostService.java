@@ -75,13 +75,25 @@ class GroupPostService {
 	@Transactional
 	void takeDown(long groupId, long postingId, long userId) {
 		GroupMembership membership = this.access.requireMember(groupId, userId);
-		GroupPost post = this.groupPosts.findById(new GroupPost.Key(groupId, postingId))
-			.filter(GroupPost::isVisible)
-			.orElseThrow(() -> new ApiException(GroupPostErrorCode.POST_NOT_FOUND));
+		GroupPost post = visibleGroupPost(groupId, postingId);
 		if (!membership.leader() && !post.isPostedBy(userId)) {
 			throw new ApiException(CommonErrorCode.FORBIDDEN, "올린 사람과 그룹장만 내릴 수 있습니다");
 		}
 		post.takeDown(userId, this.clock.instant());
+	}
+
+	/**
+	 * 공고 고치기(설계 4.5). 이 그룹에 올린 사람만 한다(그룹장도 못 한다, 아니면 403 FORBIDDEN).
+	 * 공고 본체를 고치므로 같은 공고를 올린 다른 그룹에도 보인다. 날짜 넣기와 달리 마감이 이미 있어도 바꾼다.
+	 */
+	@Transactional
+	void edit(long groupId, long postingId, long userId, String company, String title, DeadlineKind kind,
+			LocalDate date) {
+		this.access.requireMember(groupId, userId);
+		if (!visibleGroupPost(groupId, postingId).isPostedBy(userId)) {
+			throw new ApiException(CommonErrorCode.FORBIDDEN, "올린 사람만 고칠 수 있습니다");
+		}
+		this.postings.edit(postingId, company, title, kind, date);
 	}
 
 	/**
@@ -151,6 +163,12 @@ class GroupPostService {
 			throw new ApiException(GroupPostErrorCode.POST_NOT_FOUND);
 		}
 		return membership;
+	}
+
+	private GroupPost visibleGroupPost(long groupId, long postingId) {
+		return this.groupPosts.findById(new GroupPost.Key(groupId, postingId))
+			.filter(GroupPost::isVisible)
+			.orElseThrow(() -> new ApiException(GroupPostErrorCode.POST_NOT_FOUND));
 	}
 
 	private GroupPostComment commentOf(long groupId, long postingId, long commentId) {

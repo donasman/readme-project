@@ -23,6 +23,7 @@ import com.readme.common.error.CommonErrorCode;
 import com.readme.group.GroupAccess;
 import com.readme.grouppost.GroupPostRequests.CommentRequest;
 import com.readme.grouppost.GroupPostRequests.DeadlineInput;
+import com.readme.grouppost.GroupPostRequests.EditRequest;
 import com.readme.grouppost.GroupPostRequests.InterestRequest;
 import com.readme.grouppost.GroupPostRequests.PostRequest;
 import com.readme.posting.DeadlineKind;
@@ -77,6 +78,19 @@ class GroupPostController {
 		return new GroupPostDataResponse(today(), post);
 	}
 
+	/**
+	 * 공고 고치기(설계 4.5). 이 그룹에 올린 사람만 회사명, 공고명, 마감(날짜나 상시)을 고친다. 아니면 403 FORBIDDEN.
+	 * 고친 공고를 상세와 같은 모양으로 돌려준다.
+	 */
+	@PutMapping("/{postId}")
+	GroupPostDataResponse edit(@PathVariable long groupId, @PathVariable long postId,
+			@Valid @RequestBody EditRequest request, @CurrentUser LoginUser user) {
+		DeadlineInput deadline = requireDateOrAlways(request.deadline());
+		this.service.edit(groupId, postId, user.id(), request.company().strip(), request.title().strip(),
+				deadline.kind(), deadline.date());
+		return detail(groupId, postId, user);
+	}
+
 	/** 그룹에서 내리기. 올린 사람과 그룹장만. */
 	@DeleteMapping("/{postId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
@@ -91,10 +105,7 @@ class GroupPostController {
 	@PutMapping("/{postId}/deadline")
 	DeadlineResponse fillDeadline(@PathVariable long groupId, @PathVariable long postId,
 			@Valid @RequestBody DeadlineInput deadline, @CurrentUser LoginUser user) {
-		if (deadline.kind() == DeadlineKind.UNKNOWN || !deadline.isConsistent()) {
-			throw new ApiException(CommonErrorCode.INVALID_INPUT,
-					"마감은 날짜({\"kind\": \"date\", \"date\": …})나 상시({\"kind\": \"always\"})로 넣어 주세요");
-		}
+		requireDateOrAlways(deadline);
 		return this.service.fillDeadline(groupId, postId, user.id(), deadline.kind(), deadline.date());
 	}
 
@@ -125,6 +136,15 @@ class GroupPostController {
 	void deleteComment(@PathVariable long groupId, @PathVariable long postId, @PathVariable long commentId,
 			@CurrentUser LoginUser user) {
 		this.service.deleteComment(groupId, postId, commentId, user.id());
+	}
+
+	/** 날짜 넣기와 공고 고치기의 마감: 날짜나 상시만. 아니면 400 INVALID_INPUT. */
+	private static DeadlineInput requireDateOrAlways(DeadlineInput deadline) {
+		if (deadline.kind() == DeadlineKind.UNKNOWN || !deadline.isConsistent()) {
+			throw new ApiException(CommonErrorCode.INVALID_INPUT,
+					"마감은 날짜({\"kind\": \"date\", \"date\": …})나 상시({\"kind\": \"always\"})로 넣어 주세요");
+		}
+		return deadline;
 	}
 
 	private LocalDate today() {

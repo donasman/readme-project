@@ -102,6 +102,53 @@ class GroupPostChangeTests {
 	}
 
 	@Test
+	void interestCanBeTurnedOffAfterApplyingAndTheJobStaysInMyJobs() {
+		// 설계 9절 "지원한 뒤 관심 끄기": 상세에 끄기를 둔다(2026-11-15 정함)
+		this.fixtures.interest(this.group, this.posting, this.me);
+		this.fixtures.status(this.me, this.posting, "APPLIED", "INTERVIEW_1", "IN_PROGRESS");
+
+		assertThat(setInterest(false)).hasStatusOk().bodyJson().isStrictlyEqualTo("""
+				{ "interested": false, "status": "1차 면접 단계" }
+				""");
+		assertThat(interestRows()).isZero();
+		// 내 공고 행과 지원 상태는 그대로다
+		assertThat(this.jdbc.sql("""
+				select decision || '/' || stage || '/' || result from user_postings
+				 where user_id = :userId and posting_id = :postingId
+				""").param("userId", this.me).param("postingId", this.posting).query(String.class).single())
+			.isEqualTo("APPLIED/INTERVIEW_1/IN_PROGRESS");
+		// 상태를 바꾸는 길도 그대로 열려 있다
+		assertThat(this.mvc.put().uri("/api/me/postings/{postingId}", this.posting).with(loginAs(this.me)).with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{ \"decision\": \"applied\", \"stage\": \"interview_1\", \"result\": \"passed\" }"))
+			.hasStatusOk();
+	}
+
+	@Test
+	void withInterestOffIAmNotAnInterestedMemberEvenWithAStatus() {
+		// 설계 9절: 다른 그룹에서 관심을 켜고 지원한 공고가 이 그룹에도 있다. 이 그룹의 관심은 꺼져 있다.
+		long otherGroup = this.fixtures.group("둘째 그룹", this.me);
+		this.fixtures.post(otherGroup, this.posting, this.me, NOW);
+		this.fixtures.interest(otherGroup, this.posting, this.me);
+		this.fixtures.status(this.me, this.posting, "APPLIED", "TEST", "IN_PROGRESS");
+		this.fixtures.disclosure(this.group, this.me, "PROGRESS");
+		String mine = """
+				{ "interests": [], "me": { "interested": false, "status": "필기 단계" } }
+				""";
+
+		// 내 화면: 관심 멤버에 나는 없고, 내 상태 알약(me.status)은 보인다
+		assertThat(this.mvc.get().uri("/api/groups/{groupId}/posts", this.group).with(loginAs(this.me)))
+			.bodyJson().isLenientlyEqualTo("{ \"posts\": [ %s ] }".formatted(mine));
+		assertThat(this.mvc.get().uri("/api/groups/{groupId}/posts/{postId}", this.group, this.posting)
+			.with(loginAs(this.me)))
+			.bodyJson().isLenientlyEqualTo("{ \"post\": %s }".formatted(mine));
+		// 다른 멤버의 화면에도 없다. 두 화면이 같다
+		assertThat(this.mvc.get().uri("/api/groups/{groupId}/posts/{postId}", this.group, this.posting)
+			.with(loginAs(this.leader)))
+			.bodyJson().isLenientlyEqualTo("{ \"post\": { \"interests\": [] } }");
+	}
+
+	@Test
 	void interestNeedsTrueOrFalse() {
 		assertThat(this.mvc.put().uri("/api/groups/{groupId}/posts/{postId}/interest", this.group, this.posting)
 			.with(loginAs(this.me)).with(xsrf()).contentType(MediaType.APPLICATION_JSON).content("{}"))
