@@ -12,6 +12,7 @@ import { pageHead } from "@/shared/components/page-layout"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { useSearchText } from "@/shared/lib/router"
 
 import { getGroupPosts, setDeadline } from "../api"
 import { AppliedBadge } from "../components/chips"
@@ -33,8 +34,7 @@ export function GroupPostsPage() {
   const viewer = useViewer()
   const { group } = useGroup()
   const [urlFilters, setFilters] = useListFilters()
-  // 검색 칸의 값은 화면 상태로 둔다. 주소(?q=)만 따르면 라우터가 값을 늦게 돌려줘 한글 조합이 깨지고 커서가 끝으로 튄다
-  const [query, setQuery] = useState(urlFilters.query)
+  const [query, setQuery] = useSearchText(urlFilters.query)
   const interest = useInterest(group.id)
   const revalidator = useRevalidator()
   const location = useLocation()

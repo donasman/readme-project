@@ -1,4 +1,5 @@
-import type { ShouldRevalidateFunctionArgs } from "react-router"
+import { useState } from "react"
+import { useLocation, useNavigationType, type ShouldRevalidateFunctionArgs } from "react-router"
 
 /**
  * 라우트의 shouldRevalidate를 만든다. keys는 이 라우트의 loader가 쓰는 주소 값(params)이다.
@@ -13,4 +14,21 @@ export function revalidateOnParams(...keys: string[]) {
     if (formMethod || currentUrl.href === nextUrl.href) return defaultShouldRevalidate
     return keys.some((key) => currentParams[key] !== nextParams[key])
   }
+}
+
+/**
+ * 주소(?q=)를 따르는 검색 칸의 글자. 칸은 자기 글자를 들고 있어야 한다: 주소 값만 따르면 라우터가 값을 늦게 돌려줘
+ * 한글 조합이 깨지고 커서가 끝으로 튄다. 칸에 쳐서 생긴 이동(REPLACE)이 아닌 이동(그룹 바꾸기, 메뉴, 뒤로 가기)이 오면
+ * 칸을 주소 값으로 다시 맞춘다. 칸을 고칠 때는 돌려준 setText와 주소 고치기를 함께 부른다.
+ */
+export function useSearchText(urlText: string): [string, (text: string) => void] {
+  const location = useLocation()
+  const navigationType = useNavigationType()
+  const [text, setText] = useState(urlText)
+  const [seenKey, setSeenKey] = useState(location.key)
+  if (seenKey !== location.key) {
+    setSeenKey(location.key)
+    if (navigationType !== "REPLACE") setText(urlText)
+  }
+  return [text, setText]
 }
