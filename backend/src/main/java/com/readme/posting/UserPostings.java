@@ -34,4 +34,11 @@ public class UserPostings {
 				(status.result() != null) ? status.result().name() : null, this.clock.instant());
 	}
 
+	/** 나만 보는 메모를 바꾼다. 빈 메모는 null 로 둔다. 내 공고에 없는 공고면 false. */
+	@Transactional
+	boolean setMemo(long userId, long postingId, String memo) {
+		String stored = (memo == null || memo.isBlank()) ? null : memo;
+		return this.repository.updateMemo(userId, postingId, stored, this.clock.instant()) == 1;
+	}
+
 }

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.readme.group.MemberResponse;
+import com.readme.posting.DeadlineResponse;
 
 /**
  * 그룹 공고 목록의 한 줄. 프런트의 GroupPost 모양이다.

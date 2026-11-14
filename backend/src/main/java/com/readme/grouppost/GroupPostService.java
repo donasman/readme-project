@@ -12,6 +12,7 @@ import com.readme.common.error.CommonErrorCode;
 import com.readme.group.GroupAccess;
 import com.readme.group.GroupMembership;
 import com.readme.posting.DeadlineKind;
+import com.readme.posting.DeadlineResponse;
 import com.readme.posting.PostingDraft;
 import com.readme.posting.Postings;
 import com.readme.posting.UserPostings;

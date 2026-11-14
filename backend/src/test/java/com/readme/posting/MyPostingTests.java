@@ -18,7 +18,7 @@ import com.readme.Fixtures;
 import com.readme.IntegrationTest;
 
 /**
- * PUT /api/me/postings/{postingId}: 내 지원 상태(설계 4.3, 5.3).
+ * PUT /api/me/postings/{postingId}: 내 지원 상태(설계 4.2, 5.3). PUT …/memo: 나만 보는 메모(설계 4.2).
  */
 @IntegrationTest
 class MyPostingTests {
@@ -101,6 +101,67 @@ class MyPostingTests {
 		assertThat(setStatus(othersJob, "{ \"decision\": \"skip\" }")).hasStatus(HttpStatus.NOT_FOUND)
 			.bodyJson().extractingPath("$.code").isEqualTo("POSTING_NOT_FOUND");
 		assertThat(setStatus(Long.MAX_VALUE, "{ \"decision\": \"skip\" }")).hasStatus(HttpStatus.NOT_FOUND);
+	}
+
+	// ── 나만 보는 메모 ─────────────────────────────────────────────────
+
+	@Test
+	void memoIsSavedAndClearedWithoutTouchingTheStatus() {
+		setStatus(this.posting, "{ \"decision\": \"applied\", \"stage\": \"test\", \"result\": \"in_progress\" }").exchange();
+
+		assertThat(setMemo(this.posting, "{ \"memo\": \"필기는 NCS와 전산 전공\" }")).hasStatus(HttpStatus.NO_CONTENT);
+		assertThat(detail()).bodyJson().isLenientlyEqualTo("""
+				{ "posting": { "memo": "필기는 NCS와 전산 전공", "decision": "applied", "stage": "test", "status": "필기 단계" } }
+				""");
+
+		// 상태를 바꿔도 메모는 남는다
+		setStatus(this.posting, "{ \"decision\": \"hold\" }").exchange();
+		assertThat(detail()).bodyJson().isLenientlyEqualTo("""
+				{ "posting": { "memo": "필기는 NCS와 전산 전공", "decision": "hold", "stage": null, "status": null } }
+				""");
+
+		// 빈 메모는 지운다. 상태는 그대로다
+		assertThat(setMemo(this.posting, "{ \"memo\": \"  \\n \" }")).hasStatus(HttpStatus.NO_CONTENT);
+		assertThat(detail()).bodyJson().isLenientlyEqualTo("""
+				{ "posting": { "memo": null, "decision": "hold" } }
+				""");
+		assertThat(setMemo(this.posting, "{ \"memo\": \"다시\" }")).hasStatus(HttpStatus.NO_CONTENT);
+		assertThat(setMemo(this.posting, "{ \"memo\": null }")).hasStatus(HttpStatus.NO_CONTENT);
+		assertThat(detail()).bodyJson().extractingPath("$.posting.memo").isNull();
+	}
+
+	@Test
+	void memoIsAtMost2000CharactersLikeTheColumn() {
+		this.fixtures.status(this.me, this.posting, "UNDECIDED", null, null);
+		String longest = "가".repeat(2000);
+
+		assertThat(setMemo(this.posting, "{ \"memo\": \"%s\" }".formatted(longest))).hasStatus(HttpStatus.NO_CONTENT);
+		assertThat(detail()).bodyJson().extractingPath("$.posting.memo").isEqualTo(longest);
+		assertInvalid(setMemo(this.posting, "{ \"memo\": \"%s\" }".formatted(longest + "가")));
+		assertThat(detail()).bodyJson().extractingPath("$.posting.memo").isEqualTo(longest);
+	}
+
+	@Test
+	void memoNeedsTheJobInMyJobs() {
+		// 내 그룹에 있어도 내 공고 행이 없으면 404 다(상태 바꾸기는 행을 만들지만 메모는 만들지 않는다)
+		assertThat(setMemo(this.posting, "{ \"memo\": \"메모\" }")).hasStatus(HttpStatus.NOT_FOUND)
+			.bodyJson().extractingPath("$.code").isEqualTo("POSTING_NOT_FOUND");
+
+		long other = this.fixtures.user("가람");
+		this.fixtures.status(other, this.posting, "UNDECIDED", null, null);
+		assertThat(setMemo(this.posting, "{ \"memo\": \"남의 행\" }")).hasStatus(HttpStatus.NOT_FOUND);
+		assertThat(setMemo(Long.MAX_VALUE, "{ \"memo\": \"메모\" }")).hasStatus(HttpStatus.NOT_FOUND);
+		assertThat(this.jdbc.sql("select memo is null from user_postings where user_id = :userId and posting_id = :postingId")
+			.param("userId", other).param("postingId", this.posting).query(Boolean.class).single()).isTrue();
+	}
+
+	private MockMvcTester.MockMvcRequestBuilder setMemo(long postingId, String body) {
+		return this.mvc.put().uri("/api/me/postings/{postingId}/memo", postingId).with(loginAs(this.me)).with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON).content(body);
+	}
+
+	private MockMvcTester.MockMvcRequestBuilder detail() {
+		return this.mvc.get().uri("/api/me/postings/{postingId}", this.posting).with(loginAs(this.me));
 	}
 
 	private MockMvcTester.MockMvcRequestBuilder setStatus(long postingId, String body) {
