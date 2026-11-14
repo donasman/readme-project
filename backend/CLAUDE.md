@@ -105,6 +105,7 @@
 - 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고(`Fixtures`), 다른 테스트가 만든 데이터에 기대지 않는다. DB 전체에서 유일한 값(이메일, 공고키)은 테스트마다 다르게 만든다.
 - `Fixtures`가 넣는 순서용 시각(들어온 때, 관심을 켠 때)은 멈춘 시계의 `NOW`보다 앞이다. 테스트 안에서 API 로 만든 것은 `NOW`라 늘 뒤에 온다.
 - 로그인한 요청은 `TestRequests.loginAs(userId)`로 만든다. 세션을 실제로 만들고 읽는 것은 dev 프로필 테스트(`DevLoginTests`)가 본다.
+- 세션 쿠키의 속성(수명, `HttpOnly`, `SameSite`)은 `@IntegrationTest`(가짜 서버)에서 `application.yml`을 따르지 않는다. Boot 가 WAR 배포로 보기 때문이다. 쿠키 속성은 내장 서버로 띄우는 `DevLoginTests`에서 확인한다.
 - 바꾸는 요청에는 `TestRequests.xsrf()`를 붙인다. spring-security-test 의 `csrf()`는 쓰지 않는다. 처음 부를 때 CSRF 토큰 저장소를 세션 방식으로 바꿔 끼워, 같은 서버를 쓰는 뒤의 테스트까지 달라진다.
 
 ## 아직 정하지 않은 것
