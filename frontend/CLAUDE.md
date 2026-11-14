@@ -27,7 +27,7 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 고치기 전에 이 변경이 닿는 곳을 모두 적는다. 닿는 곳까지가 할 일이고, 시키지 않은 기능은 할 일이 아니다.
 
 - 코드: 바꾸는 함수와 부품을 부르는 곳(grep), 그 기능의 `routes.tsx`, `shared/lib/paths.ts`, `types.ts`와 `api.ts`, `mocks/`, 테스트.
-- 모양: 그리려는 모양이 이미 몇 곳에 있는지 센다. `shared/components/`, `domain/*/`, 그 기능의 `components/`를 보고 클래스 줄을 grep한다. 이 수로 "올리고 뽑는 기준"을 정한다.
+- 모양: 그리려는 모양이 이미 몇 곳에 있는지 센다. `shared/components/`, `domain/*/`, 그 기능의 `components/`를 보고 클래스 줄을 grep한다. 이 수로 "올리고 뽑는 기준"을 정한다. 화면을 만든 뒤에는 `npm run repeats`(클래스가 모두 같은 줄)와 `npm run repeats -- --loose`(여백·크기 값만 다른 줄)로 세 파일 이상인 줄을 본다. 배치만 같은 줄도 나오므로, 역할과 생김새가 같은지는 사람이 본다.
 - 문서: 새로 2곳이 된 모양은 계획 문서 6절에 더한다. 설계에 없는 API를 가짜 서버로 흉내 내면 `../docs/리드미_화면_API_대응.md` 1절의 목록에 3절 번호를 더한다.
 - 버그: 고치는 함수를 부르는 곳을 모두 찾고, 원인을 공통 코드에서 한 번 고친다. 부르는 쪽 한 곳만 고치지 않는다.
 

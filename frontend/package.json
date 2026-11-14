@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "regress": "node scripts/regress.mjs",
+    "repeats": "node scripts/repeats.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc -b",
     "preview": "vite preview"
