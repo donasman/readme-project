@@ -5,7 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
@@ -20,7 +20,11 @@ import com.readme.common.error.ApiException;
  * 시도는 비밀번호를 견주기 전에 세고, 성공하면 지운다. 같이 들어온 요청들이 모두 검사를 지나 10번을 넘기지 못하게 하려는 것이다.
  * 이메일은 부르는 쪽(AccountService)이 소문자로 맞춰 넘기고, 계정도 그 글자로 찾는다.
  *
- * <p>shortcut: per-process memory, lost on restart; move to the DB or Redis when more than one server runs
+ * <p>아무 이메일이나 넣어 메모리를 채우지 못하게 두 가지로 묶는다. 15분마다 지난 시도만 남은 이메일을 지우고,
+ * 이메일은 MAX_EMAILS 개까지만 든다. 넘으면 가장 먼저 들어온 이메일부터 버린다.
+ *
+ * <p>shortcut: per-process memory, lost on restart, and bounded to MAX_EMAILS emails plus the 15-minute sweep, so a flood
+ * of new emails pushes out the oldest counts; move to the DB or Redis when more than one server runs
  */
 @Component
 class LoginThrottle {
@@ -29,12 +33,21 @@ class LoginThrottle {
 
 	static final Duration WINDOW = Duration.ofMinutes(15);
 
+	/** 들고 있는 이메일 수의 상한. 한 이메일이 0.5KB 쯤이라 50MB 쯤이다. */
+	static final int MAX_EMAILS = 100_000;
+
 	private final Clock clock;
 
-	/** 이메일마다 15분 안에 센 시도의 시각. 앞이 오래된 것이다. 비어 있는 것은 두지 않는다. */
-	private final Map<String, Deque<Instant>> failures = new HashMap<>();
+	/** 이메일마다 15분 안에 센 시도의 시각. 앞이 오래된 것이다. 비어 있는 것은 두지 않는다. 처음 들어온 순서로 둔다. */
+	private final Map<String, Deque<Instant>> failures = new LinkedHashMap<>() {
 
-	/** 아무 이메일이나 넣어 메모리를 채우지 못하게, 15분마다 지난 시도만 남은 이메일을 지운다. */
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<String, Deque<Instant>> eldest) {
+			return size() > MAX_EMAILS;
+		}
+
+	};
+
 	private Instant nextSweep = Instant.MIN;
 
 	LoginThrottle(Clock clock) {

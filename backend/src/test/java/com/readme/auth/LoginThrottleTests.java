@@ -93,6 +93,19 @@ class LoginThrottleTests {
 		assertThat(this.throttle.size()).isEqualTo(1);
 	}
 
+	@Test
+	void atMostMaxEmailsAreKeptAndTheEldestGoesFirst() {
+		// 한 시각에 넣어 15분마다 지우는 것으로는 줄지 않는다
+		failTenTimes(EMAIL);
+		for (int i = 0; i < LoginThrottle.MAX_EMAILS; i++) {
+			this.throttle.countAttempt("spray-" + i + "@example.test");
+		}
+
+		assertThat(this.throttle.size()).isEqualTo(LoginThrottle.MAX_EMAILS);
+		// 가장 먼저 들어온 이메일이 빠져 센 것이 없어졌다
+		assertThatNoException().isThrownBy(() -> this.throttle.countAttempt(EMAIL));
+	}
+
 	private void failTenTimes(String email) {
 		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
 			this.throttle.countAttempt(email);
