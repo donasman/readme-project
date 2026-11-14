@@ -1,8 +1,9 @@
-import { Link, useLoaderData } from "react-router"
+import { useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PostingLink } from "@/domain/posting/posting-link"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -11,7 +12,6 @@ import { Panel } from "@/shared/components/panel"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
-import { paths } from "@/shared/lib/paths"
 
 import { getMyPostings } from "../api"
 import { MyStatusPill } from "../components/my-bits"
@@ -102,10 +102,7 @@ export function MyPostsPage() {
                 <span className="font-bold whitespace-nowrap">{due.main}</span>
                 <span className="text-xs whitespace-nowrap text-text-secondary">{due.sub}</span>
               </div>
-              <Link to={paths.myPost(p.id)} className="flex min-w-0 flex-col gap-0.5 text-foreground [grid-area:post]">
-                <span className="text-label-sm text-text-secondary">{p.company}</span>
-                <span className="font-bold">{p.title}</span>
-              </Link>
+              <PostingLink id={p.id} company={p.company} title={p.title} className="[grid-area:post]" />
               <div className="flex items-center [grid-area:me]">
                 <MyStatusPill state={p} />
               </div>

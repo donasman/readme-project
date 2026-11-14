@@ -2,6 +2,7 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { statusLabel } from "@/domain/posting/my-state"
+import { PostingLink } from "@/domain/posting/posting-link"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -68,10 +69,7 @@ export function MailPage() {
                       <Pill tone="highlight">확인 필요</Pill>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-surface-muted p-4">
-                      <Link to={paths.myPost(m.postingId)} className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5 text-foreground">
-                        <span className="text-label-sm text-text-secondary">{m.company}</span>
-                        <span className="font-bold">{m.title}</span>
-                      </Link>
+                      <PostingLink id={m.postingId} company={m.company} title={m.title} className="flex-[1_1_220px]" />
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <Pill tone="muted">{statusLabel(m.before)}</Pill>
                         <span className="sr-only">에서</span>

@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useSearchParams } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { PostingLink } from "@/domain/posting/posting-link"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -111,10 +112,7 @@ export function CalendarPage() {
             {events.map((e, i) => (
               <li key={e.postingId} className={joinClasses("flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-5 py-3.5", i > 0 ? "border-border-subtle" : "border-transparent")}>
                 <span className="w-24 flex-none font-bold whitespace-nowrap">{agendaDate(e.date)}</span>
-                <Link to={paths.myPost(e.postingId)} className="flex min-w-0 flex-[1_1_200px] flex-col gap-0.5 text-foreground">
-                  <span className="text-label-sm text-text-secondary">{e.company}</span>
-                  <span className="font-bold">{e.title}</span>
-                </Link>
+                <PostingLink id={e.postingId} company={e.company} title={e.title} className="flex-[1_1_200px]" />
                 {e.closed ? <Pill tone="muted">마감</Pill> : <DdayBadge text={formatDday(today, e.date)} soon={false} />}
               </li>
             ))}
