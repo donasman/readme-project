@@ -76,6 +76,9 @@ export function AccountPage() {
               </Button>
             </div>
           </FormField>
+          <p role="status" className="sr-only">
+            {note?.kind === "saved" ? note.text : ""}
+          </p>
         </form>
         <Row label="이메일" value={<span>{account.email}</span>}>
           {account.emailVerified && <Pill tone="accent">인증됨</Pill>}

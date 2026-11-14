@@ -106,14 +106,22 @@ function StageCell({ cell, stage }: { cell: ReturnType<typeof stageCells>[number
     return (
       <span className={`${pill} bg-accent-subtle pr-2.5 pl-1.5 text-accent-strong`}>
         <CheckIcon aria-hidden="true" className="size-3.5" />
+        <span className="sr-only">{STAGE_LABELS[stage]} </span>
         <span>합격</span>
       </span>
     )
-  if (cell === "now") return <span className={`${pill} bg-primary px-2.5 text-primary-foreground`}>진행 중</span>
+  if (cell === "now")
+    return (
+      <span className={`${pill} bg-primary px-2.5 text-primary-foreground`}>
+        <span className="sr-only">{STAGE_LABELS[stage]} </span>
+        진행 중
+      </span>
+    )
   if (cell === "fail")
     return (
       <span className={`${pill} bg-surface-sunken pr-2.5 pl-1.5 text-foreground`}>
         <XIcon aria-hidden="true" className="size-3.5" />
+        <span className="sr-only">{STAGE_LABELS[stage]} </span>
         <span>불합격</span>
       </span>
     )
@@ -125,6 +133,8 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
   const revalidator = useRevalidator()
   const [state, setState] = useState<MyState>({ decision: posting.decision, stage: posting.stage, result: posting.result })
   const [saving, setSaving] = useState(false)
+  // 저장한 그 상태일 때만 "저장했습니다."를 알린다. 고치면 새 상태라 지워진다
+  const [savedState, setSavedState] = useState<MyState | null>(null)
   const applied = state.decision === "applied"
   const where = posting.groups.map((g) => groups.find((x) => x.id === g.id)).filter((g): g is Group => g !== undefined)
 
@@ -133,6 +143,7 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
     try {
       await updateMyState(posting.id, state)
       await revalidator.revalidate()
+      setSavedState(state)
     } finally {
       setSaving(false)
     }
@@ -187,6 +198,9 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
       <Button type="button" className="self-end px-6" disabled={saving} onClick={() => void save()}>
         저장
       </Button>
+      <p role="status" className="sr-only">
+        {savedState === state ? "저장했습니다." : ""}
+      </p>
       <PanelNote className="pt-4">
         {where.length === 0
           ? "이 공고가 있는 그룹이 없습니다. 상태는 나만 봅니다."
