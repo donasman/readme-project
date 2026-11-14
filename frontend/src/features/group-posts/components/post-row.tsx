@@ -1,4 +1,4 @@
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import type { Viewer } from "@/domain/session/types"
@@ -8,6 +8,7 @@ import { formatMonthDay } from "@/shared/lib/date"
 
 import { deadlineText } from "@/domain/posting/deadline"
 import type { PostRow as Row } from "../list-rules"
+import type { ListReturnState } from "../types"
 import { MemberChip, NewBadge, StatusPill } from "./chips"
 
 /** 칸 6개: 마감, 공고, 관심 멤버, 내 상태, 댓글, 올린 사람. 768px 미만에서는 카드가 된다. */
@@ -28,6 +29,7 @@ interface PostRowProps {
  * 올린 사람은 상세에서 보여 준다(docs/design/readme-tabs.css 의 rm-row 규칙).
  */
 export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFillDeadline }: PostRowProps) {
+  const back: ListReturnState = { listSearch: useLocation().search }
   const { post } = row
   const due = deadlineText(post.deadline, today)
 
@@ -53,6 +55,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFi
 
       <Link
         to={detailPath}
+        state={back}
         className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5 text-foreground md:col-start-2"
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -90,6 +93,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFi
 
       <Link
         to={`${detailPath}#comments`}
+        state={back}
         aria-label={`댓글 ${post.commentCount}개`}
         className="col-start-2 row-start-2 inline-flex min-h-control-sm items-center gap-1 justify-self-end text-sm text-text-secondary md:col-start-5 md:row-start-1 md:justify-self-auto"
       >
