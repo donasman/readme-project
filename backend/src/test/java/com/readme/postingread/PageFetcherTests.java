@@ -52,6 +52,23 @@ class PageFetcherTests {
 		assertThat(this.site.lastHeaders("/detail").getFirst("Referer")).isEqualTo("https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=1");
 	}
 
+	@Test
+	void refererWithKoreanLettersIsLeftOut() {
+		// 사람인·잡코리아는 사용자가 준 주소를 Referer 로 보낸다. 검색어(searchword=백엔드)가 든 주소는 머리 값이 될 수 없다
+		this.site.html("/detail", "<p>상세</p>");
+		this.fetcher.html(this.site.url("/detail"), "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=1&searchword=백엔드");
+		assertThat(this.site.lastHeaders("/detail").containsKey("Referer")).isFalse();
+		assertThat(PageFetcher.isPrintableAscii("https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=1")).isTrue();
+		assertThat(PageFetcher.isPrintableAscii("https://example.com/a\tb")).isFalse();
+		assertThat(PageFetcher.isPrintableAscii("")).isFalse();
+	}
+
+	@Test
+	void linksWithKoreanLettersAreFetched() {
+		this.site.html("/채용/1", "<p>공고</p>");
+		assertThat(this.fetcher.html(this.site.url("/채용/1?searchword=백엔드"), "").html()).isEqualTo("<p>공고</p>");
+	}
+
 	// ── robots.txt ────────────────────────────────────────────────────
 
 	@Test

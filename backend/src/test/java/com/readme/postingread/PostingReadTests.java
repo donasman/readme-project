@@ -160,6 +160,17 @@ class PostingReadTests {
 	}
 
 	@Test
+	void linkWithKoreanLettersIsRead() {
+		// 검색 결과에서 복사한 주소에는 검색어(searchword=백엔드)가 한글 그대로 들어 있다
+		String path = "/jobs/" + UUID.randomUUID();
+		site.html(path, PAGE);
+		String url = site.url(path) + "?searchword=백엔드";
+		assertThat(read(this.me, "{ \"url\": \"%s\" }".formatted(url))).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("{ \"company\": \"로컬랩\", \"sourceUrl\": \"%s\" }".formatted(url));
+	}
+
+	@Test
 	void pageDisallowedByRobotsIsNotFetched() {
 		String path = "/private/" + UUID.randomUUID();
 		site.html(path, PAGE);

@@ -166,8 +166,8 @@ class PageFetcher {
 			.header("Accept", page ? "text/html,application/xhtml+xml" : "text/plain,*/*;q=0.1")
 			.header("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.5")
 			.GET();
-		if (referer != null && !referer.isEmpty()) {
-			request.header("Referer", referer);
+		if (isPrintableAscii(referer)) {
+			request.header("Referer", referer); // 머리 값에 한글이 들면 HttpClient 가 IllegalArgumentException 을 던진다. 그때는 보내지 않는다
 		}
 		UrlGuard.requirePublic(uri, this.settings.allowLoopbackForTests());
 		CompletableFuture<HttpResponse<byte[]>> call = this.client.sendAsync(request.build(), (info) -> body(info, page));
@@ -345,6 +345,11 @@ class PageFetcher {
 			default -> (status >= 500) ? failed("사이트 쪽 오류로 읽지 못했습니다. 잠시 뒤 다시 시도하거나")
 					: failed("이 링크는 읽지 못했습니다(응답 " + status + ").");
 		};
+	}
+
+	/** 비어 있지 않고 모두 보이는 ASCII(0x20~0x7E)인가. HTTP 머리 값으로 보낼 수 있는 글자다. */
+	static boolean isPrintableAscii(String value) {
+		return value != null && !value.isEmpty() && value.chars().allMatch((c) -> c >= 0x20 && c <= 0x7e);
 	}
 
 	private static boolean isHtml(String contentType) {
