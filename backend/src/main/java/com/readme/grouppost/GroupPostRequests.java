@@ -50,7 +50,7 @@ final class GroupPostRequests {
 
 	/**
 	 * PUT /api/groups/{groupId}/posts/{postId} 의 본문(공고 고치기, 설계 4.5). 올리기와 같은 칸, 같은 길이다.
-	 * 마감은 날짜나 상시만 받는다. 원문 주소와 공고키는 고치지 않는다.
+	 * 마감의 unknown 은 아직 unknown 인 공고에만 받는다(서비스가 본다). 원문 주소와 공고키는 고치지 않는다.
 	 */
 	record EditRequest(@NotBlank @Size(max = 200) String company, @NotBlank @Size(max = 300) String title,
 			@NotNull @Valid DeadlineInput deadline) {

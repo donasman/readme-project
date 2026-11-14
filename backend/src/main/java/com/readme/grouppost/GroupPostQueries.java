@@ -146,6 +146,20 @@ class GroupPostQueries {
 			.single();
 	}
 
+	/** 이 공고가 다른 그룹에도 올라와 있고(내리지 않은), 그 그룹에 올린 사람이 이 사람이 아닌지. 탈퇴해 비었으면 남으로 본다. */
+	boolean isSharedWithAnotherPoster(long groupId, long postingId, long userId) {
+		return this.jdbc.sql("""
+				select exists (select 1 from group_posts
+				                where posting_id = :postingId and group_id <> :groupId and taken_down_at is null
+				                  and posted_by is distinct from :userId)
+				""")
+			.param("groupId", groupId)
+			.param("postingId", postingId)
+			.param("userId", userId)
+			.query(Boolean.class)
+			.single();
+	}
+
 	MyStateResponse myState(long groupId, long postingId, long viewerId) {
 		boolean interested = this.jdbc.sql("""
 				select exists (select 1 from group_post_interests

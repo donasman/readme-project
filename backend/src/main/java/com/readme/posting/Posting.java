@@ -65,15 +65,6 @@ class Posting {
 		this.updatedAt = now;
 	}
 
-	/** 공고 고치기. 회사명, 공고명, 마감만 바꾼다. 원문 주소와 공고키는 그대로다. */
-	void edit(String company, String title, DeadlineKind deadlineKind, LocalDate deadlineDate, Instant now) {
-		this.company = company;
-		this.title = title;
-		this.deadlineKind = deadlineKind;
-		this.deadlineDate = deadlineDate;
-		this.updatedAt = now;
-	}
-
 	Long getId() {
 		return this.id;
 	}

@@ -101,12 +101,13 @@ class GroupPostEditTests {
 	}
 
 	@Test
-	void theEditShowsInAnotherGroupThatSharesTheJob() {
+	void theEditShowsInMyOtherGroupThatSharesTheJob() {
+		// 같은 공고를 다른 그룹에도 내가 올렸다. 그 그룹의 다른 멤버에게도 고친 값이 보인다
 		long otherLeader = this.fixtures.user("라온");
-		long otherGroup = this.fixtures.group("둘째 그룹", otherLeader);
-		this.fixtures.post(otherGroup, this.posting, otherLeader, NOW);
+		long otherGroup = this.fixtures.group("둘째 그룹", otherLeader, this.poster);
+		this.fixtures.post(otherGroup, this.posting, this.poster, NOW);
 
-		edit(this.poster, EDIT).exchange();
+		assertThat(edit(this.poster, EDIT)).hasStatusOk();
 
 		assertThat(this.mvc.get().uri("/api/groups/{groupId}/posts", otherGroup).with(loginAs(otherLeader)))
 			.bodyJson().isLenientlyEqualTo("""
@@ -116,13 +117,58 @@ class GroupPostEditTests {
 	}
 
 	@Test
+	void jobThatSomeoneElsePostedInAnotherGroupIs409PostingShared() {
+		// 혼자인 그룹을 만들어 같은 링크를 올린 사람도 그 그룹의 "올린 사람"이다. 남의 그룹이 보는 공고를 고치지 못한다
+		long stranger = this.fixtures.user("모르는 사람");
+		long strangersGroup = this.fixtures.group("혼자 그룹", stranger);
+		this.fixtures.post(strangersGroup, this.posting, stranger, NOW);
+
+		assertThat(edit(stranger, strangersGroup, EDIT)).hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.code").isEqualTo("POSTING_SHARED");
+		// 이 그룹에 올린 사람도 마찬가지다
+		assertThat(edit(this.poster, this.group, EDIT)).hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.code").isEqualTo("POSTING_SHARED");
+		assertThat(company()).isEqualTo("예시 커머스");
+	}
+
+	@Test
+	void jobTakenDownInAnotherGroupDoesNotBlockTheEdit() {
+		long otherLeader = this.fixtures.user("라온");
+		long otherGroup = this.fixtures.group("둘째 그룹", otherLeader);
+		this.fixtures.post(otherGroup, this.posting, otherLeader, NOW);
+		this.fixtures.takeDown(otherGroup, this.posting);
+
+		assertThat(edit(this.poster, EDIT)).hasStatusOk();
+		assertThat(company()).isEqualTo("고친 커머스");
+	}
+
+	@Test
+	void unknownDeadlineStaysUnknownWhileFixingTheCompany() {
+		this.jdbc.sql("update postings set deadline_kind = 'UNKNOWN', deadline_date = null where id = :id")
+			.param("id", this.posting)
+			.update();
+
+		assertThat(edit(this.poster, body("고친 커머스", "백엔드", "{ \"kind\": \"unknown\" }"))).hasStatusOk()
+			.bodyJson().isLenientlyEqualTo("""
+					{ "post": { "company": "고친 커머스", "deadline": { "kind": "unknown" } } }
+					""");
+	}
+
+	@Test
+	void setDeadlineCannotGoBackToUnknown() {
+		assertThat(edit(this.poster, body("고친 커머스", "백엔드", "{ \"kind\": \"unknown\" }")))
+			.hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.code").isEqualTo("DEADLINE_ALREADY_SET");
+		assertThat(company()).isEqualTo("예시 커머스");
+	}
+
+	@Test
 	void anotherMemberAndEvenTheLeaderGet403() {
 		for (long member : new long[] { this.other, this.leader }) {
 			assertThat(edit(member, EDIT)).hasStatus(HttpStatus.FORBIDDEN)
 				.bodyJson().extractingPath("$.code").isEqualTo("FORBIDDEN");
 		}
-		assertThat(this.jdbc.sql("select company from postings where id = :id").param("id", this.posting)
-			.query(String.class).single()).isEqualTo("예시 커머스");
+		assertThat(company()).isEqualTo("예시 커머스");
 	}
 
 	@Test
@@ -149,9 +195,9 @@ class GroupPostEditTests {
 				body("가".repeat(201), "공고명", date),
 				body("회사", "", date),
 				body("회사", "가".repeat(301), date),
-				body("회사", "공고명", "{ \"kind\": \"unknown\" }"),
 				body("회사", "공고명", "{ \"kind\": \"date\" }"),
 				body("회사", "공고명", "{ \"kind\": \"always\", \"date\": \"2026-11-30\" }"),
+				body("회사", "공고명", "{ \"kind\": \"unknown\", \"date\": \"2026-11-30\" }"),
 				"{ \"company\": \"회사\", \"title\": \"공고명\" }" };
 		for (String request : invalid) {
 			assertThat(edit(this.poster, request)).hasStatus(HttpStatus.BAD_REQUEST)
@@ -166,10 +212,19 @@ class GroupPostEditTests {
 	}
 
 	private MockMvcTester.MockMvcRequestBuilder edit(long userId, String body) {
-		return this.mvc.put().uri("/api/groups/{groupId}/posts/{postId}", this.group, this.posting)
+		return edit(userId, this.group, body);
+	}
+
+	private MockMvcTester.MockMvcRequestBuilder edit(long userId, long groupId, String body) {
+		return this.mvc.put().uri("/api/groups/{groupId}/posts/{postId}", groupId, this.posting)
 			.with(loginAs(userId)).with(xsrf())
 			.contentType(MediaType.APPLICATION_JSON)
 			.content(body);
+	}
+
+	private String company() {
+		return this.jdbc.sql("select company from postings where id = :id").param("id", this.posting)
+			.query(String.class).single();
 	}
 
 }
