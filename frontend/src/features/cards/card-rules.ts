@@ -1,4 +1,4 @@
-// 경험카드 목록의 거르기 규칙과 태그 순서. 화면과 떨어진 순수 함수다.
+// 경험카드 목록의 거르기 규칙, 태그 순서, 확인 순서. 화면과 떨어진 순수 함수다.
 import type { CardTag, ExperienceCard, Star } from "./types"
 
 /** 목록 보기: 전체, 확인 필요(verified = false), 확인됨 */
@@ -50,4 +50,10 @@ export function orderTags(tags: CardTag[]): CardTag[] {
 /** 카드 아래 줄: 어디서 · 맡은 일. 둘 다 없으면 빈 글자 */
 export function orgAndRole(card: Pick<ExperienceCard, "org" | "role">): string {
   return [card.org, card.role].filter(Boolean).join(" · ")
+}
+
+/** 카드 확인의 순서: id인 카드부터 보고, 그 앞 카드들은 뒤로 돌린다. 없는 id면 그대로 둔다. */
+export function startFrom<T extends { id: number }>(cards: T[], id: number): T[] {
+  const i = cards.findIndex((c) => c.id === id)
+  return i <= 0 ? cards : [...cards.slice(i), ...cards.slice(0, i)]
 }
