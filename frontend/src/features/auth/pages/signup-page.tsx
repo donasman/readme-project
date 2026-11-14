@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { NAME_MAX_LENGTH } from "@/domain/session/types"
 import { paths } from "@/shared/lib/paths"
 
 import { signup } from "../api"
@@ -13,15 +14,19 @@ const inlineLink = "font-bold text-primary hover:text-accent-strong"
 export function SignupPage() {
   const navigate = useNavigate()
   const [taken, setTaken] = useState(false)
+  const [nameEmpty, setNameEmpty] = useState(false)
   const [saving, setSaving] = useState(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
+    const name = String(form.get("name") ?? "").trim()
     const email = String(form.get("email") ?? "").trim()
+    // required는 공백만 넣은 이름을 통과시킨다
+    if (!name) return setNameEmpty(true)
     setSaving(true)
     try {
-      const result = await signup({ name: String(form.get("name") ?? "").trim(), email, password: String(form.get("password") ?? "") })
+      const result = await signup({ name, email, password: String(form.get("password") ?? "") })
       if (result.ok) navigate(paths.signupSent(), { state: { email } })
       else setTaken(true)
     } finally {
@@ -36,7 +41,18 @@ export function SignupPage() {
       </AuthHeading>
 
       <form onSubmit={submit} className="flex flex-col gap-4">
-        <AuthField id="signup-name" name="name" label="표시 이름" autoComplete="nickname" placeholder="다온" hint="그룹 멤버에게 보이는 이름입니다." required />
+        <AuthField
+          id="signup-name"
+          name="name"
+          label="표시 이름"
+          autoComplete="nickname"
+          placeholder="다온"
+          hint="그룹 멤버에게 보이는 이름입니다."
+          maxLength={NAME_MAX_LENGTH}
+          required
+          onChange={() => setNameEmpty(false)}
+          error={nameEmpty && "표시 이름을 넣어 주세요."}
+        />
         <AuthField
           id="signup-email"
           name="email"

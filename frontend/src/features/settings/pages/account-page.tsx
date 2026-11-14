@@ -3,6 +3,7 @@ import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NAME_MAX_LENGTH } from "@/domain/session/types"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { sectionTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
@@ -61,7 +62,7 @@ export function AccountPage() {
               <Input
                 id="ac-name"
                 value={name}
-                maxLength={20}
+                maxLength={NAME_MAX_LENGTH}
                 aria-invalid={note?.kind === "error" || undefined}
                 aria-describedby={noteId("ac-name")}
                 onChange={(e) => {
