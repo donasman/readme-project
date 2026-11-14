@@ -5,9 +5,11 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Chip } from "@/shared/components/chip"
 import { subpageTitle } from "@/shared/components/heading"
+import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, PencilIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
@@ -28,7 +30,7 @@ export function CardPage() {
   return (
     <CardsSubpage>
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className={pageHead}>
           <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-2.5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <CardStatusBadge verified={card.verified} />
@@ -55,8 +57,8 @@ export function CardPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
+        <div className={columns}>
+          <div className={joinClasses(mainColumn, "gap-6")}>
             <Panel aria-labelledby="card-summary" className="flex flex-col gap-3 p-6">
               <h2 id="card-summary" className={subLabel}>
                 요약
@@ -90,7 +92,7 @@ export function CardPage() {
             </Panel>
           </div>
 
-          <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
+          <aside className={joinClasses(sideColumn(300), "gap-6")}>
             {notes > 0 && (
               <section aria-labelledby="card-issues" className="flex flex-col gap-3 rounded-panel bg-highlight-subtle p-5">
                 <h2 id="card-issues" className="text-sm font-bold">

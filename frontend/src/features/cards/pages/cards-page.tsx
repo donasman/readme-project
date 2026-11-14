@@ -4,6 +4,8 @@ import { Link, useLoaderData } from "react-router"
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
+import { Page } from "@/shared/components/page"
+import { pageHead } from "@/shared/components/page-layout"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { ArrowRightIcon, CircleAlertIcon, FileUpIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -28,8 +30,8 @@ export function CardsPage() {
   const unverified = countUnverified(cards)
 
   return (
-    <main className="mx-auto flex max-w-[1120px] flex-col gap-8 px-6 pt-10 pb-16">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+    <Page narrow className="gap-8 pt-10">
+      <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-2">
           <Heading level={1} size="text-3xl">
             경험카드
@@ -104,6 +106,6 @@ export function CardsPage() {
           {cards.length === 0 ? "아직 카드가 없습니다." : "조건에 맞는 카드가 없습니다."}
         </p>
       )}
-    </main>
+    </Page>
   )
 }

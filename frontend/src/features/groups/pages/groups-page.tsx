@@ -6,6 +6,8 @@ import type { Group } from "@/domain/group/types"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
+import { Page } from "@/shared/components/page"
+import { pageHead } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { PlusIcon, UsersIcon } from "@/shared/icons"
 import { formatDday } from "@/shared/lib/date"
@@ -45,8 +47,8 @@ export function GroupsPage() {
   )
 
   return (
-    <main className="mx-auto flex max-w-[1120px] flex-col gap-8 px-6 pt-10 pb-16">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+    <Page narrow className="gap-8 pt-10">
+      <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-2">
           <Heading level={1} size="text-3xl">
             내 그룹
@@ -81,7 +83,7 @@ export function GroupsPage() {
       )}
 
       <CreateGroupDialog open={creating} onOpenChange={changeCreating} />
-    </main>
+    </Page>
   )
 }
 

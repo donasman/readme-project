@@ -8,7 +8,9 @@ import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { BackLink } from "@/shared/components/back-link"
 import { Page } from "@/shared/components/page"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { paths } from "@/shared/lib/paths"
+import { joinClasses } from "@/shared/lib/utils"
 
 import { addComment, deleteComment, getGroupPost, takeDownPost, updateComment } from "../api"
 import { Comments } from "../components/comments"
@@ -46,12 +48,12 @@ export function GroupPostPage() {
     <Page className="gap-4 pt-6">
       <BackLink to={listPath}>공고 목록</BackLink>
 
-      <div className="flex flex-wrap items-start gap-6">
-        <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
+      <div className={columns}>
+        <div className={joinClasses(mainColumn, "gap-6")}>
           <DeadlineCard post={post} today={today} onToggleInterest={(on) => void interest.toggle(post.id, on)} />
           <PostContent post={post} viewer={viewer} canTakeDown={canTakeDown} onTakeDown={() => setTakingDown(post)} />
         </div>
-        <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-6">
+        <div className={joinClasses(sideColumn(340), "gap-6")}>
           <InterestedMembers post={post} viewer={viewer} myDisclosure={group.myDisclosure} onChangeDisclosure={() => setDisclosureFor(group)} />
           <Comments
             comments={post.comments}
