@@ -6,7 +6,7 @@ import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
-import { Panel } from "@/shared/components/panel"
+import { Panel, PanelRow } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/icons"
 import { formatDday } from "@/shared/lib/date"
@@ -110,11 +110,11 @@ export function CalendarPage() {
         {events.length > 0 ? (
           <Panel as="ul" className="flex flex-col">
             {events.map((e, i) => (
-              <li key={e.postingId} className={joinClasses("flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-5 py-3.5", i > 0 ? "border-border-subtle" : "border-transparent")}>
+              <PanelRow key={e.postingId} first={i === 0} className="gap-x-4 py-3.5">
                 <span className="w-24 flex-none font-bold whitespace-nowrap">{agendaDate(e.date)}</span>
                 <PostingLink id={e.postingId} company={e.company} title={e.title} className="flex-[1_1_200px]" />
                 {e.closed ? <Pill tone="muted">마감</Pill> : <DdayBadge text={formatDday(today, e.date)} soon={false} />}
-              </li>
+              </PanelRow>
             ))}
           </Panel>
         ) : (
