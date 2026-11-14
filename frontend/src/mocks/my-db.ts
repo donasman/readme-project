@@ -57,8 +57,8 @@ function toPosting(e: Entry): MyPosting {
   return { id: e.id, company, title, deadline, groups: found.map((f) => f.group), decision: e.decision, stage: e.stage, result: e.result }
 }
 
-/** 내 공고 목록. */
-export const listMyPostings = (): MyPosting[] => entries().map(toPosting)
+/** 내 공고 목록. 본체를 읽을 수 없고 남긴 값도 없는 행(속한 적 없는 그룹의 공고, ?mock=no-groups)은 뺀다. */
+export const listMyPostings = (): MyPosting[] => entries().filter((e) => e.snapshot || readPosts(e).length > 0).map(toPosting)
 
 /** 내 공고 상세. */
 export function getMyPosting(id: string): MyPostingDetail {

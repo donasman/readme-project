@@ -61,3 +61,12 @@ export function statusOf(groupId: string, postId: string): string | null {
   if (result === "in_progress") return stage === "document" ? "지원함" : `${STAGE_TEXT[stage]} 단계`
   return `${STAGE_TEXT[stage]} ${result === "passed" ? "합격" : "불합격"}`
 }
+
+/** 그룹을 나가거나 공고가 내려가기 직전에 부른다: 그 공고에 걸린 내 공고 행에 마지막 회사·공고명·마감을 남긴다. */
+export function keepSnapshot(groupId: string, post: Pick<MyPosting, "company" | "title" | "deadline"> & { id: string }): void {
+  for (const e of entries()) {
+    if (e.refs.some(([g, p]) => g === groupId && p === post.id)) {
+      e.snapshot = { company: post.company, title: post.title, deadline: structuredClone(post.deadline) }
+    }
+  }
+}
