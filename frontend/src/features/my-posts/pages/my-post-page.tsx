@@ -4,6 +4,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 import { buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
+import { statusDetail } from "@/domain/posting/my-state"
 import { Avatar } from "@/shared/components/avatar"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
@@ -20,7 +21,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPosting, saveMemo } from "../api"
 import { DdayBadge } from "../components/my-bits"
-import { dueText, statusDetail } from "../status"
+import { dueText } from "../status"
 
 export function myPostLoader({ params }: LoaderFunctionArgs) {
   return getMyPosting(params.postingId ?? "")

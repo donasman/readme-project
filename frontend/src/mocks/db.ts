@@ -85,7 +85,7 @@ export function renameViewer(name: string): Viewer {
 
 /**
  * 그룹 전환 메뉴의 "공고 N": 마감되지 않은 공고 수. 서버가 세는 값을 흉내 낸다.
- * 규칙은 features/group-posts/deadline.ts의 isClosed와 같다(마감일 당일은 진행 중).
+ * 규칙은 domain/posting/deadline.ts의 isClosed와 같다(마감일 당일은 진행 중).
  */
 function openPostCount(group: ExampleGroup): number {
   return group.posts.filter((p) => p.deadline.kind !== "date" || daysBetween(today(), p.deadline.date) >= 0).length

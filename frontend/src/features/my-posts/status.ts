@@ -1,11 +1,10 @@
 // 내 지원 상태와 내 공고 목록의 규칙. 화면과 떨어진 순수 함수다.
 import { daysBetween, formatDday, formatMonthDayWeekday } from "@/shared/lib/date"
 
+import { isClosed } from "@/domain/posting/deadline"
 import { progress, STAGES, type Decision, type MyState } from "@/domain/posting/my-state"
 
 import type { MyPosting } from "./types"
-
-export { DECISION_LABELS, DECISIONS, isActive, RESULT_LABELS, RESULTS, STAGE_LABELS, STAGES, statusDetail, statusLabel } from "@/domain/posting/my-state"
 
 /** 마감 칸의 글자: 큰 글자(D-2, 상시, 확인 필요, 마감)와 작은 글자(11.15 (일), 날짜 없음, 마감일 모름). */
 export function dueText(p: Pick<MyPosting, "deadline">, today: string): { main: string; sub: string; soon: boolean } {
@@ -17,17 +16,14 @@ export function dueText(p: Pick<MyPosting, "deadline">, today: string): { main: 
   return { main: left < 0 ? "마감" : formatDday(today, d.date), sub: formatMonthDayWeekday(d.date), soon: left >= 0 && left <= 3 }
 }
 
-/** 마감됨: 마감일이 오늘보다 앞. 상시와 마감일 모름은 진행 중이다. */
-export const isPostingClosed = (p: MyPosting, today: string) => p.deadline.kind === "date" && daysBetween(today, p.deadline.date) < 0
-
 /** 진행 중 목록 순서: 마감일 가까운 것, 상시, 마감일 모름. 마감됨 목록은 최근 마감이 위. */
 export function sortPostings(postings: MyPosting[], today: string): MyPosting[] {
   const rank = (p: MyPosting) => (p.deadline.kind === "date" ? 0 : p.deadline.kind === "always" ? 1 : 2)
   const date = (p: MyPosting) => (p.deadline.kind === "date" ? p.deadline.date : "")
   return [...postings].sort((a, b) => {
-    const closed = Number(isPostingClosed(a, today)) - Number(isPostingClosed(b, today))
+    const closed = Number(isClosed(a.deadline, today)) - Number(isClosed(b.deadline, today))
     if (closed) return closed
-    if (isPostingClosed(a, today)) return date(b).localeCompare(date(a))
+    if (isClosed(a.deadline, today)) return date(b).localeCompare(date(a))
     return rank(a) - rank(b) || date(a).localeCompare(date(b))
   })
 }
@@ -68,8 +64,8 @@ export const DEFAULT_MY_FILTERS: MyFilters = { view: "open", decision: "all", qu
 /** 거른 목록과 진행 중·마감됨의 수(결정과 검색어로 거른 뒤의 수가 아니라 전체 수). */
 export function filterPostings(postings: MyPosting[], filters: MyFilters, today: string): { rows: MyPosting[]; open: number; closed: number } {
   const sorted = sortPostings(postings, today)
-  const closedList = sorted.filter((p) => isPostingClosed(p, today))
-  const openList = sorted.filter((p) => !isPostingClosed(p, today))
+  const closedList = sorted.filter((p) => isClosed(p.deadline, today))
+  const openList = sorted.filter((p) => !isClosed(p.deadline, today))
   const q = filters.query.trim().toLowerCase()
   const rows = (filters.view === "closed" ? closedList : openList).filter(
     (p) => (filters.decision === "all" || p.decision === filters.decision) && (!q || `${p.company} ${p.title}`.toLowerCase().includes(q))

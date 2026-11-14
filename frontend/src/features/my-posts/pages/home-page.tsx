@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Link, redirect, useLoaderData } from "react-router"
 
 import { getMyGroups } from "@/domain/group/api"
+import { isClosed } from "@/domain/posting/deadline"
 import { PostingLink } from "@/domain/posting/posting-link"
 import type { FillDeadlineState } from "@/domain/posting/types"
 import { Avatar } from "@/shared/components/avatar"
@@ -17,7 +18,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 import { getHome } from "../api"
 import { BigStat, DdayBadge, MyStatusPill } from "../components/my-bits"
-import { dueText, isPostingClosed, sortPostings } from "../status"
+import { dueText, sortPostings } from "../status"
 
 /** 그룹이 없으면 홈 대신 내 그룹(빈 상태)으로 보낸다(시안 7차의 제안). */
 export async function homeLoader() {
@@ -32,7 +33,7 @@ const WEEK = 7
 /** 홈(시안 8차 "홈"): 오늘, 숫자 넷, 다가오는 마감, 확인 필요, 그룹 소식. */
 export function HomePage() {
   const { today, postings, unverifiedCards, mailChanges, news } = useLoaderData<typeof homeLoader>()
-  const open = sortPostings(postings, today).filter((p) => !isPostingClosed(p, today))
+  const open = sortPostings(postings, today).filter((p) => !isClosed(p.deadline, today))
   const thisWeek = open.filter((p) => p.deadline.kind === "date" && daysBetween(today, p.deadline.date) <= WEEK).length
   const unknown = open.filter((p) => p.deadline.kind === "unknown")
 
