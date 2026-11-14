@@ -48,8 +48,7 @@ function startGroups(): ExampleGroup[] {
 
 const isMember = (g: ExampleGroup) => g.members.some((m) => m.id === VIEWER.id)
 
-/** 돌려주는 값은 늘 복사본이다. 화면이 받은 값을 고쳐도 저장소는 바뀌지 않는다. */
-const copy = <T>(value: T): T => structuredClone(value)
+// 돌려주는 값은 늘 복사본(structuredClone)이다. 화면이 받은 값을 고쳐도 저장소는 바뀌지 않는다.
 
 function rawGroup(groupId: string): ExampleGroup {
   const group = data().find((g) => g.id === groupId && isMember(g))
@@ -67,7 +66,7 @@ function rawPost(groupId: string, postId: string): GroupPostDetail {
 export const today = (): string => EXAMPLE_TODAY
 
 /** 로그인한 사람. 로그인하지 않았으면 null(서버의 401). */
-export const viewer = (): Viewer | null => (MOCK.has("guest") ? null : copy(VIEWER))
+export const viewer = (): Viewer | null => (MOCK.has("guest") ? null : structuredClone(VIEWER))
 
 /** 가짜 서버의 보기 설정을 읽는다(같은 폴더의 다른 가짜 서버가 쓴다). */
 export const mockFlag = (name: string) => MOCK.has(name)
@@ -80,7 +79,7 @@ export function signOut(): void {
 /** 표시 이름 바꾸기. 그룹 멤버에게 보이는 이름이다. */
 export function renameViewer(name: string): Viewer {
   VIEWER.name = name
-  return copy(VIEWER)
+  return structuredClone(VIEWER)
 }
 
 /**
@@ -104,7 +103,7 @@ function toGroup(g: ExampleGroup): Group {
     id: g.id,
     name: g.name,
     mark: g.mark,
-    members: copy(g.members),
+    members: structuredClone(g.members),
     leaderId: g.leaderId,
     myDisclosure: g.myDisclosure,
     openPostCount: openPostCount(g),
@@ -117,14 +116,11 @@ const myState = (p: GroupPostDetail): MyState => ({ interested: p.me.interested,
 
 function toSummary(p: GroupPostDetail): GroupPost {
   const { id, groupId, company, title, deadline, postedBy, postedAt, interests, commentCount } = p
-  return copy({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me: myState(p), commentCount })
+  return structuredClone({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me: myState(p), commentCount })
 }
 
 /** 내가 속한 그룹들. */
 export const listGroups = (): Group[] => data().filter(isMember).map(toGroup)
-
-/** 그룹 하나. 없으면 NotFoundError. */
-export const findGroup = (groupId: string): Group => toGroup(rawGroup(groupId))
 
 /** 그룹의 공고 목록(목록 한 줄 모양). 그룹이 없으면 NotFoundError. */
 export const listPosts = (groupId: string): GroupPost[] => rawGroup(groupId).posts.map(toSummary)
@@ -132,7 +128,7 @@ export const listPosts = (groupId: string): GroupPost[] => rawGroup(groupId).pos
 /** 그룹 공고 상세. 그룹이나 공고가 없으면 NotFoundError. */
 export function findPost(groupId: string, postId: string): GroupPostDetail {
   const post = rawPost(groupId, postId)
-  return { ...copy(post), me: myState(post) }
+  return { ...structuredClone(post), me: myState(post) }
 }
 
 let nextGroupId = 1
@@ -180,7 +176,7 @@ export function createInvite(groupId: string): { token: string; expiresAt: strin
   rawGroup(groupId)
   const token = Math.random().toString(36).slice(2, 12)
   const expiresAt = addDays(today(), 7)
-  invites.set(token, { groupId, inviter: copy(VIEWER), expiresAt })
+  invites.set(token, { groupId, inviter: structuredClone(VIEWER), expiresAt })
   return { token, expiresAt }
 }
 
@@ -233,13 +229,13 @@ export function addComment(groupId: string, postId: string, text: string): Comme
   const post = rawPost(groupId, postId)
   const comment: Comment = {
     id: `${postId}-c${Date.now()}`,
-    author: copy(VIEWER),
+    author: structuredClone(VIEWER),
     createdAt: new Date().toISOString(),
     body: toParts(text.trim()),
   }
   post.comments.push(comment)
   post.commentCount += 1
-  return copy(comment)
+  return structuredClone(comment)
 }
 
 /** 댓글 고치기(PUT …/comments/{commentId}). 쓴 사람만 고친다. */
@@ -248,7 +244,7 @@ export function updateComment(groupId: string, postId: string, commentId: string
   if (!comment) throw new NotFoundError("댓글")
   if (comment.author.id !== VIEWER.id) throw new Error("쓴 사람만 고칠 수 있습니다.")
   comment.body = toParts(text.trim())
-  return copy(comment)
+  return structuredClone(comment)
 }
 
 /** 댓글 지우기(DELETE …/comments/{commentId}). 쓴 사람과 그룹장이 지운다. 되돌릴 수 없다. */
@@ -269,8 +265,8 @@ export function deleteComment(groupId: string, postId: string, commentId: string
 export function setDeadline(groupId: string, postId: string, deadline: Deadline): { ok: true; deadline: Deadline } | { ok: false; error: "DEADLINE_ALREADY_SET" } {
   const post = rawPost(groupId, postId)
   if (post.deadline.kind !== "unknown") return { ok: false, error: "DEADLINE_ALREADY_SET" }
-  post.deadline = copy(deadline)
-  return { ok: true, deadline: copy(post.deadline) }
+  post.deadline = structuredClone(deadline)
+  return { ok: true, deadline: structuredClone(post.deadline) }
 }
 
 /** 그룹에서 내린 공고. 같은 공고를 다시 올리면 댓글과 관심 그대로 돌아온다(그룹 설계 가정 4). */
@@ -355,7 +351,7 @@ export function readPosting(groupId: string, input: { kind: "url"; url: string }
   const same = findSamePost(group, { url: input.kind === "url" ? input.url : draft.sourceUrl })
   if (same) {
     const { id, company, title, postedBy, postedAt } = same
-    return { status: "duplicate", post: copy({ id, company, title, postedBy, postedAt }) }
+    return { status: "duplicate", post: structuredClone({ id, company, title, postedBy, postedAt }) }
   }
   return { status: "ok", draft }
 }
@@ -381,7 +377,7 @@ export function uploadPost(groupId: string, input: PostUpload): UploadPostResult
     company: input.company,
     title: input.title,
     deadline: input.deadline,
-    postedBy: copy(VIEWER),
+    postedBy: structuredClone(VIEWER),
     postedAt: today(),
     interests: [],
     me: { interested: false, status: null },
@@ -389,7 +385,7 @@ export function uploadPost(groupId: string, input: PostUpload): UploadPostResult
     deadlineName: null,
     applyAt: input.applyAt,
     sourceUrl: input.sourceUrl,
-    sections: copy(input.sections),
+    sections: structuredClone(input.sections),
     keywords: [...input.keywords],
     comments: [],
   }

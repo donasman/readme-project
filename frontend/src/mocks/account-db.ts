@@ -3,7 +3,7 @@
 import type { AccountInfo, MailSettings, WithdrawInfo } from "@/features/settings/types"
 
 import { listCards, listSources } from "./cards-db"
-import { listGroups, mockFlag, renameViewer, signOut, viewer } from "./db"
+import { listGroups, mockFlag, signOut, viewer } from "./db"
 import { listMyPostings } from "./my-db"
 
 /** 내 정보. 구글은 ?mock=no-google이면 연결 전으로 본다. */
@@ -18,13 +18,7 @@ export function getAccount(): AccountInfo {
   }
 }
 
-export function rename(name: string): void {
-  renameViewer(name)
-}
-
-export function logout(): void {
-  signOut()
-}
+export { renameViewer as rename, signOut as logout } from "./db"
 
 let inbound = "daon-7f3k9x2m@in.readme.example"
 let senders = ["name@gmail.example"]

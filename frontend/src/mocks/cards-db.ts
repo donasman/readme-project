@@ -6,7 +6,6 @@ import { NotFoundError } from "@/shared/lib/errors"
 import { createExampleCards, createExampleSources, createExtractionPool, KEYWORD_ALIASES, KEYWORDS } from "./example-cards"
 import { EXAMPLE_TODAY } from "./example-data"
 
-const copy = <T>(value: T): T => structuredClone(value)
 
 let cardStore: CardDetail[] | null = null
 const cards = () => (cardStore ??= createExampleCards())
@@ -37,7 +36,7 @@ function checkCard(card: CardDetail): CardDetail["issues"] {
 }
 
 /** 내 경험카드 목록(GET /api/cards). */
-export const listCards = (): ExperienceCard[] => cards().map((c) => copy(summaryOf(c)))
+export const listCards = (): ExperienceCard[] => cards().map((c) => structuredClone(summaryOf(c)))
 
 /** 내 카드에 쓰인 태그와 카드 수(GET /api/cards/tags). 처음 나온 순서로 돌려준다. */
 export function listCardTags(): CardTag[] {
@@ -47,17 +46,17 @@ export function listCardTags(): CardTag[] {
 }
 
 /** 카드 상세(GET /api/cards/{id}). 없으면 NotFoundError. */
-export const getCard = (id: number): CardDetail => copy(rawCard(id))
+export const getCard = (id: number): CardDetail => structuredClone(rawCard(id))
 
 /** 확인 전 카드(GET /api/cards?verified=false), 목록 순서대로. */
-export const listUnverifiedCards = (): CardDetail[] => cards().filter((c) => !c.verified).map(copy)
+export const listUnverifiedCards = (): CardDetail[] => cards().filter((c) => !c.verified).map((c) => structuredClone(c))
 
 /** 카드 고치기(PUT /api/cards/{id}). 검사 결과를 다시 매긴다. */
 export function updateCard(id: number, input: CardInput): CardDetail {
   const card = rawCard(id)
-  Object.assign(card, copy(input))
+  Object.assign(card, structuredClone(input))
   card.issues = checkCard(card)
-  return copy(card)
+  return structuredClone(card)
 }
 
 // 서버 쪽 숫자 규칙. 화면의 card-text.ts와 같은 규칙이지만, 가짜 서버는 features를 불러오지 않으므로 따로 둔다.
@@ -84,7 +83,7 @@ export function verifyCard(id: number): CardDetail {
   card.verified = true
   card.extractionNotes = []
   card.issues = checkCard(card)
-  return copy(card)
+  return structuredClone(card)
 }
 
 /** 카드 지우기(DELETE /api/cards/{id}). */
@@ -94,13 +93,13 @@ export function deleteCard(id: number): void {
 }
 
 /** 올린 자료(새 것이 앞). */
-export const listSources = (): CardSource[] => copy(sources())
+export const listSources = (): CardSource[] => structuredClone(sources())
 
 /** 자료 올리기. 서버가 글을 읽어 글자 수를 센다(파일은 저장하지 않는다). */
 export function addSource(name: string, chars: number): CardSource {
   const source: CardSource = { id: nextId++, name, createdAt: EXAMPLE_TODAY, chars, cardCount: null }
   sources().unshift(source)
-  return copy(source)
+  return structuredClone(source)
 }
 
 /** 자료 지우기. 만든 카드는 남고 자료와의 연결만 빈다. */
@@ -120,7 +119,7 @@ export function startExtraction(sourceId: number, totalChunks: number): Extracti
   return copyJob(job)
 }
 
-const copyJob = ({ startedAt, ...job }: ExtractionJob & { startedAt: number }): ExtractionJob => (void startedAt, copy(job))
+const copyJob = ({ startedAt, ...job }: ExtractionJob & { startedAt: number }): ExtractionJob => (void startedAt, structuredClone(job))
 
 /** 뽑기 작업 상태. 화면이 몇 초마다 묻는다. 끝나는 순간 카드가 "확인 필요"로 목록에 들어간다. */
 export function getExtractionJob(jobId: number): ExtractionJob {
