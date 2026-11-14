@@ -24,7 +24,7 @@ export const VIEWER = member("다온")
 
 // 디자인의 표기: due는 마감일, "always"(상시), "unknown"(못 읽음). by "나"는 보는 사람.
 // fans는 [이름, 지원함 표시] (지원함은 공개 범위가 "지원 여부까지" 이상인 멤버만 붙는다).
-// me는 "on" / "off" / 내 지원 상태 값.
+// me는 이 그룹에서 켠 관심("on" / "off")이다. 4차 시안의 "내 상태" 값은 쓰지 않고, 지원 상태는 8차 값(user-postings.ts)을 읽는다.
 interface RawPost {
   id: string
   company: string
@@ -33,7 +33,7 @@ interface RawPost {
   by: Name | "나"
   at: string
   fans: [Name, 0 | 1][]
-  me: string
+  me: "on" | "off"
   comments: number
 }
 interface RawGroup {
@@ -53,11 +53,11 @@ const RAW: RawGroup[] = [
     posts: [
       { id: "be1", company: "예시 커머스", title: "백엔드 개발자 신입", due: "2026-11-16", by: "가람", at: "2026-11-05", fans: [["가람", 1], ["나래", 1], ["라온", 0]], me: "on", comments: 3 },
       { id: "be2", company: "예시 핀테크", title: "서버 개발 인턴", due: "2026-11-20", by: "나래", at: "2026-11-11", fans: [["가람", 1], ["나래", 0], ["마루", 0]], me: "off", comments: 1 },
-      { id: "be3", company: "예시 물류", title: "백엔드 주니어", due: "2026-11-25", by: "라온", at: "2026-11-08", fans: [["라온", 0]], me: "지원함", comments: 0 },
+      { id: "be3", company: "예시 물류", title: "백엔드 주니어", due: "2026-11-25", by: "라온", at: "2026-11-08", fans: [["라온", 0]], me: "on", comments: 0 },
       { id: "be4", company: "예시 게임", title: "플랫폼 서버 신입", due: "2026-12-03", by: "마루", at: "2026-11-12", fans: [["마루", 0]], me: "off", comments: 0 },
       { id: "be5", company: "예시 에듀테크", title: "백엔드 엔지니어", due: "unknown", by: "나", at: "2026-11-13", fans: [], me: "off", comments: 0 },
       { id: "be6", company: "예시 SaaS", title: "서버 개발자", due: "always", by: "가람", at: "2026-11-02", fans: [["가람", 0]], me: "off", comments: 2 },
-      { id: "be7", company: "예시 모빌리티", title: "백엔드 신입 공채", due: "2026-11-10", by: "나래", at: "2026-10-28", fans: [["가람", 1], ["나래", 1]], me: "필기 단계", comments: 5 },
+      { id: "be7", company: "예시 모빌리티", title: "백엔드 신입 공채", due: "2026-11-10", by: "나래", at: "2026-10-28", fans: [["가람", 1], ["나래", 1]], me: "on", comments: 5 },
       { id: "be8", company: "예시 보안", title: "주니어 서버 개발", due: "2026-11-06", by: "가람", at: "2026-10-25", fans: [["가람", 0]], me: "off", comments: 0 },
     ],
   },
@@ -72,7 +72,7 @@ const RAW: RawGroup[] = [
   {
     id: "mes", name: "MES 준비반", mark: "M", members: ["자람", "차오름"], leader: "다온", myDisclosure: "applied",
     posts: [
-      { id: "mes1", company: "예시 제조", title: "MES 개발 신입", due: "2026-11-15", by: "나", at: "2026-11-03", fans: [["자람", 1], ["차오름", 0]], me: "지원함", comments: 2 },
+      { id: "mes1", company: "예시 제조", title: "MES 개발 신입", due: "2026-11-15", by: "나", at: "2026-11-03", fans: [["자람", 1], ["차오름", 0]], me: "on", comments: 2 },
       { id: "mes2", company: "예시 자동화", title: "스마트팩토리 SW", due: "2026-11-27", by: "자람", at: "2026-11-10", fans: [["자람", 0]], me: "on", comments: 0 },
     ],
   },
@@ -147,7 +147,8 @@ export function createExampleGroups(): ExampleGroup[] {
         applied: applied === 1,
         ...(PROGRESS[p.id]?.[name] ? { progress: PROGRESS[p.id][name] } : {}),
       })),
-      me: { interested: p.me !== "off", status: p.me === "on" || p.me === "off" ? null : p.me },
+      // 내 지원 상태는 내 공고 행(user-postings.ts)에서 읽는다. 여기에는 이 그룹에서 켠 관심만 둔다
+      me: { interested: p.me === "on", status: null },
       commentCount: p.comments,
       deadlineName: null,
       applyAt: null,

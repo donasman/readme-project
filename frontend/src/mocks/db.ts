@@ -25,6 +25,7 @@ import { NotFoundError } from "@/shared/lib/errors"
 
 import { KEYWORDS } from "./example-cards"
 import { createExampleDraft, createExampleGroups, EXAMPLE_POST_URLS, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
+import { statusOf } from "./user-postings"
 
 /**
  * 가짜 서버만의 보기 설정. 처음 여는 주소에 붙인다(새로 고치면 처음 상태로 돌아간다).
@@ -111,9 +112,12 @@ function toGroup(g: ExampleGroup): Group {
   }
 }
 
+/** 그룹 공고에는 관심만 저장한다. 내 지원 상태 글자는 내 공고 행(user-postings.ts)에서 읽는다(서버의 user_postings). */
+const myState = (p: GroupPostDetail): MyState => ({ interested: p.me.interested, status: statusOf(p.groupId, p.id) })
+
 function toSummary(p: GroupPostDetail): GroupPost {
-  const { id, groupId, company, title, deadline, postedBy, postedAt, interests, me, commentCount } = p
-  return copy({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me, commentCount })
+  const { id, groupId, company, title, deadline, postedBy, postedAt, interests, commentCount } = p
+  return copy({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me: myState(p), commentCount })
 }
 
 /** 내가 속한 그룹들. */
@@ -126,7 +130,10 @@ export const findGroup = (groupId: string): Group => toGroup(rawGroup(groupId))
 export const listPosts = (groupId: string): GroupPost[] => rawGroup(groupId).posts.map(toSummary)
 
 /** 그룹 공고 상세. 그룹이나 공고가 없으면 NotFoundError. */
-export const findPost = (groupId: string, postId: string): GroupPostDetail => copy(rawPost(groupId, postId))
+export function findPost(groupId: string, postId: string): GroupPostDetail {
+  const post = rawPost(groupId, postId)
+  return { ...copy(post), me: myState(post) }
+}
 
 let nextGroupId = 1
 
@@ -208,7 +215,7 @@ export function acceptInvite(token: string): AcceptInviteResult {
 export function setInterest(groupId: string, postId: string, interested: boolean): MyState {
   const post = rawPost(groupId, postId)
   post.me.interested = interested
-  return copy(post.me)
+  return myState(post)
 }
 
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g
