@@ -30,7 +30,7 @@ class MeControllerTests {
 		long me = this.fixtures.user("다온");
 
 		assertThat(this.mvc.get().uri("/api/me").with(loginAs(me))).hasStatusOk().bodyJson().isStrictlyEqualTo("""
-				{ "id": %d, "name": "다온", "email": "%s", "hasPassword": false, "providers": [] }
+				{ "id": %d, "name": "다온", "email": "%s", "hasPassword": false, "providers": [], "google": null }
 				""".formatted(me, this.fixtures.emailOf(me)));
 	}
 
@@ -46,6 +46,23 @@ class MeControllerTests {
 		assertThat(this.mvc.get().uri("/api/me").with(loginAs(me))).hasStatusOk()
 			.bodyJson().isLenientlyEqualTo("""
 					{ "hasPassword": true, "providers": ["google"] }
+					""");
+	}
+
+	@Test
+	void theLinkedGoogleAccountShowsTheEmailGoogleGave() {
+		long me = this.fixtures.user("가람");
+		this.jdbc.sql("""
+				insert into user_identities (user_id, provider, provider_user_id, provider_email)
+				values (:id, 'GOOGLE', :sub, 'garam@gmail.example')
+				""")
+			.param("id", me)
+			.param("sub", "sub-" + me)
+			.update();
+
+		assertThat(this.mvc.get().uri("/api/me").with(loginAs(me))).hasStatusOk()
+			.bodyJson().isLenientlyEqualTo("""
+					{ "providers": ["google"], "google": { "email": "garam@gmail.example" } }
 					""");
 	}
 

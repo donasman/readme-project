@@ -19,7 +19,18 @@ public enum AuthErrorCode implements ErrorCode {
 	EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "이메일 인증을 마친 뒤 로그인할 수 있습니다"),
 
 	/** 가입 확인이나 비밀번호 재설정 링크가 지났거나, 이미 썼거나, 없다. 셋을 구분하지 않는다. */
-	LINK_EXPIRED(HttpStatus.GONE, "쓸 수 없는 링크입니다. 메일을 다시 받아 주세요");
+	LINK_EXPIRED(HttpStatus.GONE, "쓸 수 없는 링크입니다. 메일을 다시 받아 주세요"),
+
+	/**
+	 * 비밀번호 바꾸기의 지금 비밀번호, 탈퇴 확인의 비밀번호가 틀렸다. 401 이 아니다. 프런트는 401 을 "로그인하지 않았다"로 본다.
+	 */
+	WRONG_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 맞지 않습니다"),
+
+	/** 비밀번호가 없는 계정(구글로만 가입)의 탈퇴 확인: 넣은 이메일이 계정의 이메일과 다르다(대소문자는 가리지 않는다). */
+	WRONG_EMAIL(HttpStatus.BAD_REQUEST, "계정의 이메일과 맞지 않습니다"),
+
+	/** 비밀번호가 없는 계정(구글로만 가입)이 비밀번호를 바꾸려 했다. 재설정 메일로 비밀번호를 만든다. */
+	NO_PASSWORD(HttpStatus.CONFLICT, "비밀번호가 없는 계정입니다. 비밀번호 재설정 메일을 받아 비밀번호를 만들어 주세요");
 
 	private final HttpStatus status;
 
