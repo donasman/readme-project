@@ -2,7 +2,8 @@
 --
 -- 프런트의 예시 데이터(frontend/src/mocks/example-data.ts)와 같은 사람, 그룹, 공고다. 이름과 회사는 모두 지어낸 예시다.
 -- 날짜는 오늘(한국 날짜)을 기준으로 잡는다. 오늘이 2026-11-13 이면 프런트 예시와 같은 날짜가 된다.
--- 임시 로그인: POST /api/auth/dev-login { "email": "daon@example.com" }. 이메일은 모두 <영문 이름>@example.com 이다.
+-- 로그인: POST /api/auth/login { "email": "daon@example.com", "password": "readme1234" }. 이메일은 모두 <영문 이름>@example.com 이다.
+-- 비밀번호는 여기서 넣지 않고 DevSeedData 가 넣는다(비밀번호 해시는 서버가 만든다).
 --
 -- 프런트 예시와 다른 곳
 -- - 나래는 백엔드 스터디에서 "단계·결과까지"를 연다. 그래서 be1 에 "1차 면접 단계"가 보인다(프런트 예시는 "면접 단계").

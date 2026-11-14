@@ -32,10 +32,14 @@ public class AccountQueries {
 	}
 
 	/** 이메일은 대소문자를 가리지 않는다(users_email_key 가 lower(email) 로 유일하다). */
-	public Optional<Long> findIdByEmail(String email) {
-		return this.jdbc.sql("select id from users where lower(email) = lower(:email)")
+	Optional<Credentials> findCredentials(String email) {
+		return this.jdbc.sql("""
+				select id, email, password_hash, email_verified_at is not null as verified
+				  from users where lower(email) = lower(:email)
+				""")
 			.param("email", email)
-			.query(Long.class)
+			.query((rs, rowNum) -> new Credentials(rs.getLong("id"), rs.getString("email"), rs.getString("password_hash"),
+					rs.getBoolean("verified")))
 			.optional();
 	}
 

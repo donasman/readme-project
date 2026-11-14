@@ -44,7 +44,7 @@ public final class TestRequests {
 
 	/**
 	 * 이 사용자로 로그인한 요청으로 만든다. 실제 로그인(LoginSession)이 세션에 넣는 것과 같은 로그인 정보를 쓴다.
-	 * 세션을 실제로 만들고 읽는 것까지 확인하려면 dev 프로필의 임시 로그인을 쓴다(DevLoginTests).
+	 * 세션을 실제로 만들고 읽는 것까지 확인하려면 실제 로그인(POST /api/auth/login)을 쓴다(auth/LoginTests).
 	 */
 	public static RequestPostProcessor loginAs(long userId) {
 		return SecurityMockMvcRequestPostProcessors.authentication(LoginSession.authenticationOf(userId));
