@@ -1,6 +1,6 @@
 name: frontend
 
-# frontend 폴더가 바뀔 때만 돈다: main·dev 에 올라온 커밋과 PR. 린트와 빌드까지만 한다.
+# frontend 폴더가 바뀔 때만 돈다: main·dev 에 올라온 커밋과 PR. 린트, 테스트, 빌드를 한다.
 # 배포는 Cloudflare Pages 가 저장소를 직접 읽어서 한다(루트 폴더 frontend, 빌드 명령 npm run build, 결과 폴더 dist).
 on:
   push:
@@ -28,4 +28,5 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
