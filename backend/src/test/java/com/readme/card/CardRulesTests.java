@@ -156,6 +156,13 @@ class CardRulesTests {
 				"…로그를 하나씩 따라가 보니 주문마다 상품을 따로 읽는 구조였고 이를 fetch join 으로 묶어 주문 1건당 쿼리를 21회에서 1회로 줄였으며 화면 구성은 그대로 두었다");
 	}
 
+	@Test
+	void verifySkipsANumberWhoseSpellingIsLongerThanItsSentence() {
+		// "5"와 단위 "명" 사이에 빈 줄이 400개라 숫자 표기가 문장(122자)보다 길다. jobfit 은 아무것도 넣지 않는다
+		String result = "a".repeat(120) + " 5" + "\n".repeat(400) + "명";
+		assertThat(CardRules.factsToAdd(new Star("", "", "", result), List.of())).isEmpty();
+	}
+
 	private static List<String> periodIssues(String period) {
 		Content card = new Content(GOOD.title(), period, GOOD.summary(), GOOD.tags(), GOOD.usableFor(), GOOD.star(),
 				GOOD.facts());

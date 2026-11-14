@@ -219,6 +219,8 @@ final class CardRules {
 			int space = s.lastIndexOf(' ', end - 1);
 			end = (space >= pos + raw.length()) ? space : end;
 		}
+		// 숫자 표기가 문장보다 길면(숫자와 단위 사이에 줄이 많은 것) start 가 end 를 넘는다. Python 의 s[start:end] 처럼 빈 글자로
+		start = Math.min(start, end);
 		return (start > 0 ? "…" : "") + s.substring(start, end).strip() + (end < s.length() ? "…" : "");
 	}
 
