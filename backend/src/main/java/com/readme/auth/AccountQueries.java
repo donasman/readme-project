@@ -20,21 +20,28 @@ public class AccountQueries {
 	}
 
 	public Optional<MeResponse> findMe(long userId) {
-		List<String> providers = this.jdbc.sql("select provider from user_identities where user_id = :userId order by provider")
+		List<Identity> identities = this.jdbc
+			.sql("select provider, provider_email from user_identities where user_id = :userId order by provider")
 			.param("userId", userId)
-			.query((rs, rowNum) -> rs.getString("provider").toLowerCase(Locale.ROOT))
+			.query((rs, rowNum) -> new Identity(rs.getString("provider"), rs.getString("provider_email")))
 			.list();
-		MeResponse.Google google = this.jdbc
-			.sql("select provider_email from user_identities where user_id = :userId and provider = 'GOOGLE'")
-			.param("userId", userId)
-			.query((rs, rowNum) -> new MeResponse.Google(rs.getString("provider_email")))
-			.optional()
+		List<String> providers = identities.stream()
+			.map((identity) -> identity.provider().toLowerCase(Locale.ROOT))
+			.toList();
+		MeResponse.Google google = identities.stream()
+			.filter((identity) -> "GOOGLE".equals(identity.provider()))
+			.map((identity) -> new MeResponse.Google(identity.email()))
+			.findFirst()
 			.orElse(null);
 		return this.jdbc.sql("select id, display_name, email, password_hash is not null as has_password from users where id = :userId")
 			.param("userId", userId)
 			.query((rs, rowNum) -> new MeResponse(rs.getLong("id"), rs.getString("display_name"), rs.getString("email"),
 					rs.getBoolean("has_password"), providers, google))
 			.optional();
+	}
+
+	/** user_identities 의 한 행. email 은 연결할 때 제공자가 준 이메일(provider_email)이다. */
+	private record Identity(String provider, String email) {
 	}
 
 	/** 지금 로그인한 사람의 비밀번호를 확인할 때 쓴다. 계정이 지워졌으면 비어 있다. */
