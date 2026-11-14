@@ -116,10 +116,17 @@ async function openChrome() {
     try {
       targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
     } catch {
-      await sleep(200)
+      /* 아직 뜨는 중 */
     }
+    if (!targets.some((t) => t.type === "page")) await sleep(200)
   }
-  const ws = new WebSocket(targets.find((t) => t.type === "page").webSocketDebuggerUrl)
+  const page = targets.find((t) => t.type === "page")
+  if (!page) {
+    // 여기서 끝나면 shoot의 finally가 닿지 않으므로 직접 닫는다
+    chrome.kill()
+    throw new Error("Chrome의 페이지에 붙지 못했다")
+  }
+  const ws = new WebSocket(page.webSocketDebuggerUrl)
   await new Promise((r) => ws.addEventListener("open", r, { once: true }))
   let id = 0
   const pending = new Map()
