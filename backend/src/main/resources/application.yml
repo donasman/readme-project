@@ -41,7 +41,10 @@ server:
       cookie:
         http-only: true
         same-site: lax
-        max-age: 14d
+        # 쿠키는 로그인할 때 한 번만 내려온다. 위의 session.timeout 과 같게 두면 매일 써도 로그인하고 그만큼 지나면
+        # 브라우저가 쿠키를 지운다. 그래서 길게 두고, 로그인이 끝나는 때는 session.timeout(마지막 사용 후)이 정한다.
+        # 365일은 매일 써도 다시 로그인하게 되는 상한이다(아직 정하지 않은 값. 예시로 넣었다).
+        max-age: 365d
 
 management:
   endpoints:
