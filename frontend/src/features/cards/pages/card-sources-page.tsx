@@ -202,12 +202,13 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
   const [text, setText] = useState("")
   const [empty, setEmpty] = useState(false)
   const [dragging, setDragging] = useState(false)
-  const [wrongType, setWrongType] = useState(false)
+  // 틀린 파일을 이어서 놓아도 매번 알리도록 횟수를 세어 알림의 key로 쓴다
+  const [wrongTries, setWrongTries] = useState(0)
 
   const take = (file: File | undefined) => {
     if (!file) return
     const ok = matchesAccept(file.name, ACCEPT)
-    setWrongType(!ok)
+    setWrongTries((n) => (ok ? 0 : n + 1))
     if (ok) void onRead({ file })
   }
 
@@ -244,13 +245,17 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
           className="sr-only"
           tabIndex={-1}
           aria-hidden="true"
-          onChange={(e) => take(e.target.files?.[0])}
+          onChange={(e) => {
+            take(e.target.files?.[0])
+            // 같은 파일을 다시 골라도 change가 오도록 비운다
+            e.target.value = ""
+          }}
         />
-        <Button type="button" aria-describedby={wrongType ? noteId("src-file") : undefined} onClick={() => fileInput.current?.click()}>
+        <Button type="button" aria-describedby={wrongTries > 0 ? noteId("src-file") : undefined} onClick={() => fileInput.current?.click()}>
           파일 고르기
         </Button>
-        {wrongType && (
-          <div role="alert">
+        {wrongTries > 0 && (
+          <div role="alert" key={wrongTries}>
             <FieldError id="src-file">PDF, DOCX, HWPX, PPTX, TXT, MD 파일만 올릴 수 있습니다.</FieldError>
           </div>
         )}

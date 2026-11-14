@@ -141,6 +141,8 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
 
   async function save() {
     setSaving(true)
+    // 바꾸지 않고 다시 저장해도 "저장했습니다."를 다시 알리도록 먼저 비운다
+    setSavedState(null)
     try {
       await updateMyState(posting.id, state)
       await revalidator.revalidate()
