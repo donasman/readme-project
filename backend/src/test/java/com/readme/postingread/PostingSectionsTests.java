@@ -21,7 +21,8 @@ import com.readme.postingread.PostingSections.Section;
  * jobfit 의 sections.py 를 python -I 로 직접 돌려 얻었다.
  *
  * <p>옮기지 않은 것: test_jobkorea_summary_box_comes_from_the_meta_description(clean_job 과 jobfit 의 파일 저장을 거친다.
- * 리드미는 잡코리아 마감일을 JSON-LD 에서 읽는다), test_keywords_do_not_overmatch(키워드 사전, 다른 브랜치가 옮긴다),
+ * 리드미는 잡코리아 마감일을 JSON-LD 에서 읽는다), test_joined_summary_line_is_split_only_before_a_key(한 줄에 붙은 요약 칸
+ * summary_from_joined. 쓰는 곳이 없어 공고 분석을 옮길 때 같이 옮긴다), test_keywords_do_not_overmatch(키워드 사전, 다른 브랜치가 옮긴다),
  * test_mask_contacts(LLM 프롬프트에 넣을 때 쓴다), test_find_questions_*(자소서 문항 찾기. 공고 읽어 오기에 쓰지 않는다).
  */
 class PostingSectionsTests {
@@ -48,14 +49,6 @@ class PostingSectionsTests {
 	void jobkoreaSummaryIsNotOnTheScreen() {
 		assertThat(PostingSections.summaryFields(PostingSections.dropNoise(HtmlText.toText(resource("jobkorea-sample.html")))))
 			.isEmpty();
-	}
-
-	@Test
-	void joinedSummaryLineIsSplitOnlyBeforeAKey() {
-		// "대학졸업(2,3년)이상" 의 쉼표에서 자르면 값이 깨진다. 뒤에 요약 키가 오는 쉼표에서만 자른다
-		assertThat(PostingSections.summaryFromJoined("경력 : 신입 , 학력 : 대학졸업(2,3년)이상, 급여 : 회사내규에 따름"))
-			.containsExactly(Map.entry("경력", "신입"), Map.entry("학력", "대학졸업(2,3년)이상"), Map.entry("급여", "회사내규에 따름"));
-		assertThat(PostingSections.summaryFromJoined("회사 소개만 있는 설명문입니다")).isEmpty();
 	}
 
 	@Test

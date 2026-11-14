@@ -32,7 +32,6 @@ class PostingMetaTests {
 	@Test
 	void jobkoreaJsonLd() {
 		Meta meta = PostingMeta.read(resource("jobkorea-sample.html"), TODAY);
-		assertThat(meta.source()).isEqualTo("json-ld");
 		assertThat(meta.company()).isEqualTo("예시컴퍼니");
 		assertThat(meta.title()).isEqualTo("Node.js개발자(신입)");
 		assertThat(meta.deadline()).isEqualTo(new Read(DeadlineKind.DATE, LocalDate.of(2026, 11, 15)));
@@ -41,7 +40,6 @@ class PostingMetaTests {
 	@Test
 	void saraminTitleAndSummaryDeadline() {
 		Meta meta = PostingMeta.read(resource("saramin-sample.html"), TODAY);
-		assertThat(meta.source()).isEqualTo("title");
 		assertThat(meta.company()).isEqualTo("예시랩");
 		assertThat(meta.title()).isEqualTo("백엔드 (Backend) 개발자"); // 폭 없는 공백·(D-7)·사이트 이름이 빠진다
 		assertThat(meta.deadline()).isEqualTo(new Read(DeadlineKind.DATE, LocalDate.of(2026, 10, 27)));
@@ -52,7 +50,6 @@ class PostingMetaTests {
 		Meta meta = PostingMeta.read("<html><head><title>Backend Engineer - Acme Careers</title></head><body>hi</body></html>", TODAY);
 		assertThat(meta.company()).isEmpty();
 		assertThat(meta.title()).isEmpty();
-		assertThat(meta.source()).isEmpty();
 	}
 
 	@Test
@@ -72,7 +69,7 @@ class PostingMetaTests {
 				"<a href=\"#\" data-href=\"https://example.recruiter.co.kr/career/jobs/1\">홈페이지 지원</a></body>");
 		Meta meta = PostingMeta.read(html, TODAY);
 		assertThat(meta.company()).isEqualTo("예시랩");
-		assertThat(meta.source()).isEqualTo("title");
+		assertThat(meta.companyFrom()).isEqualTo("[(주)예시랩] 백엔드 (Backend) 개발자(D-7) - 사람인"); // 페이지 제목 규칙으로 읽었다
 	}
 
 	// ── meta.py 를 직접 돌려 얻은 값 ──────────────────────────────────────
@@ -102,7 +99,7 @@ class PostingMetaTests {
 	void jsonLdInAGraphWithTheOrganizationAsText() {
 		Meta meta = PostingMeta.read("<script type=\"application/ld+json\">{\"@graph\":[{\"@type\":[\"JobPosting\"],\"title\":\"A\","
 				+ "\"hiringOrganization\":\"주식회사 예시\"}]}</script>", TODAY);
-		assertThat(meta).extracting(Meta::company, Meta::title, Meta::source).containsExactly("예시", "A", "json-ld");
+		assertThat(meta).extracting(Meta::company, Meta::title, Meta::companyFrom).containsExactly("예시", "A", "주식회사 예시");
 		assertThat(meta.deadline()).isEqualTo(Read.UNKNOWN);
 	}
 
@@ -110,19 +107,20 @@ class PostingMetaTests {
 	void jsonLdWithoutACompanyFallsBackToThePageTitle() {
 		Meta meta = PostingMeta.read("<script type=\"application/ld+json\">{\"@type\":\"JobPosting\",\"title\":\"A\"}</script>"
 				+ "<title>[(주)예시] 백엔드 - 사람인</title>", TODAY);
-		assertThat(meta).extracting(Meta::company, Meta::title, Meta::source).containsExactly("예시", "백엔드", "title");
+		assertThat(meta).extracting(Meta::company, Meta::title, Meta::titleFrom)
+			.containsExactly("예시", "백엔드", "[(주)예시] 백엔드 - 사람인");
 	}
 
 	@Test
 	void brokenJsonLdIsSkipped() {
 		Meta meta = PostingMeta.read("<script type=\"application/ld+json\">{bad json</script><title>[예시] 백엔드 - 점핏</title>", TODAY);
-		assertThat(meta).extracting(Meta::company, Meta::title, Meta::source).containsExactly("예시", "백엔드", "title");
+		assertThat(meta).extracting(Meta::company, Meta::title, Meta::titleFrom).containsExactly("예시", "백엔드", "[예시] 백엔드 - 점핏");
 	}
 
 	@Test
 	void jobkoreaTitleShape() {
 		Meta meta = PostingMeta.read("<title>㈜예시 채용 - 백엔드 개발자 | 잡코리아</title>", TODAY);
-		assertThat(meta).extracting(Meta::company, Meta::title, Meta::source).containsExactly("예시", "백엔드 개발자", "title");
+		assertThat(meta).extracting(Meta::company, Meta::title).containsExactly("예시", "백엔드 개발자");
 	}
 
 	@Test
@@ -130,7 +128,7 @@ class PostingMetaTests {
 		// 사람인·점핏의 [회사] 꼴만 읽는다. 원티드 제목은 회사와 직무의 경계를 알 수 없다
 		Meta meta = PostingMeta.read("<title>[예시] 백엔드 - 원티드</title>", TODAY);
 		assertThat(meta.company()).isEmpty();
-		assertThat(meta.source()).isEmpty();
+		assertThat(meta.companyFrom()).isEmpty();
 	}
 
 	@Test

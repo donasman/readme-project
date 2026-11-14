@@ -98,10 +98,6 @@ final class PostingSections {
 
 	private static final int SUMMARY_VALUE_MAX = 60;
 
-	/** 한 줄에 붙어 오는 요약 칸(잡코리아 meta description). 뒤에 요약 키가 오는 쉼표에서만 자른다("대학졸업(2,3년)이상"). */
-	private static final Pattern SUMMARY_JOINED = Pattern
-		.compile("\\s*,\\s*(?=(?:" + String.join("|", SUMMARY_KEYS) + ")\\s*(?:\\||:|：))", U);
-
 	/** 메뉴·푸터로 보이는 짧은 줄. */
 	private static final Pattern NOISE_WORDS = Pattern.compile("^(로그인|회원가입|고객센터|이용약관|개인정보\\s*처리방침|개인정보처리방침|즐겨찾기|스크랩|인쇄"
 			+ "|공유|신고|닫기|홈|메뉴|검색|전체\\s*메뉴|TOP|더보기|바로가기|관심기업|지원하기|즉시지원|홈페이지\\s*지원|입사지원|기업정보|채용정보|공채속보"
@@ -232,11 +228,6 @@ final class PostingSections {
 			}
 		}
 		return fields;
-	}
-
-	/** 한 줄에 붙어 오는 요약 칸을 읽는다. 잡코리아는 화면이 아니라 meta description 에만 경력·학력을 둔다. */
-	static Map<String, String> summaryFromJoined(String line) {
-		return summaryFields(String.join("\n", SUMMARY_JOINED.split(line, -1)));
 	}
 
 	/** 페이지 제목 끝의 사이트 이름을 뗀다. "… - 사람인", "… | 잡코리아" */

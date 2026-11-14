@@ -80,13 +80,13 @@ final class PostingMeta {
 	}
 
 	/**
-	 * 페이지에서 읽은 값. 못 읽은 칸은 "", 근거(…From)는 그 값을 읽은 원문 조각이다.
+	 * 페이지에서 읽은 값. 못 읽은 칸은 "", 근거(…From)는 그 값을 읽은 원문 조각이다(JSON-LD 의 값이나 페이지 제목).
+	 * jobfit 의 읽은 곳(source)은 쓰는 곳이 없어 두지 않는다. 공고 분석을 옮길 때 다시 본다.
 	 *
-	 * @param source    "json-ld", "title", 못 읽었으면 ""
 	 * @param pageTitle 페이지의 &lt;title&gt;
 	 */
 	record Meta(String company, String companyFrom, String title, String titleFrom, Read deadline, String deadlineFrom,
-			String source, String pageTitle) {
+			String pageTitle) {
 	}
 
 	/** 요약 칸에서 읽은 마감과 그 근거("마감일 2026.10.27 23:59"). */
@@ -110,12 +110,12 @@ final class PostingMeta {
 			meta = fromPageTitle(document);
 		}
 		if (meta == null) {
-			meta = new Meta("", "", "", "", Read.UNKNOWN, "", "", "");
+			meta = new Meta("", "", "", "", Read.UNKNOWN, "", "");
 		}
 		Dated deadline = meta.deadline().known() ? new Dated(meta.deadline(), meta.deadlineFrom())
 				: deadlineFromSummary(HtmlText.toText(document, true), today);
 		return new Meta(meta.company(), meta.companyFrom(), meta.title(), meta.titleFrom(), deadline.deadline(),
-				deadline.from(), meta.source(), noZeroWidth(document.title()));
+				deadline.from(), noZeroWidth(document.title()));
 	}
 
 	/** 요약 칸의 마감일·접수마감·접수기간 가운데 처음 읽히는 것. */
@@ -167,7 +167,7 @@ final class PostingMeta {
 				String valid = text(item.get("validThrough"));
 				Read deadline = validThrough(valid);
 				Meta meta = new Meta(cleanCompany(company), company, cleanJobTitle(title), title, deadline,
-						deadline.known() ? valid : "", "json-ld", "");
+						deadline.known() ? valid : "", "");
 				if (!meta.company().isEmpty()) {
 					return meta;
 				}
@@ -257,7 +257,7 @@ final class PostingMeta {
 	}
 
 	private static Meta titled(String company, String title, String raw) {
-		return new Meta(cleanCompany(company), raw, cleanJobTitle(title), raw, Read.UNKNOWN, "", "title", "");
+		return new Meta(cleanCompany(company), raw, cleanJobTitle(title), raw, Read.UNKNOWN, "", "");
 	}
 
 	private static String unescape(String text) {
