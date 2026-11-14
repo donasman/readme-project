@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import type { Viewer } from "@/domain/session/types"
+import { FieldError, noteId } from "@/shared/components/form-field"
 import { Heading } from "@/shared/components/heading"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { SurfaceCard } from "@/shared/components/surface-card"
@@ -28,12 +29,14 @@ const action =
 /** 댓글: "그룹 × 공고"에 달리고 이 그룹에만 보인다. 글자와 링크만 받는다. */
 export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }: CommentsProps) {
   const [draft, setDraft] = useState("")
+  const [empty, setEmpty] = useState(false)
   const [saving, setSaving] = useState(false)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     const text = draft.trim()
-    if (!text || saving) return
+    if (saving) return
+    if (!text) return setEmpty(true)
     setSaving(true)
     try {
       await onAdd(text)
@@ -111,8 +114,14 @@ export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }
           rows={3}
           placeholder="글자와 링크만 넣을 수 있습니다"
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          aria-invalid={empty || undefined}
+          aria-describedby={empty ? noteId("comment-text") : undefined}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            setEmpty(false)
+          }}
         />
+        {empty && <FieldError id="comment-text">댓글을 넣어 주세요.</FieldError>}
         <Button type="submit" variant="outline" className="self-end" disabled={saving}>
           댓글 달기
         </Button>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
-import { FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
+import { FieldError, FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
 import { IconNote } from "@/shared/components/notice"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
@@ -41,10 +41,13 @@ export function CardEditPage() {
   const [tags, setTags] = useState(card.tags)
   const [types, setTypes] = useState<QuestionType[]>(card.usableFor)
   const [saving, setSaving] = useState(false)
+  const [titleEmpty, setTitleEmpty] = useState(false)
   const flagged = flaggedValues(star.result)
 
   async function save(event: FormEvent) {
     event.preventDefault()
+    // required는 공백만 넣은 제목을 통과시킨다
+    if (!title.trim()) return setTitleEmpty(true)
     setSaving(true)
     try {
       await updateCard(card.id, {
@@ -85,8 +88,19 @@ export function CardEditPage() {
               <h2 id="edit-basic" className={sectionTitle}>
                 기본
               </h2>
-              <Field id="edit-title" label="제목">
-                <Input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} required className="md:text-base" />
+              <Field id="edit-title" label="제목" note={titleEmpty && <FieldError id="edit-title">제목을 넣어 주세요.</FieldError>}>
+                <Input
+                  id="edit-title"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value)
+                    setTitleEmpty(false)
+                  }}
+                  required
+                  aria-invalid={titleEmpty || undefined}
+                  aria-describedby={titleEmpty ? noteId("edit-title") : undefined}
+                  className="md:text-base"
+                />
               </Field>
               <div className="flex flex-wrap gap-4">
                 <Field id="edit-period" label="기간" note={<FieldHint id="edit-period">예: 2025-03 ~ 2025-05, 2026 ~ 현재</FieldHint>} className="min-w-0 flex-[1_1_200px]">
