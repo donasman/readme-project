@@ -4,6 +4,7 @@
 // 내 공고 조회 API는 아직 설계에 없다(화면 API 대응 3.3의 10번). 이 폴더는 shared와 타입만 불러온다.
 import type { GroupPostDetail } from "@/features/group-posts/types"
 import type { CardMatch, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup } from "@/features/my-posts/types"
+import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
 import { findPost, listGroups, today } from "./db"
@@ -57,12 +58,16 @@ function toPosting(e: Entry): MyPosting {
   return { id: e.id, company, title, deadline, groups: found.map((f) => f.group), decision: e.decision, stage: e.stage, result: e.result }
 }
 
-/** 내 공고 목록. 본체를 읽을 수 없고 남긴 값도 없는 행(속한 적 없는 그룹의 공고, ?mock=no-groups)은 뺀다. */
-export const listMyPostings = (): MyPosting[] => entries().filter((e) => e.snapshot || readPosts(e).length > 0).map(toPosting)
+/** 보이는 행: 본체를 읽을 수 있거나 남긴 값이 있다. 둘 다 없으면 속한 적 없는 그룹의 공고다(?mock=no-groups). */
+const visible = (e: Entry) => e.snapshot !== null || readPosts(e).length > 0
+
+/** 내 공고 목록. */
+export const listMyPostings = (): MyPosting[] => entries().filter(visible).map(toPosting)
 
 /** 내 공고 상세. */
 export function getMyPosting(id: string): MyPostingDetail {
   const e = rawEntry(id)
+  if (!visible(e)) throw new NotFoundError("공고")
   const posting = toPosting(e)
   const found = readPosts(e)
   const body = found[0]?.post
