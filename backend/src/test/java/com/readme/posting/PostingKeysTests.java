@@ -106,6 +106,27 @@ class PostingKeysTests {
 		assertThat(key(url)).isEqualTo(expected);
 	}
 
+	// ── jobfit 과 다른 점: # 뒤가 / 로 시작하면 키에 넣는다(2026-11-14) ─────────────
+
+	@ParameterizedTest(name = "{0}")
+	@CsvSource(delimiter = '|', value = {
+			// 해시로 화면을 바꾸는 채용 사이트는 # 뒤가 공고마다 다르다. jobfit 은 둘 다 url:careers.example.co.kr 로 만든다
+			"https://careers.example.co.kr/#/jobs/101 | url:careers.example.co.kr#/jobs/101",
+			"https://careers.example.co.kr/#/jobs/102 | url:careers.example.co.kr#/jobs/102",
+			// # 뒤도 경로처럼 끝의 / 를 떼고, 쿼리의 추적값을 뺀다
+			"https://www.careers.example.co.kr/recruit/#/jobs/101/?utm_source=x&id=7 | url:careers.example.co.kr/recruit#/jobs/101?id=7",
+			"https://careers.example.co.kr/#/?id=3 | url:careers.example.co.kr#/?id=3",
+			// # 뒤가 / 뿐이면 첫 화면이라 뺀다
+			"https://careers.example.co.kr/#/ | url:careers.example.co.kr",
+			// / 로 시작하지 않는 # 뒤(문서 안의 위치, #!)는 지금처럼 뺀다
+			"https://example.com/jobs/1#apply | url:example.com/jobs/1",
+			"https://example.com/jobs/1#!/apply | url:example.com/jobs/1",
+			// 사이트 공고키는 그대로다
+			"https://www.wanted.co.kr/wd/123#/apply | wanted:123" })
+	void hashRoutesStayInTheKey(String url, String expected) {
+		assertThat(key(url)).isEqualTo(expected);
+	}
+
 	@Test
 	void localKeysSameAsJobfit() {
 		assertThat(PostingKeys.derive("", "예시컴퍼니", "Node.js개발자", "2026-11-15").key()).isEqualTo("local:779642d2");

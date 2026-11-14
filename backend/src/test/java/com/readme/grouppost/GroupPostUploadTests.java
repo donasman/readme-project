@@ -141,6 +141,19 @@ class GroupPostUploadTests {
 	}
 
 	@Test
+	void hashRoutedJobsOfOneSiteAreDifferentJobs() {
+		// 해시(#/)로 화면을 바꾸는 채용 사이트. # 뒤가 다르면 다른 공고다
+		String site = "https://careers-%d.example.co.kr/#/jobs/".formatted(jobNumber());
+
+		assertThat(upload(this.group, this.me, job("해시 주소 회사", site + "101"))).hasStatus(HttpStatus.CREATED);
+		assertThat(upload(this.group, this.me, job("해시 주소 회사", site + "102"))).hasStatus(HttpStatus.CREATED);
+		// 같은 화면의 주소는 끝의 / 나 추적값이 달라도 같은 공고다
+		assertThat(upload(this.group, this.other, job("해시 주소 회사", site + "101/?utm_source=x")))
+			.hasStatus(HttpStatus.CONFLICT)
+			.bodyJson().extractingPath("$.code").isEqualTo("ALREADY_IN_GROUP");
+	}
+
+	@Test
 	void aLinkTooLongForAKeyMakesANewJobEachTime() throws Exception {
 		// 공고키 칸(300자)보다 긴 키가 나오는 주소는 키 없이 넣는다(엔티티로 넣는 유일한 길).
 		// 같은 공고인지 알아볼 수 없으므로 같은 그룹에 다시 올려도 409 가 아니라 새 공고다.
