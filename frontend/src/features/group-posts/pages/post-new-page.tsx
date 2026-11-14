@@ -28,14 +28,14 @@ const VIAS: { value: Via; label: string }[] = [
 // shortcut: 크기(20MB)는 안내 글뿐이고 막지 않는다, 서버가 받는 형식과 크기를 정하면 여기서도 막는다(화면 API 대응 3.2의 7번)
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
 
-type Notice = Exclude<ReadPostResult, { status: "ok" }>
+type ReadNotice = Exclude<ReadPostResult, { status: "ok" }>
 
 /** 공고 올리기(시안 7차): 링크, 본문 붙여넣기, 파일 가운데 하나로 읽고 칸 확인으로 간다. */
 export function PostNewPage() {
   const { group } = useGroup()
   const navigate = useNavigate()
   const [via, setVia] = useState<Via>("url")
-  const [notice, setNotice] = useState<Notice | null>(null)
+  const [notice, setNotice] = useState<ReadNotice | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function read(input: PostReadInput) {
