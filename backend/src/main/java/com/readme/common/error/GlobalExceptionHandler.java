@@ -4,8 +4,10 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.exc.StreamConstraintsException;
 
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -46,10 +48,14 @@ class GlobalExceptionHandler {
 		return ResponseEntity.status(code.status()).body(new ApiError(code.name(), message));
 	}
 
-	/** JSON 이 아닌 본문, 주소나 쿼리의 값 꼴이 틀린 경우(/groups/abc). 이 둘은 아래의 ErrorResponse 가 아니라 따로 받는다. */
+	/**
+	 * JSON 이 아닌 본문, 주소나 쿼리의 값 꼴이 틀린 경우(/groups/abc). 이 둘은 아래의 ErrorResponse 가 아니라 따로 받는다.
+	 * Jackson 이 한도(본문 4MB 등)를 넘어 읽기를 멈춘 본문은 413 이다.
+	 */
 	@ExceptionHandler({ HttpMessageNotReadableException.class, TypeMismatchException.class })
 	ResponseEntity<ApiError> handleUnreadable(Exception exception) {
-		CommonErrorCode code = CommonErrorCode.INVALID_INPUT;
+		boolean tooLarge = NestedExceptionUtils.getMostSpecificCause(exception) instanceof StreamConstraintsException;
+		CommonErrorCode code = tooLarge ? CommonErrorCode.REQUEST_TOO_LARGE : CommonErrorCode.INVALID_INPUT;
 		return ResponseEntity.status(code.status()).body(ApiError.of(code));
 	}
 

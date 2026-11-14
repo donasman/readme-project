@@ -23,6 +23,12 @@ public enum CommonErrorCode implements ErrorCode {
 
 	METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 요청입니다"),
 
+	/**
+	 * JSON 본문이 4MB 를 넘었다(application.yml 의 spring.jackson.factory.constraints.read). Jackson 이 읽기를 멈추게 하는
+	 * 다른 한도(깊이 500, 숫자 1000자리)를 넘은 본문도 이 코드다.
+	 */
+	REQUEST_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "요청이 너무 큽니다"),
+
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요");
 
 	private final HttpStatus status;

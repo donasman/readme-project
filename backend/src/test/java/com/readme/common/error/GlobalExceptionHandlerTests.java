@@ -71,6 +71,17 @@ class GlobalExceptionHandlerTests {
 			.bodyJson().extractingPath("$.code").isEqualTo("INVALID_INPUT");
 	}
 
+	/** 본문 4MB 한도는 application.yml 에 있어 common/config/JsonBodyLimitTests 가 본다. 여기서는 Jackson 의 기본 한도(숫자 1000자리)로 본다. */
+	@Test
+	void bodyPastJacksonsReadLimitIs413() {
+		assertThat(this.mvc.post().uri("/probe/validated").contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"company\": %s }".formatted("1".repeat(1001))))
+			.hasStatus(HttpStatus.CONTENT_TOO_LARGE)
+			.bodyJson().isStrictlyEqualTo("""
+				{ "code": "REQUEST_TOO_LARGE", "message": "요청이 너무 큽니다" }
+				""");
+	}
+
 	@Test
 	void wrongPathValueTypeIsInvalidInput() {
 		assertThat(this.mvc.get().uri("/probe/groups/abc"))

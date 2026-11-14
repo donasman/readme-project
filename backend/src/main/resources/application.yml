@@ -34,6 +34,15 @@ spring:
       max-file-size: 20MB    # 이력서·포트폴리오 파일
       max-request-size: 20MB
 
+  jackson:
+    factory:
+      constraints:
+        read:
+          # JSON 본문은 4MB(4 × 1024 × 1024 바이트)까지만 읽는다. 넘으면 413 REQUEST_TOO_LARGE.
+          # Tomcat 의 크기 제한은 폼·multipart 에만 걸리고, JSON 은 Jackson 이 끝까지 읽기 때문이다.
+          # 가장 큰 요청인 붙여 넣은 글(100만 자, 한글이면 UTF-8 로 약 3MB)이 들어가는 크기다.
+          max-document-length: 4194304
+
 server:
   port: 8080
   servlet:
