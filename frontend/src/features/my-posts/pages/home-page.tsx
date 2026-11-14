@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Link, redirect, useLoaderData } from "react-router"
 
 import { getMyGroups } from "@/domain/group/api"
+import { PostingLink } from "@/domain/posting/posting-link"
 import type { FillDeadlineState } from "@/domain/posting/types"
 import { Avatar } from "@/shared/components/avatar"
 import { Heading } from "@/shared/components/heading"
@@ -89,10 +90,7 @@ export function HomePage() {
                       <DdayBadge text={due.main} soon={due.soon} />
                       <span className="text-xs text-text-secondary">{due.sub}</span>
                     </div>
-                    <Link to={paths.myPost(p.id)} className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5 text-foreground">
-                      <span className="text-label-sm text-text-secondary">{p.company}</span>
-                      <span className="font-bold">{p.title}</span>
-                    </Link>
+                    <PostingLink id={p.id} company={p.company} title={p.title} className="flex-[1_1_220px]" />
                     <div className="flex flex-none flex-col items-end gap-1">
                       <MyStatusPill state={p} />
                       <span className="text-xs text-text-secondary">{p.groups.map((g) => g.name).join(", ")}</span>
