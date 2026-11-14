@@ -64,7 +64,7 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 - 뽑은 부품이 갈 자리: 도메인을 모르면 `shared/components/`, 도메인 타입을 받으면 `domain/<이름>/`, 한 기능만 쓰면 그 기능의 `components/`.
 - 같은 함수나 계산이 두 번 나오면 바로 하나로 합친다. 모양과 무관한 로직은 기다리지 않는다.
 - 두 번째 기능이 어떤 타입이나 api를 필요로 하면 `domain/`으로 올린다. 기능끼리 불러오게 하지 않는다.
-- 공용 부품을 뽑거나 고칠 때는 값(여백, 색, 모서리)을 바꾸지 않는다. 화면 모양이 달라지면 안 된다.
+- 공용 부품을 뽑거나 고칠 때는 값(여백, 색, 모서리)을 바꾸지 않는다. 화면 모양이 달라지면 안 된다. 화면 회귀 검사(아래 "확인")로 확인한다.
 - 옮기거나 합치는 코드는 접근성 속성, 입력 검사, 오류 처리를 그대로 가져간다.
 
 ## 미뤄 둔 것 표시
@@ -87,6 +87,7 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 - 커밋 전에 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`를 돌린다.
 - 화면과 무관한 규칙(순수 함수)을 만들거나 고치면 옆에 `*.test.ts`를 두고 Vitest로 확인한다. 버그를 고치면 그 버그에서 실패하는 테스트를 하나 더한다. Vitest는 Node 22.12 이상에서 돈다(이 저장소는 `.nvmrc`의 24).
 - 층 규칙은 lint가 본다. 새 층이나 새 도메인을 만들면 `eslint.layers.js`에 더한다.
+- 화면 회귀 검사: 모양이 바뀌면 안 되는 변경(공용 부품 뽑기, 구조 바꾸기)은 개발 서버(`npm run dev`)를 띄운 채 고치기 전에 `npm run regress -- shoot before`, 고친 뒤 `npm run regress -- shoot after`를 돌리고 `npm run regress -- compare before after`가 "all scenarios pixel-identical"이어야 한다. 장면(모든 화면과 창, 66개)은 `scripts/regress.mjs`에 있고, 새 화면이나 창을 만들면 장면을 더한다. 결과는 `.regress/`에 남고 git에 올리지 않는다.
 - 고를 수 있는 것: 커밋 전에 ponytail의 `/ponytail-review`로 바뀐 것을 한 번 본다.
 
 ## 보고

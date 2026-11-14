@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 화면 회귀 검사 결과(scripts/regress.mjs)
+.regress
