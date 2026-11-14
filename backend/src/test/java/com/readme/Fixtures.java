@@ -211,6 +211,58 @@ public class Fixtures {
 			.single();
 	}
 
+	// ── 경험카드 ─────────────────────────────────────────────────────────
+
+	/** 올린 자료. kind: "FILE"(파일 이름이 있다), "TEXT"(붙여넣은 글. 이름이 없다). 같은 자료로 보지 않게 해시는 매번 다르다. */
+	public long cardSource(long userId, String kind, String fileName, String body) {
+		return this.jdbc.sql("""
+				insert into card_sources (user_id, kind, file_name, sha256, body, char_count)
+				values (:userId, :kind, :fileName, :sha256, :body, :charCount) returning id
+				""")
+			.param("userId", userId)
+			.param("kind", kind)
+			.param("fileName", fileName, Types.VARCHAR)
+			.param("sha256", (UUID.randomUUID().toString() + UUID.randomUUID()).replace("-", ""))
+			.param("body", body)
+			.param("charCount", body.length())
+			.query(Long.class)
+			.single();
+	}
+
+	/** 끝난 추출 작업. */
+	public long extractionJob(long userId, long sourceId) {
+		return this.jdbc.sql("""
+				insert into card_extraction_jobs (user_id, source_id, status, total_parts, done_parts)
+				values (:userId, :sourceId, 'DONE', 1, 1) returning id
+				""")
+			.param("userId", userId)
+			.param("sourceId", sourceId)
+			.query(Long.class)
+			.single();
+	}
+
+	/** 카드를 자료에서 뽑은 것으로 만든다. notesJson 은 추출 안내의 JSON 배열 글자. 셋 다 null 이면 그 칸을 비운다. */
+	public void extracted(long cardId, Long sourceId, Long jobId, String notesJson) {
+		this.jdbc.sql("""
+				update experience_cards
+				   set source_id = :sourceId, job_id = :jobId, extraction_notes = cast(:notes as jsonb)
+				 where id = :id
+				""")
+			.param("sourceId", sourceId, Types.BIGINT)
+			.param("jobId", jobId, Types.BIGINT)
+			.param("notes", notesJson, Types.VARCHAR)
+			.param("id", cardId)
+			.update();
+	}
+
+	/** 카드를 고친 때. 목록은 이 시각의 역순이다. 부른 순서대로 늘어나고 NOW 보다 앞이다. */
+	public void touchCard(long cardId) {
+		this.jdbc.sql("update experience_cards set updated_at = :at where id = :id")
+			.param("at", nextMoment())
+			.param("id", cardId)
+			.update();
+	}
+
 	/** 부를 때마다 1ms 씩 늘어나는 시각. 멈춘 시계의 NOW 하루 전에서 시작한다. */
 	private Timestamp nextMoment() {
 		return Timestamp.from(FixedClockConfiguration.NOW.minus(Duration.ofDays(1)).plusMillis(this.ticks.incrementAndGet()));
