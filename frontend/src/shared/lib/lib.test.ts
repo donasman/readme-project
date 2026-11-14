@@ -6,7 +6,7 @@ import { NotFoundError } from "./errors"
 import { objectParticle, subjectParticle } from "./korean"
 import { paths } from "./paths"
 import { revalidateOnParams } from "./router"
-import { isHttpUrl } from "./utils"
+import { isHttpUrl, matchesAccept } from "./utils"
 
 describe("date", () => {
   it("daysBetween: 달과 해를 넘어도 날 수", () => {
@@ -101,5 +101,13 @@ describe("isHttpUrl", () => {
     expect(isHttpUrl("https://careers.example.com/jobs/7")).toBe(true)
     expect(isHttpUrl("careers.example.com/jobs/7")).toBe(false)
     expect(isHttpUrl("javascript:alert(1)")).toBe(false)
+  })
+})
+
+describe("matchesAccept", () => {
+  it("accept의 확장자로 끝나는 파일만 받는다", () => {
+    expect(matchesAccept("공고.PDF", ".pdf,.docx")).toBe(true)
+    expect(matchesAccept("photo.png", ".pdf,.docx")).toBe(false)
+    expect(matchesAccept("report.pdf.exe", ".pdf,.docx")).toBe(false)
   })
 })
