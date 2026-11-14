@@ -9,6 +9,7 @@ import { useGroup } from "@/domain/group/use-group"
 import { BackLink } from "@/shared/components/back-link"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { subpageTitle } from "@/shared/components/heading"
+import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { UploadIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -69,29 +70,24 @@ export function PostNewPage() {
         <h1 className={subpageTitle}>공고 올리기</h1>
       </div>
 
-      {notice && (
-        <div role="status" className="flex flex-col gap-2 rounded-control bg-highlight-subtle px-5 py-4 text-sm">
-          {notice.status === "duplicate" ? (
-            <>
-              <strong className="font-bold">이미 이 그룹에 있는 공고입니다</strong>
-              <span>
-                {notice.post.company} · {notice.post.title}. {notice.post.postedBy.name} 님이 {notice.post.postedAt}에 올렸습니다.
-              </span>
-              <Link
-                to={paths.groupPost(group.id, notice.post.id)}
-                className="-my-2 inline-flex min-h-control-md items-center self-start font-bold whitespace-nowrap text-primary"
-              >
-                그 공고 보기
-              </Link>
-            </>
-          ) : (
-            <>
-              <strong className="font-bold">이 링크는 읽지 못했습니다</strong>
-              <span>로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요.</span>
-            </>
-          )}
-        </div>
-      )}
+      {notice &&
+        (notice.status === "duplicate" ? (
+          <Notice title="이미 이 그룹에 있는 공고입니다">
+            <span>
+              {notice.post.company} · {notice.post.title}. {notice.post.postedBy.name} 님이 {notice.post.postedAt}에 올렸습니다.
+            </span>
+            <Link
+              to={paths.groupPost(group.id, notice.post.id)}
+              className="-my-2 inline-flex min-h-control-md items-center self-start font-bold whitespace-nowrap text-primary"
+            >
+              그 공고 보기
+            </Link>
+          </Notice>
+        ) : (
+          <Notice title="이 링크는 읽지 못했습니다">
+            <span>로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요.</span>
+          </Notice>
+        ))}
 
       <Panel aria-label="공고 넣기" className="flex flex-col gap-5 p-6">
         <SegmentedControl label="넣는 방법" value={via} onValueChange={(value) => setVia(value as Via)} options={VIAS} />

@@ -12,8 +12,8 @@ import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/fo
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
+import { IconNote, Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
-import { CircleAlertIcon } from "@/shared/icons"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
@@ -121,12 +121,11 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
       <div className={columns}>
         <form onSubmit={submit} noValidate className={joinClasses(mainColumn, "gap-6")}>
           {already && (
-            <div role="status" className="flex flex-col gap-2 rounded-control bg-highlight-subtle px-5 py-4 text-sm">
-              <strong className="font-bold">이미 이 그룹에 있는 공고입니다</strong>
+            <Notice title="이미 이 그룹에 있는 공고입니다">
               <Link to={paths.groupPost(group.id, already)} className="-my-2 inline-flex min-h-control-md items-center self-start font-bold text-primary">
                 그 공고 보기
               </Link>
-            </div>
+            </Notice>
           )}
 
           <Panel aria-labelledby="pc-must" className="flex flex-col gap-4 p-6">
@@ -173,9 +172,9 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
                 <FieldError id="pc-due">{errors.deadline}</FieldError>
               ) : (
                 dueUnread && (
-                  <UnreadNote id="pc-due">
+                  <IconNote id={noteId("pc-due")} tone="warning">
                     마감일을 읽지 못했습니다. 원문을 보고 넣어 주세요. "모름"으로 올리면 목록 맨 위 "마감일 확인 필요"에 들어갑니다.
-                  </UnreadNote>
+                  </IconNote>
                 )
               )}
             </div>
@@ -274,10 +273,10 @@ function Field({
   const note = error ? (
     <FieldError id={id}>{error}</FieldError>
   ) : unread && name ? (
-    <UnreadNote id={id}>
+    <IconNote id={noteId(id)} tone="warning">
       {name}
       {objectParticle(name)} 읽지 못했습니다. 원문을 보고 넣어 주세요.
-    </UnreadNote>
+    </IconNote>
   ) : (
     evidence && <FieldHint id={id}>근거: {evidence}</FieldHint>
   )
@@ -285,15 +284,5 @@ function Field({
     <FormField id={id} label={label} note={note}>
       {children}
     </FormField>
-  )
-}
-
-/** 읽지 못한 칸 아래의 경고 줄. */
-function UnreadNote({ id, children }: { id: string; children: ReactNode }) {
-  return (
-    <p id={noteId(id)} className="flex items-start gap-1.5 text-label-sm font-medium">
-      <CircleAlertIcon aria-hidden="true" className="mt-px size-4 flex-none text-warning" />
-      <span>{children}</span>
-    </p>
   )
 }
