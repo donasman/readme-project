@@ -52,6 +52,11 @@ export interface Comment {
 }
 
 /** 그룹 공고 상세. 목록의 한 줄에 공고 내용과 댓글이 더해진다. */
+/** 목록에서 상세로 갈 때 넘기는 값: 목록의 ? 뒤(고른 필터). 상세의 "공고 목록"이 그 목록으로 돌아간다. */
+export interface ListReturnState {
+  listSearch: string
+}
+
 export interface GroupPostDetail extends GroupPost {
   /** 마감의 이름. 예: "서류 접수 마감" */
   deadlineName: string | null

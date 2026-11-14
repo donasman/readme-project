@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLoaderData, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
+import { useLoaderData, useLocation, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { setMyDisclosure } from "@/domain/group/api"
 import type { Group } from "@/domain/group/types"
@@ -18,7 +18,7 @@ import { DeadlineCard } from "../components/deadline-card"
 import { InterestedMembers } from "../components/interested-members"
 import { PostContent } from "../components/post-content"
 import { CommentDeleteDialog, CommentEditDialog, DisclosureDialog, TakedownDialog } from "../components/post-dialogs"
-import type { Comment, GroupPostDetail } from "../types"
+import type { Comment, GroupPostDetail, ListReturnState } from "../types"
 import { useInterest } from "../use-interest"
 
 export function groupPostLoader({ params }: LoaderFunctionArgs) {
@@ -33,6 +33,7 @@ export function GroupPostPage() {
   const { group } = useGroup()
   const revalidator = useRevalidator()
   const navigate = useNavigate()
+  const location = useLocation()
   const [takingDown, setTakingDown] = useState<GroupPostDetail | null>(null)
   const [editing, setEditing] = useState<Comment | null>(null)
   const [deleting, setDeleting] = useState<Comment | null>(null)
@@ -42,7 +43,8 @@ export function GroupPostPage() {
 
   const isLeader = group.leaderId === viewer.id
   const canTakeDown = isLeader || post.postedBy.id === viewer.id
-  const listPath = paths.groupPosts(group.id)
+  // 목록에서 왔으면 그때 고른 필터 그대로 돌아간다(브라우저 뒤로 가기와 같게)
+  const listPath = paths.groupPosts(group.id) + ((location.state as ListReturnState | null)?.listSearch ?? "")
 
   return (
     <Page className="gap-4 pt-6">
