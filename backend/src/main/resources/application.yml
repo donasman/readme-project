@@ -31,8 +31,10 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 20MB    # 이력서·포트폴리오 파일
-      max-request-size: 20MB
+      max-file-size: 20MB    # 이력서·포트폴리오 파일(extraction 의 SourceInput.MAX_BYTES 와 같다)
+      max-request-size: 21MB # 20MB 파일에 multipart 의 머리말이 붙어도 받는다
+      # 파일을 컨트롤러의 인자를 만들 때 읽는다. 20MB 를 넘으면 그 컨트롤러가 오류(SOURCE_TOO_LARGE)를 낸다.
+      resolve-lazily: true
 
 server:
   port: 8080
