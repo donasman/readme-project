@@ -16,7 +16,7 @@ import { IconNote, Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { isHttpUrl, joinClasses } from "@/shared/lib/utils"
 
 import { uploadPost } from "../api"
 import type { Deadline, DraftField, PostDraft } from "../types"
@@ -70,6 +70,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
     if (!company.trim()) next.company = "회사명을 넣어 주세요."
     if (!title.trim()) next.title = "공고명을 넣어 주세요."
     if (dueMode === "date" && !dueDate) next.deadline = "마감일을 넣거나 상시, 모름을 고르세요."
+    if (sourceUrl.trim() && !isHttpUrl(sourceUrl.trim())) next.sourceUrl = "https:// 로 시작하는 주소를 넣거나 비워 두세요."
     setErrors(next)
     if (Object.keys(next).length) return
     setSaving(true)

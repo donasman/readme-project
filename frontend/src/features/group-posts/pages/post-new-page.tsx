@@ -13,7 +13,7 @@ import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { UploadIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn } from "@/shared/lib/utils"
+import { cn, isHttpUrl } from "@/shared/lib/utils"
 
 import { readPost } from "../api"
 import type { PostReadInput, ReadPostResult } from "../types"
@@ -29,14 +29,6 @@ const VIAS: { value: Via; label: string }[] = [
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
 
 type Notice = Exclude<ReadPostResult, { status: "ok" }>
-
-const isHttpUrl = (value: string) => {
-  try {
-    return ["http:", "https:"].includes(new URL(value).protocol)
-  } catch {
-    return false
-  }
-}
 
 /** 공고 올리기(시안 7차): 링크, 본문 붙여넣기, 파일 가운데 하나로 읽고 칸 확인으로 간다. */
 export function PostNewPage() {
