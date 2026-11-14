@@ -19,7 +19,8 @@ import com.readme.keyword.Numbers.NumToken;
  * 얻은 값이다(리드미 사전의 영문 표기를 버전 이름으로 넘겼다).
  *
  * <p>pytest 는 버전 이름으로 Java, Spring Boot, Python, Node.js 를 넘기는데, 넷 다 기본 목록에 있어 넘기지 않아도 같다.
- * 옮기지 않은 것: test_severity(초안 검사의 등급. 아직 쓰는 곳이 없다).
+ * 옮기지 않은 것: test_severity(초안 검사의 등급. 아직 쓰는 곳이 없다), pytest 의 연도(years) 확인(연도를 쓰는 곳이 없어
+ * 옮기지 않았다. 날짜를 숫자로 보지 않는 것은 그대로 본다).
  */
 class NumbersTests {
 
@@ -28,7 +29,7 @@ class NumbersTests {
 	@Test
 	void sameQuantityInManySpellings() {
 		List<NumToken> tokens = Stream.of("약 3천만 건", "삼천만 건", "30,000,000건", "3,000만 건")
-			.map((text) -> Numbers.extract(text).numbers().get(0))
+			.map((text) -> Numbers.extract(text).get(0))
 			.toList();
 		assertThat(tokens).extracting(NumToken::value, NumToken::unit).containsOnly(tuple(30_000_000.0, "건"));
 		assertThat(Numbers.sameValue(tokens.get(0), tokens.subList(1, 4))).isTrue();
@@ -45,10 +46,9 @@ class NumbersTests {
 
 	@Test
 	void namesDatesMarkersAreNotNumbers() {
-		Numbers.Extracted ex = Numbers.extract(
-				"Java 17과 Spring Boot 3, S3·EC2·OAuth2, HTTP/2, p95. 2025년 3월부터 2025.06까지. [확인 필요: 사용자 수 1만 명]\n1. 첫째");
-		assertThat(ex.numbers()).isEmpty();
-		assertThat(ex.years()).containsExactly(2025, 2025);
+		assertThat(Numbers.extract(
+				"Java 17과 Spring Boot 3, S3·EC2·OAuth2, HTTP/2, p95. 2025년 3월부터 2025.06까지. [확인 필요: 사용자 수 1만 명]\n1. 첫째"))
+			.isEmpty();
 	}
 
 	@Test
@@ -64,10 +64,9 @@ class NumbersTests {
 
 	@Test
 	void datesTimesRelationsAreNotNumbers() {
-		Numbers.Extracted ex = Numbers
-			.extract("2026.09.17 실측, 2026-10-28 기준, 09-15 측정, 2026 – 현재, 매일 04:00(KST) 백업, 1:N 상세 · N:M 관계 · 1:1 멘토링");
-		assertThat(ex.numbers()).isEmpty();
-		assertThat(ex.years()).containsExactly(2026, 2026, 2026);
+		assertThat(Numbers
+			.extract("2026.09.17 실측, 2026-10-28 기준, 09-15 측정, 2026 – 현재, 매일 04:00(KST) 백업, 1:N 상세 · N:M 관계 · 1:1 멘토링"))
+			.isEmpty();
 		assertThat(values("2025년 3개월 동안")).containsExactly(tuple(3.0, "개월")); // 연도 뒤의 기간은 남긴다
 		assertThat(values("2025년 3월 5일")).isEmpty();
 	}
@@ -86,8 +85,8 @@ class NumbersTests {
 
 	@Test
 	void versionsWithoutProjectDictionary() {
-		assertThat(Numbers.extract("PostgreSQL 17, React 18, Next.js 16, Spring Boot 2.6, Gemini 3.5 Flash, Prisma 7, JDK 11")
-			.numbers()).isEmpty();
+		assertThat(Numbers.extract("PostgreSQL 17, React 18, Next.js 16, Spring Boot 2.6, Gemini 3.5 Flash, Prisma 7, JDK 11"))
+			.isEmpty();
 		assertThat(values("Java 3년 경력, React 18개 컴포넌트")).containsExactly(tuple(3.0, "년"), tuple(18.0, "개"));
 	}
 
@@ -99,7 +98,7 @@ class NumbersTests {
 			.containsExactly(tuple(43_000.0, ""), tuple(120_000_000.0, "원"), tuple(35_000.0, "원"));
 		assertThat(values("응답 압축 45~78%, 3~6회"))
 			.containsExactly(tuple(45.0, "%"), tuple(78.0, "%"), tuple(3.0, "회"), tuple(6.0, "회"));
-		assertThat(Numbers.sameValue(first("43,000 콜"), Numbers.extract("약 4만 3천 콜").numbers())).isTrue();
+		assertThat(Numbers.sameValue(first("43,000 콜"), Numbers.extract("약 4만 3천 콜"))).isTrue();
 	}
 
 	@Test
@@ -113,7 +112,7 @@ class NumbersTests {
 
 	@Test
 	void sameValueRules() {
-		List<NumToken> facts = Numbers.extract("p95 1.8초 → 0.4초, 6GB").numbers();
+		List<NumToken> facts = Numbers.extract("p95 1.8초 → 0.4초, 6GB");
 		assertThat(Numbers.sameValue(first("1.8초"), facts)).isTrue();
 		assertThat(Numbers.sameValue(first("1.8"), facts)).isTrue(); // 단위 없는 쪽은 값만 본다
 		assertThat(Numbers.sameValue(first("1.8분"), facts)).isFalse(); // 단위가 다르면 다른 값
@@ -181,12 +180,11 @@ class NumbersTests {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource
 	void sameNumbersAsJobfit(String text, List<NumToken> expected) {
-		assertThat(Numbers.extract(text).numbers()).containsExactlyElementsOf(expected);
+		assertThat(Numbers.extract(text)).containsExactlyElementsOf(expected);
 	}
 
 	@Test
-	void yearsAndKoreanNumeralsSameAsJobfit() {
-		assertThat(Numbers.extract("2025.03 ~ 2025.06 동안 40% 개선").years()).containsExactly(2025, 2025);
+	void koreanNumeralsSameAsJobfit() {
 		assertThat(Numbers.korToInt("삼천오백만")).isEqualTo(35000000);
 		assertThat(Numbers.korToInt("구십구")).isEqualTo(99);
 		assertThat(Numbers.korToInt("일억이천만")).isEqualTo(120000000);
@@ -198,19 +196,19 @@ class NumbersTests {
 
 	@Test
 	void sameValueSameAsJobfit() {
-		assertThat(Numbers.sameValue(first("1,000건"), Numbers.extract("1천 건").numbers())).isTrue();
-		assertThat(Numbers.sameValue(first("30%"), Numbers.extract("30").numbers())).isTrue();
-		assertThat(Numbers.sameValue(first("30"), Numbers.extract("30%").numbers())).isTrue();
-		assertThat(Numbers.sameValue(first("2배"), Numbers.extract("2").numbers())).isTrue();
-		assertThat(Numbers.sameValue(first("3명"), Numbers.extract("3인").numbers())).isFalse(); // 명과 인은 다른 단위다
+		assertThat(Numbers.sameValue(first("1,000건"), Numbers.extract("1천 건"))).isTrue();
+		assertThat(Numbers.sameValue(first("30%"), Numbers.extract("30"))).isTrue();
+		assertThat(Numbers.sameValue(first("30"), Numbers.extract("30%"))).isTrue();
+		assertThat(Numbers.sameValue(first("2배"), Numbers.extract("2"))).isTrue();
+		assertThat(Numbers.sameValue(first("3명"), Numbers.extract("3인"))).isFalse(); // 명과 인은 다른 단위다
 	}
 
 	private static List<Tuple> values(String text) {
-		return Numbers.extract(text).numbers().stream().map((n) -> tuple(n.value(), n.unit())).toList();
+		return Numbers.extract(text).stream().map((n) -> tuple(n.value(), n.unit())).toList();
 	}
 
 	private static NumToken first(String text) {
-		return Numbers.extract(text).numbers().get(0);
+		return Numbers.extract(text).get(0);
 	}
 
 	private static NumToken n(double value, String unit, String raw) {

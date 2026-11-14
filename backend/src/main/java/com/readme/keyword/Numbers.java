@@ -138,23 +138,16 @@ public final class Numbers {
 	public record NumToken(double value, String unit, String raw) {
 	}
 
-	/** 뽑은 숫자들(글의 순서가 아니라 섞인 한글 숫자, 한글 숫자, 범위, 나머지 순)과 날짜에서 읽은 연도. */
-	public record Extracted(List<NumToken> numbers, List<Integer> years) {
-	}
-
-	public static Extracted extract(String text) {
+	/**
+	 * 글 속 숫자들. 글의 순서가 아니라 섞인 한글 숫자, 한글 숫자, 범위, 나머지 순이다(jobfit 과 같다).
+	 * jobfit 이 함께 돌려주는 날짜의 연도(years)는 쓰는 곳이 없어 옮기지 않았다.
+	 */
+	public static List<NumToken> extract(String text) {
 		String s = Normalizer.normalize(text, Normalizer.Form.NFKC);
 		s = mask(s, CONFIRM);
 		s = mask(s, LINE_NUMBER);
 		s = mask(s, Versions.PATTERN);
 		s = mask(s, TECH);
-		List<Integer> years = new ArrayList<>();
-		for (Matcher m = DATE.matcher(s); m.find();) {
-			String year = firstNonNull(m.group("y1"), m.group("y2"), m.group("y3"));
-			if (year != null) {
-				years.add(Integer.parseInt(year));
-			}
-		}
 		s = mask(s, DATE);
 		s = mask(s, TIME);
 		s = mask(s, RELATION);
@@ -188,7 +181,7 @@ public final class Numbers {
 			double value = Double.parseDouble(m.group("num").replace(",", "")) * mult(m);
 			numbers.add(new NumToken(value, unit(m.group("unit")), m.group().strip()));
 		}
-		return new Extracted(List.copyOf(numbers), List.copyOf(years));
+		return List.copyOf(numbers);
 	}
 
 	/** facts 에 같은 값이 있나. 단위가 같거나 한쪽에 단위가 없으면 값만 본다. */
@@ -298,16 +291,6 @@ public final class Numbers {
 
 	private static String replace(String s, Pattern pattern, Function<MatchResult, String> replacement) {
 		return pattern.matcher(s).replaceAll((m) -> Matcher.quoteReplacement(replacement.apply(m)));
-	}
-
-	@SafeVarargs
-	private static <T> T firstNonNull(T... values) {
-		for (T value : values) {
-			if (value != null) {
-				return value;
-			}
-		}
-		return null;
 	}
 
 	/** 이름 + 버전 숫자. 뒤에 단위가 붙으면 버전이 아니다("Java 3년"의 3은 남긴다). 사전을 처음 쓸 때 만든다. */

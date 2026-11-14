@@ -131,7 +131,7 @@ final class CardRules {
 		List<NumToken> factNumbers = numbersIn(facts);
 		LinkedHashSet<String> loose = new LinkedHashSet<>();
 		for (String part : star.parts()) {
-			for (NumToken number : Numbers.extract(part).numbers()) {
+			for (NumToken number : Numbers.extract(part)) {
 				if (!Numbers.sameValue(number, factNumbers)) {
 					loose.add(number.raw());
 				}
@@ -151,16 +151,16 @@ final class CardRules {
 		List<NumToken> factNumbers = numbersIn(facts);
 		List<String> added = new ArrayList<>();
 		for (String part : star.parts()) {
-			for (NumToken number : Numbers.extract(part).numbers()) {
+			for (NumToken number : Numbers.extract(part)) {
 				if (Numbers.sameValue(number, factNumbers)) {
 					continue;
 				}
 				String sentence = sentences(part).stream()
-					.filter((s) -> Numbers.sameValue(number, Numbers.extract(s).numbers()))
+					.filter((s) -> Numbers.sameValue(number, Numbers.extract(s)))
 					.findFirst()
 					.orElse(part);
 				String fact = clip(sentence, number.raw());
-				List<NumToken> factNumbersOfFact = Numbers.extract(fact).numbers();
+				List<NumToken> factNumbersOfFact = Numbers.extract(fact);
 				if (!fact.isEmpty() && Numbers.sameValue(number, factNumbersOfFact)) {
 					added.add(fact);
 					factNumbers.addAll(factNumbersOfFact);
@@ -182,7 +182,7 @@ final class CardRules {
 
 	private static List<NumToken> numbersIn(List<String> texts) {
 		List<NumToken> numbers = new ArrayList<>();
-		texts.forEach((text) -> numbers.addAll(Numbers.extract(text).numbers()));
+		texts.forEach((text) -> numbers.addAll(Numbers.extract(text)));
 		return numbers;
 	}
 
