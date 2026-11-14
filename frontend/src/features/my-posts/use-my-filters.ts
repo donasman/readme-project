@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from "react"
 import { useSearchParams } from "react-router"
 
-import { DECISIONS, DEFAULT_MY_FILTERS, type MyFilters } from "./status"
+import { DECISIONS } from "@/domain/posting/my-state"
+
+import { DEFAULT_MY_FILTERS, type MyFilters } from "./status"
 
 /** 내 공고 거르기를 주소의 ? 뒤에 둔다(?view=closed&decision=hold&q=물류). 기본값은 적지 않는다. */
 export function useMyFilters(): [MyFilters, (patch: Partial<MyFilters>) => void] {

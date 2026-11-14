@@ -1,7 +1,7 @@
+import { isActive, statusLabel } from "@/domain/posting/my-state"
 import { Pill } from "@/shared/components/pill"
 import { joinClasses } from "@/shared/lib/utils"
 
-import { isActive, statusLabel } from "../status"
 import type { MyState } from "../types"
 
 // 홈과 내 공고 화면들이 함께 쓰는 조각(시안 8차).

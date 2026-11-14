@@ -7,6 +7,7 @@ import { getMyGroups } from "@/domain/group/api"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import { PostingLink } from "@/domain/posting/posting-link"
 import type { Group } from "@/domain/group/types"
+import { DECISION_LABELS, DECISIONS, RESULT_LABELS, RESULTS, STAGE_LABELS, STAGES } from "@/domain/posting/my-state"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -17,7 +18,7 @@ import { joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings, updateMyState } from "../api"
 import { BigStat } from "../components/my-bits"
-import { boardCounts, DECISION_LABELS, DECISIONS, dueText, RESULT_LABELS, RESULTS, sortBoard, STAGE_LABELS, STAGES, stageCells, withDecision } from "../status"
+import { boardCounts, dueText, sortBoard, stageCells, withDecision } from "../status"
 import type { Decision, MyPosting, MyState, Result, Stage } from "../types"
 
 export async function boardLoader() {

@@ -1,5 +1,6 @@
 // 달력의 칸과 그달의 마감 목록. 화면과 떨어진 순수 함수다. 달은 "YYYY-MM".
-import { daysBetween, formatMonthDayWeekday } from "@/shared/lib/date"
+import { isClosed } from "@/domain/posting/deadline"
+import { daysBetween } from "@/shared/lib/date"
 
 import type { MyPosting } from "./types"
 
@@ -45,7 +46,7 @@ export function monthEvents(month: string, postings: MyPosting[], today: string)
   return postings
     .flatMap((p) =>
       p.deadline.kind === "date" && monthOf(p.deadline.date) === month
-        ? [{ postingId: p.id, company: p.company, title: p.title, date: p.deadline.date, closed: daysBetween(today, p.deadline.date) < 0 }]
+        ? [{ postingId: p.id, company: p.company, title: p.title, date: p.deadline.date, closed: isClosed(p.deadline, today) }]
         : []
     )
     .sort((a, b) => a.date.localeCompare(b.date) || a.company.localeCompare(b.company))
@@ -65,6 +66,3 @@ export function monthCells(month: string, postings: MyPosting[], today: string):
     return { date, day, isToday: date === today, isPast: daysBetween(today, date) < 0, events: events.filter((e) => e.date === date) }
   })
 }
-
-/** 목록의 날짜 글자: "11.06 (금)". */
-export const agendaDate = (date: string) => formatMonthDayWeekday(date)

@@ -4,6 +4,7 @@ import SegmentedControl from "@/components/arc/segmented-control/segmented-contr
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PostingLink } from "@/domain/posting/posting-link"
+import { DECISION_LABELS } from "@/domain/posting/my-state"
 import { Heading } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -15,7 +16,7 @@ import { PlusIcon, SearchIcon } from "@/shared/icons"
 
 import { getMyPostings } from "../api"
 import { MyStatusPill } from "../components/my-bits"
-import { DECISION_LABELS, dueText, filterPostings, type MyFilters } from "../status"
+import { dueText, filterPostings, type MyFilters } from "../status"
 import type { Decision } from "../types"
 import { useMyFilters } from "../use-my-filters"
 
