@@ -56,7 +56,7 @@ class LoginThrottle {
 		recent.addLast(now);
 	}
 
-	/** 로그인에 성공했다. 그 이메일에서 센 것을 지운다. */
+	/** 로그인에 성공했거나 비밀번호를 재설정했다. 그 이메일에서 센 것을 지운다. */
 	synchronized void clear(String email) {
 		this.failures.remove(email);
 	}

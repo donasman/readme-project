@@ -148,7 +148,7 @@ class AccountService {
 
 	/**
 	 * 새 비밀번호로 바꾸고, 그 계정의 로그인을 모두 끊는다. 인증 전 계정이면 인증도 마친다(메일을 받았다는 뜻이라서).
-	 * 그 계정의 다른 재설정 링크도 쓸 수 없게 된다.
+	 * 그 계정의 다른 재설정 링크도 쓸 수 없게 된다. 로그인 실패로 막혀 있었으면 풀어 새 비밀번호로 바로 들어오게 한다.
 	 */
 	@Transactional
 	void resetPassword(String token, String password) {
@@ -156,6 +156,7 @@ class AccountService {
 		long userId = use(token, Purpose.RESET_PASSWORD, now).userId();
 		this.accounts.changePassword(userId, this.passwordEncoder.encode(password), now);
 		this.tokens.cancelUnused(userId, Purpose.RESET_PASSWORD.name(), now);
+		this.loginThrottle.clear(this.queries.findMe(userId).orElseThrow().email().toLowerCase(Locale.ROOT));
 		afterCommit(() -> endSessions(userId));
 	}
 

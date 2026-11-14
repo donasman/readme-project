@@ -94,6 +94,21 @@ class PasswordResetTests {
 	}
 
 	@Test
+	void resettingLiftsTheLoginBlock() {
+		// 비밀번호를 잊어 10번 틀린 사람이 재설정한다
+		String email = this.fixtures.emailOf(this.fixtures.passwordUser("가람", OLD, true));
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
+			assertThat(login(email, "wrong password")).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+		assertThat(login(email, OLD)).hasStatus(HttpStatus.TOO_MANY_REQUESTS);
+		request(email).exchange();
+
+		assertThat(confirm(this.mailbox.lastTokenTo(email), NEW)).hasStatus(HttpStatus.NO_CONTENT);
+
+		assertThat(login(email, NEW)).hasStatusOk();
+	}
+
+	@Test
 	void theLinkWorksOnceAndANewRequestEndsTheOlderLink() {
 		String email = this.fixtures.emailOf(this.fixtures.passwordUser("가람", OLD, true));
 		request(email).exchange();
