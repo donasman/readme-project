@@ -74,7 +74,9 @@ export function GroupPostPage() {
         onClose={() => setTakingDown(null)}
         onConfirm={async () => {
           await takeDownPost(group.id, post.id)
-          navigate(listPath)
+          // 같은 그룹 안의 이동이라 그룹 loader(머리의 "공고 N")가 다시 돌지 않는다. 먼저 다시 읽으면 이 공고가 없어 오류가 나므로 옮긴 뒤 읽는다
+          await navigate(listPath)
+          await revalidator.revalidate()
         }}
       />
       <CommentEditDialog

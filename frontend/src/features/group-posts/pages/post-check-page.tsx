@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react"
-import { Link, Navigate, useLocation, useNavigate } from "react-router"
+import { Link, Navigate, useLocation, useNavigate, useRevalidator } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -49,6 +49,7 @@ export function PostCheckPage() {
 function PostCheckForm({ draft }: { draft: PostDraft }) {
   const { group } = useGroup()
   const navigate = useNavigate()
+  const revalidator = useRevalidator()
   const [company, setCompany] = useState(draft.company)
   const [title, setTitle] = useState(draft.title)
   const [dueMode, setDueMode] = useState<DueMode>(draft.deadline.kind === "unknown" && draft.unread.includes("deadline") ? "date" : draft.deadline.kind)
@@ -87,8 +88,11 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
           .filter((s) => s.items.length > 0),
         keywords: draft.keywords,
       })
-      if (result.ok) navigate(paths.groupPosts(group.id))
-      else setAlready(result.postId)
+      if (result.ok) {
+        // 같은 그룹 안의 이동이라 그룹 loader(머리의 "공고 N")가 다시 돌지 않아 옮긴 뒤 다시 읽는다
+        await navigate(paths.groupPosts(group.id))
+        await revalidator.revalidate()
+      } else setAlready(result.postId)
     } finally {
       setSaving(false)
     }
