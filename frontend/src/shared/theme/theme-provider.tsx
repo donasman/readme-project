@@ -65,9 +65,14 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey)
-    if (isTheme(storedTheme)) {
-      return storedTheme
+    // 사이트 데이터 저장을 막은 브라우저에서는 localStorage가 오류를 던진다. 그때는 기본 테마로 연다(index.html과 같다)
+    try {
+      const storedTheme = localStorage.getItem(storageKey)
+      if (isTheme(storedTheme)) {
+        return storedTheme
+      }
+    } catch {
+      /* 저장소를 못 쓰면 기본 테마 */
     }
 
     return defaultTheme
@@ -75,7 +80,11 @@ export function ThemeProvider({
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
-      localStorage.setItem(storageKey, nextTheme)
+      try {
+        localStorage.setItem(storageKey, nextTheme)
+      } catch {
+        /* 저장소를 못 쓰면 이 페이지에서만 바뀐다 */
+      }
       setThemeState(nextTheme)
     },
     [storageKey]
