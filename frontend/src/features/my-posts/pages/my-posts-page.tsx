@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
@@ -14,6 +13,7 @@ import { Panel } from "@/shared/components/panel"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
+import { useSearchText } from "@/shared/lib/router"
 
 import { getMyPostings } from "../api"
 import { MyStatusPill } from "../components/my-bits"
@@ -35,8 +35,7 @@ const ROW_GRID =
 export function MyPostsPage() {
   const { today, postings } = useLoaderData<typeof myPostsLoader>()
   const [filters, setFilters] = useMyFilters()
-  // 검색 칸의 값은 화면 상태로 둔다. 주소(?q=)만 따르면 라우터가 값을 늦게 돌려줘 한글 조합이 깨지고 커서가 끝으로 튄다
-  const [query, setQuery] = useState(filters.query)
+  const [query, setQuery] = useSearchText(filters.query)
   const { rows, open, closed } = filterPostings(postings, filters, today)
 
   return (
