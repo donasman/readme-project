@@ -4,6 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -12,7 +13,9 @@ import com.readme.common.error.CommonErrorCode;
 import com.readme.keyword.KeywordDictionary;
 
 /**
- * 카드 API 가 받는 본문. 길이 제한은 테이블 칸의 길이와 같다. STAR 네 칸(text)은 길이 제한이 없다.
+ * 카드 API 가 받는 본문. 길이 제한은 테이블 칸의 길이와 같다. 칸에 길이가 없는 것(STAR 네 칸, 태그·근거 숫자의 개수)은
+ * 카드 검사가 감당할 크기로 막는다: STAR 한 칸 2,000자, 태그 30개, 근거 숫자 50개(2026-11-15 정함). 검사(숫자 뽑기)는
+ * 글 길이의 제곱으로 오래 걸려서, 막지 않으면 카드 한 장이 서버를 붙잡는다.
  */
 final class CardRequests {
 
@@ -25,8 +28,8 @@ final class CardRequests {
 	 */
 	record CardRequest(@NotBlank @Size(max = 200) String title, @Size(max = 50) String period,
 			@Size(max = 200) String org, @Size(max = 200) String role, @Size(max = 200) String summary,
-			List<@NotBlank @Size(max = 100) String> tags, List<String> usableFor, Star star,
-			List<@NotBlank @Size(max = 500) String> facts) {
+			@Size(max = 30) List<@NotBlank @Size(max = 100) String> tags, List<String> usableFor, @Valid Star star,
+			@Size(max = 50) List<@NotBlank @Size(max = 500) String> facts) {
 
 		/**
 		 * 저장할 값. 앞뒤 공백을 지우고 빈 글자는 넣지 않은 것으로 본다. 태그는 대표 표기로 바꾸고(사전에 없으면 친 그대로),

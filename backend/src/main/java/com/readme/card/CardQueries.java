@@ -22,6 +22,9 @@ import com.readme.card.CardRules.Content;
 /**
  * 카드 화면에 내보내는 것을 읽는다. 카드는 쿼리 넷(카드, 태그, 문항 유형, 근거 숫자)으로 읽고, 검사 결과는 읽은 값으로 매긴다.
  * 모두 그 사람의 카드만 읽는다.
+ *
+ * <p>검사(CardRules.check)는 쿼리가 끝나 DB 연결을 돌려준 뒤에 한다. 검사는 글이 길수록 오래 걸려서, 행을 읽는 중에 하면
+ * 그동안 연결(풀 5개)을 붙잡는다.
  */
 @Component
 class CardQueries {
@@ -104,7 +107,13 @@ class CardQueries {
 			params.put("q", filter.q());
 		}
 		Children children = children(userId, null);
-		return this.jdbc.sql(sql + CARDS_ORDER).params(params).query((rs, rowNum) -> card(rs, children)).list();
+		return this.jdbc.sql(sql + CARDS_ORDER)
+			.params(params)
+			.query((rs, rowNum) -> card(rs, children))
+			.list()
+			.stream()
+			.map(CardQueries::checked)
+			.toList();
 	}
 
 	/** 내 카드 한 장. 없거나 남의 카드면 비어 있다. */
@@ -114,7 +123,8 @@ class CardQueries {
 			.param("userId", userId)
 			.param("cardId", cardId)
 			.query((rs, rowNum) -> card(rs, children))
-			.optional();
+			.optional()
+			.map(CardQueries::checked);
 	}
 
 	/** 내 카드에 쓰인 태그와 카드 수. 많이 쓰인 것이 앞, 같으면 이름순이다. */
@@ -155,6 +165,7 @@ class CardQueries {
 					Collectors.mapping(Map.Entry::getValue, Collectors.toCollection(ArrayList::new))));
 	}
 
+	/** 행 하나를 카드로. 검사 결과는 비워 두고 {@link #checked} 가 매긴다. */
 	private CardResponse card(ResultSet rs, Children children) throws SQLException {
 		long id = rs.getLong("id");
 		String title = rs.getString("title");
@@ -166,11 +177,19 @@ class CardQueries {
 		List<String> types = children.types().getOrDefault(id, List.of());
 		List<String> facts = children.facts().getOrDefault(id, List.of());
 		String notes = rs.getString("extraction_notes");
-		List<CardIssue> issues = CardRules.check(new Content(title, period, summary, tags, types, star, facts));
 		return new CardResponse(id, title, period, rs.getString("org"), rs.getString("role"), tags,
 				(summary != null) ? summary : "", types, rs.getBoolean("verified"), star, facts,
 				rs.getString("visibility"), rs.getObject("source_id", Long.class), rs.getString("source_name"),
-				(notes != null) ? this.jsonMapper.readValue(notes, STRINGS) : List.of(), issues);
+				(notes != null) ? this.jsonMapper.readValue(notes, STRINGS) : List.of(), List.of());
+	}
+
+	/** 검사 결과를 매긴 카드. 빈 요약("")은 검사에서 비어 있는 것과 같다. */
+	private static CardResponse checked(CardResponse card) {
+		List<CardIssue> issues = CardRules.check(new Content(card.title(), card.period(), card.summary(), card.tags(),
+				card.usableFor(), card.star(), card.facts()));
+		return new CardResponse(card.id(), card.title(), card.period(), card.org(), card.role(), card.tags(),
+				card.summary(), card.usableFor(), card.verified(), card.star(), card.facts(), card.visibility(),
+				card.sourceId(), card.sourceName(), card.extractionNotes(), issues);
 	}
 
 	/** 목록의 거르기. 태그는 대표 표기, 문항 유형은 6종 중 하나다. */

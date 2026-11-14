@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
@@ -148,6 +149,24 @@ class CardWriteTests {
 	}
 
 	@Test
+	void starLengthAndTagAndFactCountsAreCappedSoTheCheckStaysCheap() {
+		long me = this.fixtures.user("다온");
+
+		assertInvalid(create(me, "{ \"title\": \"제목\", \"star\": { \"situation\": \"%s\" } }".formatted("가".repeat(2001))));
+		assertInvalid(create(me, "{ \"title\": \"제목\", \"star\": { \"result\": \"%s\" } }".formatted("-a".repeat(1001))));
+		assertInvalid(create(me, "{ \"title\": \"제목\", \"tags\": %s }".formatted(numbered("태그", 31))));
+		assertInvalid(create(me, "{ \"title\": \"제목\", \"facts\": %s }".formatted(numbered("사실 ", 51))));
+		String star = "가".repeat(2000);
+		assertThat(create(me, """
+				{
+				  "title": "제목", "tags": %s, "facts": %s,
+				  "star": { "situation": "%s", "task": "%s", "action": "%s", "result": "%s" }
+				}
+				""".formatted(numbered("태그", 30), numbered("사실 ", 50), star, star, star, star)))
+			.hasStatus(HttpStatus.CREATED);
+	}
+
+	@Test
 	void usableForMustBeOneOfTheSixTypesAfterReadingAliases() {
 		long me = this.fixtures.user("다온");
 
@@ -276,6 +295,11 @@ class CardWriteTests {
 
 	private MockMvcTester.MockMvcRequestBuilder verify(long userId, long id) {
 		return this.mvc.post().uri("/api/cards/{id}/verify", id).with(loginAs(userId)).with(xsrf());
+	}
+
+	/** ["태그1", "태그2", …] 처럼 번호를 붙인 JSON 배열. */
+	private static String numbered(String prefix, int count) {
+		return IntStream.rangeClosed(1, count).mapToObj((i) -> "\"" + prefix + i + "\"").toList().toString();
 	}
 
 	private static long idOf(MvcTestResult result) throws Exception {
