@@ -1,11 +1,13 @@
-// 설정 화면의 데이터 모양. 읽기는 GET /api/me뿐이고 나머지는 아직 설계에 없다(화면 API 대응 3.4의 16~18번).
+// 설정 화면의 데이터 모양. 읽기는 GET /api/me뿐이다.
+// shortcut: 내 정보 고치기, 메일 자동화, 탈퇴가 설계에 없어 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.4의 16~18번)
 
 export interface AccountInfo {
   name: string
   email: string
   emailVerified: boolean
   hasPassword: boolean
-  /** 연결한 구글 계정. 없으면 null(GET /api/me의 providers에는 이메일이 없다: 3.4의 17번) */
+  // shortcut: GET /api/me의 providers에는 이메일이 없다, 서버가 싣기로 하면 맞춘다(화면 API 대응 3.4의 17번)
+  /** 연결한 구글 계정. 없으면 null */
   google: { email: string } | null
 }
 

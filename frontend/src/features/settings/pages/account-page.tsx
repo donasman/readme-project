@@ -95,7 +95,7 @@ export function AccountPage() {
           </Row>
         ) : (
           <Row label="구글" value={<span className="text-sm text-text-secondary">연결하면 구글로도 로그인할 수 있습니다</span>}>
-            {/* 구글 연결: 서버가 없어 아직 동작 없음(로그인 설계 가정 3, 화면 API 대응 3.4의 17번) */}
+            {/* shortcut: 구글 연결은 서버가 없어 눌러도 아무 일이 없다, 로그인 설계의 계정 연결(L3)이 정해지면 만든다(화면 API 대응 3.4의 17번) */}
             <Button type="button" variant="outline" size="sm">
               구글 연결
             </Button>

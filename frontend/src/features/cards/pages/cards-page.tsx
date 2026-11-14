@@ -37,7 +37,7 @@ export function CardsPage() {
           <p className="text-text-secondary">문항 유형별로 꺼내 쓸 경험을 카드 한 장씩 정리합니다.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* 직접 만들기: 아직 시안이 없어 동작 없음 */}
+          {/* shortcut: 직접 만들기는 시안이 없어 눌러도 아무 일이 없다, 시안이 나오면 만든다 */}
           <Button variant="outline">
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             직접 만들기

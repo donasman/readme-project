@@ -18,6 +18,7 @@ export function cardSourcesLoader() {
   return getSources()
 }
 
+// shortcut: 크기(20MB)는 안내 글뿐이고 막지 않는다, 서버가 받는 형식과 크기를 정하면 여기서도 막는다(화면 API 대응 3.5의 24번)
 const ACCEPT = ".pdf,.docx,.hwpx,.pptx,.txt,.md"
 const POLL_MS = 1000
 
@@ -31,6 +32,7 @@ type Step =
 export function CardSourcesPage() {
   const sources = useLoaderData<typeof cardSourcesLoader>()
   const revalidator = useRevalidator()
+  // shortcut: 뽑는 중인 작업은 이 화면의 상태에만 있어 나갔다 오면 찾지 못한다, 진행 중인 작업을 찾는 방법이 정해지면 바꾼다(화면 API 대응 3.5의 23번)
   const [step, setStep] = useState<Step>({ kind: "upload" })
 
   // 뽑는 중: 1초마다 작업 상태를 묻고, 끝나면 "끝남"으로 넘어간다.

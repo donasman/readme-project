@@ -9,10 +9,9 @@ import { AuthField, AuthFooter, AuthFrame, authFooterLink, OrGoogle } from "../c
 
 /**
  * 로그인(시안 3종의 "A · 로그인", 모바일 390px). 넓은 화면에서는 같은 폭의 단을 가운데 둔다.
- * 서버가 없어 로그인과 구글은 아직 동작하지 않는다.
  */
 export function LoginPage() {
-  // 로그인: 서버를 붙이면 POST /api/auth/login 을 부른다(docs/리드미_설계_로그인_경험카드.md 4.1).
+  // shortcut: 서버가 없어 로그인은 아무것도 부르지 않는다, 서버를 붙이면 POST /api/auth/login 을 부른다(docs/리드미_설계_로그인_경험카드.md 4.1)
   const submit = (event: FormEvent) => event.preventDefault()
 
   return (

@@ -116,7 +116,7 @@ export function StatusIcon({ tone = "accent", children }: { tone?: "accent" | "m
   )
 }
 
-/** "또는" 줄과 구글로 계속하기. 구글 마크는 시안처럼 자리만 둔다. */
+/** "또는" 줄과 구글로 계속하기. */
 export function OrGoogle() {
   return (
     <div className="flex flex-col gap-4">
@@ -125,7 +125,7 @@ export function OrGoogle() {
         <span>또는</span>
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
       </div>
-      {/* 구글 로그인: 서버를 붙이면 /oauth2/authorization/google 로 보낸다 */}
+      {/* shortcut: 서버가 없어 눌러도 아무 일이 없고 구글 마크는 시안처럼 자리만 있다, 서버를 붙이면 /oauth2/authorization/google 로 보내고 마크를 넣는다 */}
       <Button type="button" variant="outline" className="w-full">
         <span aria-hidden="true" className="size-[18px] rounded-full border-[1.5px] border-dashed border-border-strong" />
         <span>구글로 계속하기</span>

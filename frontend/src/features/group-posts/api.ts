@@ -1,6 +1,6 @@
 // 그룹 공고 화면이 공고 데이터를 가져오고 바꾸는 유일한 곳. 그룹과 보는 사람은 domain에서 읽는다.
-// 지금은 백엔드 연결 전이라 가짜 서버(mocks/db.ts)를 부른다. 서버가 생기면 이 파일의 함수 안만
-// fetch 호출로 바꾸고, 함수 이름과 돌려주는 모양(types.ts)은 그대로 둔다.
+// 함수 이름과 돌려주는 모양(types.ts)은 서버를 붙여도 그대로 둔다.
+// shortcut: 가짜 서버(mocks/db.ts)를 부른다, 백엔드를 연결하면 함수 안만 fetch로 바꾼다(읽어 오기 말고는 서버에 있다)
 import * as db from "@/mocks/db"
 
 import type { Comment, Deadline, GroupPostData, GroupPostsData, MyState, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
@@ -27,7 +27,7 @@ export async function addComment(groupId: string, postId: string, text: string):
 
 /** 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일. 이 그룹에 이미 있으면 그 공고를, 읽지 못하면 failed를 돌려준다. */
 export async function readPost(groupId: string, input: PostReadInput): Promise<ReadPostResult> {
-  // 가짜 서버는 파일을 읽지 않는다. 서버가 생기면 파일을 그대로 보낸다
+  // shortcut: 읽어 오기는 설계에 없어 가짜 서버가 흉내 내고 파일은 이름만 보낸다, 설계가 생기면 파일을 그대로 보낸다(화면 API 대응 3.2의 7~9번)
   return db.readPosting(groupId, input.kind === "file" ? { kind: "file", name: input.file.name } : input)
 }
 

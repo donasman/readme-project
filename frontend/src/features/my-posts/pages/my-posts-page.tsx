@@ -58,7 +58,7 @@ export function MyPostsPage() {
               className="pl-10 md:text-base"
             />
           </div>
-          {/* 공고 넣기(그룹 없이 내 공고에 넣기): 화면이 아직 없다(화면 API 대응 3.3의 11번) */}
+          {/* shortcut: 공고 넣기(그룹 없이 내 공고에 넣기)는 화면이 없어 눌러도 아무 일이 없다, 화면이 정해지면 만든다(화면 API 대응 3.3의 11번) */}
           <PlaceholderLink className={buttonVariants({ className: "flex-none" })}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             공고 넣기

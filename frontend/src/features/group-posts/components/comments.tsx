@@ -81,6 +81,7 @@ export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }
                   part.href === undefined ? (
                     <span key={index}>{part.text}</span>
                   ) : part.href === "#" ? (
+                    // shortcut: 예시 데이터의 주소 없는 링크(#)는 자리만 둔다, 서버를 붙이면 이 갈래를 지운다
                     <PlaceholderLink key={index} className={textLink}>
                       {part.text}
                     </PlaceholderLink>

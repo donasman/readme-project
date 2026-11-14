@@ -1,5 +1,5 @@
-// 메일 확인함이 서버와 주고받는 곳. 메일 자동화 API는 아직 설계에 없다(화면 API 대응 3.4의 16번).
-// 지금은 가짜 서버(mocks/mail-db.ts)를 부른다.
+// 메일 확인함이 서버와 주고받는 곳.
+// shortcut: 메일 자동화 API는 설계에 없어 가짜 서버(mocks/mail-db.ts)를 부른다, 설계가 생기면 함수 안만 그 API로 바꾼다(화면 API 대응 3.4의 16번)
 import * as db from "@/mocks/mail-db"
 
 import type { Mailbox } from "./types"

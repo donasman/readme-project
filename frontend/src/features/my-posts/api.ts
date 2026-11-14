@@ -1,5 +1,5 @@
-// 홈과 내 공고 화면이 서버와 주고받는 곳. 내 공고 조회와 홈 모음은 아직 설계에 없고(화면 API 대응 3.3의 10, 14번),
-// 상태 바꾸기만 PUT /api/me/postings/{postingId}가 있다. 지금은 가짜 서버(mocks/my-db.ts)를 부른다.
+// 홈과 내 공고 화면이 서버와 주고받는 곳. 상태 바꾸기만 PUT /api/me/postings/{postingId}가 서버에 있다.
+// shortcut: 내 공고 조회, 메모, 맞는 카드, 홈 모음은 설계에 없어 가짜 서버(mocks/my-db.ts)를 부른다, 설계가 생기면 함수 안만 그 API로 바꾼다(화면 API 대응 3.3의 10, 12, 13, 14번)
 import { mailSummary } from "@/mocks/mail-db"
 import * as db from "@/mocks/my-db"
 

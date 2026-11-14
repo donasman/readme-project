@@ -1,7 +1,7 @@
-// 경험카드 화면이 서버와 주고받는 유일한 곳(docs/리드미_설계_로그인_경험카드.md 4.2, 4.3).
-// 지금은 가짜 서버(mocks/cards-db.ts)를 부른다. 서버가 생기면 함수 안만 /api/cards, /api/card-sources,
-// /api/card-extractions, /api/keywords 호출로 바꾸고(docs/리드미_화면_API_대응.md 2.2), 함수 이름과
-// 돌려주는 모양(types.ts)은 그대로 둔다.
+// 경험카드 화면이 서버와 주고받는 유일한 곳(docs/리드미_설계_로그인_경험카드.md 4.2, 4.3). 함수 이름과
+// 돌려주는 모양(types.ts)은 서버를 붙여도 그대로 둔다.
+// shortcut: 가짜 서버(mocks/cards-db.ts)를 부른다, 서버가 생기면 함수 안만 /api/cards, /api/card-sources,
+// /api/card-extractions, /api/keywords 호출로 바꾼다(docs/리드미_화면_API_대응.md 2.2)
 import * as db from "@/mocks/cards-db"
 
 import { chunkCount } from "./card-text"
@@ -47,7 +47,7 @@ export async function uploadSource(input: { file: File } | { text: string }): Pr
     chars = input.text.length
   } else {
     name = input.file.name
-    // 가짜 서버: 글 파일은 그대로 세고, 그 밖의 파일(PDF, DOCX …)은 크기로 어림한다. 실제로는 서버가 읽는다.
+    // shortcut: 글 파일만 세고 그 밖의 파일(PDF, DOCX …)은 크기로 어림한다, 서버를 붙이면 파일을 보내고 서버가 센 값을 쓴다
     chars = /\.(txt|md)$/i.test(name) ? (await input.file.text()).length : Math.max(1, Math.round(input.file.size / 2))
   }
   const source = db.addSource(name, chars)

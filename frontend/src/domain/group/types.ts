@@ -6,8 +6,9 @@ export interface Member {
   name: string
 }
 
-/** 그룹 안의 멤버: 들어온 날까지(GET /api/groups의 members. 화면 API 대응 3.1의 4번). */
+/** 그룹 안의 멤버: 들어온 날까지(GET /api/groups의 members). */
 export interface GroupMember extends Member {
+  // shortcut: 서버의 members에는 들어온 날이 없다, 서버가 싣는 방법을 정하면 맞춘다(화면 API 대응 3.1의 4번)
   /** "YYYY-MM-DD" */
   joinedAt: string
 }
@@ -28,6 +29,7 @@ export interface Group {
   openPostCount: number
   /** 내가 이 그룹에 정한 공개 범위 */
   myDisclosure: Disclosure
-  /** 진행 중인 공고 가운데 마감일이 가장 가까운 것. 없으면 null(화면 API 대응 3.1의 5번) */
+  // shortcut: GET /api/groups에 없는 칸이다, 서버가 싣는 방법을 정하면 맞춘다(화면 API 대응 3.1의 5번)
+  /** 진행 중인 공고 가운데 마감일이 가장 가까운 것. 없으면 null */
   nearestDeadline: { date: string; company: string; title: string } | null
 }

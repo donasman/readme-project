@@ -56,7 +56,9 @@ export interface CardDetail extends ExperienceCard {
   /** 지금은 나만 보기 하나다(설계 가정 9) */
   visibility: "PRIVATE"
   sourceId: number | null
+  // shortcut: 카드 응답에는 sourceId만 있다, 자료 이름을 싣는 방법이 정해지면 맞춘다(화면 API 대응 3.5의 22번)
   sourceName: string | null
+  // shortcut: 원문을 주는 API와 조각 위치 칸이 없다, 정해지면 맞춘다(화면 API 대응 3.5의 21번)
   /** 이 카드를 뽑은 자료 원문 부분. 문단은 줄바꿈으로 나눈다 */
   sourceExcerpt: string | null
   extractionNotes: string[]
@@ -92,6 +94,7 @@ export interface ExtractionJob {
   skippedSameAs: string[]
 }
 
+// shortcut: 응답 모양은 프런트가 정했다, 설계에 응답이 정해지면 맞춘다(화면 API 대응 3.5의 25번)
 /** 태그 입력 후보(GET /api/keywords?q=): 다른 표기를 쳐도 대표 표기를 준다. */
 export interface KeywordSuggestion {
   label: string

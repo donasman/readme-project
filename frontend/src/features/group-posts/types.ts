@@ -75,7 +75,8 @@ export interface GroupPostData {
   post: GroupPostDetail
 }
 
-// ---- 공고 올리기(시안 7차 "공고 올리기", "칸 확인"). 읽어 오기 API는 아직 설계에 없다(화면 API 대응 3.2의 7~9번) ----
+// ---- 공고 올리기(시안 7차 "공고 올리기", "칸 확인") ----
+// shortcut: 읽어 오기의 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.2의 7~9번)
 
 /** 공고를 넣는 방법: 링크, 붙여넣은 본문(원문 링크는 비워도 된다), 파일. */
 export type PostReadInput =
