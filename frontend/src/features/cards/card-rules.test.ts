@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { countUnverified, DEFAULT_CARD_FILTERS, filterCards, orderTags, orgAndRole, type CardFilters } from "./card-rules"
+import { countUnverified, DEFAULT_CARD_FILTERS, filterCards, orderTags, orgAndRole, startFrom, type CardFilters } from "./card-rules"
 import type { ExperienceCard } from "./types"
 
 let seq = 0
@@ -54,5 +54,16 @@ describe("orgAndRole", () => {
     expect(orgAndRole({ org: "예시 스터디", role: "스터디장" })).toBe("예시 스터디 · 스터디장")
     expect(orgAndRole({ org: "개인 프로젝트", role: null })).toBe("개인 프로젝트")
     expect(orgAndRole({ org: null, role: null })).toBe("")
+  })
+})
+
+describe("startFrom", () => {
+  const cards = [{ id: 1 }, { id: 2 }, { id: 3 }]
+  it("고른 카드부터 보고 앞 카드를 뒤로 돌려 하나도 빠뜨리지 않는다", () => {
+    expect(startFrom(cards, 3).map((c) => c.id)).toEqual([3, 1, 2])
+  })
+  it("첫 카드나 없는 id면 그대로", () => {
+    expect(startFrom(cards, 1).map((c) => c.id)).toEqual([1, 2, 3])
+    expect(startFrom(cards, 9).map((c) => c.id)).toEqual([1, 2, 3])
   })
 })

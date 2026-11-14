@@ -11,7 +11,7 @@ import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
-import { orgAndRole, STAR_PARTS } from "../card-rules"
+import { orgAndRole, STAR_PARTS, startFrom } from "../card-rules"
 import { dropFlaggedSentences, flaggedValues, markUsedNumbers } from "../card-text"
 import { CardsSubpage, FactList, FlaggedText, ProgressBar, StatBox } from "../components/card-bits"
 import type { CardDetail } from "../types"
@@ -20,7 +20,7 @@ import type { CardDetail } from "../types"
 export async function cardReviewLoader({ request }: LoaderFunctionArgs) {
   const cards = await getUnverifiedCards()
   const start = Number(new URL(request.url).searchParams.get("card"))
-  return { cards, startIndex: Math.max(0, cards.findIndex((c) => c.id === start)) }
+  return { cards: startFrom(cards, start) }
 }
 
 /** 결과는 확인 필요 상자와 함께 따로 그린다. */
@@ -28,8 +28,8 @@ const STAR_BEFORE_RESULT = STAR_PARTS.filter(([key]) => key !== "result")
 
 /** 카드 확인(6차): 뽑은 카드를 원문과 나란히 한 장씩 보고 확인·나중에·버리기를 고른다. */
 export function CardReviewPage() {
-  const { cards, startIndex } = useLoaderData<typeof cardReviewLoader>()
-  const [index, setIndex] = useState(startIndex)
+  const { cards } = useLoaderData<typeof cardReviewLoader>()
+  const [index, setIndex] = useState(0)
   const [edited, setEdited] = useState<Record<number, CardDetail>>({})
   const [counts, setCounts] = useState({ verified: 0, later: 0, dropped: 0 })
   const [busy, setBusy] = useState(false)
