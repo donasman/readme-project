@@ -3,6 +3,7 @@ package com.readme.postingread;
 import static com.readme.postingread.HtmlTextTests.resource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.net.URI;
 import java.time.Duration;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.readme.posting.DeadlineKind;
 import com.readme.postingread.PostingReadResponse.DeadlineValue;
@@ -27,11 +30,17 @@ class PostingReaderTests {
 
 	private final List<String> fetched = new ArrayList<>();
 
+	/** careers.example.com 에 돌려줄 페이지. */
+	private String companyPage = "";
+
 	private final PostingReader reader = new PostingReader(new PageFetcher("test", PageFetcherTests.settings(Duration.ofSeconds(1), false)) {
 
 		@Override
 		Page html(String url, String referer) {
 			PostingReaderTests.this.fetched.add(url + " ← " + referer);
+			if (url.contains("careers.example.com")) {
+				return new Page(URI.create(url), PostingReaderTests.this.companyPage);
+			}
 			String name = url.contains("view-detail") ? "saramin-sample-detail.html"
 					: url.contains("jobs/view") ? "saramin-sample.html"
 					: url.contains("GI_Read_Comt_Ifrm") ? "jobkorea-sample-detail.html" : "jobkorea-sample.html";
@@ -79,6 +88,24 @@ class PostingReaderTests {
 		assertThat(read.sections()).extracting(SectionValue::title).startsWith("회사 소개", "주요 업무", "필수 요건", "우대 사항");
 		// 항목의 "- " 글머리는 떼고 ※ 안내는 둔다
 		assertThat(read.sections().get(3).items()).contains("※ 본 채용은 채용 완료 시 조기 마감될 수 있습니다.");
+	}
+
+	/** 페이지나 붙여넣은 글에 공백 5만 칸(보통 공백과 em 공백)이 있어도 읽기가 바로 끝난다. */
+	@ParameterizedTest
+	@ValueSource(strings = { " ", " " })
+	void longRunsOfSpacesTakeLinearTime(String space) {
+		String run = space.repeat(50_000);
+		this.companyPage = "<title>x" + run + "x</title><script type=\"application/ld+json\">{\"@type\":\"JobPosting\",\"title\":\"x" + run
+				+ "\",\"hiringOrganization\":{\"name\":\"x" + run + "(a)\"}}</script><h2>담당 업무</h2><ul><li>[" + run + "]</li></ul>"
+				+ "<h2>자격 요건</h2><p>마감일 :" + run + "x</p><p>x" + run + "- 사람인</p>";
+		String text = String.join("\n", "[예시" + run + "] 개발자(D-1)" + run, "마감일 : ~11/20" + run, "주요 업무", "-" + run + "개발",
+				"[" + run + "]", "자격 요건", "- Java" + run + "3년");
+		assertTimeoutPreemptively(Duration.ofSeconds(1), () -> {
+			assertThat(this.reader.fromUrl("https://careers.example.com/jobs/1", TODAY).sections()).extracting(SectionValue::title)
+				.containsExactly("주요 업무", "필수 요건");
+			assertThat(this.reader.fromText(text, null, TODAY).sections()).extracting(SectionValue::title)
+				.containsExactly("주요 업무", "필수 요건");
+		});
 	}
 
 }

@@ -25,6 +25,13 @@ final class PostingSections {
 
 	private static final int UI = U | Pattern.CASE_INSENSITIVE;
 
+	/**
+	 * 공백으로 시작하는 정규식 앞에 붙인다: 찾기를 시작한 자리(\G)이거나 바로 앞이 공백이 아닐 때만 맞추기 시작한다.
+	 * 결과는 jobfit 의 정규식과 같다. 가장 앞의 맞는 자리는 공백 줄의 한가운데일 수 없기 때문이다(한 칸 앞에서도 맞는다).
+	 * 이것이 없으면 긴 공백 줄의 자리마다 공백을 끝까지 다시 읽어 공백 수의 제곱만큼 걸린다(공백 4만 칸에 몇 초).
+	 */
+	static final String RUN_START = "(?:\\G|(?<!\\s))";
+
 	/** 섹션 이름(정규화) → 헤더 정규식. 앞에서부터 본다. 헤더로 보려면 줄이 짧아야 한다(HEADER_MAX_LEN). */
 	private static final Map<String, Pattern> SECTION_PATTERNS = ordered(
 			"모집부문", Pattern.compile("모집\\s*(부문|분야|직무|포지션)|채용\\s*(부문|분야|포지션)|포지션\\s*소개", U),
@@ -59,7 +66,13 @@ final class PostingSections {
 	private static final Pattern LI_MARK = Pattern.compile("^-\\s+", U);
 
 	/** "[근무 조건]" 같은 괄호 헤더. */
-	private static final Pattern BRACKETS = Pattern.compile("^[\\[(【<]\\s*|\\s*[\\])】>]$", U);
+	private static final Pattern BRACKETS = Pattern.compile("^[\\[(【<]\\s*|" + RUN_START + "\\s*[\\])】>]$", U);
+
+	/**
+	 * 글머리를 뗀 줄이 이보다 길면 괄호를 볼 것도 없이 내용이다. 괄호와 공백을 떼도 머리(30자 이하)가 되지 않는다.
+	 * jobfit 과 결과가 다른 것은 괄호 안쪽이나 줄 앞에 공백을 30칸 넘게 둔 줄뿐이다.
+	 */
+	private static final int CONTENT_LEN = 60;
 
 	/** 회사 이름의 괄호·㈜는 길이에서 뺀다. "㈜예시컴퍼니(example)를 소개해요"가 이름 길이 때문에 헤더에서 빠지지 않게. */
 	private static final Pattern NAME_DECOR = Pattern.compile("\\([^)]{1,30}\\)|㈜|\\(주\\)", U);
@@ -99,7 +112,7 @@ final class PostingSections {
 	private static final Pattern MANY_NL = Pattern.compile("\\n{3,}");
 
 	private static final Pattern SITE_SUFFIX = Pattern
-		.compile("\\s*[-|–—:]\\s*(사람인|잡코리아|원티드|점핏|리멤버|프로그래머스|Wanted|Saramin|JobKorea)\\s*$", UI);
+		.compile(RUN_START + "\\s*[-|–—:]\\s*(사람인|잡코리아|원티드|점핏|리멤버|프로그래머스|Wanted|Saramin|JobKorea)\\s*$", UI);
 
 	private PostingSections() {
 	}
@@ -157,7 +170,8 @@ final class PostingSections {
 		sections.add(new Section(HEAD, "", new ArrayList<>()));
 		for (String line : Py.lines(text)) {
 			String raw = LI_MARK.matcher(Py.strip(Py.strip(Py.strip(line), "| "))).replaceFirst("");
-			String core = Py.strip(BRACKETS.matcher(Py.lstrip(raw, BULLETS)).replaceAll(""));
+			String unbulleted = Py.lstrip(raw, BULLETS);
+			String core = (Py.len(unbulleted) > CONTENT_LEN) ? "" : Py.strip(BRACKETS.matcher(unbulleted).replaceAll(""));
 			String name = headerName(raw, core);
 			if (name != null) {
 				sections.add(new Section(name, core, new ArrayList<>()));

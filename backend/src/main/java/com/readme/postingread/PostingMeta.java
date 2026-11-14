@@ -44,17 +44,25 @@ final class PostingMeta {
 
 	private static final Pattern CORP = Pattern.compile("㈜|\\(\\s*주\\s*\\)|\\(\\s*유\\s*\\)|주식회사|유한회사", U);
 
+	private static final String RUN_START = PostingSections.RUN_START;
+
 	/** ㈜예시컴퍼니(example) 의 (example). */
-	private static final Pattern PAREN_LATIN = Pattern.compile("\\s*\\([A-Za-z0-9 .&,'’-]+\\)\\s*", U);
+	private static final Pattern PAREN_LATIN = Pattern.compile(RUN_START + "\\s*\\([A-Za-z0-9 .&,'’-]+\\)\\s*", U);
 
 	/** [시리즈A투자유치] */
 	private static final Pattern LEADING_TAGS = Pattern.compile("^(\\s*\\[[^\\]]*\\]\\s*)+", U);
 
-	private static final Pattern DDAY = Pattern.compile("\\s*\\((D-\\d+|D-day|오늘\\s*마감|마감\\s*임박)\\)",
+	private static final Pattern DDAY = Pattern.compile(RUN_START + "\\s*\\((D-\\d+|D-day|오늘\\s*마감|마감\\s*임박)\\)",
 			U | Pattern.CASE_INSENSITIVE);
 
 	private static final Pattern SITE_SUFFIX = Pattern.compile(
-			"\\s*[-|–—]\\s*(사람인|잡코리아|점핏|원티드|리멤버|프로그래머스|Wanted|JobKorea|Saramin)\\s*$", U | Pattern.CASE_INSENSITIVE);
+			RUN_START + "\\s*[-|–—]\\s*(사람인|잡코리아|점핏|원티드|리멤버|프로그래머스|Wanted|JobKorea|Saramin)\\s*$",
+			U | Pattern.CASE_INSENSITIVE);
+
+	/** JSON-LD 의 회사명과 공고명은 칸의 길이(postings.company 200자, title 300자)까지만 읽는다. 더 길면 읽지 못한 것으로 본다. */
+	private static final int MAX_COMPANY = 200;
+
+	private static final int MAX_TITLE = 300;
 
 	/** 사람인·점핏: "[(주)예시랩] 백엔드 (Backend) 개발자(D-7)" */
 	private static final Pattern BRACKET_TITLE = Pattern.compile("^\\[([^\\]]+)\\]\\s*(.+)$", U);
@@ -149,8 +157,8 @@ final class PostingMeta {
 					continue;
 				}
 				JsonNode org = item.get("hiringOrganization");
-				String company = unescape((org != null && org.isObject()) ? text(org.get("name")) : text(org));
-				String title = unescape(text(item.get("title")));
+				String company = upTo(MAX_COMPANY, unescape((org != null && org.isObject()) ? text(org.get("name")) : text(org)));
+				String title = upTo(MAX_TITLE, unescape(text(item.get("title"))));
 				String valid = text(item.get("validThrough"));
 				Read deadline = validThrough(valid);
 				Meta meta = new Meta(cleanCompany(company), company, cleanJobTitle(title), title, deadline,
@@ -249,6 +257,11 @@ final class PostingMeta {
 
 	private static String unescape(String text) {
 		return Parser.unescapeEntities(text, false);
+	}
+
+	/** 칸보다 긴 값은 "". jobfit 은 길이를 보지 않는다. */
+	private static String upTo(int max, String value) {
+		return (Py.len(value) > max) ? "" : value;
 	}
 
 }

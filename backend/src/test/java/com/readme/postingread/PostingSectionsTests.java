@@ -3,13 +3,16 @@ package com.readme.postingread;
 import static com.readme.postingread.HtmlTextTests.resource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.readme.postingread.PostingSections.Section;
 
@@ -153,6 +156,22 @@ class PostingSectionsTests {
 	@Test
 	void cleanTitleDropsTrailingSiteNameAfterColon() {
 		assertThat(PostingSections.cleanTitle("백엔드 : 점핏 ")).isEqualTo("백엔드");
+	}
+
+	/** 공백 5만 칸(보통 공백과 em 공백)도 바로 끝난다. 괄호 머리 정규식이 공백 수의 제곱만큼 걸리던 것을 막았다. */
+	@ParameterizedTest
+	@ValueSource(strings = { " ", " " })
+	void longRunsOfSpacesTakeLinearTime(String space) {
+		String run = space.repeat(50_000);
+		String text = String.join("\n", "주요 업무", "[" + run + "x" + run + "]", "x" + run + "]", "마감일 :" + run + "x", "자격 요건",
+				"- Java" + run + "3년");
+		assertTimeoutPreemptively(Duration.ofSeconds(1), () -> {
+			assertThat(PostingSections.split(text)).extracting(Section::name).containsExactly("주요업무", "자격요건");
+			assertThat(PostingSections.cleanTitle("x" + run + "x" + run + "- 사람인")).isEqualTo("x" + run + "x");
+			assertThat(PostingSections.dropNoise(text)).isEqualTo(text);
+			assertThat(PostingSections.hasPostingBody(text)).isTrue();
+			assertThat(PostingSections.summaryFields(text)).containsExactly(Map.entry("마감일", "x"));
+		});
 	}
 
 	private static List<String> names(String text) {

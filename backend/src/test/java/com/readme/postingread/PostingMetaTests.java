@@ -2,12 +2,15 @@ package com.readme.postingread;
 
 import static com.readme.postingread.HtmlTextTests.resource;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+import java.time.Duration;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.readme.posting.DeadlineKind;
 import com.readme.postingread.Deadlines.Read;
@@ -170,6 +173,32 @@ class PostingMetaTests {
 	void summaryDateWithoutAYear() {
 		Meta meta = PostingMeta.read("<p>마감일 : ~11/20(목) 23:59</p>", TODAY);
 		assertThat(meta.deadline()).isEqualTo(new Read(DeadlineKind.DATE, LocalDate.of(2026, 11, 20)));
+	}
+
+	/** 공백 5만 칸(보통 공백과 전각 폭의 em 공백)도 바로 끝난다. 앞에 공백이 오는 정규식이 공백 수의 제곱만큼 걸리던 것을 막았다. */
+	@ParameterizedTest
+	@ValueSource(strings = { " ", " " })
+	void longRunsOfSpacesTakeLinearTime(String space) {
+		String run = space.repeat(50_000);
+		assertTimeoutPreemptively(Duration.ofSeconds(1), () -> {
+			assertThat(PostingMeta.cleanCompany("x" + run + "x")).isEqualTo("x x");
+			assertThat(PostingMeta.cleanJobTitle("x" + run + "x")).isEqualTo("x x");
+			assertThat(PostingMeta.cleanJobTitle("x" + run + "(D-1)" + run + "- 사람인")).isEqualTo("x");
+			assertThat(PostingMeta.read("<title>[예시]" + run + "개발자" + run + "- 사람인</title>", TODAY).title()).isEqualTo("개발자");
+		});
+	}
+
+	@Test
+	void jsonLdValuesLongerThanTheirColumnsAreNotRead() {
+		String spaces = " ".repeat(1_000_000);
+		Meta meta = PostingMeta.read("<script type=\"application/ld+json\">{\"@type\":\"JobPosting\",\"title\":\"" + "가".repeat(301)
+				+ "\",\"hiringOrganization\":{\"name\":\"x" + spaces + "(a)\"}}</script>", TODAY);
+		assertThat(meta.company()).isEmpty();
+		assertThat(meta.title()).isEmpty();
+		Meta longTitle = PostingMeta.read("<script type=\"application/ld+json\">{\"@type\":\"JobPosting\",\"title\":\"" + "가".repeat(301)
+				+ "\",\"hiringOrganization\":{\"name\":\"" + "나".repeat(200) + "\"}}</script>", TODAY);
+		assertThat(longTitle.company()).hasSize(200);
+		assertThat(longTitle.title()).isEmpty();
 	}
 
 	@Test
