@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { DisclosureOptions } from "@/domain/group/disclosure-options"
 import type { Disclosure, Group } from "@/domain/group/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
+import { ChoiceInput } from "@/shared/components/choice-input"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { PlaceholderLink } from "@/shared/components/placeholder-link"
 
@@ -76,14 +77,13 @@ function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave:
         />
       </FormField>
       <label className="-my-2 flex min-h-11 cursor-pointer items-center gap-2.5 text-sm">
-        <input
+        <ChoiceInput
           type="checkbox"
           checked={always}
           onChange={(e) => {
             setAlways(e.target.checked)
             setMissing(false)
           }}
-          className="size-[18px] flex-none accent-primary"
         />
         <span>날짜 없이 상시 채용입니다</span>
       </label>

@@ -3,6 +3,7 @@ import { Link, useLoaderData, useNavigate } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ChoiceInput } from "@/shared/components/choice-input"
 import { Dot } from "@/shared/components/dot"
 import { FieldError, FormField, noteId } from "@/shared/components/form-field"
 import { sectionTitle, subLabel } from "@/shared/components/heading"
@@ -101,7 +102,7 @@ export function WithdrawPage() {
           </FormField>
           <div className="flex flex-col gap-1">
             <label className="flex min-h-11 cursor-pointer items-start gap-2.5 text-sm">
-              <input
+              <ChoiceInput
                 type="checkbox"
                 checked={agreed}
                 aria-invalid={errors.agreed ? true : undefined}
@@ -110,7 +111,7 @@ export function WithdrawPage() {
                   setAgreed(e.target.checked)
                   setErrors((er) => ({ ...er, agreed: undefined }))
                 }}
-                className="mt-0.5 size-[18px] flex-none accent-primary"
+                className="mt-0.5"
               />
               <span>지워진 자료는 되돌릴 수 없다는 것을 확인했습니다.</span>
             </label>

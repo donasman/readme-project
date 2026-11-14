@@ -1,5 +1,6 @@
 import { useId } from "react"
 
+import { ChoiceInput } from "@/shared/components/choice-input"
 import { joinClasses } from "@/shared/lib/utils"
 
 import { DISCLOSURE_DESCRIPTIONS, DISCLOSURE_LABELS, DISCLOSURES } from "./disclosure"
@@ -27,12 +28,12 @@ export function DisclosureOptions({ value, onChange, labelledBy }: DisclosureOpt
               on ? "border-primary bg-accent-subtle" : "border-border bg-transparent"
             )}
           >
-            <input
+            <ChoiceInput
               type="radio"
               name={name}
               checked={on}
               onChange={() => onChange(option)}
-              className="mt-0.5 size-[18px] flex-none accent-primary"
+              className="mt-0.5"
             />
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="text-sm font-bold">{DISCLOSURE_LABELS[option]}</span>
