@@ -26,10 +26,12 @@ export function matchesAccept(fileName: string, accept: string): boolean {
   return accept.split(",").some((ext) => name.endsWith(ext.trim().toLowerCase()))
 }
 
-const graphemes = new Intl.Segmenter()
+// Intl.Segmenter가 없는 옛 브라우저(Firefox 125 전)에서도 이 모듈을 읽다 앱 전체가 멈추지 않게 있을 때만 만든다
+const graphemes = typeof Intl.Segmenter === "function" ? new Intl.Segmenter() : null
 
 /** 첫 글자 하나(이름·그룹 이름의 동그라미). 이모지와 조합형 한글도 반쪽으로 자르지 않는다. */
 export function firstChar(text: string): string {
+  if (!graphemes) return Array.from(text)[0] ?? ""
   for (const { segment } of graphemes.segment(text)) return segment
   return ""
 }
