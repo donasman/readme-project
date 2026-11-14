@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -110,6 +111,15 @@ class DeadlinesTests {
 			""")
 	void stillUnreadable(String value) {
 		assertThat(Deadlines.parse(value, TODAY)).isEqualTo(Read.UNKNOWN);
+	}
+
+	@Test
+	void february29thOnlyInALeapYear() {
+		// 2026-11-13 에서 가까운 2월은 2027년(평년)이다. 2/28 로 바꾸지 않고 읽지 못한 것으로 둔다
+		assertThat(Deadlines.parse("2/29", TODAY)).isEqualTo(Read.UNKNOWN);
+		assertThat(Deadlines.parse("2월 29일", TODAY)).isEqualTo(Read.UNKNOWN);
+		assertThat(Deadlines.parse("2/29", LocalDate.of(2027, 11, 13))).isEqualTo(new Read(DeadlineKind.DATE, LocalDate.of(2028, 2, 29)));
+		assertThat(Deadlines.parse("2/28", TODAY)).isEqualTo(new Read(DeadlineKind.DATE, LocalDate.of(2027, 2, 28)));
 	}
 
 }

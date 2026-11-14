@@ -80,7 +80,10 @@ final class Deadlines {
 			Matcher m = pattern.matcher(s);
 			if (m.find()) {
 				try {
-					return date(nearestYear(MonthDay.of(number(m, 1), number(m, 2)), today));
+					MonthDay monthDay = MonthDay.of(number(m, 1), number(m, 2));
+					int year = nearestYear(monthDay, today);
+					// 그 해에 없는 날(평년의 2/29)이면 읽지 못한 것이다. atYear 는 말없이 2/28 로 바꾼다
+					return monthDay.isValidYear(year) ? date(monthDay.atYear(year)) : Read.UNKNOWN;
 				}
 				catch (DateTimeException ex) {
 					return Read.UNKNOWN;
@@ -91,15 +94,15 @@ final class Deadlines {
 	}
 
 	/** 오늘에서 앞뒤 6개월 안의 해. 공고의 마감은 대개 몇 주 안이라, 12월에 읽은 "1/5"는 다음 해다. */
-	private static LocalDate nearestYear(MonthDay monthDay, LocalDate today) {
-		LocalDate date = monthDay.atYear(today.getYear());
+	private static int nearestYear(MonthDay monthDay, LocalDate today) {
+		LocalDate date = monthDay.atYear(today.getYear()); // 견주기만 한다. 평년의 2/29 는 2/28 로 견준다
 		if (date.isBefore(today.minusMonths(6))) {
-			return monthDay.atYear(today.getYear() + 1);
+			return today.getYear() + 1;
 		}
 		if (date.isAfter(today.plusMonths(6))) {
-			return monthDay.atYear(today.getYear() - 1);
+			return today.getYear() - 1;
 		}
-		return date;
+		return today.getYear();
 	}
 
 	private static Read date(LocalDate date) {
