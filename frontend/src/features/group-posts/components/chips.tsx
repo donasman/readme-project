@@ -5,11 +5,6 @@ import { cn } from "@/shared/lib/utils"
 
 const chip = "inline-flex h-6 items-center rounded-full px-2.5 text-xs whitespace-nowrap"
 
-/** 관심 멤버 칸의 "나". 하이라이트색은 "내 것"에만 쓴다. */
-export function MeChip() {
-  return <span className={cn(chip, "bg-highlight font-bold text-highlight-foreground")}>나</span>
-}
-
 /** 지원함 표시: 강조색 옅은 채움 위 체크와 글자. */
 export function AppliedBadge({ children, className }: { children: ReactNode; className?: string }) {
   return (

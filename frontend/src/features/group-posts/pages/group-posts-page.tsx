@@ -9,10 +9,11 @@ import { useViewer } from "@/domain/session/use-viewer"
 import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { SurfaceCard } from "@/shared/components/surface-card"
-import { CheckIcon, PlusIcon, SearchIcon } from "@/shared/icons"
+import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { getGroupPosts, setDeadline } from "../api"
+import { AppliedBadge } from "../components/chips"
 import { ListToolbar } from "../components/list-toolbar"
 import { DeadlineDialog } from "../components/post-dialogs"
 import { POST_GRID, PostRow } from "../components/post-row"
@@ -94,10 +95,7 @@ export function GroupPostsPage() {
           <span>공고</span>
           <span className="inline-flex items-center gap-1.5">
             <span>관심 멤버</span>
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-accent-subtle pr-2 pl-1.5 text-accent-strong">
-              <CheckIcon className="size-3" strokeWidth={2.5} />
-              <span>지원함</span>
-            </span>
+            <AppliedBadge className="pr-2">지원함</AppliedBadge>
           </span>
           <span>내 상태</span>
           <span>댓글</span>

@@ -2,12 +2,13 @@ import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import type { Viewer } from "@/domain/session/types"
+import { Pill } from "@/shared/components/pill"
 import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
 import { formatMonthDay } from "@/shared/lib/date"
 
 import { deadlineText } from "@/domain/posting/deadline"
 import type { PostRow as Row } from "../list-rules"
-import { MeChip, MemberChip, NewBadge, StatusPill } from "./chips"
+import { MemberChip, NewBadge, StatusPill } from "./chips"
 
 /** 칸 6개: 마감, 공고, 관심 멤버, 내 상태, 댓글, 올린 사람. 768px 미만에서는 카드가 된다. */
 export const POST_GRID = "md:grid-cols-[104px_minmax(0,1.15fr)_minmax(0,1fr)_128px_56px_132px]"
@@ -64,7 +65,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFi
       <div className="col-start-1 row-start-2 flex min-w-0 flex-wrap items-center gap-1 md:col-start-3 md:row-start-1">
         {row.fans.map((fan) =>
           fan.kind === "me" ? (
-            <MeChip key="me" />
+            <Pill key="me" tone="highlight">나</Pill>
           ) : (
             <MemberChip key={fan.member.id} name={fan.member.name} applied={fan.applied} />
           )
