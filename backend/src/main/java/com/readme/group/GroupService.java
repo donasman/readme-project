@@ -128,7 +128,7 @@ class GroupService {
 
 	private String inviteLink(String token) {
 		String origin = this.app.frontendOrigin().replaceAll("/+$", "");
-		return origin + "/invites/" + token;
+		return origin + "/invite/" + token;
 	}
 
 	private static String firstCharacter(String text) {

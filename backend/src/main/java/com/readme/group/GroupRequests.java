@@ -28,7 +28,7 @@ final class GroupRequests {
 	/**
 	 * POST /api/groups/{groupId}/invites 의 응답.
 	 *
-	 * @param link      프런트의 초대 수락 화면 주소(프런트 주소 + /invites/토큰). 토큰은 이 링크에만 있다
+	 * @param link      프런트의 초대 수락 화면 주소(프런트 주소 + /invite/토큰, 프런트의 paths.invite). 토큰은 이 링크에만 있다
 	 * @param expiresAt 만료 시각(한국 시각 +09:00)
 	 */
 	record InviteResponse(String link, OffsetDateTime expiresAt) {

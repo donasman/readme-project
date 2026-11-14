@@ -46,7 +46,7 @@ class GroupInviteTests {
 		assertThat(result).hasStatus(HttpStatus.CREATED).bodyJson()
 			.extractingPath("$.expiresAt").isEqualTo("2026-11-20T00:30:00+09:00");
 		String link = JsonPath.read(result.getResponse().getContentAsString(), "$.link");
-		assertThat(link).matches("http://localhost:5173/invites/[A-Za-z0-9_-]{43}");
+		assertThat(link).matches("http://localhost:5173/invite/[A-Za-z0-9_-]{43}");
 		String token = link.substring(link.lastIndexOf('/') + 1);
 		String stored = this.jdbc.sql("select token_hash from group_invites where group_id = :groupId")
 			.param("groupId", group).query(String.class).single();
