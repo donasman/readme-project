@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,6 +142,28 @@ class WithdrawTests {
 			.isLenientlyEqualTo("""
 					[ { "id": %d, "leaderId": %d, "members": [ { "id": %d }, { "id": %d } ] } ]
 					""".formatted(group, first, first, second));
+	}
+
+	@Test
+	void theSuccessorIsTheEarliestJoinerNotTheSmallestIdAndThePreviewAgrees() throws Exception {
+		long me = this.fixtures.passwordUser("다온", PASSWORD, true);
+		long smallerId = this.fixtures.user("가람");
+		long earlierJoiner = this.fixtures.user("나래");
+		// 나래가 먼저 들어왔지만 id 는 가람이 작다. id 순으로 고르면 가람이 된다
+		long group = this.fixtures.group("백엔드 스터디", me, earlierJoiner, smallerId);
+		long solo = this.fixtures.group("혼자 그룹", me);
+
+		MvcTestResult preview = this.mvc.get().uri("/api/me/withdrawal").with(loginAs(me)).exchange();
+		assertThat(preview).hasStatusOk();
+		String body = preview.getResponse().getContentAsString();
+		long previewed = ((Number) JsonPath.read(body, "$.leads[0].successor.id")).longValue();
+		assertThat(((Number) JsonPath.read(body, "$.leads[0].id")).longValue()).isEqualTo(group);
+		assertThat((Object) JsonPath.read(body, "$.leads[1].successor")).isNull();
+
+		assertThat(withdraw(loginAs(me), passwordBody())).hasStatus(HttpStatus.NO_CONTENT);
+
+		assertThat(leaderOf(group)).isEqualTo(earlierJoiner).isEqualTo(previewed);
+		assertThat(exists("groups", "id", solo)).isFalse();
 	}
 
 	@Test
