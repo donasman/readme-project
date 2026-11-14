@@ -8,6 +8,7 @@ import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
+import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses, matchesAccept } from "@/shared/lib/utils"
 
@@ -64,6 +65,15 @@ export function CardSourcesPage() {
 
       <div className={columns}>
         <div className={joinClasses(mainColumn, "gap-6")}>
+          <p role="status" className="sr-only">
+            {step.kind === "ready"
+              ? `${step.source.name}${objectParticle(step.source.name)} 읽었습니다.`
+              : step.kind === "running"
+                ? "카드를 뽑는 중입니다."
+                : step.kind === "done"
+                  ? `카드 ${step.job.newCards}장을 만들었습니다.`
+                  : ""}
+          </p>
           {step.kind === "upload" && <UploadStep onRead={read} />}
           {step.kind === "ready" && (
             <Panel aria-labelledby="src-ready" className="flex flex-col gap-5 p-6">

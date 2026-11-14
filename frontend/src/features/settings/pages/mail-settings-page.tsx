@@ -85,7 +85,7 @@ export function MailSettingsPage() {
           주소 새로 만들기
         </Button>
         <p role="status" className="sr-only">
-          {copied ? "수신 주소를 복사했습니다." : ""}
+          {copied ? "수신 주소를 복사했습니다." : renewed ? "새 주소를 만들었습니다." : ""}
         </p>
       </Panel>
 

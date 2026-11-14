@@ -100,7 +100,7 @@ export function CardReviewPage() {
             </p>
           </div>
           <div className="flex min-w-40 flex-[0_1_220px] flex-col gap-2">
-            <span className="text-sm font-bold">
+            <span aria-live="polite" className="text-sm font-bold">
               {index + 1} / {total}장
             </span>
             <ProgressBar label="확인한 카드" value={index} max={total} />

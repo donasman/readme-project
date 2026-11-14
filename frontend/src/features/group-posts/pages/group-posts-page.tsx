@@ -134,6 +134,9 @@ export function GroupPostsPage() {
             조건에 맞는 공고가 없습니다.
           </p>
         )}
+        <p role="status" className="sr-only">
+          공고 {list.sections.reduce((n, s) => n + s.rows.length, 0)}개
+        </p>
       </SurfaceCard>
 
       <DeadlineDialog

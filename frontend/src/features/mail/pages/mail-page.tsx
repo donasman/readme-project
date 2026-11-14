@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -21,14 +22,20 @@ export function mailLoader() {
 export function MailPage() {
   const { pending, added } = useLoaderData<typeof mailLoader>()
   const revalidator = useRevalidator()
-  const act = async (run: () => Promise<void>) => {
+  // 누른 메일은 목록에서 빠지므로 한 일을 화면 읽기에 알린다
+  const [done, setDone] = useState("")
+  const act = async (run: () => Promise<void>, message: string) => {
     await run()
     await revalidator.revalidate()
+    setDone(message)
   }
 
   return (
     <Page narrow className="gap-6 pt-10">
       <MySpaceNav current="mail" />
+      <p role="status" className="sr-only">
+        {done}
+      </p>
       <div className="flex flex-col gap-2">
         <Heading level={1} size="text-3xl">
           메일 확인함
@@ -80,10 +87,10 @@ export function MailPage() {
                     </div>
                     <p className="text-label-sm text-text-secondary">근거: "{m.quote}"</p>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => void act(() => ignoreMail(m.id))}>
+                      <Button type="button" variant="outline" onClick={() => void act(() => ignoreMail(m.id), `${m.company} 메일을 무시했습니다.`)}>
                         무시
                       </Button>
-                      <Button type="button" className="px-6" onClick={() => void act(() => applyMail(m.id))}>
+                      <Button type="button" className="px-6" onClick={() => void act(() => applyMail(m.id), `${m.company} 메일을 반영했습니다.`)}>
                         반영
                       </Button>
                     </div>
@@ -110,7 +117,7 @@ export function MailPage() {
                         {a.company} · {a.title}
                       </span>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => void act(() => revertAdded(a.id))}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => void act(() => revertAdded(a.id), `${a.company} 공고를 내 공고에서 뺐습니다.`)}>
                       되돌리기
                     </Button>
                   </li>
