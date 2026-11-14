@@ -85,7 +85,7 @@
 
 ## 설정과 비밀 값
 
-- 내 PC 에서만 쓰는 값(구글 클라이언트 비밀, Claude API 키 등)은 `backend/application-local.yml`에 둔다. git 에 올라가지 않는다. dev 프로필만 읽고 테스트는 읽지 않는다.
+- 내 PC 에서만 쓰는 값(구글 클라이언트 비밀, Claude API 키 등)은 `backend/application-local.yml`에 둔다. git 에 올라가지 않는다. dev 프로필만 읽는다. test 프로필만 켜는 테스트는 읽지 않지만, test 와 dev 를 함께 켜는 `dev/DevProfileTests`는 읽는다(내 PC 에 구글 값이 있으면 그 테스트에서는 구글 로그인이 켜진다).
 - 운영 값은 환경 변수로 받는다. 환경 변수를 더하면 `backend/.env.example`과 `application-prod.yml`에 같이 적는다.
 
 ## jobfit 에서 옮기기
