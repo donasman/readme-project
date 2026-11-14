@@ -24,8 +24,11 @@ final class AuthRequests {
 
 	}
 
-	/** POST /api/auth/login. 비밀번호는 규칙을 보지 않는다(틀린 비밀번호와 같게 401 이다). */
-	record LoginRequest(@NotBlank String email, @NotBlank String password) {
+	/**
+	 * POST /api/auth/login. 비밀번호는 규칙을 보지 않는다(틀린 비밀번호와 같게 401 이다).
+	 * 이메일은 길이만 본다. LoginThrottle 이 이메일 글자를 메모리에 들고 있어서다.
+	 */
+	record LoginRequest(@NotBlank @Size(max = 320) String email, @NotBlank String password) {
 
 		LoginRequest {
 			email = strip(email);

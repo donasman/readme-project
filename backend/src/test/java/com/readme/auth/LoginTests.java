@@ -5,6 +5,7 @@ import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
 
@@ -23,6 +24,9 @@ import com.readme.IntegrationTest;
 
 /**
  * 이메일·비밀번호 로그인과 로그아웃. 진짜 세션(spring_session 의 행)을 만들고, 그 세션으로 지금 로그인한 사람을 읽는다.
+ *
+ * <p>로그인 실패 제한(LoginThrottle)은 서버의 메모리에 있어 다른 테스트와 나눠 쓴다. 테스트마다 다른 이메일로 센다.
+ * 시간이 지나 풀리는 것은 LoginThrottleTests 가 본다.
  */
 @IntegrationTest
 class LoginTests {
@@ -173,8 +177,55 @@ class LoginTests {
 	}
 
 	@Test
+	void tenFailuresBlockTheEmailEvenForTheRightPassword() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		String email = this.fixtures.emailOf(user);
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
+			assertThat(login(email, "wrong password", null)).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+
+		MvcTestResult blocked = login(email, PASSWORD, null);
+
+		assertThat(blocked).hasStatus(HttpStatus.TOO_MANY_REQUESTS).bodyJson().isStrictlyEqualTo("""
+				{ "code": "TOO_MANY_ATTEMPTS", "message": "로그인 시도가 너무 많습니다. 잠시 뒤에 다시 시도해 주세요" }
+				""");
+		assertThat(setCookie(blocked, "SESSION")).isNull();
+		// 대소문자와 앞뒤 공백이 달라도 같은 이메일이다
+		assertThat(login(" " + email.toUpperCase() + " ", PASSWORD, null)).hasStatus(HttpStatus.TOO_MANY_REQUESTS);
+	}
+
+	@Test
+	void anEmailWithoutAnAccountIsBlockedTheSameWay() {
+		String nobody = "nobody-" + UUID.randomUUID() + "@example.test";
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
+			assertThat(login(nobody, PASSWORD, null)).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+
+		assertThat(login(nobody, PASSWORD, null)).hasStatus(HttpStatus.TOO_MANY_REQUESTS);
+	}
+
+	@Test
+	void aSuccessfulLoginClearsTheFailures() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		String email = this.fixtures.emailOf(user);
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES - 1; i++) {
+			assertThat(login(email, "wrong password", null)).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+		assertThat(login(email, PASSWORD, null)).hasStatusOk();
+
+		// 지우지 않았다면 여기서 막힌다
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES - 1; i++) {
+			assertThat(login(email, "wrong password", null)).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+		assertThat(login(email, PASSWORD, null)).hasStatusOk();
+	}
+
+	@Test
 	void loginChecksTheInput() {
-		for (String body : new String[] { "{}", "{ \"email\": \"a@example.test\" }", "{ \"password\": \"x\" }" }) {
+		// 이메일은 users 칸의 길이(320자)까지 받는다
+		String tooLong = "a".repeat(308) + "@example.test";
+		for (String body : new String[] { "{}", "{ \"email\": \"a@example.test\" }", "{ \"password\": \"x\" }",
+				body(tooLong, PASSWORD) }) {
 			assertThat(this.mvc.post().uri("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
 				.content(body))
 				.hasStatus(HttpStatus.BAD_REQUEST).bodyJson().extractingPath("$.code").isEqualTo("INVALID_INPUT");

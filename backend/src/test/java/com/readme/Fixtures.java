@@ -62,6 +62,20 @@ public class Fixtures {
 		return this.jdbc.sql("select email from users where id = :id").param("id", userId).query(String.class).single();
 	}
 
+	/**
+	 * 이 이메일로 보낸 링크(email_tokens)를 모두 그만큼 전에 만든 것으로 둔다. 시계가 멈춰 있어서, 시간이 지난 것은 이렇게 만든다.
+	 * 같은 링크를 1분 안에 다시 보내지 않으므로, 새 링크가 필요하면 먼저 1분을 지나게 한다.
+	 */
+	public void ageLinks(String email, Duration by) {
+		this.jdbc.sql("""
+				update email_tokens set created_at = created_at - :seconds * interval '1 second'
+				 where user_id = (select id from users where email = :email)
+				""")
+			.param("seconds", by.toSeconds())
+			.param("email", email)
+			.update();
+	}
+
 	/** 계정 삭제. 멤버·관심·내 공고는 지워지고, 올린 사람과 댓글 쓴 사람은 빈다(테이블의 on delete). */
 	public void deleteUser(long userId) {
 		this.jdbc.sql("delete from users where id = :id").param("id", userId).update();
