@@ -54,7 +54,20 @@ public class Postings {
 		if (kind == DeadlineKind.UNKNOWN || (kind == DeadlineKind.DATE) != (date != null)) {
 			throw new IllegalArgumentException("마감은 날짜가 있는 DATE 나 날짜가 없는 ALWAYS 로만 넣는다: " + kind + ", " + date);
 		}
-		return this.repository.fillUnknownDeadline(postingId, kind.name(), date, userId, this.clock.instant()) == 1;
+		String newKey = this.repository.findById(postingId).map((posting) -> keyWithDate(posting, date)).orElse(null);
+		return this.repository.fillUnknownDeadline(postingId, kind.name(), date, newKey, userId,
+				this.clock.instant()) == 1;
+	}
+
+	/**
+	 * 링크 없는 공고의 키는 회사명|공고명|마감일로 만든다(local:). 날짜가 들어가면 그 날짜로 다시 만들어야, 같은 날짜로
+	 * 올라오는 같은 공고를 알아본다. 링크로 만든 키와 상시(날짜 없음)는 바뀌지 않으므로 null.
+	 */
+	private static String keyWithDate(Posting posting, LocalDate date) {
+		if (date == null || posting.postingKey() == null || !posting.postingKey().startsWith("local:")) {
+			return null;
+		}
+		return PostingKeys.derive(null, posting.company(), posting.title(), date.toString()).key();
 	}
 
 }

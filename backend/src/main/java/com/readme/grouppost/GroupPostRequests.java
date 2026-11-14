@@ -30,11 +30,12 @@ final class GroupPostRequests {
 	/**
 	 * POST /api/groups/{groupId}/posts 의 본문(설계 4.4 의 올리기 요청). 회사명, 공고명, 마감이 필수다.
 	 * 원문 주소는 http·https 만 받는다(설계 6절 12번). 빈 글자는 넣지 않은 것으로 본다.
+	 * 역슬래시도 받지 않는다. 브라우저는 \ 를 / 로 읽어 다른 호스트를 여는데, 공고키는 뒤쪽 호스트로 만들어진다.
 	 */
 	record PostRequest(@NotBlank @Size(max = 200) String company, @NotBlank @Size(max = 300) String title,
 			@NotNull @Valid DeadlineInput deadline, @Size(max = 50) String deadlineName,
 			@Size(max = 100) String applyAt,
-			@Size(max = 2000) @Pattern(regexp = "(?i)(https?://\\S+)?") String sourceUrl) {
+			@Size(max = 2000) @Pattern(regexp = "(?i)(https?://[^\\s\\\\]+)?") String sourceUrl) {
 
 		PostingDraft toDraft() {
 			return new PostingDraft(this.company.strip(), this.title.strip(), this.deadline.kind(), this.deadline.date(),

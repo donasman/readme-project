@@ -19,11 +19,10 @@ public class GroupAccess {
 
 	/** 멤버가 아니거나 그룹이 없으면 404 GROUP_NOT_FOUND. */
 	public GroupMembership requireMember(long groupId, long userId) {
-		return this.jdbc.sql("select role, disclosure from group_members where group_id = :groupId and user_id = :userId")
+		return this.jdbc.sql("select role from group_members where group_id = :groupId and user_id = :userId")
 			.param("groupId", groupId)
 			.param("userId", userId)
-			.query((rs, rowNum) -> new GroupMembership(groupId, userId, "LEADER".equals(rs.getString("role")),
-					Disclosure.valueOf(rs.getString("disclosure"))))
+			.query((rs, rowNum) -> new GroupMembership("LEADER".equals(rs.getString("role"))))
 			.optional()
 			.orElseThrow(() -> new ApiException(GroupErrorCode.GROUP_NOT_FOUND));
 	}

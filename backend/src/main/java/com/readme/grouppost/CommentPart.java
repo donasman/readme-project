@@ -14,7 +14,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 record CommentPart(String text, @JsonInclude(JsonInclude.Include.NON_NULL) String href) {
 
-	private static final Pattern LINK = Pattern.compile("https?://\\S+");
+	/**
+	 * 주소에 쓰는 글자(RFC 3986)만 링크로 잡는다. 그래서 "https://…/review에서"의 "에서"는 글자로 남는다.
+	 * 링크는 문장부호(.,;:!?)나 닫는 괄호로 끝나지 않는다: "(https://…/a)."의 ")."는 글자다.
+	 * 경로에 한글이 그대로 든 주소는 한글 앞에서 끊긴다. 브라우저가 복사해 주는 주소는 %로 인코딩되어 있어 드물다.
+	 */
+	private static final Pattern LINK = Pattern
+		.compile("https?://[A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]*[A-Za-z0-9\\-_~/#=&%+]");
 
 	/**
 	 * 저장된 글자를 글자와 링크 조각으로 나눈다. http·https 로 시작하는 주소만 링크로 만들고,

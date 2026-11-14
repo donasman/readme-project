@@ -33,15 +33,25 @@ interface PostingRepository extends JpaRepository<Posting, Long> {
 	/**
 	 * 날짜 넣기. 마감이 아직 UNKNOWN 일 때만 날짜(DATE)나 상시(ALWAYS)로 바꾼다.
 	 * 두 사람이 같이 넣으면 먼저 넣은 사람 것만 들어간다(설계 6절 15번). 바꿨으면 1, 이미 마감이 있었으면 0.
+	 *
+	 * <p>newKey 가 있으면 공고키도 그 값으로 바꾼다. 다만 그 키를 이미 다른 공고가 쓰고 있으면 옛 키를 둔다.
+	 * 그 사이에 같은 키의 공고가 막 올라오면 유일 제약에 걸려 500 이 난다. 두 사람이 같은 순간에 해야 생기므로 그대로 둔다.
 	 */
 	@Modifying
 	@Query(value = """
 			update postings
 			   set deadline_kind = :kind, deadline_date = cast(:date as date), deadline_set_by = :userId,
-			       deadline_set_at = :now, updated_at = :now
+			       deadline_set_at = :now, updated_at = :now,
+			       posting_key = case
+			           when cast(:newKey as varchar) is not null
+			            and not exists (select 1 from postings other where other.posting_key = cast(:newKey as varchar))
+			           then cast(:newKey as varchar)
+			           else posting_key
+			       end
 			 where id = :postingId and deadline_kind = 'UNKNOWN'
 			""", nativeQuery = true)
 	int fillUnknownDeadline(@Param("postingId") long postingId, @Param("kind") String kind,
-			@Param("date") LocalDate date, @Param("userId") long userId, @Param("now") Instant now);
+			@Param("date") LocalDate date, @Param("newKey") String newKey, @Param("userId") long userId,
+			@Param("now") Instant now);
 
 }

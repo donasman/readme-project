@@ -89,6 +89,23 @@ class PostingKeysTests {
 		assertThat(key(url)).isEqualTo(expected);
 	}
 
+	// ── jobfit 과 다른 점: 사이트 호스트를 점 경계로 본다(2026-11-14) ─────────────
+
+	@ParameterizedTest(name = "{0}")
+	@CsvSource(delimiter = '|', value = {
+			// 사이트 이름으로 끝나기만 하는 남의 호스트는 그 사이트가 아니다. jobfit 은 이것도 사이트 키로 만든다
+			"https://fakesaramin.co.kr/x?rec_idx=12345 | url:fakesaramin.co.kr/x?rec_idx=12345",
+			"https://notjobkorea.co.kr/Recruit/GI_Read/1 | url:notjobkorea.co.kr/Recruit/GI_Read/1",
+			"https://evilwanted.co.kr/wd/1 | url:evilwanted.co.kr/wd/1",
+			"https://nottoss.im/career/job-detail?job_id=1&sub_position_id=2 | url:nottoss.im/career/job-detail?job_id=1&sub_position_id=2",
+			// 진짜 사이트는 맨 호스트, www., m., 다른 하위 도메인 모두 그대로다
+			"https://saramin.co.kr/zf_user/jobs/view?rec_idx=7 | saramin:7",
+			"https://www.toss.im/career/job-detail?job_id=1&sub_position_id=2 | toss:1-2",
+			"https://rememberapp.co.kr/posting/31 | remember:31" })
+	void lookalikeHostsAreNotTheSite(String url, String expected) {
+		assertThat(key(url)).isEqualTo(expected);
+	}
+
 	@Test
 	void localKeysSameAsJobfit() {
 		assertThat(PostingKeys.derive("", "예시컴퍼니", "Node.js개발자", "2026-11-15").key()).isEqualTo("local:779642d2");

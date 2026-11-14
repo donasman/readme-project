@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
  * 공고키(postings.posting_key). 같은 공고를 알아보는 키다(설계 그룹·공고 가정 3).
  *
  * <p>jobfit 의 src/jobfit/jobkey.py(derive, normalize_url)를 옮겼다. 같은 입력이면 jobfit 과 같은 키가 나온다.
+ * 다른 점 하나: 사이트 호스트를 점 경계로 본다(SITE_RULES 의 설명).
  * Python 의 urlsplit, parse_qsl, urlencode 가 하는 일을 그대로 따라 한다(아래의 split, parseQuery, quotePlus).
  * 게시처 판정(kind)은 아직 쓰는 곳이 없어 옮기지 않았다.
  *
@@ -27,14 +28,21 @@ import java.util.regex.Pattern;
  */
 public final class PostingKeys {
 
-	/** 먼저 맞는 규칙을 쓴다. 점핏은 jumpit.saramin.co.kr 로도 열리므로 사람인보다 먼저 본다. */
+	/**
+	 * 먼저 맞는 규칙을 쓴다. 점핏은 jumpit.saramin.co.kr 로도 열리므로 사람인보다 먼저 본다.
+	 * 호스트는 그 사이트 자체이거나 그 하위 도메인이어야 한다({@code (^|\.)}). jobfit 은 "그 이름으로 끝나기만" 보아서
+	 * fakesaramin.co.kr 도 사람인 공고키가 되는데, 리드미에서는 공고키가 같으면 다른 그룹이 그 공고 본체(원문 링크 포함)를
+	 * 함께 쓰므로 남의 호스트가 사이트 공고를 가로챌 수 있다. 진짜 사이트 주소의 키는 jobfit 과 같다.
+	 */
 	private static final List<SiteRule> SITE_RULES = List.of(
-			new SiteRule("jumpit", "jumpit\\.(co\\.kr|saramin\\.co\\.kr)$", "/position/(\\d+)"),
-			new SiteRule("jobkorea", "jobkorea\\.co\\.kr$", "/Recruit/GI_Read/(\\d+)", "[?&]Gno=(\\d+)"),
-			new SiteRule("saramin", "saramin\\.co\\.kr$", "[?&]rec_idx=(\\d+)"),
-			new SiteRule("wanted", "wanted\\.co\\.kr$", "/wd/(\\d+)"),
-			new SiteRule("remember", "(remember|rememberapp)\\.co\\.kr$", "/posting/(\\d+)"),
-			new SiteRule("programmers", "programmers\\.co\\.kr$", "/job_positions/(\\d+)"));
+			new SiteRule("jumpit", "(^|\\.)jumpit\\.(co\\.kr|saramin\\.co\\.kr)$", "/position/(\\d+)"),
+			new SiteRule("jobkorea", "(^|\\.)jobkorea\\.co\\.kr$", "/Recruit/GI_Read/(\\d+)", "[?&]Gno=(\\d+)"),
+			new SiteRule("saramin", "(^|\\.)saramin\\.co\\.kr$", "[?&]rec_idx=(\\d+)"),
+			new SiteRule("wanted", "(^|\\.)wanted\\.co\\.kr$", "/wd/(\\d+)"),
+			new SiteRule("remember", "(^|\\.)(remember|rememberapp)\\.co\\.kr$", "/posting/(\\d+)"),
+			new SiteRule("programmers", "(^|\\.)programmers\\.co\\.kr$", "/job_positions/(\\d+)"));
+
+	private static final Pattern TOSS_HOST = Pattern.compile("(^|\\.)toss\\.(im|com)$");
 
 	/** 토스는 한 job_id 에 포지션이 여럿이라 둘을 합쳐야 공고 하나다. */
 	private static final Pattern TOSS_JOB = Pattern.compile("[?&]job_id=([^&#]+)");
@@ -96,7 +104,7 @@ public final class PostingKeys {
 				}
 			}
 		}
-		if (host.endsWith("toss.im") || host.endsWith("toss.com")) {
+		if (TOSS_HOST.matcher(host).find()) {
 			Matcher job = TOSS_JOB.matcher(url);
 			Matcher sub = TOSS_SUB.matcher(url);
 			if (job.find() && sub.find()) {
