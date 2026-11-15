@@ -36,6 +36,12 @@ class Account {
 
 	private Instant lastLoginAt;
 
+	/** 생년월일·성별을 통계와 생일 이벤트에 쓰는 데 동의한 때(V8). null 이면 동의하지 않았다 */
+	private Instant birthGenderConsentAt;
+
+	/** 이벤트·혜택 안내를 받는 데 동의한 때(V8). null 이면 동의하지 않았다 */
+	private Instant eventNoticeConsentAt;
+
 	protected Account() {
 	}
 

@@ -104,8 +104,8 @@ public class SecurityConfig {
 		// 구글 로그인: 구글 클라이언트 값을 넣었을 때만 켠다(개발은 backend/application-local.yml, 운영은 환경 변수).
 		// GET /oauth2/authorization/google 이 구글로 보내고(state 를 세션에 둔다), 구글은 /login/oauth2/code/google 로 돌아온다.
 		// 사람을 확인한 뒤의 일과 돌려보낼 곳은 googleLoginSuccess·Failure 가 정한다.
-		// shortcut: Spring 이 구글의 access token 을 구글 계정마다 메모리에 하나씩 둔다(쓰지 않고, 서버를 다시 띄우면 사라진다),
-		// 구글 사용자가 많아지면 oauth2Login 의 authorizedClientRepository 에 아무것도 두지 않는 것을 넣는다.
+		// 구글의 access token 은 Spring 이 기본 저장소(서버 메모리)에 둔다. googleLoginSuccess 가 꺼내 People API 로 생년월일·성별을
+		// 한 번 읽고 바로 지운다(로그인 설계 4.1). 그래서 메모리에 쌓이지 않고 세션에도 남지 않는다.
 		if (googleClient.getIfAvailable() != null) {
 			http.oauth2Login((google) -> google.successHandler(googleLoginSuccess).failureHandler(googleLoginFailure));
 		}

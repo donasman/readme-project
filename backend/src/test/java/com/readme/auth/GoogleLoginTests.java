@@ -1,19 +1,34 @@
 package com.readme.auth;
 
+import static com.readme.FixedClockConfiguration.NOW;
 import static com.readme.TestRequests.setCookie;
 import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 import jakarta.servlet.http.Cookie;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +51,8 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
@@ -51,14 +68,28 @@ import com.readme.TestMailbox;
  *
  * <p>구글 클라이언트 값을 넣어 구글 로그인을 켜야 하므로 다른 통합 테스트와 서버·DB 를 나눠 쓰지 못하고 따로 띄운다.
  * 구글로 보내는 것(state, nonce 를 세션에 두기)과 돌아온 뒤의 처리는 실제 것이다. 구글 쪽(코드를 토큰으로 바꾸기, ID 토큰 검사,
- * 사용자 정보)만 {@link FakeGoogle} 이 대신 답한다.
+ * 사용자 정보)만 {@link FakeGoogle} 이 대신 답한다. 생년월일·성별을 읽는 People API 는 내 PC 에 띄운 가짜({@link FakePeople})를
+ * 실제 HTTP 로 부른다. 요청 범위는 운영(application-prod.yml)과 같다.
  */
 @IntegrationTest
 @TestPropertySource(properties = {
 		"spring.security.oauth2.client.registration.google.client-id=test-client-id",
-		"spring.security.oauth2.client.registration.google.client-secret=test-client-secret" })
+		"spring.security.oauth2.client.registration.google.client-secret=test-client-secret",
+		"spring.security.oauth2.client.registration.google.scope=openid,email,profile,"
+				+ GooglePeople.BIRTHDAY_SCOPE + "," + GooglePeople.GENDER_SCOPE })
 @Import(GoogleLoginTests.FakeGoogle.class)
 class GoogleLoginTests {
+
+	private static final FakePeople PEOPLE = new FakePeople();
+
+	/** 프로필의 생일(대표)은 연도를 숨겼고, 구글 계정의 생일에 연도가 있다. 성별은 여성. */
+	private static final String PERSON = """
+			{ "resourceName": "people/1",
+			  "birthdays": [
+			    { "metadata": { "primary": true, "source": { "type": "PROFILE" } }, "date": { "month": 3, "day": 1 } },
+			    { "metadata": { "source": { "type": "ACCOUNT" } }, "date": { "year": 1999, "month": 3, "day": 1 } } ],
+			  "genders": [ { "metadata": { "primary": true }, "value": "female", "formattedValue": "Female" } ] }
+			""";
 
 	private static final String HOME = "http://localhost:5173/";
 
@@ -87,6 +118,22 @@ class GoogleLoginTests {
 	@Autowired
 	FakeGoogle google;
 
+	@DynamicPropertySource
+	static void peopleApi(DynamicPropertyRegistry registry) {
+		registry.add("app.google.people-url", PEOPLE::url);
+	}
+
+	@AfterAll
+	static void stopPeopleApi() {
+		PEOPLE.server.stop(0);
+	}
+
+	@BeforeEach
+	void grantEverythingAndAnswerNothing() {
+		this.google.grantedScopes = null;
+		PEOPLE.answer(200, "{}");
+	}
+
 	@Test
 	void startSendsTheBrowserToGoogleWithOurCallbackAddress() {
 		MvcTestResult start = this.mvc.get().uri("/oauth2/authorization/google").exchange();
@@ -98,7 +145,8 @@ class GoogleLoginTests {
 			.containsEntry("response_type", "code")
 			.containsEntry("redirect_uri", "http://localhost/login/oauth2/code/google")
 			.containsKeys("state", "nonce");
-		assertThat(query.get("scope").split(" ")).containsExactlyInAnyOrder("openid", "email", "profile");
+		assertThat(query.get("scope").split(" ")).containsExactlyInAnyOrder("openid", "email", "profile",
+				"https://www.googleapis.com/auth/user.birthday.read", "https://www.googleapis.com/auth/user.gender.read");
 		// 돌아왔을 때 맞춰 볼 state 를 세션에 둔다
 		assertThat(setCookie(start, "SESSION")).isNotNull();
 	}
@@ -359,6 +407,130 @@ class GoogleLoginTests {
 		assertThat(identitiesOf(first)).isZero();
 	}
 
+	// ── 구글의 생년월일·성별(4.1, 2026-11-16) ─────────────────────────
+
+	@Test
+	void aGoogleSignupGetsTheBirthDateAndGenderFromThePeopleApiAndTheConsent() {
+		PEOPLE.answer(200, PERSON);
+		String email = newEmail();
+
+		assertThat(googleLogin(newSub(), email, true, "가람")).hasRedirectedUrl(HOME);
+
+		long user = userIdOf(email);
+		assertThat(profileOf(user)).isEqualTo("1999-03-01|FEMALE");
+		// 구글 동의 화면에서 허락한 것을 수집·이용 동의로 남긴다. 이벤트 안내 동의는 받을 화면이 없어 없다
+		assertThat(consentsOf(user)).containsExactly(NOW, null);
+		// 구글이 준 access token 으로, 허락한 칸만 묻는다
+		assertThat(PEOPLE.requests).containsExactly("Bearer fake-access-token personFields=birthdays,genders");
+	}
+
+	@Test
+	void valuesAlreadyInTheProfileAreNotOverwritten() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		this.jdbc.sql("insert into profiles (user_id, birth_date) values (:id, date '2000-01-02')").param("id", user).update();
+		PEOPLE.answer(200, PERSON);
+
+		// 같은 이메일의 계정에 연결되고, 비어 있던 성별만 채운다
+		assertThat(googleLogin(newSub(), this.fixtures.emailOf(user), true, "가람")).hasRedirectedUrl(HOME);
+		assertThat(profileOf(user)).isEqualTo("2000-01-02|FEMALE");
+
+		// 다음 구글 로그인도 덮어쓰지 않는다
+		PEOPLE.answer(200, """
+				{ "birthdays": [ { "date": { "year": 1980, "month": 5, "day": 5 } } ], "genders": [ { "value": "male" } ] }
+				""");
+		assertThat(googleLogin(googleSubOf(user), this.fixtures.emailOf(user), true, "가람")).hasRedirectedUrl(HOME);
+		assertThat(PEOPLE.requests).hasSize(1);
+		assertThat(profileOf(user)).isEqualTo("2000-01-02|FEMALE");
+	}
+
+	@Test
+	void aPeopleApiFailureOrAnUnusableAnswerDoesNotStopTheLogin() {
+		PEOPLE.answer(500, "{ \"error\": { \"code\": 500 } }");
+		String failed = newEmail();
+		MvcTestResult back = googleLogin(newSub(), failed, true, "가람");
+		assertThat(back).hasRedirectedUrl(HOME);
+		assertThat(me(back)).hasStatusOk();
+		assertThat(profileOf(userIdOf(failed))).isNull();
+
+		PEOPLE.answer(200, "not json");
+		String unreadable = newEmail();
+		assertThat(googleLogin(newSub(), unreadable, true, "나래")).hasRedirectedUrl(HOME);
+		assertThat(profileOf(userIdOf(unreadable))).isNull();
+
+		// 연도 없는 생일과 밝히지 않은 성별은 넣지 않는다
+		PEOPLE.answer(200, """
+				{ "birthdays": [ { "date": { "month": 3, "day": 1 } } ], "genders": [ { "value": "unspecified" } ] }
+				""");
+		String empty = newEmail();
+		assertThat(googleLogin(newSub(), empty, true, "다온")).hasRedirectedUrl(HOME);
+		assertThat(profileOf(userIdOf(empty))).isNull();
+		// 허락은 했으므로 동의는 남는다
+		assertThat(consentsOf(userIdOf(empty))).containsExactly(NOW, null);
+	}
+
+	@Test
+	void withoutTheBirthdayAndGenderPermissionsThePeopleApiIsNotAsked() {
+		// 구글 동의 화면에서 생년월일·성별의 체크를 풀었다
+		this.google.grantedScopes = Set.of("openid", "https://www.googleapis.com/auth/userinfo.email",
+				"https://www.googleapis.com/auth/userinfo.profile");
+		PEOPLE.answer(200, PERSON);
+		String email = newEmail();
+
+		assertThat(googleLogin(newSub(), email, true, "가람")).hasRedirectedUrl(HOME);
+
+		assertThat(PEOPLE.requests).isEmpty();
+		assertThat(profileOf(userIdOf(email))).isNull();
+		assertThat(consentsOf(userIdOf(email))).containsExactly(null, null);
+
+		// 성별만 허락하면 성별만 묻는다
+		this.google.grantedScopes = Set.of("openid", GooglePeople.GENDER_SCOPE);
+		String genderOnly = newEmail();
+		assertThat(googleLogin(newSub(), genderOnly, true, "나래")).hasRedirectedUrl(HOME);
+		assertThat(PEOPLE.requests).containsExactly("Bearer fake-access-token personFields=genders");
+		assertThat(profileOf(userIdOf(genderOnly))).isEqualTo("-|FEMALE");
+	}
+
+	@Test
+	void takingOverAnUnverifiedAccountDropsWhatItsSignupLeft() {
+		// 누군가 이 이메일로 생년월일·성별과 동의 둘을 넣어 가입만 해 두었다
+		String email = newEmail();
+		assertThat(this.mvc.post().uri("/api/auth/signup").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+			.content("""
+					{ "name": "먼저 가입한 사람", "email": "%s", "password": "%s", "birthDate": "1950-01-01", "gender": "male",
+					  "birthGenderConsent": true, "eventNoticeConsent": true }
+					""".formatted(email, PASSWORD)))
+			.hasStatus(HttpStatus.NO_CONTENT);
+		PEOPLE.answer(200, PERSON);
+
+		assertThat(googleLogin(newSub(), email, true, "이메일 주인")).hasRedirectedUrl(HOME);
+
+		long user = userIdOf(email);
+		assertThat(profileOf(user)).isEqualTo("1999-03-01|FEMALE");
+		assertThat(consentsOf(user)).containsExactly(NOW, null);
+	}
+
+	@Test
+	void linkingFillsTheProfileButAGoogleAccountInUseDoesNot() {
+		PEOPLE.answer(200, PERSON);
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+
+		assertThat(linkGoogle(login(user, null), newSub(), newEmail(), true)).hasRedirectedUrl(ACCOUNT + "linked");
+		assertThat(profileOf(user)).isEqualTo("1999-03-01|FEMALE");
+		assertThat(consentsOf(user)).containsExactly(NOW, null);
+
+		long other = this.fixtures.user("나래");
+		String sub = newSub();
+		link(other, sub);
+		long second = this.fixtures.passwordUser("다온", PASSWORD, true);
+		PEOPLE.requests.clear();
+
+		// 다른 사람의 구글 계정이라 그 값을 이 사람의 프로필에 넣지 않는다
+		assertThat(linkGoogle(login(second, null), sub, newEmail(), true)).hasRedirectedUrl(ACCOUNT + "in-use");
+		assertThat(PEOPLE.requests).isEmpty();
+		assertThat(profileOf(second)).isNull();
+		assertThat(consentsOf(second)).containsExactly(null, null);
+	}
+
 	/** 구글로 보낸 뒤, 구글이 이 사람을 확인하고 돌려보낸 것처럼 돌아오는 주소를 부른다. */
 	private MvcTestResult googleLogin(String sub, String email, boolean emailVerified, String name) {
 		return googleLogin(this.mvc.get().uri("/oauth2/authorization/google").exchange(), sub, email, emailVerified, name);
@@ -447,6 +619,29 @@ class GoogleLoginTests {
 		return this.jdbc.sql("select id from users where email = :email").param("email", email).query(Long.class).single();
 	}
 
+	private String googleSubOf(long userId) {
+		return this.jdbc.sql("select provider_user_id from user_identities where user_id = :userId").param("userId", userId)
+			.query(String.class).single();
+	}
+
+	/** 프로필의 "생년월일|성별"(빈 칸은 -). 프로필이 없으면 null. */
+	private String profileOf(long userId) {
+		return this.jdbc.sql("select coalesce(birth_date::text, '-') || '|' || coalesce(gender, '-') from profiles where user_id = :id")
+			.param("id", userId).query(String.class).optional().orElse(null);
+	}
+
+	/** 생년월일·성별 수집·이용 동의와 이벤트 안내 동의의 때. 없으면 null. */
+	private List<Instant> consentsOf(long userId) {
+		return this.jdbc.sql("select birth_gender_consent_at, event_notice_consent_at from users where id = :id")
+			.param("id", userId)
+			.query((rs, rowNum) -> Arrays.asList(instant(rs.getTimestamp(1)), instant(rs.getTimestamp(2))))
+			.single();
+	}
+
+	private static Instant instant(Timestamp timestamp) {
+		return (timestamp != null) ? timestamp.toInstant() : null;
+	}
+
 	private long googleUserOf(String sub) {
 		return this.jdbc.sql("select user_id from user_identities where provider_user_id = :sub").param("sub", sub)
 			.query(Long.class).single();
@@ -479,11 +674,16 @@ class GoogleLoginTests {
 
 		volatile Map<String, Object> nextIdToken = Map.of();
 
+		/** 사람이 구글 동의 화면에서 허락한 범위. null 이면 요청한 범위를 모두 허락했다. */
+		volatile Set<String> grantedScopes;
+
 		@Bean
 		OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> fakeTokenEndpoint() {
 			return (request) -> OAuth2AccessTokenResponse.withToken("fake-access-token")
 				.tokenType(OAuth2AccessToken.TokenType.BEARER)
 				.expiresIn(3600)
+				// 구글은 토큰 응답의 scope 에 사람이 허락한 범위만 싣는다
+				.scopes((this.grantedScopes != null) ? this.grantedScopes : request.getClientRegistration().getScopes())
 				.additionalParameters(Map.of(OidcParameterNames.ID_TOKEN, "fake-id-token"))
 				.build();
 		}
@@ -501,6 +701,54 @@ class GoogleLoginTests {
 		@Bean
 		OAuth2UserService<OidcUserRequest, OidcUser> fakeUserInfo() {
 			return (request) -> new DefaultOidcUser(List.of(), request.getIdToken());
+		}
+
+	}
+
+	/**
+	 * 내 PC 에 띄운 가짜 People API(127.0.0.1, 빈 포트). {@code GET /v1/people/me} 에 정해 둔 답을 주고, 받은 요청을
+	 * "Authorization 머리 쿼리" 꼴로 남긴다.
+	 */
+	static final class FakePeople {
+
+		final HttpServer server;
+
+		final List<String> requests = new CopyOnWriteArrayList<>();
+
+		private volatile int status;
+
+		private volatile String body;
+
+		FakePeople() {
+			try {
+				this.server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+			}
+			catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+			this.server.createContext("/v1/people/me", this::handle);
+			this.server.start();
+		}
+
+		String url() {
+			return "http://127.0.0.1:" + this.server.getAddress().getPort();
+		}
+
+		/** 다음 요청부터 이 답을 준다. 남긴 요청은 지운다. */
+		void answer(int status, String body) {
+			this.status = status;
+			this.body = body;
+			this.requests.clear();
+		}
+
+		private void handle(HttpExchange exchange) throws IOException {
+			this.requests.add(exchange.getRequestHeaders().getFirst("Authorization") + " " + exchange.getRequestURI().getQuery());
+			byte[] bytes = this.body.getBytes(StandardCharsets.UTF_8);
+			exchange.getResponseHeaders().add("Content-Type", "application/json");
+			exchange.sendResponseHeaders(this.status, bytes.length);
+			try (OutputStream out = exchange.getResponseBody()) {
+				out.write(bytes);
+			}
 		}
 
 	}
