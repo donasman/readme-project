@@ -105,6 +105,8 @@ class KeywordDictionaryTests {
 			"Java17, Java 17, Python3, Python 3.12 | {Java=1, Python=1}", "Java. Kotlin, Python! | {Java=1, Kotlin=1, Python=1}",
 			"\"#Java +Java .Java _Java\" | {Java=1}", "Java_8 Java-8 Java/Spring | {Java=3, Spring=1}",
 			"CI/CD 와 CICD, CI·CD | {CI/CD=3}", "scikit-learn 과 sklearn | {scikit-learn=2}",
+			// 한 표기를 다 찾은 뒤에 가린다. 둘째 .NET 과 k8s 는 가리기 전의 앞 글자(T, .)에 막힌다
+			".NET.NET | {.NET=1}", "k8sk8s k8s.k8s | {Kubernetes=1}", "C++C++ c c | {C=2, C++=2}",
 			// Python 의 re.I 처럼 켈빈 기호(K)와 점 없는 i(ı)도 같은 글자로 본다
 			"K8s ıos Lınux | {Kubernetes=1, Linux=1, iOS=1}",
 			"Python Docker Python Java 데이터베이스 Git | {Python=2, Docker=1, Git=1, Java=1, 데이터베이스=1}" })

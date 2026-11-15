@@ -154,11 +154,16 @@ class PostingReader {
 	}
 
 	/**
-	 * 주요 업무·필수 요건·우대 사항에 나온 사전 낱말의 대표 표기. 셋 다 없으면 섹션을 나눈 글 전체에서 찾는다.
+	 * 주요 업무·필수 요건·우대 사항에 나온 사전 낱말의 대표 표기. 셋 다 없거나 내용이 비었으면 섹션을 나눈 글 전체에서 찾는다.
 	 * 많이 나온 순, 같으면 글자 순(jobfit 의 find)으로 MAX_KEYWORDS 개까지.
 	 */
 	private static List<String> keywords(List<Section> sections, String text) {
-		List<String> parts = sections.stream().filter((s) -> KEYWORD_SECTIONS.contains(s.name())).map(Section::text).toList();
+		// split 은 머리 줄만 있는 섹션도 남긴다("…경험\n우대 사항", 내용이 머리 줄에 붙은 "주요 업무 Java 로 API 개발")
+		List<String> parts = sections.stream()
+			.filter((s) -> KEYWORD_SECTIONS.contains(s.name()))
+			.map(Section::text)
+			.filter((t) -> !t.isEmpty())
+			.toList();
 		String scanned = parts.isEmpty() ? text : String.join("\n", parts);
 		return KeywordDictionary.standard().find(scanned).keySet().stream().limit(MAX_KEYWORDS).toList();
 	}

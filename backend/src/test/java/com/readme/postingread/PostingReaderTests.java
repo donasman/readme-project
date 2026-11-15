@@ -121,6 +121,16 @@ class PostingReaderTests {
 	}
 
 	@Test
+	void requirementSectionsWithoutContentFallBackToTheWholeText() {
+		// 머리 줄만 있는 우대 사항
+		assertThat(this.reader.fromText("Java, Spring Boot 개발자를 찾습니다. k8s 경험\n우대 사항", null, TODAY).keywords())
+			.containsExactly("Java", "Kubernetes", "Spring Boot");
+		// 짧은 줄이라 내용째 머리 줄로 읽힌 주요 업무·자격 요건. 근무 조건의 "서울"에는 사전 낱말이 없다
+		String text = String.join("\n", "주요 업무 Java 로 API 개발", "자격 요건 Kotlin 3년", "근무 조건", "- 서울");
+		assertThat(this.reader.fromText(text, null, TODAY).keywords()).containsExactly("API", "Java", "Kotlin");
+	}
+
+	@Test
 	void atMostFifteenKeywordsMostFrequentFirst() {
 		String text = String.join("\n", "주요 업무", "- Java Kotlin Python Go Rust Scala PHP Ruby Swift Dart SQL Spring JPA Docker Redis Kafka",
 				"자격 요건", "- Redis 경험");

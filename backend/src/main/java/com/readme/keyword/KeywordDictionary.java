@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +16,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -111,22 +111,29 @@ public final class KeywordDictionary {
 		for (Form form : this.forms) {
 			// 정규식은 접은 글에 그 표기가 있는 자리에서만 맞춰 본다. 모든 자리에서 맞춰 보면 표기 수(약 600)만큼 글을 읽어 1MB 에 15초 걸렸다
 			Matcher matcher = form.pattern().matcher(rest).useTransparentBounds(true);
-			List<MatchResult> found = new ArrayList<>();
+			// 찾은 자리는 시작·끝 int 둘로만 둔다. MatchResult 는 하나에 약 190바이트라 1MB 에 짧은 표기가 많으면 수백 MB 가 된다
+			int[] spans = new int[16];
+			int size = 0;
 			for (int at = folded.indexOf(form.folded()); at >= 0; at = folded.indexOf(form.folded(), at + 1)) {
 				if (matcher.region(at, rest.length()).lookingAt()) {
-					found.add(matcher.toMatchResult());
+					if (size == spans.length) {
+						spans = Arrays.copyOf(spans, size * 2);
+					}
+					spans[size++] = at;
+					spans[size++] = matcher.end();
 					at = matcher.end() - 1;
 				}
 			}
-			// jobfit 처럼 한 표기를 다 찾은 뒤에 가린다. 가리는 일은 찾은 글자 수만큼이라 글 길이의 제곱이 되지 않는다(jobfit 은 글을 다시 만든다)
-			for (MatchResult match : found) {
-				for (int i = match.start(); i < match.end(); i++) {
+			// jobfit 처럼 한 표기를 다 찾은 뒤에 가린다(".NET.NET"의 둘째는 앞 글자 T 때문에 아니다). 가리는 일은 찾은 글자 수만큼이라
+			// 글 길이의 제곱이 되지 않는다(jobfit 은 글을 다시 만든다)
+			for (int s = 0; s < size; s += 2) {
+				for (int i = spans[s]; i < spans[s + 1]; i++) {
 					rest.setCharAt(i, ' ');
 					folded.setCharAt(i, ' ');
 				}
 			}
-			if (!found.isEmpty()) {
-				counts.merge(form.canonical(), found.size(), Integer::sum);
+			if (size > 0) {
+				counts.merge(form.canonical(), size / 2, Integer::sum);
 			}
 		}
 		Map<String, Integer> sorted = new LinkedHashMap<>();
