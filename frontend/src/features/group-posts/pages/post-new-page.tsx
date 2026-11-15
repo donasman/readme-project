@@ -25,8 +25,9 @@ const VIAS: { value: Via; label: string }[] = [
   { value: "text", label: "본문 붙여넣기" },
   { value: "file", label: "파일" },
 ]
-// shortcut: 크기(20MB)는 안내 글뿐이고 막지 않는다, 서버가 받는 형식과 크기를 정하면 여기서도 막는다(화면 API 대응 3.2의 7번)
+// 서버가 받는 형식과 크기(공고 문서 4.6). 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
+const MAX_BYTES = 20 * 1024 * 1024
 const TEXT_MAX = 50_000
 
 type ReadNotice = Exclude<ReadPostResult, { status: "ok" }>
@@ -36,7 +37,7 @@ export function PostNewPage() {
   const { group } = useGroup()
   const navigate = useNavigate()
   const [via, setVia] = useState<Via>("url")
-  const [notice, setNotice] = useState<ReadNotice | null>(null)
+  const [notice, setNotice] = useState<(ReadNotice & { from: Via }) | null>(null)
   const [busy, setBusy] = useState(false)
   // 읽지 못한 링크. 본문 붙여넣기의 원문 링크와, 링크 탭으로 돌아왔을 때의 칸에 다시 넣는다
   const [failedUrl, setFailedUrl] = useState("")
@@ -49,8 +50,8 @@ export function PostNewPage() {
         const state: PostCheckState = { draft: result.draft }
         return navigate(paths.groupPostCheck(group.id), { state })
       }
-      setNotice(result)
-      // 링크를 읽지 못하면 본문을 붙여넣게 한다
+      setNotice({ ...result, from: input.kind })
+      // 링크나 파일을 읽지 못하면 본문을 붙여넣게 한다
       if (result.status === "failed") {
         if (input.kind === "url") setFailedUrl(input.url)
         setVia("text")
@@ -83,7 +84,7 @@ export function PostNewPage() {
             </Link>
           </Notice>
         ) : (
-          <Notice title="이 링크는 읽지 못했습니다">
+          <Notice title={notice.from === "file" ? "이 파일은 읽지 못했습니다" : "이 링크는 읽지 못했습니다"}>
             <span>{notice.message}</span>
           </Notice>
         ))}
@@ -214,14 +215,16 @@ function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
 function FileDrop({ busy, onRead }: ReadProps) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
-  // 틀린 파일을 이어서 놓아도 매번 알리도록 횟수를 세어 알림의 key로 쓴다
-  const [wrongTries, setWrongTries] = useState(0)
+  // 같은 이유로 이어서 막혀도 매번 알리도록 횟수를 알림의 key로 쓴다
+  const [fileError, setFileError] = useState<{ message: string; tries: number } | null>(null)
+  const failFile = (message: string | null) => setFileError((e) => (message ? { message, tries: (e?.tries ?? 0) + 1 } : null))
 
   const take = (file: File | undefined) => {
     if (!file) return
-    const ok = matchesAccept(file.name, ACCEPT)
-    setWrongTries((n) => (ok ? 0 : n + 1))
-    if (ok) void onRead({ kind: "file", file })
+    if (!matchesAccept(file.name, ACCEPT)) return failFile("PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.")
+    if (file.size > MAX_BYTES) return failFile("파일이 너무 큽니다. 20MB까지 올릴 수 있습니다.")
+    failFile(null)
+    void onRead({ kind: "file", file })
   }
 
   const drop = (event: DragEvent) => {
@@ -259,12 +262,12 @@ function FileDrop({ busy, onRead }: ReadProps) {
           e.target.value = ""
         }}
       />
-      <Button type="button" disabled={busy} aria-describedby={wrongTries > 0 ? noteId("pn-file") : undefined} onClick={() => fileInput.current?.click()}>
+      <Button type="button" disabled={busy} aria-describedby={fileError ? noteId("pn-file") : undefined} onClick={() => fileInput.current?.click()}>
         파일 고르기
       </Button>
-      {wrongTries > 0 && (
-        <div role="alert" key={wrongTries}>
-          <FieldError id="pn-file">PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.</FieldError>
+      {fileError && (
+        <div role="alert" key={fileError.tries}>
+          <FieldError id="pn-file">{fileError.message}</FieldError>
         </div>
       )}
     </div>

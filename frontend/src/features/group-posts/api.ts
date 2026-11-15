@@ -1,6 +1,6 @@
 // 그룹 공고 화면이 공고 데이터를 가져오고 바꾸는 유일한 곳. 주소와 오류 이름은 공고 문서 4.1, 4.3이다. 그룹과 보는 사람은 domain에서 읽는다.
 import * as db from "@/mocks/db"
-import { apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
+import { ApiError, apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
 import { sentence } from "@/shared/lib/korean"
 
 import type { Comment, Deadline, DraftField, GroupPost, GroupPostData, GroupPostsData, MyState, PostDraft, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
@@ -38,22 +38,33 @@ interface ReadResponse extends Omit<PostDraft, "unread"> {
 /** 칸 확인 화면이 아는 칸. 서버의 unread에는 화면에 없는 deadlineName도 늘 들어 있다(공고 문서 8절 16번). */
 const DRAFT_FIELDS: readonly string[] = ["company", "title", "deadline", "sourceUrl", "applyAt"] satisfies DraftField[]
 
-/** 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일. 이 그룹에 이미 있으면 그 공고를, 읽지 못하면 이유를 돌려준다. */
+/** 읽어 오기의 본문. groupId를 주면 서버가 그 그룹에 같은 공고가 있는지 함께 본다(파일은 멤버인지만 본다). 서버의 id는 숫자다. */
+function readBody(groupId: string, input: PostReadInput) {
+  if (input.kind === "url") return { url: input.url, groupId: Number(groupId) }
+  if (input.kind === "text") return { text: input.text, sourceUrl: input.sourceUrl, groupId: Number(groupId) }
+  const form = new FormData()
+  form.append("file", input.file)
+  form.append("groupId", groupId)
+  return form
+}
+
+/** 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일(PDF, DOCX, HWPX, HWP). 이 그룹에 이미 있으면 그 공고를, 읽지 못하면 이유를 돌려준다. */
 export async function readPost(groupId: string, input: PostReadInput): Promise<ReadPostResult> {
   if (mockServer) return db.readPosting(groupId, input.kind === "file" ? { kind: "file", name: input.file.name } : input)
-  // shortcut: 서버에 파일 읽기가 아직 없어 붙여넣기로 보낸다, 서버가 파일을 받으면 보낸다(공고 문서 4.6)
-  if (input.kind === "file") return { status: "failed", message: "파일은 아직 읽지 못합니다. 공고 본문을 복사해 붙여넣어 주세요." }
-  const from = input.kind === "url" ? { url: input.url } : { text: input.text, sourceUrl: input.sourceUrl }
   try {
-    // groupId를 주면 서버가 그 그룹에 같은 공고가 있는지 함께 본다. 서버의 id는 숫자다
-    const { duplicate, unread, ...draft } = await request<ReadResponse>("POST", "/api/postings/read", { ...from, groupId: Number(groupId) })
+    const { duplicate, unread, ...draft } = await request<ReadResponse>("POST", "/api/postings/read", readBody(groupId, input))
     if (duplicate) {
       const { postId, ...post } = duplicate
       return { status: "duplicate", post: { id: postId, ...post } }
     }
     return { status: "ok", draft: { ...draft, unread: unread.filter((f): f is DraftField => DRAFT_FIELDS.includes(f)) } }
   } catch (error) {
-    if (isApiError(error, "FETCH_BLOCKED", "FETCH_FAILED")) return { status: "failed", message: sentence(error.message) }
+    // 413은 서버 앞(Caddy)이 본문 없이 끊을 수도 있어 code와 관계없이 "너무 크다"로 본다(공고 문서 8절 29번)
+    if (error instanceof ApiError && error.status === 413) {
+      return { status: "failed", message: error.code ? sentence(error.message) : "파일이 너무 큽니다. 20MB까지 올릴 수 있습니다." }
+    }
+    // 서버의 글에 이유와 붙여넣기 안내가 있다
+    if (isApiError(error, "FETCH_BLOCKED", "FETCH_FAILED", "FILE_UNSUPPORTED_TYPE", "FILE_UNREADABLE", "FILE_NO_TEXT")) return { status: "failed", message: sentence(error.message) }
     throw error
   }
 }
