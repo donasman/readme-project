@@ -93,6 +93,14 @@ public final class KeywordDictionary {
 		return List.copyOf(this.variants.keySet());
 	}
 
+	/**
+	 * 글에 이 낱말이 있는지, 사전 낱말과 같은 경계 규칙으로 본다(jobfit 의 word_pattern). 사전 밖의 낱말(카드 태그 '배치' 등)을
+	 * 찾을 때 쓴다. 부분 문자열로 찾으면 Java 가 JavaScript 에 걸린다.
+	 */
+	public static boolean mentions(String text, String word) {
+		return pattern(word).matcher(text).find();
+	}
+
 	/** 사전에 있는 표기(대표 표기나 다른 표기)인지. 대소문자는 가리지 않는다. */
 	public boolean contains(String token) {
 		return canonicalOf(token.strip()) != null;
