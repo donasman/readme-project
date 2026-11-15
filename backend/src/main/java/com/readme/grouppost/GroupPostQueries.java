@@ -70,6 +70,36 @@ class GroupPostQueries {
 			  left join users u on u.id = c.author_id
 			""";
 
+	/**
+	 * 홈의 그룹 소식. 내 그룹에 since 뒤로 올라온 공고는 그룹마다 한 줄(개수), 달린 댓글은 공고 × 쓴 사람마다 한 줄이다.
+	 * 내린 공고와 그 댓글, 내가 올린 공고와 내가 쓴 댓글, 탈퇴한 사람의 댓글은 넣지 않는다. 댓글 본문과 지원 상태는 싣지 않는다.
+	 */
+	private static final String ACTIVITY = """
+			select g.id as group_id, g.name, g.mark, null::bigint as posting_id, null::varchar as company,
+			       null::varchar as author_name, count(*) as post_count, max(gp.posted_at) as happened_at
+			  from group_posts gp
+			  join group_members m on m.group_id = gp.group_id and m.user_id = :viewerId
+			  join groups g on g.id = gp.group_id
+			 where gp.taken_down_at is null
+			   and gp.posted_at >= :since
+			   and gp.posted_by is distinct from :viewerId
+			 group by g.id, g.name, g.mark
+			union all
+			select g.id, g.name, g.mark, p.id, p.company, u.display_name, 0, max(c.created_at)
+			  from group_post_comments c
+			  join group_posts gp on gp.group_id = c.group_id and gp.posting_id = c.posting_id
+			  join group_members m on m.group_id = c.group_id and m.user_id = :viewerId
+			  join groups g on g.id = c.group_id
+			  join postings p on p.id = c.posting_id
+			  join users u on u.id = c.author_id
+			 where gp.taken_down_at is null
+			   and c.created_at >= :since
+			   and c.author_id <> :viewerId
+			 group by g.id, g.name, g.mark, p.id, p.company, u.id, u.display_name
+			 order by happened_at desc, group_id, posting_id nulls first
+			 limit :limit
+			""";
+
 	private static final TypeReference<List<PostSection>> SECTIONS = new TypeReference<>() {
 	};
 
@@ -118,6 +148,20 @@ class GroupPostQueries {
 			.single();
 	}
 
+	/** 이 공고가 다른 그룹에도 올라와 있고(내리지 않은), 그 그룹에 올린 사람이 이 사람이 아닌지. 탈퇴해 비었으면 남으로 본다. */
+	boolean isSharedWithAnotherPoster(long groupId, long postingId, long userId) {
+		return this.jdbc.sql("""
+				select exists (select 1 from group_posts
+				                where posting_id = :postingId and group_id <> :groupId and taken_down_at is null
+				                  and posted_by is distinct from :userId)
+				""")
+			.param("groupId", groupId)
+			.param("postingId", postingId)
+			.param("userId", userId)
+			.query(Boolean.class)
+			.single();
+	}
+
 	MyStateResponse myState(long groupId, long postingId, long viewerId) {
 		boolean interested = this.jdbc.sql("""
 				select exists (select 1 from group_post_interests
@@ -143,6 +187,25 @@ class GroupPostQueries {
 			.param("commentId", commentId)
 			.query((rs, rowNum) -> comment(rs))
 			.single();
+	}
+
+	/** 홈의 그룹 소식. 최근 것부터 limit 줄. */
+	List<GroupNewsResponse> activity(long viewerId, OffsetDateTime since, int limit) {
+		return this.jdbc.sql(ACTIVITY)
+			.param("viewerId", viewerId)
+			.param("since", since)
+			.param("limit", limit)
+			.query((rs, rowNum) -> news(rs))
+			.list();
+	}
+
+	private static GroupNewsResponse news(ResultSet rs) throws SQLException {
+		Long postingId = rs.getObject("posting_id", Long.class);
+		String text = (postingId == null) ? "새 공고 %d건".formatted(rs.getLong("post_count"))
+				: "%s 님이 %s 공고에 댓글을 남겼습니다".formatted(rs.getString("author_name"), rs.getString("company"));
+		return new GroupNewsResponse(
+				new GroupNewsResponse.GroupLabel(rs.getLong("group_id"), rs.getString("name"), rs.getString("mark")),
+				text, postingId);
 	}
 
 	private Map<Long, List<InterestResponse>> interests(String sql, long groupId, long viewerId, Long postingId) {

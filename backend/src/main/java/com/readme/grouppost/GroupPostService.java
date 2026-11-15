@@ -76,13 +76,34 @@ class GroupPostService {
 	@Transactional
 	void takeDown(long groupId, long postingId, long userId) {
 		GroupMembership membership = this.access.requireMember(groupId, userId);
-		GroupPost post = this.groupPosts.findById(new GroupPost.Key(groupId, postingId))
-			.filter(GroupPost::isVisible)
-			.orElseThrow(() -> new ApiException(GroupPostErrorCode.POST_NOT_FOUND));
+		GroupPost post = visibleGroupPost(groupId, postingId);
 		if (!membership.leader() && !post.isPostedBy(userId)) {
 			throw new ApiException(CommonErrorCode.FORBIDDEN, "올린 사람과 그룹장만 내릴 수 있습니다");
 		}
 		post.takeDown(userId, this.clock.instant());
+	}
+
+	/**
+	 * 공고 고치기(설계 4.5). 이 그룹에 올린 사람만 한다(그룹장도 못 한다, 아니면 403 FORBIDDEN).
+	 * 공고 본체를 고치므로 같은 공고를 올린 다른 그룹에도 보인다. 그래서 다른 사람이 다른 그룹에 올린(내리지 않은) 같은
+	 * 공고가 있으면 409 POSTING_SHARED 다. 아니면 혼자인 그룹에 같은 링크를 올려 남의 그룹이 보는 공고를 고칠 수 있다.
+	 * 날짜 넣기와 달리 마감이 이미 있어도 바꾸지만, unknown 으로 되돌리지는 않는다(409 DEADLINE_ALREADY_SET).
+	 *
+	 * <p>살펴본 뒤 고치기 전에 다른 그룹에 같은 공고가 막 올라오면 고쳐진다. 두 사람이 같은 순간에 해야 생기므로 그대로 둔다.
+	 */
+	@Transactional
+	void edit(long groupId, long postingId, long userId, String company, String title, DeadlineKind kind,
+			LocalDate date) {
+		this.access.requireMember(groupId, userId);
+		if (!visibleGroupPost(groupId, postingId).isPostedBy(userId)) {
+			throw new ApiException(CommonErrorCode.FORBIDDEN, "올린 사람만 고칠 수 있습니다");
+		}
+		if (this.queries.isSharedWithAnotherPoster(groupId, postingId, userId)) {
+			throw new ApiException(GroupPostErrorCode.POSTING_SHARED);
+		}
+		if (!this.postings.edit(postingId, company, title, kind, date)) {
+			throw new ApiException(GroupPostErrorCode.DEADLINE_ALREADY_SET);
+		}
 	}
 
 	/**
@@ -152,6 +173,12 @@ class GroupPostService {
 			throw new ApiException(GroupPostErrorCode.POST_NOT_FOUND);
 		}
 		return membership;
+	}
+
+	private GroupPost visibleGroupPost(long groupId, long postingId) {
+		return this.groupPosts.findById(new GroupPost.Key(groupId, postingId))
+			.filter(GroupPost::isVisible)
+			.orElseThrow(() -> new ApiException(GroupPostErrorCode.POST_NOT_FOUND));
 	}
 
 	private GroupPostComment commentOf(long groupId, long postingId, long commentId) {

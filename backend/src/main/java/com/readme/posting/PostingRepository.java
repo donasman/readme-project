@@ -31,6 +31,21 @@ interface PostingRepository extends JpaRepository<Posting, Long> {
 			@Param("sourceUrl") String sourceUrl, @Param("userId") long userId, @Param("now") Instant now);
 
 	/**
+	 * 공고 고치기. 회사명, 공고명, 마감만 바꾸고 원문 주소와 공고키는 그대로 둔다.
+	 * UNKNOWN 으로는 마감이 아직 UNKNOWN 일 때만 바꾼다(마감이 있는 공고를 되돌리지 않는다). 바꿨으면 1, 아니면 0.
+	 */
+	@Modifying
+	@Query(value = """
+			update postings
+			   set company = :company, title = :title, deadline_kind = :kind, deadline_date = cast(:date as date),
+			       updated_at = :now
+			 where id = :postingId
+			   and (:kind <> 'UNKNOWN' or deadline_kind = 'UNKNOWN')
+			""", nativeQuery = true)
+	int edit(@Param("postingId") long postingId, @Param("company") String company, @Param("title") String title,
+			@Param("kind") String kind, @Param("date") LocalDate date, @Param("now") Instant now);
+
+	/**
 	 * 날짜 넣기. 마감이 아직 UNKNOWN 일 때만 날짜(DATE)나 상시(ALWAYS)로 바꾼다.
 	 * 두 사람이 같이 넣으면 먼저 넣은 사람 것만 들어간다(설계 6절 15번). 바꿨으면 1, 이미 마감이 있었으면 0.
 	 *

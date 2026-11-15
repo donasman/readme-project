@@ -51,12 +51,35 @@ public class Postings {
 	 */
 	@Transactional
 	public boolean fillUnknownDeadline(long postingId, DeadlineKind kind, LocalDate date, long userId) {
-		if (kind == DeadlineKind.UNKNOWN || (kind == DeadlineKind.DATE) != (date != null)) {
-			throw new IllegalArgumentException("마감은 날짜가 있는 DATE 나 날짜가 없는 ALWAYS 로만 넣는다: " + kind + ", " + date);
-		}
+		requireDateOrAlways(kind, date);
 		String newKey = this.repository.findById(postingId).map((posting) -> keyWithDate(posting, date)).orElse(null);
 		return this.repository.fillUnknownDeadline(postingId, kind.name(), date, newKey, userId,
 				this.clock.instant()) == 1;
+	}
+
+	/**
+	 * 공고 고치기(설계 4.5). 회사명, 공고명, 마감을 이 값으로 바꾼다. 날짜 넣기와 달리 마감이 이미 있어도 바꾼다.
+	 * UNKNOWN 은 마감이 아직 UNKNOWN 일 때만 받는다(회사명만 고칠 때). 마감이 있는 공고를 UNKNOWN 으로 되돌리려 하면
+	 * 고치지 않고 false 를 돌려준다. 공고 본체를 고치므로 같은 공고를 올린 다른 그룹에도 보인다(설계 가정 2).
+	 * 누가 고칠 수 있는지는 부르는 쪽이 본다.
+	 *
+	 * <p>shortcut: 원문 주소와 공고키는 바꾸지 않아, 링크 없는 공고(local: 키)는 고치기 전 값으로 만든 키가 남는다.
+	 * 고친 값으로 다시 올리면 다른 공고가 된다. 같은 공고로 알아봐야 하면 날짜 넣기처럼 키를 다시 만든다.
+	 *
+	 * @param date DATE 일 때만 넣고, 그 밖에는 null
+	 */
+	@Transactional
+	public boolean edit(long postingId, String company, String title, DeadlineKind kind, LocalDate date) {
+		if ((kind == DeadlineKind.DATE) != (date != null)) {
+			throw new IllegalArgumentException("날짜는 DATE 일 때만, 꼭 넣는다: " + kind + ", " + date);
+		}
+		return this.repository.edit(postingId, company, title, kind.name(), date, this.clock.instant()) == 1;
+	}
+
+	private static void requireDateOrAlways(DeadlineKind kind, LocalDate date) {
+		if (kind == DeadlineKind.UNKNOWN || (kind == DeadlineKind.DATE) != (date != null)) {
+			throw new IllegalArgumentException("마감은 날짜가 있는 DATE 나 날짜가 없는 ALWAYS 로만 넣는다: " + kind + ", " + date);
+		}
 	}
 
 	/**
