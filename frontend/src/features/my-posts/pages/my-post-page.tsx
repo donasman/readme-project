@@ -1,5 +1,5 @@
-import { useRef, useState } from "react"
-import { Link, useLoaderData, useLocation, type LoaderFunctionArgs } from "react-router"
+import { useEffect, useRef, useState } from "react"
+import { Link, useLoaderData, useLocation, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,8 +33,13 @@ const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-b
 /** 공고 상세(시안 8차, 내 공고): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
   const { today, posting } = useLoaderData<typeof myPostLoader>()
-  // 내 공고 넣기에서 이미 있는 공고로 왔을 때
-  const arrived = (useLocation().state as ArrivedState | null)?.arrived
+  const location = useLocation()
+  const navigate = useNavigate()
+  // 내 공고 넣기에서 이미 있는 공고로 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(브라우저가 새로 고침과 뒤로 가기에도 남겨 알림이 다시 뜬다)
+  const [arrived] = useState(() => (location.state as ArrivedState | null)?.arrived ?? false)
+  useEffect(() => {
+    if (arrived) void navigate(".", { replace: true, state: null })
+  }, [arrived, navigate])
   const due = dueText(posting, today)
   const [memo, setMemo] = useState(posting.memo)
   // 저장한 값과 비교한다. loader의 posting.memo는 저장해도 다시 읽지 않아 처음 값에 머문다
