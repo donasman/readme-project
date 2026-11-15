@@ -49,6 +49,17 @@ class SourceFilesTests {
 	}
 
 	@Test
+	void formatsClaudeCanReadAreRecognized() {
+		assertThat(SourceFiles.llmMediaType("%PDF-1.4".getBytes(StandardCharsets.US_ASCII))).isEqualTo("application/pdf");
+		assertThat(SourceFiles.llmMediaType(new byte[] { (byte) 0x89, 'P', 'N', 'G', 13, 10 })).isEqualTo("image/png");
+		assertThat(SourceFiles.llmMediaType(new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0 })).isEqualTo("image/jpeg");
+		assertThat(SourceFiles.llmMediaType("GIF89a".getBytes(StandardCharsets.US_ASCII))).isEqualTo("image/gif");
+		assertThat(SourceFiles.llmMediaType("RIFF0000WEBPVP8 ".getBytes(StandardCharsets.US_ASCII))).isEqualTo("image/webp");
+		assertThat(SourceFiles.llmMediaType(new byte[] { 0, 0, 0, 24, 'f', 't', 'y', 'p', 'h', 'e', 'i', 'c', 0, 0 })).isNull();
+		assertThat(SourceFiles.llmMediaType(new byte[] { 'I', 'I', '*', 0 })).isNull();
+	}
+
+	@Test
 	void photosHaveNoText() {
 		assertCode(() -> SourceFiles.read("scan.png", new byte[] { (byte) 0x89, 'P', 'N', 'G', 13, 10 }),
 				ExtractionErrorCode.SOURCE_NO_TEXT);

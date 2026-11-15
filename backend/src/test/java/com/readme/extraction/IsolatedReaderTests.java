@@ -1,6 +1,7 @@
 package com.readme.extraction;
 
 import static com.readme.extraction.HwpTextTests.assertCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+
+import com.readme.common.error.ApiException;
 
 /**
  * PDF·HWP 를 다른 프로세스에서 읽기. 그 프로세스가 메모리를 다 쓰거나 오래 걸리면 그 프로세스만 끝나고 SOURCE_UNREADABLE 이다.
@@ -31,6 +34,15 @@ class IsolatedReaderTests {
 		byte[] scan = PdfTextTests.pdf("");
 
 		assertCode(() -> IsolatedReader.read(SourceFiles.Format.PDF, scan), ExtractionErrorCode.SOURCE_NO_TEXT);
+	}
+
+	@Test
+	void aScannedPdfComesBackWithItsPageCount() throws IOException {
+		byte[] scan = PdfTextTests.pdf("", "", "");
+
+		assertThatThrownBy(() -> IsolatedReader.read(SourceFiles.Format.PDF, scan)).isInstanceOf(ApiException.class)
+			.extracting((ex) -> ((ApiException) ex).details().get(PdfText.PAGES))
+			.isEqualTo(3);
 	}
 
 	@Test

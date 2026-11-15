@@ -1,6 +1,7 @@
 package com.readme.llm;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,7 +13,10 @@ import com.anthropic.errors.AnthropicException;
 import com.anthropic.errors.AnthropicServiceException;
 import com.anthropic.helpers.BetaMessageAccumulator;
 import com.anthropic.models.beta.AnthropicBeta;
+import com.anthropic.models.beta.messages.BetaBase64ImageSource;
+import com.anthropic.models.beta.messages.BetaBase64PdfSource;
 import com.anthropic.models.beta.messages.BetaCacheCreation;
+import com.anthropic.models.beta.messages.BetaContentBlockParam;
 import com.anthropic.models.beta.messages.BetaContentBlock;
 import com.anthropic.models.beta.messages.BetaMessage;
 import com.anthropic.models.beta.messages.BetaRawMessageStreamEvent;
@@ -90,12 +94,30 @@ final class AnthropicClaudeApi implements ClaudeApi, AutoCloseable {
 			.model(request.model())
 			.maxTokens(request.feature().maxTokens())
 			.addBeta(AnthropicBeta.SERVER_SIDE_FALLBACK_2026_07_01)
-			.fallbacksDefault()
-			.addUserMessage(request.text());
+			.fallbacksDefault();
+		if (request.document() == null) {
+			builder.addUserMessage(request.text());
+		}
+		else {
+			builder.addUserMessageOfContentBlockParams(List.of(block(request.document()),
+					BetaContentBlockParam.ofText(request.text())));
+		}
 		if (request.system() != null) {
 			builder.system(request.system());
 		}
 		return builder.build();
+	}
+
+	/** 파일 블록: PDF 는 document, 사진은 image. 둘 다 base64 로 요청에 싣는다(요청은 32MB 까지, 서버가 받는 파일은 20MB 까지다). */
+	private static BetaContentBlockParam block(LlmDocument document) {
+		String data = Base64.getEncoder().encodeToString(document.bytes());
+		if (LlmDocument.PDF.equals(document.mediaType())) {
+			return BetaContentBlockParam.ofDocument(BetaBase64PdfSource.builder().data(data).build());
+		}
+		return BetaContentBlockParam.ofImage(BetaBase64ImageSource.builder()
+			.data(data)
+			.mediaType(BetaBase64ImageSource.MediaType.of(document.mediaType()))
+			.build());
 	}
 
 	/**

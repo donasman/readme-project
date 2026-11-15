@@ -26,8 +26,8 @@ enum PostingReadErrorCode implements ErrorCode {
 	/** 형식은 맞는데 읽지 못했다: 손상, 암호, 배포용 한글 문서, 읽는 프로세스의 메모리·시간 초과. */
 	FILE_UNREADABLE(HttpStatus.UNPROCESSABLE_CONTENT, "파일을 읽지 못했습니다. 손상되었거나 암호가 걸린 파일일 수 있습니다. 공고 본문을 복사해 붙여넣어 주세요"),
 
-	/** 읽을 글자가 없다: 글자 층이 없는 PDF(스캔본), 사진, 빈 파일. 이런 파일을 LLM 으로 읽는 것은 다음 작업이다. */
-	FILE_NO_TEXT(HttpStatus.UNPROCESSABLE_CONTENT, "글자를 읽을 수 없는 파일입니다. 스캔한 파일은 아직 읽지 못합니다. 공고 본문을 복사해 붙여넣어 주세요");
+	/** 읽을 글자가 없다: 빈 파일, Claude 가 받지 않는 사진 형식(TIFF, HEIC), Claude 가 옮겨 적지 못한 스캔본·사진(2026-11-16). */
+	FILE_NO_TEXT(HttpStatus.UNPROCESSABLE_CONTENT, "글자를 읽을 수 없는 파일입니다. 공고 본문을 복사해 붙여넣어 주세요");
 
 	private final HttpStatus status;
 

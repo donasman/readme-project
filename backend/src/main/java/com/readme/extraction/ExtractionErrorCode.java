@@ -25,8 +25,11 @@ public enum ExtractionErrorCode implements ErrorCode {
 	/** 형식은 맞는데 읽다가 실패했다(손상, 암호, 배포용 한글 문서). */
 	SOURCE_UNREADABLE(HttpStatus.UNPROCESSABLE_CONTENT, "파일을 읽지 못했습니다. 파일이 손상되었거나 암호가 걸려 있지 않은지 확인해 주세요"),
 
-	/** 글자 층이 없는 PDF(스캔본)나 사진. 글자를 읽어 내는 방법(OCR)은 뒤에 붙인다. */
-	SOURCE_NO_TEXT(HttpStatus.UNPROCESSABLE_CONTENT, "글자를 읽을 수 없는 파일입니다. 스캔한 파일과 사진은 아직 읽지 못하고, 곧 읽을 수 있게 할 예정입니다"),
+	/**
+	 * 글자를 읽을 수 없다. 글자 층이 없는 PDF·사진은 Claude 로 옮겨 적으므로(ScannedFiles), 응답에는 그쪽의 사정(받지 않는 사진 형식,
+	 * 옮겨 적지 못함)이 메시지로 온다.
+	 */
+	SOURCE_NO_TEXT(HttpStatus.UNPROCESSABLE_CONTENT, "글자를 읽을 수 없는 파일입니다"),
 
 	/** 읽은 글이 비었다(빈 파일, 공백만 붙여넣은 글). */
 	SOURCE_EMPTY(HttpStatus.UNPROCESSABLE_CONTENT, "읽을 글이 없습니다");

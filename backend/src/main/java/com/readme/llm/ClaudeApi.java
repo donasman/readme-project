@@ -14,11 +14,18 @@ interface ClaudeApi {
 	<T> ClaudeReply<T> send(ClaudeRequest<T> request);
 
 	/**
-	 * @param system 지시문. 없으면 null
-	 * @param text   사용자 글(자료, 공고 본문 등)
-	 * @param type   답의 모양. 이 record 의 JSON 스키마로 구조화 출력을 받는다
+	 * @param system   지시문. 없으면 null
+	 * @param text     사용자 글(자료, 공고 본문 등)
+	 * @param document 사용자 글 앞에 넣는 파일(스캔본, 사진). 없으면 null
+	 * @param type     답의 모양. 이 record 의 JSON 스키마로 구조화 출력을 받는다
 	 */
-	record ClaudeRequest<T>(String model, LlmFeature feature, String system, String text, Class<T> type) {
+	record ClaudeRequest<T>(String model, LlmFeature feature, String system, String text, LlmDocument document,
+			Class<T> type) {
+
+		ClaudeRequest(String model, LlmFeature feature, String system, String text, Class<T> type) {
+			this(model, feature, system, text, null, type);
+		}
+
 	}
 
 	/** @param value outcome 이 DONE 일 때만 있다 */

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import com.readme.common.error.ApiException;
@@ -22,6 +23,9 @@ final class PdfText {
 
 	/** 이보다 적으면 스캔한 PDF 로 본다(jobfit 의 PDF_MIN_CHARS_PER_PAGE) */
 	static final int MIN_CHARS_PER_PAGE = 40;
+
+	/** SOURCE_NO_TEXT 의 details 에 싣는 쪽 수의 이름 */
+	static final String PAGES = "pages";
 
 	/** 쪽의 끝 표시. 문서를 한 번에 읽고 이것으로 쪽을 나눈다 */
 	private static final String PAGE_END = "\f";
@@ -42,7 +46,13 @@ final class PdfText {
 			String text = Arrays.stream(pages).map(String::strip).filter((page) -> !page.isEmpty())
 				.collect(Collectors.joining("\n\n"));
 			if (SourceText.length(text) < MIN_CHARS_PER_PAGE * pageCount) {
-				throw new ApiException(ExtractionErrorCode.SOURCE_NO_TEXT);
+				// 쪽 수는 스캔본을 Claude 로 읽을지 정하는 데 쓴다(ScannedFiles). IsolatedReader 가 서버 쪽에 넘긴다.
+				// 글이 없는 쪽은 쪽 끝 표시가 나오지 않고 /Count 는 믿을 수 없어, 쪽 나무를 하나씩 센다
+				int walked = 0;
+				for (PDPage ignored : document.getPages()) {
+					walked++;
+				}
+				throw new ApiException(ExtractionErrorCode.SOURCE_NO_TEXT).with(PAGES, Math.max(walked, pageCount));
 			}
 			return text;
 		}

@@ -69,8 +69,13 @@ public class Llm {
 	 * @param type   답의 모양. record 로 만든다. 그 JSON 스키마로 구조화 출력을 받는다
 	 */
 	public <T> T ask(long userId, LlmFeature feature, String system, String text, Class<T> type) {
+		return ask(userId, feature, system, text, null, type);
+	}
+
+	/** 파일(스캔본, 사진)을 사용자 글 앞에 함께 넣어 묻는다. document 가 null 이면 글만 묻는다. */
+	public <T> T ask(long userId, LlmFeature feature, String system, String text, LlmDocument document, Class<T> type) {
 		ClaudeReply<T> reply = this.claude
-			.send(new ClaudeRequest<>(this.properties.model(), feature, system, text, type));
+			.send(new ClaudeRequest<>(this.properties.model(), feature, system, text, document, type));
 		this.recorder.record(userId, feature, reply.attempts());
 		if (reply.outcome() == ClaudeApi.Outcome.DONE) {
 			return reply.value();

@@ -137,6 +137,30 @@ final class SourceFiles {
 			.toString();
 	}
 
+	/**
+	 * Claude 에 그대로 넣을 수 있는 형식이면 그 media type(application/pdf, image/png, image/jpeg, image/gif, image/webp),
+	 * 아니면 null. TIFF 와 HEIC·AVIF 는 Claude 가 받지 않는다.
+	 */
+	static String llmMediaType(byte[] bytes) {
+		if (indexOf(bytes, PDF, 1024) >= 0) {
+			return "application/pdf";
+		}
+		if (startsWith(bytes, new byte[] { (byte) 0x89, 'P', 'N', 'G' })) {
+			return "image/png";
+		}
+		if (startsWith(bytes, new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF })) {
+			return "image/jpeg";
+		}
+		if (startsWith(bytes, "GIF8".getBytes(StandardCharsets.US_ASCII))) {
+			return "image/gif";
+		}
+		if (startsWith(bytes, "RIFF".getBytes(StandardCharsets.US_ASCII))
+				&& indexOf(bytes, "WEBP".getBytes(StandardCharsets.US_ASCII), 16) == 8) {
+			return "image/webp";
+		}
+		return null;
+	}
+
 	/** PNG, JPEG, GIF, TIFF, WebP, HEIC·AVIF(휴대폰 사진). */
 	private static boolean isImage(byte[] bytes) {
 		return startsWith(bytes, new byte[] { (byte) 0x89, 'P', 'N', 'G' })

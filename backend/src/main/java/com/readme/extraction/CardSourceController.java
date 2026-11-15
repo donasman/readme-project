@@ -57,7 +57,7 @@ class CardSourceController {
 	@PostMapping(path = "/api/card-sources", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	ResponseEntity<UploadResponse> uploadFile(@RequestParam("file") MultipartFile file, @CurrentUser LoginUser user)
 			throws IOException {
-		return saved(this.files.read(file), user);
+		return saved(this.files.read(file, user.id()), user);
 	}
 
 	@PostMapping(path = "/api/card-sources", consumes = MediaType.APPLICATION_JSON_VALUE)
