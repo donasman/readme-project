@@ -3,11 +3,16 @@ package com.readme.card;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.readme.card.CardRequests.CardInput;
+import com.readme.extraction.ExtractedCard;
 import com.readme.keyword.KeywordDictionary;
 import com.readme.keyword.Numbers;
 import com.readme.keyword.Numbers.NumToken;
@@ -16,7 +21,8 @@ import com.readme.keyword.Numbers.NumToken;
  * 카드 규칙: 문항 유형 읽기, 카드 검사, STAR 에만 있는 숫자. Spring 없이 돈다.
  *
  * <p>jobfit 의 src/jobfit/experiences.py(normalize_type, check_cards, loose_star_numbers, 기간 정규식)와
- * ai/exp_extract.py 의 ground_star 중 "자료 원문 없이 사람이 맞다고 한 카드"의 길(vouched)을 옮겼다.
+ * ai/exp_extract.py 의 ground_star(사람이 맞다고 한 카드의 길 vouched 와 자료 원문과 대조하는 길), normalize_cards 의 카드 한 장 부분을
+ * 옮겼다.
  *
  * <p>check_cards 와 다른 점(경험카드 설계 4.1): 칸 이름과 글은 화면의 말("요약", "근거 숫자")로 쓴다. id·예시 카드·verified 검사는
  * 리드미에 해당하지 않아 뺐다(확인 여부는 화면이 따로 보여 준다). 사전에 없는 태그를 경고한다(jobfit 은 그대로 둔다).
@@ -168,6 +174,200 @@ final class CardRules {
 			}
 		}
 		return added;
+	}
+
+	// ── 추출한 카드(jobfit ai/exp_extract.py 의 normalize_cards 중 카드 한 장, ground_star) ──────────────
+
+	/** 원문 대조에 쓰는 자료 글. 숫자 뽑기는 글 길이에 따라 오래 걸려 조각마다 한 번만 한다. */
+	record SourceText(String text, List<NumToken> numbers, List<String> sentences) {
+
+		static SourceText of(String text) {
+			return new SourceText(text, Numbers.extract(text), CardRules.sentences(text));
+		}
+
+	}
+
+	/** 다듬은 추출 카드와 그때 생긴 안내(카드의 extractionNotes). */
+	record Normalized(CardInput card, List<String> notes) {
+	}
+
+	/** STAR 를 맞춘 결과: 바뀐 STAR, 근거 숫자에 더할 문장, 안내. */
+	record Grounding(Star star, List<String> factsToAdd, List<String> notes) {
+	}
+
+	/**
+	 * LLM 이 뽑은 카드를 저장할 값으로 다듬는다. 제목이 비었으면 null.
+	 * <ul>
+	 * <li>태그는 대표 표기로(겹치면 하나), 문항 유형은 6종으로 읽고 아닌 것은 빼고 알린다.</li>
+	 * <li>근거 숫자 가운데 자료 원문에 없는 숫자가 든 것은 빼고 알린다.</li>
+	 * <li>STAR 에만 있는 숫자는 {@link #groundStar} 로 맞춘다.</li>
+	 * <li>칸 길이를 넘는 글은 자른다(제목·기관·역할·요약 200, 기간 50, STAR 한 칸 2,000, 태그 30개·100자, 근거 숫자 50개·500자).</li>
+	 * </ul>
+	 * jobfit 과 다른 점: 숫자를 그 카드가 나온 조각과 대조한다(jobfit 은 자료 전체). 숫자 뽑기가 글 길이에 따라 오래 걸려서다.
+	 */
+	static Normalized normalizeExtracted(ExtractedCard raw, SourceText source) {
+		String title = cut(raw.title(), 200);
+		if (title == null) {
+			return null;
+		}
+		List<String> notes = new ArrayList<>();
+		KeywordDictionary dictionary = KeywordDictionary.standard();
+		LinkedHashSet<String> tags = new LinkedHashSet<>();
+		for (String tag : strings(raw.tags())) {
+			String canonical = cut(dictionary.normalize(tag), 100);
+			if (canonical != null && tags.size() < 30) {
+				tags.add(canonical);
+			}
+		}
+		LinkedHashSet<String> types = new LinkedHashSet<>();
+		List<String> badTypes = new ArrayList<>();
+		for (String value : strings(raw.usableFor())) {
+			String type = normalizeType(value);
+			if (type != null) {
+				types.add(type);
+			}
+			else {
+				badTypes.add(value);
+			}
+		}
+		if (!badTypes.isEmpty()) {
+			notes.add("문항 유형이 아니라서 뺐습니다 — " + String.join(", ", badTypes));
+		}
+		ExtractedCard.StarText given = (raw.star() != null) ? raw.star() : new ExtractedCard.StarText("", "", "", "");
+		Star star = new Star(orEmpty(cut(given.situation(), 2000)), orEmpty(cut(given.task(), 2000)),
+				orEmpty(cut(given.action(), 2000)), orEmpty(cut(given.result(), 2000)));
+		List<String> facts = new ArrayList<>();
+		for (String fact : strings(raw.facts())) {
+			List<NumToken> numbers = Numbers.extract(fact);
+			if (!numbers.isEmpty() && !numbers.stream().allMatch((n) -> Numbers.sameValue(n, source.numbers()))) {
+				notes.add("자료 원문에 없는 숫자가 있어 이 근거 숫자를 뺐습니다 — \"" + fact + "\"");
+				continue;
+			}
+			facts.add(fact);
+		}
+		Grounding grounding = groundStar(star, facts, source);
+		facts.addAll(grounding.factsToAdd());
+		notes.addAll(grounding.notes());
+		List<String> keptFacts = facts.stream().map((f) -> cut(f, 500)).filter((f) -> f != null).limit(50).toList();
+		return new Normalized(new CardInput(title, cut(raw.period(), 50), cut(raw.org(), 200), cut(raw.role(), 200),
+				cut(raw.summary(), 200), grounding.star(), List.copyOf(tags), List.copyOf(types), keptFacts), notes);
+	}
+
+	/**
+	 * STAR 에만 있고 근거 숫자에 없는 숫자를 맞춘다(jobfit 의 ground_star, 사람이 확인하기 전의 길). 초안은 근거 숫자의 숫자만 쓸 수 있다.
+	 * <ul>
+	 * <li>자료 원문에 있는 숫자 → 그 숫자가 든 원문 문장(STAR 문장과 가장 많이 겹치는 것, 길면 숫자 앞뒤만)을 근거 숫자에 더한다.</li>
+	 * <li>원문에 없는 숫자 → STAR 에서 [확인 필요: 숫자] 로 바꾼다(초안이 그 숫자를 쓰지 않게).</li>
+	 * </ul>
+	 */
+	static Grounding groundStar(Star star, List<String> facts, SourceText source) {
+		List<NumToken> factNumbers = numbersIn(facts);
+		List<String> added = new ArrayList<>();
+		List<String> notes = new ArrayList<>();
+		List<String> parts = new ArrayList<>(star.parts());
+		for (int i = 0; i < parts.size(); i++) {
+			String value = parts.get(i);
+			for (NumToken number : Numbers.extract(value)) {
+				if (Numbers.sameValue(number, factNumbers)) {
+					continue;
+				}
+				String fact = Numbers.sameValue(number, source.numbers()) ? sourceFact(number, source.sentences(), value)
+						: null;
+				if (fact != null) {
+					added.add(fact);
+					factNumbers.addAll(Numbers.extract(fact));
+					notes.add("STAR에만 있던 숫자(" + number.raw() + ")를 근거 숫자에 넣었습니다 — \"" + fact + "\"");
+				}
+				else {
+					String marked = markUnconfirmed(value, number.raw());
+					if (!marked.equals(value)) {
+						value = marked;
+						notes.add("STAR의 숫자(" + number.raw() + ")는 자료 원문에 없어 [확인 필요: " + number.raw() + "]로 바꿨습니다");
+					}
+				}
+			}
+			parts.set(i, value);
+		}
+		return new Grounding(new Star(parts.get(0), parts.get(1), parts.get(2), parts.get(3)), added, notes);
+	}
+
+	private static final Pattern CONFIRM_SPAN = Pattern.compile("\\[확인\\s*필요[^\\]]*\\]", Pattern.UNICODE_CHARACTER_CLASS);
+
+	private static final Pattern SPACES = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
+
+	/** 숫자가 든 원문 문장 가운데 STAR 문장과 가장 많이 겹치는 것(같으면 앞의 것). 숫자가 표기 그대로 든 문장이 먼저다. */
+	private static String sourceFact(NumToken number, List<String> sentences, String context) {
+		Set<String> grams = bigrams(context);
+		String best = null;
+		int bestRaw = -1;
+		int bestOverlap = -1;
+		for (String sentence : sentences) {
+			if (!Numbers.sameValue(number, Numbers.extract(sentence))) {
+				continue;
+			}
+			int raw = Normalizer.normalize(sentence, Normalizer.Form.NFKC).contains(number.raw()) ? 1 : 0;
+			Set<String> overlap = bigrams(sentence);
+			overlap.retainAll(grams);
+			if (raw > bestRaw || (raw == bestRaw && overlap.size() > bestOverlap)) {
+				best = sentence;
+				bestRaw = raw;
+				bestOverlap = overlap.size();
+			}
+		}
+		if (best == null) {
+			return null;
+		}
+		String fact = clip(best, number.raw());
+		return Numbers.sameValue(number, Numbers.extract(fact)) ? fact : null;
+	}
+
+	private static Set<String> bigrams(String text) {
+		String s = SPACES.matcher(text).replaceAll("");
+		Set<String> grams = new HashSet<>();
+		for (int i = 0; i + 1 < s.length(); i++) {
+			grams.add(s.substring(i, i + 2));
+		}
+		return grams;
+	}
+
+	/** value 의 raw(숫자 표기)를 [확인 필요: raw] 로. 이미 [확인 필요 …] 안에 있는 것과 더 긴 숫자의 일부는 건드리지 않는다. */
+	static String markUnconfirmed(String value, String raw) {
+		List<int[]> taken = new ArrayList<>();
+		Matcher confirm = CONFIRM_SPAN.matcher(value);
+		while (confirm.find()) {
+			taken.add(new int[] { confirm.start(), confirm.end() });
+		}
+		Matcher matcher = Pattern.compile("(?<![\\d.,])" + Pattern.quote(raw) + "(?!\\d)", Pattern.UNICODE_CHARACTER_CLASS)
+			.matcher(value);
+		StringBuilder out = new StringBuilder();
+		int last = 0;
+		while (matcher.find()) {
+			int start = matcher.start();
+			if (taken.stream().anyMatch((span) -> span[0] <= start && start < span[1])) {
+				continue;
+			}
+			out.append(value, last, start).append("[확인 필요: ").append(raw).append(']');
+			last = matcher.end();
+		}
+		return (last == 0) ? value : out.append(value.substring(last)).toString();
+	}
+
+	private static List<String> strings(List<String> values) {
+		return (values == null) ? List.of()
+				: values.stream().filter((v) -> v != null && !v.isBlank()).map(String::strip).toList();
+	}
+
+	private static String orEmpty(String text) {
+		return (text != null) ? text : "";
+	}
+
+	/** 앞뒤 공백을 지우고 max 자까지. 비면 null. */
+	private static String cut(String text, int max) {
+		if (text == null || text.isBlank()) {
+			return null;
+		}
+		String s = text.strip();
+		return (s.length() <= max) ? s : s.substring(0, max).strip();
 	}
 
 	private static void requireFilled(List<CardIssue> issues, String field, boolean empty) {

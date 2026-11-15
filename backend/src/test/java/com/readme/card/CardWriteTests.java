@@ -88,6 +88,7 @@ class CardWriteTests {
 				  "visibility": "PRIVATE",
 				  "sourceId": null,
 				  "sourceName": null,
+				  "sourceExcerpt": null,
 				  "extractionNotes": [],
 				  "issues": [
 				    { "level": "경고", "field": "태그", "message": "태그 '사내 배포 도구'은(는) 키워드 사전에 없습니다" },

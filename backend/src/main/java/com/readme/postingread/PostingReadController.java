@@ -123,7 +123,8 @@ class PostingReadController {
 			case SOURCE_TOO_LARGE -> PostingReadErrorCode.FILE_TOO_LARGE;
 			case SOURCE_UNSUPPORTED_TYPE -> PostingReadErrorCode.FILE_UNSUPPORTED_TYPE;
 			case SOURCE_NO_TEXT, SOURCE_EMPTY -> PostingReadErrorCode.FILE_NO_TEXT;
-			case SOURCE_UNREADABLE, SOURCE_NOT_FOUND -> PostingReadErrorCode.FILE_UNREADABLE;
+			// 파일 읽기는 SOURCE_NOT_FOUND·JOB_NOT_FOUND 를 내지 않는다. 다 다루려고 둔다
+			case SOURCE_UNREADABLE, SOURCE_NOT_FOUND, JOB_NOT_FOUND -> PostingReadErrorCode.FILE_UNREADABLE;
 		};
 	}
 

@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * <p>jobfit 의 ai/exp_extract.py {@code _split} 을 옮겼다. 글자 수는 Python 의 len 처럼 코드 포인트로 센다.
  * 공백도 Python 처럼 유니코드 공백(전각 공백, 줄바꿈 없는 공백 포함)으로 본다.
  */
-final class SourceParts {
+public final class SourceParts {
 
 	/** jobfit 의 SOURCE_PART: 프롬프트 한 장에 넣는 자료 글자 수 */
 	static final int SIZE = 5000;
@@ -25,8 +25,8 @@ final class SourceParts {
 		return split(text).size();
 	}
 
-	/** 문단 경계에서 SIZE 이하 조각으로. 한 문단이 SIZE 보다 길면 그 문단을 자른다. */
-	static List<String> split(String text) {
+	/** 문단 경계에서 SIZE 이하 조각으로. 한 문단이 SIZE 보다 길면 그 문단을 자른다. 카드의 원문 조각(card 패키지)도 쓴다. */
+	public static List<String> split(String text) {
 		text = strip(text);
 		if (length(text) <= SIZE) {
 			return List.of(text);
