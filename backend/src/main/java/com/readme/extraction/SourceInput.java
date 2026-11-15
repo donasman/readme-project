@@ -42,6 +42,13 @@ record SourceInput(Kind kind, String fileName, String contentType, Long byteSize
 		return new SourceInput(Kind.FILE, fileName, read.format().contentType, (long) bytes.length, text);
 	}
 
+	/** 글자 층이 없어 Claude 가 옮겨 적은 파일(ScannedFiles). 글은 파일과 같은 규칙으로 다듬는다. */
+	static SourceInput scanned(String originalName, String mediaType, byte[] bytes, String transcribed) {
+		String text = SourceText.normalize(transcribed);
+		SourceText.check(text);
+		return new SourceInput(Kind.FILE, cleanName(originalName), mediaType, (long) bytes.length, text);
+	}
+
 	/** 붙여넣은 글. 파일과 같은 규칙으로 다듬는다. 다듬기 전에 READ_LIMIT 를 넘으면 사본을 만들기 전에 거부한다. */
 	static SourceInput text(String pasted) {
 		if (pasted.length() > SourceText.READ_LIMIT) {

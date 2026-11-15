@@ -26,27 +26,51 @@ public class UploadedFiles {
 
 	private final Semaphore reading = new Semaphore(CONCURRENT_READS);
 
-	/** 자료 한 건으로 읽는다. 20MB 를 넘거나, 받지 않는 형식이거나, 읽을 글이 없으면 ApiException(ExtractionErrorCode). */
-	SourceInput read(MultipartFile file) throws IOException {
+	private final ScannedFiles scanned;
+
+	UploadedFiles(ScannedFiles scanned) {
+		this.scanned = scanned;
+	}
+
+	/**
+	 * 자료 한 건으로 읽는다. 20MB 를 넘거나, 받지 않는 형식이거나, 읽을 글이 없으면 ApiException(ExtractionErrorCode).
+	 * 글자 층이 없는 PDF(스캔본)와 사진은 Claude 로 옮겨 적는다(ScannedFiles). 그때 LLM 한도와 사용액은 userId 의 것이다.
+	 */
+	SourceInput read(MultipartFile file, long userId) throws IOException {
 		if (file.getSize() > SourceInput.MAX_BYTES) {
 			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
 		}
+		byte[] bytes;
+		Integer pages;
 		this.reading.acquireUninterruptibly();
 		try {
-			return SourceInput.file(file.getOriginalFilename(), file.getBytes());
+			bytes = file.getBytes();
+			try {
+				return SourceInput.file(file.getOriginalFilename(), bytes);
+			}
+			catch (ApiException ex) {
+				if (ex.errorCode() != ExtractionErrorCode.SOURCE_NO_TEXT) {
+					throw ex;
+				}
+				pages = (Integer) ex.details().get(PdfText.PAGES);
+			}
 		}
 		finally {
 			this.reading.release();
 		}
+		// 옮겨 적는 동안(수십 초)은 읽는 수를 잡지 않는다. 그 수는 서버 메모리를 지키려는 것이다
+		String text = this.scanned.read(userId, bytes, pages);
+		return SourceInput.scanned(file.getOriginalFilename(), SourceFiles.llmMediaType(bytes), bytes, text);
 	}
 
 	/**
-	 * PDF, DOCX, HWPX, HWP 파일의 다듬은 글(비지 않았고 100만 자까지). 다른 형식(PPTX, TXT, MD)은 SOURCE_UNSUPPORTED_TYPE 이고,
-	 * 그 밖의 오류도 자료 올리기와 같은 ExtractionErrorCode 다.
+	 * 공고 파일의 다듬은 글(비지 않았고 100만 자까지). PDF, DOCX, HWPX, HWP 와, 글자 층이 없어 Claude 로 옮겨 적은 PDF·사진이다.
+	 * 다른 형식(PPTX, TXT, MD)은 SOURCE_UNSUPPORTED_TYPE 이고, 그 밖의 오류도 자료 올리기와 같은 ExtractionErrorCode 다.
+	 * 옮겨 적을 때의 LLM 오류(한도, 키 없음)는 LlmErrorCode 그대로다.
 	 */
-	public String documentText(MultipartFile file) throws IOException {
-		SourceInput input = read(file);
-		if (!DOCUMENTS.contains(input.contentType())) {
+	public String documentText(MultipartFile file, long userId) throws IOException {
+		SourceInput input = read(file, userId);
+		if (!DOCUMENTS.contains(input.contentType()) && !input.contentType().startsWith("image/")) {
 			throw new ApiException(ExtractionErrorCode.SOURCE_UNSUPPORTED_TYPE);
 		}
 		return input.text();

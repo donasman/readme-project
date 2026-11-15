@@ -21,7 +21,10 @@ public enum LlmFeature {
 	POSTING_FIELDS(Effort.LOW, 8_000),
 
 	/** 받은 메일 분류(9-3) */
-	MAIL_CLASSIFY(Effort.LOW, 8_000);
+	MAIL_CLASSIFY(Effort.LOW, 8_000),
+
+	/** 글자 층이 없는 PDF(스캔본)와 사진의 글 옮겨 적기(5-8, 6-1). 옮겨 적는 글이 길어 출력 상한이 크다 */
+	DOCUMENT_READ(Effort.LOW, 32_000);
 
 	private final Effort effort;
 

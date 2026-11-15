@@ -95,7 +95,7 @@ class PostingReadController {
 		}
 		String text;
 		try {
-			text = this.files.documentText(file);
+			text = this.files.documentText(file, user.id());
 		}
 		catch (ApiException ex) {
 			throw (ex.errorCode() instanceof ExtractionErrorCode code) ? new ApiException(fileError(code)) : ex;

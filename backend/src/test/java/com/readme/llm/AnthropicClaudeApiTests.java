@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -91,6 +92,35 @@ class AnthropicClaudeApiTests {
 		// SDK 3.x 는 키를 x-api-key 가 아니라 Authorization 머리로 보낸다
 		assertThat(this.headers.get().getFirst("authorization")).isEqualTo("Bearer sk-ant-api03-test");
 		assertThat(this.headers.get().getFirst("anthropic-beta")).contains("server-side-fallback-2026-07-01");
+	}
+
+	@Test
+	void documentsGoBeforeTheTextAsBase64Blocks() throws IOException {
+		answer(200, stream("end_turn", 1600, 30, "{\\\"title\\\":\\\"a\\\",\\\"tags\\\":[]}"));
+		byte[] pdf = "%PDF-1.4 스캔".getBytes(StandardCharsets.UTF_8);
+
+		this.api.send(new ClaudeRequest<>("claude-opus-5-5", LlmFeature.DOCUMENT_READ, "옮겨 적는다", "옮겨 적어 주세요",
+				new LlmDocument(LlmDocument.PDF, pdf), Draft.class));
+
+		JsonNode content = ObjectMappers.jsonMapper().readTree(this.body.get()).at("/messages/0/content");
+		assertThat(content.get(0).get("type").asText()).isEqualTo("document");
+		assertThat(content.get(0).at("/source/type").asText()).isEqualTo("base64");
+		assertThat(content.get(0).at("/source/media_type").asText()).isEqualTo("application/pdf");
+		assertThat(content.get(0).at("/source/data").asText()).isEqualTo(Base64.getEncoder().encodeToString(pdf));
+		assertThat(content.get(1).get("type").asText()).isEqualTo("text");
+		assertThat(content.get(1).get("text").asText()).isEqualTo("옮겨 적어 주세요");
+	}
+
+	@Test
+	void photosGoAsImageBlocks() throws IOException {
+		answer(200, stream("end_turn", 1600, 30, "{\\\"title\\\":\\\"a\\\",\\\"tags\\\":[]}"));
+
+		this.api.send(new ClaudeRequest<>("claude-opus-5-5", LlmFeature.DOCUMENT_READ, null, "옮겨 적어 주세요",
+				new LlmDocument("image/png", new byte[] { 1, 2 }), Draft.class));
+
+		JsonNode block = ObjectMappers.jsonMapper().readTree(this.body.get()).at("/messages/0/content/0");
+		assertThat(block.get("type").asText()).isEqualTo("image");
+		assertThat(block.at("/source/media_type").asText()).isEqualTo("image/png");
 	}
 
 	@Test

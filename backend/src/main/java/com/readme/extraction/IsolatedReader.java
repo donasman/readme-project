@@ -70,10 +70,10 @@ public final class IsolatedReader {
 				throw SourceText.tooLong();
 			}
 			String result = Files.readString(output, StandardCharsets.UTF_8);
-			if (exit == API_ERROR) {
-				int newline = result.indexOf('\n');
-				throw new ApiException(ExtractionErrorCode.valueOf(result.substring(0, newline)),
-						result.substring(newline + 1));
+			if (exit == API_ERROR) { // 코드, 쪽 수(없으면 빈 줄), 메시지
+				String[] parts = result.split("\n", 3);
+				ApiException error = new ApiException(ExtractionErrorCode.valueOf(parts[0]), parts[2]);
+				throw parts[1].isEmpty() ? error : error.with(PdfText.PAGES, Integer.parseInt(parts[1]));
 			}
 			return result;
 		}
@@ -103,7 +103,8 @@ public final class IsolatedReader {
 			result.flush();
 		}
 		catch (ApiException ex) {
-			result.print(ex.errorCode().name() + "\n" + ex.getMessage());
+			Object pages = ex.details().get(PdfText.PAGES);
+			result.print(ex.errorCode().name() + "\n" + ((pages != null) ? pages : "") + "\n" + ex.getMessage());
 			result.flush();
 			System.exit(API_ERROR);
 		}

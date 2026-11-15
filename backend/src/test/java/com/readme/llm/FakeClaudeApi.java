@@ -1,5 +1,8 @@
 package com.readme.llm;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.RecordComponent;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -34,7 +37,35 @@ public class FakeClaudeApi implements ClaudeApi {
 		if (reply == null) {
 			throw new ApiException(LlmErrorCode.LLM_UNAVAILABLE);
 		}
+		if (reply.value() instanceof RecordValues values) {
+			return ClaudeReply.done(values.of(request.type()), reply.attempts());
+		}
 		return (ClaudeReply<T>) reply;
+	}
+
+	/**
+	 * 다음 호출에, 요청한 답의 record 를 이 값들로 만들어 답한다. 다른 패키지의 package-private 답 모양(예: extraction 의
+	 * ScannedFiles.Transcript)을 테스트가 직접 만들 수 없을 때 쓴다.
+	 */
+	public void willAnswerRecord(Object... values) {
+		willReply(ClaudeReply.done(new RecordValues(values), List.of(attempt())));
+	}
+
+	private record RecordValues(Object[] values) {
+
+		<T> T of(Class<T> type) {
+			try {
+				Class<?>[] types = Arrays.stream(type.getRecordComponents()).map(RecordComponent::getType)
+					.toArray(Class<?>[]::new);
+				Constructor<T> constructor = type.getDeclaredConstructor(types);
+				constructor.setAccessible(true);
+				return constructor.newInstance(this.values);
+			}
+			catch (ReflectiveOperationException ex) {
+				throw new IllegalStateException(type + " 을 만들지 못했다", ex);
+			}
+		}
+
 	}
 
 	/** 다음 호출의 답. 정한 순서대로 쓴다. */
@@ -65,6 +96,11 @@ public class FakeClaudeApi implements ClaudeApi {
 	/** 마지막으로 받은 요청의 사용자 글. */
 	public String lastText() {
 		return this.requests.getLast().text();
+	}
+
+	/** 마지막으로 받은 요청의 파일. 없으면 null. */
+	public LlmDocument lastDocument() {
+		return this.requests.getLast().document();
 	}
 
 	/** 마지막으로 받은 요청의 기능. */

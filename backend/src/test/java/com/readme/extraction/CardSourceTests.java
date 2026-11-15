@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.sql.Types;
 import java.util.Map;
 
@@ -25,6 +26,8 @@ import org.springframework.test.web.servlet.assertj.MvcTestResultAssert;
 import com.readme.Fixtures;
 import com.readme.IntegrationTest;
 import com.readme.common.token.Tokens;
+import com.readme.llm.FakeClaudeApi;
+import com.readme.llm.LlmFeature;
 
 /**
  * 자료 올리기·목록·지우기(경험카드 설계 4.2).
@@ -40,6 +43,9 @@ class CardSourceTests {
 
 	@Autowired
 	JdbcClient jdbc;
+
+	@Autowired
+	FakeClaudeApi claude;
 
 	// ── 올리기 ─────────────────────────────────────────────────────────
 
@@ -158,10 +164,76 @@ class CardSourceTests {
 				HttpStatus.CONTENT_TOO_LARGE, "SOURCE_TOO_LARGE");
 	}
 
+	// ── 글자 층이 없는 파일: Claude 가 옮겨 적는다(경험카드 설계 4.7). Claude 는 FakeClaudeApi 가 답한다 ──
+
 	@Test
-	void aScannedPdfHasNoText() throws Exception {
-		assertError(uploadFile(this.fixtures.user("다온"), "스캔.pdf", PdfTextTests.pdf("")),
-				HttpStatus.UNPROCESSABLE_CONTENT, "SOURCE_NO_TEXT");
+	void aScannedPdfIsTranscribedByClaude() throws Exception {
+		this.claude.reset();
+		long me = this.fixtures.user("다온");
+		this.claude.willAnswerRecord("김다온\n주문 조회 API 개선 프로젝트\n연락처 010-1234-5678");
+
+		assertThat(uploadFile(me, "스캔.pdf", PdfTextTests.pdf(""))).hasStatus(HttpStatus.CREATED)
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "source": { "name": "스캔.pdf", "kind": "file", "parts": 1 }, "duplicate": false }
+					""");
+		assertThat(this.claude.lastFeature()).isEqualTo(LlmFeature.DOCUMENT_READ);
+		assertThat(this.claude.lastDocument().mediaType()).isEqualTo("application/pdf");
+		assertThat(this.jdbc.sql("select body from card_sources where user_id = :userId").param("userId", me)
+			.query(String.class).single()).isEqualTo("김다온\n주문 조회 API 개선 프로젝트\n연락처 [전화번호]");
+	}
+
+	@Test
+	void aPhotoIsTranscribedButNotEveryFormat() {
+		this.claude.reset();
+		long me = this.fixtures.user("다온");
+		this.claude.willAnswerRecord("사진 속 이력서");
+
+		assertThat(uploadFile(me, "이력서.png", new byte[] { (byte) 0x89, 'P', 'N', 'G', 13, 10, 26, 10 }))
+			.hasStatus(HttpStatus.CREATED);
+		assertThat(this.claude.lastDocument().mediaType()).isEqualTo("image/png");
+		assertThat(uploadFile(me, "IMG_0001.HEIC", new byte[] { 0, 0, 0, 24, 'f', 't', 'y', 'p', 'h', 'e', 'i', 'c', 0, 0 }))
+			.hasStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "code": "SOURCE_NO_TEXT", "message": "이 사진 형식은 읽지 못합니다. JPG나 PNG로 바꿔 올려 주세요" }
+					""");
+		assertThat(this.claude.calls()).isEqualTo(1);
+	}
+
+	@Test
+	void scannedPdfsOverTwentyPagesAreRefusedBeforeClaude() throws Exception {
+		this.claude.reset();
+		String[] pages = new String[ScannedFiles.MAX_PAGES + 1];
+		Arrays.fill(pages, "");
+
+		assertThat(uploadFile(this.fixtures.user("다온"), "스캔.pdf", PdfTextTests.pdf(pages)))
+			.hasStatus(HttpStatus.CONTENT_TOO_LARGE)
+			.bodyJson()
+			.extractingPath("$.message")
+			.isEqualTo("스캔한 PDF는 20쪽까지 읽습니다. 글자를 고를 수 있는 PDF나 나눈 파일로 올려 주세요");
+		assertThat(this.claude.calls()).isZero();
+	}
+
+	@Test
+	void whenClaudeCannotReadItTheUploadFailsWithTheReason() throws Exception {
+		this.claude.reset();
+		long me = this.fixtures.user("다온");
+
+		// 정해 둔 답이 없으면 키가 없는 서버처럼 503 이다
+		assertError(uploadFile(me, "스캔.pdf", PdfTextTests.pdf("")), HttpStatus.SERVICE_UNAVAILABLE, "LLM_UNAVAILABLE");
+		this.claude.willRefuse();
+		assertThat(uploadFile(me, "스캔.pdf", PdfTextTests.pdf(""))).hasStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "code": "SOURCE_NO_TEXT", "message": "글자를 읽지 못했습니다. 글자가 잘 보이는 파일로 다시 올려 주세요" }
+					""");
+		this.jdbc.sql("""
+				insert into llm_usage (user_id, feature, model, input_tokens, output_tokens, cost_micros, created_at)
+				values (:userId, 'DOCUMENT_READ', 'claude-opus-5-5', 0, 0, 2000000, now())
+				""").param("userId", me).update();
+		assertError(uploadFile(me, "스캔.pdf", PdfTextTests.pdf("")), HttpStatus.TOO_MANY_REQUESTS, "LLM_LIMIT_REACHED");
+		assertThat(count("select count(*) from card_sources where user_id = " + me)).isZero();
 	}
 
 	@Test

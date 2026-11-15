@@ -35,6 +35,8 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import com.readme.Fixtures;
 import com.readme.IntegrationTest;
+import com.readme.llm.FakeClaudeApi;
+import com.readme.llm.LlmFeature;
 import com.readme.posting.PostingKeys;
 
 /**
@@ -67,6 +69,9 @@ class PostingReadTests {
 
 	@Autowired
 	JdbcClient jdbc;
+
+	@Autowired
+	FakeClaudeApi claude;
 
 	long leader;
 
@@ -342,8 +347,27 @@ class PostingReadTests {
 	}
 
 	@Test
-	void scannedPdfHasNoText() throws IOException {
-		assertFileError(readFile(this.me, "스캔.pdf", blankPdf()), HttpStatus.UNPROCESSABLE_CONTENT, "FILE_NO_TEXT");
+	void scannedPdfIsTranscribedByClaudeThenReadLikeText() throws IOException {
+		this.claude.reset();
+		this.claude.willAnswerRecord(TEXT); // 옮겨 적은 글. 규칙이 필수 칸을 모두 읽어 칸 채우기는 부르지 않는다
+
+		assertThat(readFile(this.me, "스캔.pdf", blankPdf())).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "company": "예시랩", "title": "백엔드 개발자", "deadline": { "kind": "date", "date": "2026-11-20" } }
+					""");
+		assertThat(this.claude.calls()).isEqualTo(1);
+		assertThat(this.claude.lastFeature()).isEqualTo(LlmFeature.DOCUMENT_READ);
+	}
+
+	@Test
+	void scannedPdfWithoutClaudeIs503() throws IOException {
+		this.claude.reset();
+
+		assertThat(readFile(this.me, "스캔.pdf", blankPdf())).hasStatus(HttpStatus.SERVICE_UNAVAILABLE)
+			.bodyJson()
+			.extractingPath("$.code")
+			.isEqualTo("LLM_UNAVAILABLE");
 	}
 
 	@Test
