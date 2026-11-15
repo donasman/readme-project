@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { memberName } from "@/domain/group/member"
 import type { Viewer } from "@/domain/session/types"
 import { FieldError, noteId } from "@/shared/components/form-field"
 import { Heading } from "@/shared/components/heading"
@@ -54,12 +55,12 @@ export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }
       </div>
       <ul className="flex flex-col">
         {comments.map((comment) => {
-          const mine = comment.author.id === viewer.id
+          const mine = comment.author?.id === viewer.id
           return (
             <li key={comment.id} className="flex flex-col gap-1.5 border-t border-border-subtle py-3.5">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-bold">
-                  {mine ? "나" : comment.author.name}{" "}
+                  {mine ? "나" : memberName(comment.author)}{" "}
                   <span className="font-normal text-text-secondary">· {formatCommentTime(comment.createdAt)}</span>
                 </span>
                 {mine ? (

@@ -71,7 +71,8 @@ export function PostNewPage() {
         (notice.status === "duplicate" ? (
           <Notice title="이미 이 그룹에 있는 공고입니다">
             <span>
-              {notice.post.company} · {notice.post.title}. {notice.post.postedBy.name} 님이 {notice.post.postedAt}에 올렸습니다.
+              {notice.post.company} · {notice.post.title}. {notice.post.postedBy ? <>{notice.post.postedBy.name} 님이 </> : "탈퇴한 멤버가 "}
+              {notice.post.postedAt}에 올렸습니다.
             </span>
             <Link
               to={paths.groupPost(group.id, notice.post.id)}

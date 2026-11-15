@@ -34,6 +34,18 @@ export function apiPath(parts: TemplateStringsArray, ...values: string[]): strin
 }
 
 /** 바꾸는 요청에 실을 CSRF 값. 서버가 XSRF-TOKEN 쿠키로 내려 준다. */
+/**
+ * 서버의 id는 숫자이고 화면의 id는 문자열이다(구조 문서 5.1). 응답을 읽을 때 이름이 id이거나 Id로 끝나는 숫자 칸(groupId, postId, leaderId …)을
+ * 문자열로 바꿔, 각 api.ts가 따로 바꾸지 않게 한다.
+ */
+const stringIds = (key: string, value: unknown) => (typeof value === "number" && (key === "id" || key.endsWith("Id")) ? String(value) : value)
+
+/** 응답 본문을 읽는다. 비었으면(204) undefined. */
+async function readBody(response: Response): Promise<unknown> {
+  const text = await response.text()
+  return text ? JSON.parse(text, stringIds) : undefined
+}
+
 const csrfToken = () =>
   document.cookie
     .split("; ")
@@ -52,7 +64,8 @@ async function send(method: Method, path: string, body: unknown): Promise<Respon
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   if (response.ok) return response
-  return new ApiError(response.status, await response.json().catch(() => ({})))
+  const error = await readBody(response).catch(() => undefined)
+  return new ApiError(response.status, error && typeof error === "object" ? (error as Record<string, unknown>) : {})
 }
 
 /**
@@ -63,7 +76,7 @@ export async function request<T>(method: Method, path: string, body?: unknown): 
   let result = await send(method, path, body)
   if (result instanceof ApiError && result.code === "CSRF_INVALID") result = await send(method, path, body)
   if (result instanceof ApiError) throw result
-  return (result.status === 204 ? undefined : await result.json()) as T
+  return (await readBody(result)) as T
 }
 
 /** 서버가 이 오류 이름 가운데 하나로 답했는지. 화면이 칸 아래에 알릴 오류를 고를 때 쓴다. */

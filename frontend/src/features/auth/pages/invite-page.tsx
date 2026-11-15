@@ -62,7 +62,8 @@ export function InvitePage() {
         </Avatar>
         <AuthHeading title={`${invite.groupName}에 초대받았습니다`}>
           <AuthText>
-            {invite.inviterName && `${invite.inviterName} 님이 만든 초대 링크입니다. `}멤버 {invite.memberCount}명이 공고를 모으고 있습니다.
+            {invite.inviterName ? <>{invite.inviterName} 님이 만든 초대 링크입니다. 멤버 </> : "멤버 "}
+            {invite.memberCount}명이 공고를 모으고 있습니다.
           </AuthText>
         </AuthHeading>
         <ul className="flex flex-col gap-3 rounded-control bg-surface-muted px-5 py-4 text-sm">

@@ -253,7 +253,7 @@ export function addComment(groupId: string, postId: string, text: string): Comme
 export function updateComment(groupId: string, postId: string, commentId: string, text: string): Comment {
   const comment = rawPost(groupId, postId).comments.find((c) => c.id === commentId)
   if (!comment) throw new NotFoundError("댓글")
-  if (comment.author.id !== VIEWER.id) throw new Error("쓴 사람만 고칠 수 있습니다.")
+  if (comment.author?.id !== VIEWER.id) throw new Error("쓴 사람만 고칠 수 있습니다.")
   comment.body = toParts(text.trim())
   return structuredClone(comment)
 }
@@ -264,7 +264,7 @@ export function deleteComment(groupId: string, postId: string, commentId: string
   const post = rawPost(groupId, postId)
   const comment = post.comments.find((c) => c.id === commentId)
   if (!comment) throw new NotFoundError("댓글")
-  if (comment.author.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("쓴 사람과 그룹장만 지울 수 있습니다.")
+  if (comment.author?.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("쓴 사람과 그룹장만 지울 수 있습니다.")
   post.comments = post.comments.filter((c) => c.id !== commentId)
   post.commentCount -= 1
 }
@@ -287,7 +287,7 @@ const takenDown = new Map<string, GroupPostDetail[]>()
 export function takeDownPost(groupId: string, postId: string): void {
   const group = rawGroup(groupId)
   const post = rawPost(groupId, postId)
-  if (post.postedBy.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("올린 사람과 그룹장만 내릴 수 있습니다.")
+  if (post.postedBy?.id !== VIEWER.id && group.leaderId !== VIEWER.id) throw new Error("올린 사람과 그룹장만 내릴 수 있습니다.")
   keepSnapshot(groupId, post)
   group.posts = group.posts.filter((p) => p.id !== postId)
   takenDown.set(groupId, [...(takenDown.get(groupId) ?? []), post])

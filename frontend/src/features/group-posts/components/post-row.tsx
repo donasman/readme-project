@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { memberName } from "@/domain/group/member"
 import type { Viewer } from "@/domain/session/types"
 import { Pill } from "@/shared/components/pill"
 import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
@@ -102,7 +103,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFi
       </Link>
 
       <div className="hidden min-w-0 text-label-sm text-text-secondary md:col-start-6 md:row-start-1 md:block">
-        {post.postedBy.id === viewer.id ? "나" : post.postedBy.name} · {formatMonthDay(post.postedAt)}
+        {post.postedBy?.id === viewer.id ? "나" : memberName(post.postedBy)} · {formatMonthDay(post.postedAt)}
       </div>
     </li>
   )

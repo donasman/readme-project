@@ -42,7 +42,7 @@ export function GroupPostPage() {
   const post = interest.apply(data.post)
 
   const isLeader = group.leaderId === viewer.id
-  const canTakeDown = isLeader || post.postedBy.id === viewer.id
+  const canTakeDown = isLeader || post.postedBy?.id === viewer.id
   // 목록에서 왔으면 그때 고른 필터 그대로 돌아간다(브라우저 뒤로 가기와 같게)
   const listPath = paths.groupPosts(group.id) + ((location.state as ListReturnState | null)?.listSearch ?? "")
 

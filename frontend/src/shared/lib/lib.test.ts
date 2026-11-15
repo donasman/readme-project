@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { addDays, daysBetween, formatCommentTime, formatDateWeekday, formatDday, formatLongDate, formatMonthDay, formatMonthDayWeekday, seoulToday } from "./date"
 import { NotFoundError } from "./errors"
-import { objectParticle, subjectParticle } from "./korean"
+import { objectParticle, sentence, subjectParticle } from "./korean"
 import { paths } from "./paths"
 import { revalidateOnParams } from "./router"
 import { firstChar, isHttpUrl, matchesAccept } from "./utils"
@@ -123,5 +123,13 @@ describe("firstChar", () => {
     expect(firstChar("👨‍👩‍👧 가족")).toBe("👨‍👩‍👧")
     expect(firstChar("다온".normalize("NFD"))).toBe("다".normalize("NFD"))
     expect(firstChar("")).toBe("")
+  })
+})
+
+describe("sentence", () => {
+  it("마침표가 없을 때만 붙인다", () => {
+    expect(sentence("그룹을 찾을 수 없습니다")).toBe("그룹을 찾을 수 없습니다.")
+    expect(sentence("다시 해 주세요.")).toBe("다시 해 주세요.")
+    expect(sentence("정말요?")).toBe("정말요?")
   })
 })

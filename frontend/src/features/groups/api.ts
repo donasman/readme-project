@@ -1,6 +1,6 @@
 // 내 그룹과 멤버 화면이 서버와 주고받는 곳(그룹 문서 4절, 화면 API 대응 2.3).
-import { getMyGroups, toGroup } from "@/domain/group/api"
-import type { Group, GroupResponse } from "@/domain/group/types"
+import { getMyGroups } from "@/domain/group/api"
+import type { Group } from "@/domain/group/types"
 import * as db from "@/mocks/db"
 import { apiPath, mockServer, request } from "@/shared/lib/api"
 import { seoulToday } from "@/shared/lib/date"
@@ -19,7 +19,7 @@ export async function createGroup(input: { name: string; mark: string }): Promis
   const name = input.name.trim()
   const mark = input.mark.trim() || firstChar(name)
   if (mockServer) return db.createGroup(name, mark)
-  return toGroup(await request<GroupResponse>("POST", "/api/groups", { name, mark }))
+  return request<Group>("POST", "/api/groups", { name, mark })
 }
 
 /** 초대 링크를 만든다. */

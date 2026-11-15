@@ -18,3 +18,6 @@ export function objectParticle(word: string): string {
   const final = hasFinalConsonant(word)
   return final === null ? "을(를)" : final ? "을" : "를"
 }
+
+/** 마침표 없이 끝난 글(서버의 오류 글)을 문장으로 끝낸다. 칸 아래 다른 글처럼 보이게 한다. */
+export const sentence = (text: string) => (/[.?!]$/.test(text) ? text : `${text}.`)
