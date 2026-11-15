@@ -133,7 +133,7 @@ export function HomePage() {
             {news.length > 0 ? (
               <ul className="flex flex-col gap-1">
                 {news.map((n) => (
-                  <li key={n.group.id + n.text}>
+                  <li key={`${n.group.id}-${n.postId}-${n.text}`}>
                     <Link to={n.postId ? paths.groupPost(n.group.id, n.postId) : paths.groupPosts(n.group.id)} className="flex min-h-13 items-center gap-3 text-foreground">
                       <Avatar size={32} tone="accent">
                         {n.group.mark}
