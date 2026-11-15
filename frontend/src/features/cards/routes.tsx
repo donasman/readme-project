@@ -46,6 +46,15 @@ export const cardsRoutes: RouteObject[] = [
     },
   },
   {
+    // 직접 만들기: 고치기와 같은 화면을 빈 카드로 연다
+    path: "/cards/new",
+    handle,
+    lazy: async () => {
+      const { CardEditPage, cardNewLoader } = await import("./pages/card-edit-page")
+      return { loader: cardNewLoader, Component: CardEditPage }
+    },
+  },
+  {
     path: "/cards/:cardId/edit",
     handle,
     lazy: async () => {

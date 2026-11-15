@@ -52,6 +52,24 @@ export const getCard = (id: string): CardDetail => structuredClone(rawCard(id))
 export const listUnverifiedCards = (): CardDetail[] => cards().filter((c) => !c.verified).map((c) => structuredClone(c))
 
 /** 카드 고치기(PUT /api/cards/{id}). 검사 결과를 다시 매긴다. */
+/** 카드 직접 만들기(POST /api/cards). 직접 만든 카드도 확인 전이다(경험카드 문서 4.3). */
+export function createCard(input: CardInput): CardDetail {
+  const card: CardDetail = {
+    ...structuredClone(input),
+    id: String(nextId++),
+    verified: false,
+    visibility: "PRIVATE",
+    sourceId: null,
+    sourceName: null,
+    sourceExcerpt: null,
+    extractionNotes: [],
+    issues: [],
+  }
+  card.issues = checkCard(card)
+  cardStore = [card, ...cards()]
+  return structuredClone(card)
+}
+
 export function updateCard(id: string, input: CardInput): CardDetail {
   const card = rawCard(id)
   Object.assign(card, structuredClone(input))

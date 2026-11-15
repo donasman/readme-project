@@ -28,6 +28,12 @@ export async function getUnverifiedCards(): Promise<CardDetail[]> {
   return (await request<Omit<CardDetail, "sourceExcerpt">[]>("GET", "/api/cards?verified=false")).map(withExcerpt)
 }
 
+/** 카드를 직접 만든다. 직접 만든 카드도 확인 전이다. 서버는 태그를 대표 표기로 바꿔 저장하고 검사 결과를 매긴다. */
+export async function createCard(input: CardInput): Promise<CardDetail> {
+  if (mockServer) return db.createCard(input)
+  return withExcerpt(await request("POST", "/api/cards", input))
+}
+
 /** 카드를 고친다. 서버는 태그를 대표 표기로 바꿔 저장하고 검사 결과를 다시 매긴다. */
 export async function updateCard(id: string, input: CardInput): Promise<CardDetail> {
   if (mockServer) return db.updateCard(id, input)
