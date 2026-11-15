@@ -34,11 +34,15 @@ export async function saveMemo(id: string, memo: string): Promise<void> {
   await request("PUT", apiPath`/api/me/postings/${id}/memo`, { memo })
 }
 
-/** 홈에 보일 것: 내 공고(GET /api/me/postings), 그룹 소식(GET /api/me/group-activity), 확인을 기다리는 카드 수, 메일에서 온 변경. */
+/** 홈에 보일 것: 내 공고(GET /api/me/postings), 그룹 소식(GET /api/me/group-activity), 확인을 기다리는 카드 수(GET /api/cards), 메일에서 온 변경. */
 export async function getHome(): Promise<HomeData> {
   if (mockServer) return { ...db.getHome(), mailChanges: mailSummary() }
-  const [{ today, postings }, news] = await Promise.all([getMyPostings(), request<GroupNews[]>("GET", "/api/me/group-activity")])
-  // shortcut: 확인을 기다리는 카드 수는 아직 가짜 서버에서 센다, 경험카드를 서버에 붙일 때 카드 목록 API로 센다
+  const [{ today, postings }, news, unverified] = await Promise.all([
+    getMyPostings(),
+    request<GroupNews[]>("GET", "/api/me/group-activity"),
+    // 확인을 기다리는 카드 수. 카드 수가 적어 목록을 받아 센다(기능끼리 불러오지 않으려 cards의 api.ts 대신 바로 부른다)
+    request<unknown[]>("GET", "/api/cards?verified=false"),
+  ])
   // shortcut: 메일에서 온 변경은 설계에 없어 가짜 서버를 부른다, 메일 자동화가 생기면 바꾼다(화면 API 대응 3.4의 16번)
-  return { today, postings, news, unverifiedCards: db.getHome().unverifiedCards, mailChanges: mailSummary() }
+  return { today, postings, news, unverifiedCards: unverified.length, mailChanges: mailSummary() }
 }
