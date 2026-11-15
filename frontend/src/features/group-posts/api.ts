@@ -1,6 +1,6 @@
 // 그룹 공고 화면이 공고 데이터를 가져오고 바꾸는 유일한 곳. 주소와 오류 이름은 공고 문서 4.1, 4.3이다. 그룹과 보는 사람은 domain에서 읽는다.
 import * as db from "@/mocks/db"
-import { ApiError, apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
+import { apiPath, isApiError, mockServer, request, tooLargeMessage } from "@/shared/lib/api"
 import { sentence } from "@/shared/lib/korean"
 
 import type { Comment, Deadline, DraftField, GroupPost, GroupPostData, GroupPostsData, MyState, PostDraft, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
@@ -59,10 +59,8 @@ export async function readPost(groupId: string, input: PostReadInput): Promise<R
     }
     return { status: "ok", draft: { ...draft, unread: unread.filter((f): f is DraftField => DRAFT_FIELDS.includes(f)) } }
   } catch (error) {
-    // 413은 서버 앞(Caddy)이 본문 없이 끊을 수도 있어 code와 관계없이 "너무 크다"로 본다(공고 문서 8절 29번)
-    if (error instanceof ApiError && error.status === 413) {
-      return { status: "failed", message: error.code ? sentence(error.message) : "파일이 너무 큽니다. 20MB까지 올릴 수 있습니다." }
-    }
+    const tooLarge = tooLargeMessage(error)
+    if (tooLarge) return { status: "failed", message: tooLarge }
     // 서버의 글에 이유와 붙여넣기 안내가 있다
     if (isApiError(error, "FETCH_BLOCKED", "FETCH_FAILED", "FILE_UNSUPPORTED_TYPE", "FILE_UNREADABLE", "FILE_NO_TEXT")) return { status: "failed", message: sentence(error.message) }
     throw error

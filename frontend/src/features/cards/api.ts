@@ -1,6 +1,6 @@
 // 경험카드 화면이 서버와 주고받는 유일한 곳. 주소는 경험카드 문서 4.1(카드)과 4.2(자료와 추출)다.
 import * as db from "@/mocks/cards-db"
-import { ApiError, apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
+import { apiPath, isApiError, mockServer, request, tooLargeMessage } from "@/shared/lib/api"
 import { sentence } from "@/shared/lib/korean"
 
 import { chunkCount } from "./card-text"
@@ -89,10 +89,8 @@ export async function uploadSource(input: { file: File } | { text: string }): Pr
     const { source } = await request<{ source: SourceResponse; duplicate: boolean }>("POST", "/api/card-sources", body)
     return { ok: true, source: toSource(source), chunks: source.parts }
   } catch (error) {
-    // 413은 서버 앞(Caddy)이 본문 없이 끊을 수도 있어 code와 관계없이 "너무 크다"로 본다(경험카드 문서 6절 7번)
-    if (error instanceof ApiError && error.status === 413) {
-      return { ok: false, message: error.code ? sentence(error.message) : "파일이 너무 큽니다. 20MB까지 올릴 수 있습니다." }
-    }
+    const tooLarge = tooLargeMessage(error)
+    if (tooLarge) return { ok: false, message: tooLarge }
     if (isApiError(error, "SOURCE_UNSUPPORTED_TYPE", "SOURCE_UNREADABLE", "SOURCE_NO_TEXT", "SOURCE_EMPTY")) return { ok: false, message: sentence(error.message) }
     throw error
   }

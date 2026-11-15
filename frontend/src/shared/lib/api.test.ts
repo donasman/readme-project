@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { ApiError, apiPath, errorMessage, networkError, request } from "./api"
+import { ApiError, apiPath, errorMessage, FILE_TOO_LARGE, networkError, request, tooLargeMessage } from "./api"
 
 type Call = { url: string; method: string; headers: Record<string, string>; body?: unknown }
 
@@ -100,5 +100,14 @@ describe("request", () => {
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ status: 409, code: "ALREADY_IN_GROUP", message: "이미 있습니다", body: { postId: "12" } })
     await expect(request("GET", "/api/x")).rejects.toMatchObject({ status: 502, code: "" })
+  })
+})
+
+describe("tooLargeMessage", () => {
+  it("413은 서버가 준 글, 본문 없는 413(Caddy)은 20MB 안내, 다른 오류는 null", () => {
+    expect(tooLargeMessage(new ApiError(413, { code: "FILE_TOO_LARGE", message: "파일은 20MB까지입니다" }))).toBe("파일은 20MB까지입니다.")
+    expect(tooLargeMessage(new ApiError(413, {}))).toBe(FILE_TOO_LARGE)
+    expect(tooLargeMessage(new ApiError(415, { code: "FILE_UNSUPPORTED_TYPE", message: "x" }))).toBeNull()
+    expect(tooLargeMessage(new TypeError("x"))).toBeNull()
   })
 })

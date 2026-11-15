@@ -37,6 +37,18 @@ export function errorMessage(error: unknown): string {
   return "문제가 생겼습니다. 다시 해 주세요."
 }
 
+/** 파일이 서버가 받는 크기(20MB)를 넘을 때의 글. 화면은 보내기 전에도 이 글로 막는다. */
+export const FILE_TOO_LARGE = "파일이 너무 큽니다. 20MB까지 올릴 수 있습니다."
+
+/**
+ * 413이면 알릴 글, 아니면 null. 서버 앞(Caddy)이 본문 없이 끊을 수도 있어 code와 관계없이 "너무 크다"로 본다
+ * (경험카드 문서 6절 7번, 공고 문서 8절 29번). 서버가 이유를 주었으면 그 글이다.
+ */
+export function tooLargeMessage(error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 413) return null
+  return error.code ? sentence(error.message) : FILE_TOO_LARGE
+}
+
 type Method = "GET" | "POST" | "PUT" | "DELETE"
 
 /** API 주소를 만든다: apiPath`/api/groups/${groupId}/me`. 끼워 넣는 값(주소에서 온 id, 메일의 토큰)은 인코딩한다. */
