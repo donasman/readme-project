@@ -24,7 +24,8 @@ import com.readme.common.error.ApiException;
 import com.readme.common.token.Tokens;
 
 /**
- * 계정: 가입, 이메일 인증, 로그인 확인, 비밀번호 재설정(로그인 설계 4절), 구글 로그인의 계정 찾기·연결·만들기(3.2).
+ * 계정: 가입, 이메일 인증, 로그인 확인, 비밀번호 재설정(로그인 설계 4절), 구글 로그인의 계정 찾기·연결·만들기(3.2),
+ * 로그인한 채로 구글 연결하기(4.1).
  *
  * <p>메일과 세션 끊기는 DB 의 변경이 커밋된 뒤에 한다. 커밋되지 않은 링크를 메일로 보내지 않기 위해서다.
  */
@@ -178,6 +179,32 @@ class AccountService {
 		}
 		this.accounts.recordLogin(userId, now);
 		return OptionalLong.of(userId);
+	}
+
+	/** 로그인한 채로 구글 연결하기의 결과(로그인 설계 4.1). */
+	enum GoogleLink {
+		/** 연결했다. 그 구글 계정이 이미 이 계정에 연결되어 있었어도 같다. */
+		LINKED,
+		/** 그 구글 계정이 다른 계정에 연결되어 있다. */
+		IN_USE,
+		/** 이 계정에 다른 구글 계정이 이미 연결되어 있다. */
+		HAS_GOOGLE
+	}
+
+	/**
+	 * 로그인한 사람의 계정에 구글 계정(sub)을 연결한다(로그인 설계 4.1). 구글이 이 브라우저에서 방금 확인한 구글 계정이라서
+	 * 이메일과 email_verified 는 보지 않는다. email 은 provider_email 에 넣을 뿐이다. 있는 연결을 옮기거나 바꾸지 않는다.
+	 */
+	@Transactional
+	GoogleLink linkGoogle(long userId, String sub, String email) {
+		if (this.accounts.linkGoogle(userId, sub, email, this.clock.instant()) == 1) {
+			return GoogleLink.LINKED;
+		}
+		Optional<Long> owner = this.queries.findGoogleUser(sub);
+		GoogleLink result = owner.isEmpty() ? GoogleLink.HAS_GOOGLE
+				: (owner.get() == userId) ? GoogleLink.LINKED : GoogleLink.IN_USE;
+		log.info("구글 연결: 사용자 {} 는 {}", userId, result);
+		return result;
 	}
 
 	/**
