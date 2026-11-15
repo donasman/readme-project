@@ -73,3 +73,11 @@ export interface HomeData {
   mailChanges: { count: number; first: string | null }
   news: GroupNews[]
 }
+
+/** 내 공고 넣기 결과. 이미 내 공고에 있으면 서버가 409 ALREADY_IN_MY_POSTINGS와 그 공고의 id를 준다. */
+export type AddPostingResult = { ok: true; postingId: string } | { ok: false; error: "ALREADY_IN_MY_POSTINGS"; postingId: string }
+
+/** 내 공고 넣기가 이미 있는 공고의 상세로 보낼 때 넘기는 값. 상세가 "이미 내 공고에 있는 공고입니다"를 띄운다. */
+export interface ArrivedState {
+  arrived: true
+}

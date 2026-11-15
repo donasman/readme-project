@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router"
+import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
@@ -10,9 +10,9 @@ import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
+import { paths } from "@/shared/lib/paths"
 import { useSearchText } from "@/shared/lib/router"
 
 import { getMyPostings } from "../api"
@@ -66,11 +66,10 @@ export function MyPostsPage() {
               className="pl-10 md:text-base"
             />
           </div>
-          {/* shortcut: 공고 넣기(그룹 없이 내 공고에 넣기)는 화면이 없어 눌러도 아무 일이 없다, 화면이 정해지면 만든다(화면 API 대응 3.3의 11번) */}
-          <PlaceholderLink className={buttonVariants({ className: "flex-none" })}>
+          <Link to={paths.myPostNew()} className={buttonVariants({ className: "flex-none" })}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             공고 넣기
-          </PlaceholderLink>
+          </Link>
         </div>
       </div>
 
