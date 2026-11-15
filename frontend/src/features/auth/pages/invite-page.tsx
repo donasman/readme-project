@@ -3,6 +3,7 @@ import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { getViewer } from "@/domain/session/api"
+import { rememberReturnTo } from "@/domain/session/return-to"
 import { Avatar } from "@/shared/components/avatar"
 import { ClockIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -61,7 +62,7 @@ export function InvitePage() {
         </Avatar>
         <AuthHeading title={`${invite.groupName}에 초대받았습니다`}>
           <AuthText>
-            {invite.inviterName} 님이 만든 초대 링크입니다. 멤버 {invite.memberCount}명이 공고를 모으고 있습니다.
+            {invite.inviterName && `${invite.inviterName} 님이 만든 초대 링크입니다. `}멤버 {invite.memberCount}명이 공고를 모으고 있습니다.
           </AuthText>
         </AuthHeading>
         <ul className="flex flex-col gap-3 rounded-control bg-surface-muted px-5 py-4 text-sm">
@@ -80,11 +81,10 @@ export function InvitePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {/* shortcut: 로그인·가입을 마친 뒤 이 화면으로 돌아오는 길이 없다, 돌아갈 주소를 누가 들고 있을지 정하면 만든다(화면 API 대응 3.1의 2번) */}
-            <Link to={paths.login()} className={buttonVariants({ className: "w-full" })}>
+            <Link to={paths.login()} onClick={() => rememberReturnTo(paths.invite(token))} className={buttonVariants({ className: "w-full" })}>
               로그인하고 들어가기
             </Link>
-            <Link to={paths.signup()} className={buttonVariants({ variant: "outline", className: "w-full" })}>
+            <Link to={paths.signup()} onClick={() => rememberReturnTo(paths.invite(token))} className={buttonVariants({ variant: "outline", className: "w-full" })}>
               회원가입
             </Link>
             <p className="text-label-sm text-text-secondary">로그인하거나 가입을 마치면 이 화면으로 돌아옵니다.</p>

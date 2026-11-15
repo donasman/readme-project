@@ -1,8 +1,9 @@
 // 계정 화면(로그인, 가입, 이메일 인증, 비밀번호 재설정, 초대)이 서버와 주고받는 유일한 곳. 주소와 오류 이름은 docs/리드미_설계_로그인.md 4절이다.
+import type { GroupResponse } from "@/domain/group/types"
 import * as db from "@/mocks/db"
-import { isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
+import { apiPath, isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
 
-import type { AcceptInviteResult, InviteView } from "./types"
+import type { AcceptInviteResult, InvitePreview, InviteView } from "./types"
 
 /** 로그인 결과. 막히면 서버의 오류 이름과 칸 아래에 보일 글. */
 export type LoginResult = { ok: true } | { ok: false; code: string; message: string }
@@ -23,12 +24,12 @@ export async function login(email: string, password: string): Promise<LoginResul
 
 /**
  * 구글 로그인: fetch가 아니라 서버의 구글 로그인 주소로 페이지를 옮긴다. 끝나면 서버가 홈(/)으로, 실패하면 /login?error=google로 보낸다.
+ * 돌아갈 화면은 홈의 sessionLoader가 옮긴다(domain/session/return-to.ts).
  * 구글에 등록한 돌아올 주소가 서버의 것이라 서버 주소로 바로 간다(로그인 문서 7절 10번).
  */
 export function startGoogleLogin(): void {
   // shortcut: 가짜 서버에는 구글 로그인이 없어 아무 일도 하지 않는다, 가짜 서버를 지우면 이 줄도 지운다
   if (mockServer) return
-  // shortcut: 로그인 뒤 돌아갈 화면을 기억하지 않아 늘 홈으로 간다, 로그인 전 화면(초대 수락 등)에서 로그인으로 보낼 때 localStorage에 두고 홈에서 옮긴다(로그인 문서 4.1)
   window.location.assign(`${SERVER_ORIGIN}/oauth2/authorization/google`)
 }
 
@@ -88,13 +89,26 @@ export async function resetPassword(token: string | null, password: string): Pro
   return sendToken("/api/auth/password-reset/confirm", { token, password })
 }
 
-// shortcut: 초대는 아직 가짜 서버를 부른다, 그룹 API를 붙일 때 서버의 초대 미리 보기·수락(그룹 문서 4절)으로 바꾼다
-/** 초대 링크의 내용(그룹 이름, 만든 사람, 멤버 수). 없거나 지난 링크는 expired. 로그인하지 않아도 읽는다. */
+/** 초대 링크의 내용(그룹 이름, 만든 사람, 멤버 수). 없거나(404) 만료·취소된(410) 링크는 expired. 로그인하지 않아도 읽는다. */
 export async function getInvite(token: string): Promise<InviteView> {
-  return db.getInvite(token)
+  if (mockServer) return db.getInvite(token)
+  try {
+    const invite = await request<InvitePreview>("GET", apiPath`/api/group-invites/${token}`)
+    return { status: "open", ...invite }
+  } catch (error) {
+    if (isApiError(error, "INVITE_NOT_FOUND", "INVITE_EXPIRED")) return { status: "expired" }
+    throw error
+  }
 }
 
-/** 초대를 받아 그룹에 들어간다. 이미 멤버면 그대로 들어간다. */
+/** 초대를 받아 그룹에 들어간다. 이미 멤버면 링크가 지났어도 그대로 들어간다. */
 export async function acceptInvite(token: string): Promise<AcceptInviteResult> {
-  return db.acceptInvite(token)
+  if (mockServer) return db.acceptInvite(token)
+  try {
+    const group = await request<GroupResponse>("POST", apiPath`/api/group-invites/${token}/accept`)
+    return { ok: true, groupId: String(group.id) }
+  } catch (error) {
+    if (isApiError(error, "INVITE_NOT_FOUND", "INVITE_EXPIRED")) return { ok: false, error: "INVITE_EXPIRED" }
+    throw error
+  }
 }

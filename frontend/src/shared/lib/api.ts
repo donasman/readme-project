@@ -28,6 +28,11 @@ export class ApiError extends Error {
 
 type Method = "GET" | "POST" | "PUT" | "DELETE"
 
+/** API 주소를 만든다: apiPath`/api/groups/${groupId}/me`. 끼워 넣는 값(주소에서 온 id, 메일의 토큰)은 인코딩한다. */
+export function apiPath(parts: TemplateStringsArray, ...values: string[]): string {
+  return parts.reduce((path, part, i) => `${path}${encodeURIComponent(values[i - 1])}${part}`)
+}
+
 /** 바꾸는 요청에 실을 CSRF 값. 서버가 XSRF-TOKEN 쿠키로 내려 준다. */
 const csrfToken = () =>
   document.cookie

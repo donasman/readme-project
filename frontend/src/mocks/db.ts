@@ -202,7 +202,7 @@ export function getInvite(token: string): InviteView {
   const found = openInvite(token)
   if (!found) return { status: "expired" }
   const { invite, group } = found
-  return { status: "open", groupId: group.id, groupName: group.name, mark: group.mark, inviterName: invite.inviter.name, memberCount: group.members.length }
+  return { status: "open", groupName: group.name, mark: group.mark, inviterName: invite.inviter.name, memberCount: group.members.length }
 }
 
 /** 초대 수락(POST /api/group-invites/{token}/accept). 이미 멤버면 그대로 둔다. 지난 링크는 410 INVITE_EXPIRED. */
