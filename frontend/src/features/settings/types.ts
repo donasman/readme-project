@@ -6,9 +6,8 @@ export interface AccountInfo {
   email: string
   emailVerified: boolean
   hasPassword: boolean
-  // shortcut: GET /api/me의 providers에는 이메일이 없다, 서버가 싣기로 하면 맞춘다(화면 API 대응 3.4의 17번)
-  /** 연결한 구글 계정. 없으면 null */
-  google: { email: string } | null
+  /** 연결한 구글 계정. 없으면 null. 연결할 때 구글이 이메일을 주지 않았으면 email이 null(GET /api/me의 google) */
+  google: { email: string | null } | null
 }
 
 export interface MailSettings {

@@ -97,7 +97,7 @@ export function AccountPage() {
           </Link>
         </Row>
         {account.google ? (
-          <Row label="구글" value={<span className="text-sm text-text-secondary">{account.google.email} 계정이 연결되어 있습니다</span>}>
+          <Row label="구글" value={<span className="text-sm text-text-secondary">{account.google.email ?? "구글"} 계정이 연결되어 있습니다</span>}>
             <Pill tone="accent">연결됨</Pill>
           </Row>
         ) : (

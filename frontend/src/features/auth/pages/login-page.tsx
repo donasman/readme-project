@@ -1,18 +1,39 @@
-import type { FormEvent } from "react"
-import { Link } from "react-router"
+import { useState, type FormEvent } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
+import { IconNote } from "@/shared/components/notice"
 import { paths } from "@/shared/lib/paths"
 
-import { AuthField, AuthFooter, AuthFrame, authFooterLink, OrGoogle } from "../components/auth-parts"
+import { login, type LoginResult } from "../api"
+import { AuthField, AuthFooter, AuthFrame, authFooterLink, authInlineLink, OrGoogle } from "../components/auth-parts"
+
+/** 서버의 오류 글은 마침표 없이 온다. 칸 아래 다른 글처럼 문장으로 끝낸다. */
+const sentence = (text: string) => (/[.?!]$/.test(text) ? text : `${text}.`)
 
 /**
  * 로그인(시안 3종의 "A · 로그인", 모바일 390px). 넓은 화면에서는 같은 폭의 단을 가운데 둔다.
+ * 막히면(틀림, 인증 전, 시도가 너무 많음) 서버의 글을 비밀번호 칸 아래에 알린다. 구글 로그인이 실패하면 서버가 ?error=google로 보낸다.
  */
 export function LoginPage() {
-  // shortcut: 서버가 없어 로그인은 아무것도 부르지 않는다, 서버를 붙이면 POST /api/auth/login 을 부른다(docs/리드미_설계_로그인_경험카드.md 4.1)
-  const submit = (event: FormEvent) => event.preventDefault()
+  const navigate = useNavigate()
+  const googleFailed = useSearchParams()[0].get("error") === "google"
+  const [failed, setFailed] = useState<Extract<LoginResult, { ok: false }> | null>(null)
+  const [email, setEmail] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSaving(true)
+    try {
+      const result = await login(email.trim(), String(new FormData(event.currentTarget).get("password") ?? ""))
+      if (result.ok) navigate(paths.home())
+      else setFailed(result)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <AuthFrame>
@@ -21,16 +42,49 @@ export function LoginPage() {
         <span className="-ml-1 rounded-sm bg-highlight px-2.5 py-1 text-highlight-foreground">정보공유·스터디</span>
       </Heading>
 
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <AuthField id="login-email" label="이메일" type="email" autoComplete="email" placeholder="name@example.com" />
-        <AuthField id="login-password" label="비밀번호" type="password" autoComplete="current-password" />
+      <form onSubmit={submit} onChange={() => setFailed(null)} className="flex flex-col gap-4">
+        {googleFailed && <IconNote tone="danger">구글로 로그인하지 못했습니다. 다시 시도해 주세요.</IconNote>}
+        <AuthField
+          id="login-email"
+          name="email"
+          label="이메일"
+          type="email"
+          autoComplete="email"
+          placeholder="name@example.com"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <AuthField
+          id="login-password"
+          name="password"
+          label="비밀번호"
+          type="password"
+          autoComplete="current-password"
+          required
+          error={
+            failed && (
+              <>
+                {sentence(failed.message)}
+                {failed.code === "EMAIL_NOT_VERIFIED" && (
+                  <>
+                    {" "}
+                    <Link to={paths.signupSent()} state={{ email: email.trim() }} className={authInlineLink}>
+                      확인 메일 다시 받기
+                    </Link>
+                  </>
+                )}
+              </>
+            )
+          }
+        />
         <Link
           to={paths.passwordReset()}
           className="-mt-3 -mb-1 inline-flex min-h-control-md items-center self-end text-sm font-medium text-primary"
         >
           비밀번호 재설정
         </Link>
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={saving}>
           로그인
         </Button>
       </form>
