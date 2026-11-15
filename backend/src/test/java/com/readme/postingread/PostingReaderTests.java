@@ -79,6 +79,9 @@ class PostingReaderTests {
 				"실시간 센서 데이터 수집·처리 및 DB 설계·최적화", "웹 애플리케이션 배포 및 운영");
 		assertThat(read.sections().get(3).items()).containsExactly("주요 언어 : Python / Java 중 1개 이상",
 				"데이터베이스 : MongoDB 또는 PostgreSQL 활용 경험");
+		// 주요 업무·필수 요건·우대 사항에서 많이 나온 순(DB 와 데이터베이스는 하나), 같으면 글자 순으로 15개. 센서 데이터·자동화·테스트가 잘린다
+		assertThat(read.keywords()).containsExactly("데이터베이스", "Java", "Python", "배포", "Docker", "Git", "Kotlin", "MongoDB",
+				"PostgreSQL", "REST API", "SQL", "Spring Boot", "백엔드", "서버 개발", "성능 최적화");
 		assertThat(read.source().title()).isEqualTo("[(주)예시랩] 백엔드 (Backend) 개발자(D-7)");
 		assertThat(read.source().text()).startsWith(resource("saramin-sample.txt")).endsWith(resource("saramin-sample-detail.txt"));
 	}
@@ -95,6 +98,33 @@ class PostingReaderTests {
 		assertThat(read.sections()).extracting(SectionValue::title).startsWith("회사 소개", "주요 업무", "필수 요건", "우대 사항");
 		// 항목의 "- " 글머리는 떼고 ※ 안내는 둔다
 		assertThat(read.sections().get(3).items()).contains("※ 본 채용은 채용 완료 시 조기 마감될 수 있습니다.");
+		// "이런 기술이 필요해요"도 필수 요건이다. Node.js 안의 js 를 JavaScript 로 따로 세지 않는다
+		assertThat(read.keywords()).containsExactly("API", "Node.js", "NestJS", "Next.js", "React", "TypeScript", "Express", "JavaScript",
+				"PostgreSQL", "Redis", "데이터베이스", "배포", "백엔드");
+	}
+
+	// ── 키워드 ─────────────────────────────────────────────────────────
+
+	@Test
+	void keywordsComeFromDutiesRequirementsAndPreferredOnly() {
+		// 제목의 백엔드, 회사 소개의 AI, 복리후생의 AWS 는 넣지 않는다. k8s·쿠버네티스는 Kubernetes 하나로 세어 맨 앞이다
+		String text = String.join("\n", "[예시] 백엔드 개발자", "회사 소개", "- AI 로 공장을 바꿉니다", "주요 업무", "- k8s 위에서 Java 로 주문 API 개발",
+				"자격 요건", "- 쿠버네티스 운영 경험", "우대 사항", "- Kubernetes, Kafka 경험", "복리후생", "- AWS 교육비");
+		assertThat(this.reader.fromText(text, null, TODAY).keywords()).containsExactly("Kubernetes", "API", "Java", "Kafka");
+	}
+
+	@Test
+	void textWithoutThoseSectionsIsSearchedWhole() {
+		assertThat(this.reader.fromText("Java, Spring Boot 개발자를 찾습니다. k8s 를 써 봤으면 좋겠습니다", null, TODAY).keywords())
+			.containsExactly("Java", "Kubernetes", "Spring Boot");
+		assertThat(this.reader.fromText("함께 일할 분을 찾습니다", null, TODAY).keywords()).isEmpty();
+	}
+
+	@Test
+	void atMostFifteenKeywordsMostFrequentFirst() {
+		String text = String.join("\n", "주요 업무", "- Java Kotlin Python Go Rust Scala PHP Ruby Swift Dart SQL Spring JPA Docker Redis Kafka",
+				"자격 요건", "- Redis 경험");
+		assertThat(this.reader.fromText(text, null, TODAY).keywords()).hasSize(PostingReader.MAX_KEYWORDS).startsWith("Redis", "Dart");
 	}
 
 	@Test
@@ -155,6 +185,7 @@ class PostingReaderTests {
 				.containsExactly("주요 업무", "필수 요건");
 			assertThat(this.reader.fromText(text, null, TODAY).sections()).extracting(SectionValue::title)
 				.containsExactly("주요 업무", "필수 요건");
+			assertThat(this.reader.fromText(text, null, TODAY).keywords()).containsExactly("Java");
 		});
 	}
 
