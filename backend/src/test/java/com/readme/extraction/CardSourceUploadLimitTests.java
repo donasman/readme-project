@@ -23,7 +23,8 @@ import com.readme.IntegrationTest;
 
 /**
  * 20MB 를 넘는 파일을 실제 서버(Tomcat)에 보낸다. MockMvc 는 multipart 크기 제한(max-file-size)을 거치지 않아서다.
- * Tomcat 이 낸 크기 오류도 SOURCE_TOO_LARGE 로 답하는지 본다(CardSourceController 의 tooLarge).
+ * Tomcat 이 낸 크기 오류도 SOURCE_TOO_LARGE 로 답하는지 본다(CardSourceController 의 tooLarge). 파일을 받는 다른 주소인
+ * 공고 읽어 오기도 FILE_TOO_LARGE 로 답하는지 함께 본다(postingread 의 PostingReadController.tooLarge).
  *
  * <p>실제 서버가 필요한데 서버를 하나 더 띄우면 메모리가 든다. 그래서 dev/DevProfileTests 와 설정을 똑같이 두어
  * 그 테스트가 띄운 내장 서버를 함께 쓴다. 저쪽 설정이 바뀌면 여기도 같이 바꾼다.
@@ -48,10 +49,21 @@ class CardSourceUploadLimitTests {
 		long me = this.fixtures.passwordUser("다온", "upload-limit-1234", true);
 		String session = login(this.fixtures.emailOf(me), "upload-limit-1234");
 
-		HttpResponse<String> response = upload(session, new byte[(int) SourceInput.MAX_BYTES + 1]);
+		HttpResponse<String> response = upload(session, "/api/card-sources", new byte[(int) SourceInput.MAX_BYTES + 1]);
 
 		assertThat(response.statusCode()).isEqualTo(413);
 		assertThat(response.body()).contains("\"code\":\"SOURCE_TOO_LARGE\"");
+	}
+
+	@Test
+	void postingReadAnswersFileTooLarge() throws Exception {
+		long me = this.fixtures.passwordUser("다온", "upload-limit-1234", true);
+		String session = login(this.fixtures.emailOf(me), "upload-limit-1234");
+
+		HttpResponse<String> response = upload(session, "/api/postings/read", new byte[(int) SourceInput.MAX_BYTES + 1]);
+
+		assertThat(response.statusCode()).isEqualTo(413);
+		assertThat(response.body()).contains("\"code\":\"FILE_TOO_LARGE\"");
 	}
 
 	@Test
@@ -59,7 +71,7 @@ class CardSourceUploadLimitTests {
 		long me = this.fixtures.passwordUser("다온", "upload-limit-1234", true);
 		String session = login(this.fixtures.emailOf(me), "upload-limit-1234");
 
-		HttpResponse<String> response = upload(session, "실제 서버로 올린 글".getBytes(StandardCharsets.UTF_8));
+		HttpResponse<String> response = upload(session, "/api/card-sources", "실제 서버로 올린 글".getBytes(StandardCharsets.UTF_8));
 
 		assertThat(response.statusCode()).isEqualTo(201);
 		assertThat(response.body()).contains("\"kind\":\"file\"");
@@ -81,14 +93,14 @@ class CardSourceUploadLimitTests {
 			.orElseThrow();
 	}
 
-	private HttpResponse<String> upload(String session, byte[] file) throws IOException, InterruptedException {
+	private HttpResponse<String> upload(String session, String path, byte[] file) throws IOException, InterruptedException {
 		String boundary = "readme-test-boundary";
 		ByteArrayOutputStream body = new ByteArrayOutputStream();
 		body.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.txt\"\r\n"
 				+ "Content-Type: text/plain\r\n\r\n").getBytes(StandardCharsets.UTF_8));
 		body.write(file);
 		body.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
-		return this.http.send(HttpRequest.newBuilder(uri("/api/card-sources"))
+		return this.http.send(HttpRequest.newBuilder(uri(path))
 			.header("Content-Type", "multipart/form-data; boundary=" + boundary)
 			.header("Cookie", "SESSION=" + session + "; XSRF-TOKEN=" + XSRF)
 			.header("X-XSRF-TOKEN", XSRF)

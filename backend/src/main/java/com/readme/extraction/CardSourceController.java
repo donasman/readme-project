@@ -2,7 +2,6 @@ package com.readme.extraction;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 import jakarta.validation.Valid;
 
@@ -24,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.readme.auth.CurrentUser;
 import com.readme.auth.LoginUser;
 import com.readme.common.error.ApiError;
-import com.readme.common.error.ApiException;
 import com.readme.extraction.CardSourceRequests.TextSourceRequest;
 import com.readme.extraction.CardSourceRequests.UploadResponse;
 
@@ -37,19 +35,15 @@ import com.readme.extraction.CardSourceRequests.UploadResponse;
 @RestController
 class CardSourceController {
 
-	/**
-	 * 동시에 읽는 파일 수. 파일 하나를 읽는 데 메모리가 수십~수백 MB 든다(PDF·HWP 는 256MB 힙의 다른 프로세스).
-	 * 기다리는 파일은 Tomcat 의 임시 파일에 있다.
-	 */
-	private static final int CONCURRENT_READS = 2;
-
-	private final Semaphore reading = new Semaphore(CONCURRENT_READS);
+	/** 파일 읽기. 동시에 읽는 파일 수를 공고 읽어 오기와 나눠 쓴다. */
+	private final UploadedFiles files;
 
 	private final CardSourceQueries queries;
 
 	private final CardSourceService service;
 
-	CardSourceController(CardSourceQueries queries, CardSourceService service) {
+	CardSourceController(UploadedFiles files, CardSourceQueries queries, CardSourceService service) {
+		this.files = files;
 		this.queries = queries;
 		this.service = service;
 	}
@@ -63,18 +57,7 @@ class CardSourceController {
 	@PostMapping(path = "/api/card-sources", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	ResponseEntity<UploadResponse> uploadFile(@RequestParam("file") MultipartFile file, @CurrentUser LoginUser user)
 			throws IOException {
-		if (file.getSize() > SourceInput.MAX_BYTES) {
-			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
-		}
-		SourceInput input;
-		this.reading.acquireUninterruptibly();
-		try {
-			input = SourceInput.file(file.getOriginalFilename(), file.getBytes());
-		}
-		finally {
-			this.reading.release();
-		}
-		return saved(input, user);
+		return saved(this.files.read(file), user);
 	}
 
 	@PostMapping(path = "/api/card-sources", consumes = MediaType.APPLICATION_JSON_VALUE)

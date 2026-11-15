@@ -65,7 +65,7 @@ class PostingReader {
 	}
 
 	/**
-	 * 붙여넣은 본문. 글은 고치지 않는다(jobfit 의 _clean_pasted). 본문이 없어 보여도 막지 않는다. 사용자가 본문이라고 준 것이다.
+	 * 붙여넣은 본문, 또는 파일에서 읽은 글(PostingReadController). 글은 고치지 않는다(jobfit 의 _clean_pasted). 본문이 없어 보여도 막지 않는다. 사용자가 본문이라고 준 것이다.
 	 *
 	 * @param sourceUrl 원문 링크. 없으면 null
 	 */
