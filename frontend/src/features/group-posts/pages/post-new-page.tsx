@@ -12,6 +12,7 @@ import { subpageTitle } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { UploadIcon } from "@/shared/icons"
+import { FILE_TOO_LARGE } from "@/shared/lib/api"
 import { paths } from "@/shared/lib/paths"
 import { cn, isHttpUrl, matchesAccept } from "@/shared/lib/utils"
 
@@ -223,7 +224,7 @@ function FileDrop({ busy, onRead }: ReadProps) {
     // 읽는 중에 끌어 놓은 파일은 받지 않는다(버튼만 막혀 있어 두 번 읽고 늦게 끝난 쪽이 칸 확인을 덮는다)
     if (!file || busy) return
     if (!matchesAccept(file.name, ACCEPT)) return failFile("PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.")
-    if (file.size > MAX_BYTES) return failFile("파일이 너무 큽니다. 20MB까지 올릴 수 있습니다.")
+    if (file.size > MAX_BYTES) return failFile(FILE_TOO_LARGE)
     failFile(null)
     void onRead({ kind: "file", file })
   }

@@ -9,6 +9,7 @@ import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
+import { FILE_TOO_LARGE } from "@/shared/lib/api"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses, matchesAccept } from "@/shared/lib/utils"
@@ -225,7 +226,7 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
     if (!file) return
     if (!matchesAccept(file.name, ACCEPT)) return failFile(`${ACCEPT_TEXT} 파일만 올릴 수 있습니다.`)
     // 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다(경험카드 문서 6절 7번)
-    if (file.size > MAX_BYTES) return failFile("파일이 너무 큽니다. 20MB까지 올릴 수 있습니다.")
+    if (file.size > MAX_BYTES) return failFile(FILE_TOO_LARGE)
     failFile(await onRead({ file }))
   }
 
