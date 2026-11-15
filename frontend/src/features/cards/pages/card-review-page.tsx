@@ -20,7 +20,7 @@ import type { CardDetail } from "../types"
 /** 확인을 기다리는 카드를 읽는다. ?card=id 가 있으면 그 카드부터 본다. */
 export async function cardReviewLoader({ request }: LoaderFunctionArgs) {
   const cards = await getUnverifiedCards()
-  const start = Number(new URL(request.url).searchParams.get("card"))
+  const start = new URL(request.url).searchParams.get("card")
   return { cards: startFrom(cards, start) }
 }
 
@@ -31,7 +31,7 @@ const STAR_BEFORE_RESULT = STAR_PARTS.filter(([key]) => key !== "result")
 export function CardReviewPage() {
   const { cards } = useLoaderData<typeof cardReviewLoader>()
   const [index, setIndex] = useState(0)
-  const [edited, setEdited] = useState<Record<number, CardDetail>>({})
+  const [edited, setEdited] = useState<Record<string, CardDetail>>({})
   const [counts, setCounts] = useState({ verified: 0, later: 0, dropped: 0 })
   const [busy, setBusy] = useState(false)
   const [dropping, setDropping] = useState(false)

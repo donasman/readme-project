@@ -11,7 +11,7 @@ import { findPost, listGroups, today } from "./db"
 import { entries, rawEntry, type Entry } from "./user-postings"
 
 /** 상세에만 보이는 값. 예시 공사(시안 8차 "공고 상세")의 공고 내용과 맞는 카드를 옮겼다. 그 밖의 공고는 그룹 공고의 내용을 쓴다. */
-const DETAILS: Record<string, Partial<Pick<MyPostingDetail, "applyAt" | "sections" | "keywords" | "unmatched">> & { matches?: [number, string[]][] }> = {
+const DETAILS: Record<string, Partial<Pick<MyPostingDetail, "applyAt" | "sections" | "keywords" | "unmatched">> & { matches?: [string, string[]][] }> = {
   "p-pub1": {
     applyAt: "기관 채용 홈페이지",
     sections: [
@@ -21,9 +21,9 @@ const DETAILS: Record<string, Partial<Pick<MyPostingDetail, "applyAt" | "section
     ],
     keywords: ["Java", "Spring", "SQL", "정보보안", "네트워크"],
     matches: [
-      [1, ["Java", "SQL"]],
-      [5, ["Java", "Spring", "정보보안"]],
-      [2, ["SQL"]],
+      ["1", ["Java", "SQL"]],
+      ["5", ["Java", "Spring", "정보보안"]],
+      ["2", ["SQL"]],
     ],
     unmatched: ["네트워크 운영 경험"],
   },
