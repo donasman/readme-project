@@ -54,14 +54,16 @@ const csrfToken = () =>
 
 async function send(method: Method, path: string, body: unknown): Promise<Response | ApiError> {
   const headers: Record<string, string> = {}
-  if (body !== undefined) headers["Content-Type"] = "application/json"
+  // 파일(FormData)은 브라우저가 multipart 머리를 붙이므로 그대로 보낸다. 나머지는 JSON이다
+  const json = body !== undefined && !(body instanceof FormData)
+  if (json) headers["Content-Type"] = "application/json"
   const token = method === "GET" ? undefined : csrfToken()
   if (token) headers["X-XSRF-TOKEN"] = token
   const response = await fetch(SERVER_ORIGIN + path, {
     method,
     headers,
     credentials: "include",
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: json ? JSON.stringify(body) : (body as FormData | undefined),
   })
   if (response.ok) return response
   const error = await readBody(response).catch(() => undefined)

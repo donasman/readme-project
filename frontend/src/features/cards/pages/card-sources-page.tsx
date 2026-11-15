@@ -4,6 +4,7 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { FieldError, noteId } from "@/shared/components/form-field"
+import { IconNote } from "@/shared/components/notice"
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
@@ -21,8 +22,10 @@ export function cardSourcesLoader() {
   return getSources()
 }
 
-// shortcut: 크기(20MB)는 안내 글뿐이고 막지 않는다, 서버가 받는 형식과 크기를 정하면 여기서도 막는다(화면 API 대응 3.5의 24번)
-const ACCEPT = ".pdf,.docx,.hwpx,.pptx,.txt,.md"
+// 서버가 받는 형식과 크기(경험카드 문서 4.4). 형식은 서버가 내용으로 다시 본다
+const ACCEPT = ".pdf,.docx,.hwpx,.hwp,.pptx,.txt,.md"
+const ACCEPT_TEXT = "PDF, DOCX, HWPX, HWP, PPTX, TXT, MD"
+const MAX_BYTES = 20 * 1024 * 1024
 const POLL_MS = 1000
 
 type Step =
@@ -37,6 +40,7 @@ export function CardSourcesPage() {
   const revalidator = useRevalidator()
   // shortcut: 뽑는 중인 작업은 이 화면의 상태에만 있어 나갔다 오면 찾지 못한다, 진행 중인 작업을 찾는 방법이 정해지면 바꾼다(화면 API 대응 3.5의 23번)
   const [step, setStep] = useState<Step>({ kind: "upload" })
+  const [noExtraction, setNoExtraction] = useState(false)
 
   // 뽑는 중: 1초마다 작업 상태를 묻고, 끝나면 "끝남"으로 넘어간다.
   const runningJobId = step.kind === "running" ? step.job.id : null
@@ -50,10 +54,19 @@ export function CardSourcesPage() {
     return () => clearInterval(timer)
   }, [runningJobId, revalidator])
 
-  async function read(input: { file: File } | { text: string }) {
-    const { source, chunks } = await uploadSource(input)
-    setStep({ kind: "ready", source, chunks })
+  /** 자료를 올린다. 읽지 못하면 그 이유를 돌려주고, 올리기 화면이 칸 아래에 알린다. */
+  async function read(input: { file: File } | { text: string }): Promise<string | null> {
+    const result = await uploadSource(input)
+    if (!result.ok) return result.message
+    setStep({ kind: "ready", source: result.source, chunks: result.chunks })
     void revalidator.revalidate()
+    return null
+  }
+
+  async function extract(source: CardSource) {
+    const job = await startExtraction(source)
+    if (job) setStep({ kind: "running", source, job })
+    else setNoExtraction(true)
   }
 
   return (
@@ -96,14 +109,15 @@ export function CardSourcesPage() {
                 <Button type="button" variant="outline" onClick={() => setStep({ kind: "upload" })}>
                   다른 자료 올리기
                 </Button>
-                <Button
-                  type="button"
-                  className="px-6"
-                  onClick={async () => setStep({ kind: "running", source: step.source, job: await startExtraction(step.source) })}
-                >
+                <Button type="button" className="px-6" onClick={() => void extract(step.source)}>
                   카드 뽑기 시작
                 </Button>
               </div>
+              {noExtraction && (
+                <div role="alert">
+                  <IconNote tone="warning">카드 뽑기는 아직 준비 중입니다. 올린 자료는 목록에 남아 있어 나중에 뽑을 수 있습니다.</IconNote>
+                </div>
+              )}
             </Panel>
           )}
           {step.kind === "running" && (
@@ -196,26 +210,28 @@ export function CardSourcesPage() {
 }
 
 /** 올리기: 파일을 끌어 놓거나 고르기, 또는 글 붙여넣기. */
-function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: string }) => Promise<void> }) {
+function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: string }) => Promise<string | null> }) {
   const fileInput = useRef<HTMLInputElement>(null)
   const textArea = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState("")
-  const [empty, setEmpty] = useState(false)
+  const [textError, setTextError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
-  // 틀린 파일을 이어서 놓아도 매번 알리도록 횟수를 세어 알림의 key로 쓴다
-  const [wrongTries, setWrongTries] = useState(0)
+  // 같은 이유로 이어서 막혀도 매번 알리도록 횟수를 알림의 key로 쓴다
+  const [fileError, setFileError] = useState<{ message: string; tries: number } | null>(null)
+  const failFile = (message: string | null) => setFileError((e) => (message ? { message, tries: (e?.tries ?? 0) + 1 } : null))
 
-  const take = (file: File | undefined) => {
+  const take = async (file: File | undefined) => {
     if (!file) return
-    const ok = matchesAccept(file.name, ACCEPT)
-    setWrongTries((n) => (ok ? 0 : n + 1))
-    if (ok) void onRead({ file })
+    if (!matchesAccept(file.name, ACCEPT)) return failFile(`${ACCEPT_TEXT} 파일만 올릴 수 있습니다.`)
+    // 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다(경험카드 문서 6절 7번)
+    if (file.size > MAX_BYTES) return failFile("파일이 너무 큽니다. 20MB까지 올릴 수 있습니다.")
+    failFile(await onRead({ file }))
   }
 
   const drop = (event: DragEvent) => {
     event.preventDefault()
     setDragging(false)
-    take(event.dataTransfer.files[0])
+    void take(event.dataTransfer.files[0])
   }
 
   return (
@@ -237,7 +253,7 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
       >
         <UploadIcon aria-hidden="true" className="size-7 text-text-secondary" />
         <p className="font-bold">파일을 여기에 끌어 놓으세요</p>
-        <p className="text-label-sm text-text-secondary">PDF, DOCX, HWPX, PPTX, TXT, MD · 20MB까지</p>
+        <p className="text-label-sm text-text-secondary">{ACCEPT_TEXT} · 20MB까지</p>
         <input
           ref={fileInput}
           type="file"
@@ -246,17 +262,17 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
           tabIndex={-1}
           aria-hidden="true"
           onChange={(e) => {
-            take(e.target.files?.[0])
+            void take(e.target.files?.[0])
             // 같은 파일을 다시 골라도 change가 오도록 비운다
             e.target.value = ""
           }}
         />
-        <Button type="button" aria-describedby={wrongTries > 0 ? noteId("src-file") : undefined} onClick={() => fileInput.current?.click()}>
+        <Button type="button" aria-describedby={fileError ? noteId("src-file") : undefined} onClick={() => fileInput.current?.click()}>
           파일 고르기
         </Button>
-        {wrongTries > 0 && (
-          <div role="alert" key={wrongTries}>
-            <FieldError id="src-file">PDF, DOCX, HWPX, PPTX, TXT, MD 파일만 올릴 수 있습니다.</FieldError>
+        {fileError && (
+          <div role="alert" key={fileError.tries}>
+            <FieldError id="src-file">{fileError.message}</FieldError>
           </div>
         )}
       </div>
@@ -275,26 +291,26 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
           rows={5}
           placeholder="이력서나 포트폴리오의 글을 붙여넣으세요"
           value={text}
-          aria-invalid={empty || undefined}
-          aria-describedby={empty ? "src-text-error" : undefined}
+          aria-invalid={textError ? true : undefined}
+          aria-describedby={textError ? "src-text-error" : undefined}
           onChange={(e) => {
             setText(e.target.value)
-            setEmpty(false)
+            setTextError(null)
           }}
           className="min-h-32"
         />
-        {empty && (
+        {textError && (
           <p id="src-text-error" className="text-label-sm font-medium text-danger">
-            읽을 글을 붙여넣어 주세요.
+            {textError}
           </p>
         )}
         <Button
           type="button"
           variant="outline"
           className="self-end"
-          onClick={() => {
-            if (text.trim()) return void onRead({ text })
-            setEmpty(true)
+          onClick={async () => {
+            if (text.trim()) return setTextError(await onRead({ text }))
+            setTextError("읽을 글을 붙여넣어 주세요.")
             textArea.current?.focus()
           }}
         >
