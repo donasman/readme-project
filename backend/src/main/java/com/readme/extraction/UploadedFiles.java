@@ -18,7 +18,7 @@ import com.readme.common.error.ApiException;
 @Component
 public class UploadedFiles {
 
-	static final int CONCURRENT_READS = 2;
+	private static final int CONCURRENT_READS = 2;
 
 	/** 공고 읽어 오기가 받는 형식(화면·API 대응 문서 3절 7번). 서버가 내용으로 알아낸 형식이다 */
 	private static final Set<String> DOCUMENTS = Set.of(SourceFiles.Format.PDF.contentType,

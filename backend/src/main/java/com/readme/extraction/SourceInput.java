@@ -33,7 +33,7 @@ record SourceInput(Kind kind, String fileName, String contentType, Long byteSize
 
 	}
 
-	/** 올린 파일을 읽는다(크기는 컨트롤러가 먼저 본다). 받지 않는 형식이거나 읽을 글이 없으면 ApiException. */
+	/** 올린 파일을 읽는다(크기는 UploadedFiles.read 가 먼저 본다). 받지 않는 형식이거나 읽을 글이 없으면 ApiException. */
 	static SourceInput file(String originalName, byte[] bytes) {
 		String fileName = cleanName(originalName);
 		SourceFiles.Read read = SourceFiles.read(fileName, bytes);
