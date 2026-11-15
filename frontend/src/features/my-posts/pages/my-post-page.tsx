@@ -124,6 +124,8 @@ export function MyPostPage() {
             <Textarea
               id="mp-memo-text"
               rows={3}
+              // 서버가 받는 길이(공고 문서 8절 16번). 넘으면 저장이 실패한다
+              maxLength={2000}
               value={memo}
               onChange={(e) => {
                 setMemo(e.target.value)

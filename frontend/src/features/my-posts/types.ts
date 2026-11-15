@@ -1,5 +1,5 @@
-// 내 공고의 데이터 모양(관심을 켜거나 직접 넣은 공고와 내 지원 상태). 상태 값의 글자는 정했다: 소문자로 주고받는다(그룹 설계 4.3 아래 "정함").
-// shortcut: 내 공고 조회와 메모가 설계에 없어 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.3의 10, 12번)
+// 내 공고의 데이터 모양(관심을 켜거나 상태를 넣은 공고와 내 지원 상태). 서버의 응답(공고 문서 4.2) 그대로다.
+// 서버는 상태 글자(status)도 주지만 화면은 domain/posting/my-state.ts의 statusLabel로 그린다(공고 문서 8절 14번).
 import type { Disclosure } from "@/domain/group/types"
 import type { MyState } from "@/domain/posting/my-state"
 import type { Deadline, PostSection } from "@/domain/posting/types"
@@ -48,7 +48,7 @@ export interface MyPostingDetail extends MyPosting {
   sourceUrl: string | null
   sections: PostSection[]
   keywords: string[]
-  /** 나만 보는 메모(화면 API 대응 3.3의 12번) */
+  /** 나만 보는 메모. 없으면 "" */
   memo: string
   matches: CardMatch[]
   /** 카드로 답하지 못한 요건 */
@@ -56,8 +56,7 @@ export interface MyPostingDetail extends MyPosting {
   groupStates: PostingGroupState[]
 }
 
-// shortcut: 무엇을 소식으로 볼지 정하지 않아 예시만 보인다, 정해지면 맞춘다(화면 API 대응 3.3의 14번)
-/** 홈의 "그룹 소식" 한 줄. */
+/** 홈의 "그룹 소식" 한 줄: 내 그룹의 최근 7일 새 공고와 새 댓글(GET /api/me/group-activity, 공고 문서 4.5). */
 export interface GroupNews {
   group: GroupLabel
   text: string
@@ -65,8 +64,7 @@ export interface GroupNews {
   postId: string | null
 }
 
-// shortcut: 홈 전용 API 하나로 받는다고 보고 짰다, 화면이 여러 API를 부르기로 하면 바꾼다(화면 API 대응 3.3의 14번)
-/** 홈에 모으는 것. */
+/** 홈에 모으는 것. 서버에서는 내 공고와 그룹 소식을 따로 받아 모은다(api.ts의 getHome). */
 export interface HomeData {
   today: string
   postings: MyPosting[]
