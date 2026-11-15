@@ -7,6 +7,7 @@ import { paths } from "@/shared/lib/paths"
 
 import { checkResetToken, resetPassword } from "../api"
 import { AuthField, AuthFrame, AuthHeading, AuthText, StatusIcon } from "../components/auth-parts"
+import { PASSWORD_TOO_LONG, passwordTooLong } from "../password"
 
 /** 메일의 재설정 링크(/password-reset/new?token=…)를 연 순간 아직 쓸 수 있는지 서버에 묻는다. */
 export async function passwordResetNewLoader({ request }: LoaderFunctionArgs) {
@@ -19,13 +20,16 @@ export function PasswordResetNewPage() {
   const { token, usable } = useLoaderData<typeof passwordResetNewLoader>()
   const navigate = useNavigate()
   const [step, setStep] = useState<"new" | "done" | "expired">(usable ? "new" : "expired")
+  const [tooLong, setTooLong] = useState(false)
   const [saving, setSaving] = useState(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const password = String(new FormData(event.currentTarget).get("password") ?? "")
+    if (passwordTooLong(password)) return setTooLong(true)
     setSaving(true)
     try {
-      setStep(await resetPassword(token, String(new FormData(event.currentTarget).get("password") ?? "")))
+      setStep(await resetPassword(token, password))
     } finally {
       setSaving(false)
     }
@@ -74,7 +78,18 @@ export function PasswordResetNewPage() {
           <AuthText>바꾸면 다른 기기의 로그인이 모두 풀립니다.</AuthText>
         </AuthHeading>
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <AuthField id="reset-password" name="password" label="새 비밀번호" type="password" autoComplete="new-password" hint="8자 이상" minLength={8} required />
+          <AuthField
+            id="reset-password"
+            name="password"
+            label="새 비밀번호"
+            type="password"
+            autoComplete="new-password"
+            hint="8자 이상"
+            minLength={8}
+            required
+            onChange={() => setTooLong(false)}
+            error={tooLong && PASSWORD_TOO_LONG}
+          />
           <Button type="submit" className="w-full" disabled={saving}>
             비밀번호 바꾸기
           </Button>

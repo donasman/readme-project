@@ -6,15 +6,15 @@ import { NAME_MAX_LENGTH } from "@/domain/session/types"
 import { paths } from "@/shared/lib/paths"
 
 import { signup } from "../api"
-import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthText, OrGoogle } from "../components/auth-parts"
-
-const inlineLink = "font-bold text-primary hover:text-accent-strong"
+import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, authInlineLink, AuthText, OrGoogle } from "../components/auth-parts"
+import { PASSWORD_TOO_LONG, passwordTooLong } from "../password"
 
 /** 회원가입(5차 "회원가입"). 가입하면 확인 메일을 보냈다는 화면으로 간다. 이미 있는 이메일이면 그 자리에서 알려 준다. */
 export function SignupPage() {
   const navigate = useNavigate()
   const [taken, setTaken] = useState(false)
   const [nameEmpty, setNameEmpty] = useState(false)
+  const [tooLong, setTooLong] = useState(false)
   const [saving, setSaving] = useState(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -22,11 +22,13 @@ export function SignupPage() {
     const form = new FormData(event.currentTarget)
     const name = String(form.get("name") ?? "").trim()
     const email = String(form.get("email") ?? "").trim()
+    const password = String(form.get("password") ?? "")
     // required는 공백만 넣은 이름을 통과시킨다
     if (!name) return setNameEmpty(true)
+    if (passwordTooLong(password)) return setTooLong(true)
     setSaving(true)
     try {
-      const result = await signup({ name, email, password: String(form.get("password") ?? "") })
+      const result = await signup({ name, email, password })
       if (result.ok) navigate(paths.signupSent(), { state: { email } })
       else setTaken(true)
     } finally {
@@ -66,11 +68,11 @@ export function SignupPage() {
             taken && (
               <>
                 이미 가입된 이메일입니다.{" "}
-                <Link to={paths.login()} className={inlineLink}>
+                <Link to={paths.login()} className={authInlineLink}>
                   로그인
                 </Link>
                 하거나{" "}
-                <Link to={paths.passwordReset()} className={inlineLink}>
+                <Link to={paths.passwordReset()} className={authInlineLink}>
                   비밀번호를 재설정
                 </Link>
                 하세요.
@@ -78,7 +80,18 @@ export function SignupPage() {
             )
           }
         />
-        <AuthField id="signup-password" name="password" label="비밀번호" type="password" autoComplete="new-password" hint="8자 이상" minLength={8} required />
+        <AuthField
+          id="signup-password"
+          name="password"
+          label="비밀번호"
+          type="password"
+          autoComplete="new-password"
+          hint="8자 이상"
+          minLength={8}
+          required
+          onChange={() => setTooLong(false)}
+          error={tooLong && PASSWORD_TOO_LONG}
+        />
         <Button type="submit" className="mt-1 w-full" disabled={saving}>
           가입하기
         </Button>

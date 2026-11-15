@@ -1,7 +1,7 @@
-// 가짜 서버. 백엔드를 연결하기 전까지 각 층의 api.ts가 이 함수들을 부른다.
+// 가짜 서버. npm run dev(shared/lib/api.ts의 mockServer)에서 각 층의 api.ts가 이 함수들을 부른다. 서버를 붙이지 않은 api.ts는 늘 이것을 부른다.
 // 예시 데이터를 처음 한 번 만들어 메모리에 두고 읽고 고친다. 새로 고치면 처음 상태로 돌아간다.
 // 서버가 할 일(열린 공고 수 세기, 댓글 링크 나누기)도 여기서 흉내 낸다.
-// shortcut: 이 폴더 전체가 가짜 서버다, 백엔드를 연결하면 각 api.ts를 fetch로 바꾸고 이 폴더를 지운다
+// shortcut: 이 폴더 전체가 가짜 서버다, 모든 api.ts가 서버를 부르게 되면 화면 회귀 검사를 서버의 예시 데이터로 옮기고 이 폴더를 지운다
 // 이 폴더는 shared와 타입(import type)만 불러온다.
 import type { Disclosure, Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
@@ -70,6 +70,12 @@ export const viewer = (): Viewer | null => (MOCK.has("guest") ? null : structure
 
 /** 가짜 서버의 보기 설정을 읽는다(같은 폴더의 다른 가짜 서버가 쓴다). */
 export const mockFlag = (name: string) => MOCK.has(name)
+
+/** 로그인(POST /api/auth/login). 가짜 서버는 비밀번호를 보지 않고 예시 사용자로 들어간다. */
+export function signIn(): { ok: true } {
+  MOCK.delete("guest")
+  return { ok: true }
+}
 
 /** 로그아웃(POST /api/auth/logout)과 탈퇴 뒤: 이 뒤로는 로그인하지 않은 사람으로 본다. */
 export function signOut(): void {
@@ -422,7 +428,7 @@ export function resendVerification(email: string): void {
   void email
 }
 
-/** 가입 확인 링크(GET /api/auth/verify?token=). */
+/** 가입 확인 링크(POST /api/auth/verify-email). */
 export function verifyEmail(token: string | null): "done" | "expired" {
   return usableToken(token) ? "done" : "expired"
 }

@@ -9,6 +9,8 @@ import { IconNote } from "@/shared/components/notice"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses } from "@/shared/lib/utils"
 
+import { startGoogleLogin } from "../api"
+
 // 로그인 쪽 화면(로그인, 회원가입, 이메일 인증, 비밀번호 재설정)이 함께 쓰는 조각.
 // 시안: 리드미 시안 3종의 "A · 로그인"과 5차 "로그인·가입". 데스크톱도 가운데 390px 한 줄이다.
 
@@ -114,8 +116,8 @@ export function OrGoogle() {
         <span>또는</span>
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
       </div>
-      {/* shortcut: 서버가 없어 눌러도 아무 일이 없고 구글 마크는 시안처럼 자리만 있다, 서버를 붙이면 /oauth2/authorization/google 로 보내고 마크를 넣는다 */}
-      <Button type="button" variant="outline" className="w-full">
+      {/* shortcut: 구글 마크는 시안처럼 자리만 있다, 마크 그림을 정하면 넣는다 */}
+      <Button type="button" variant="outline" className="w-full" onClick={startGoogleLogin}>
         <span aria-hidden="true" className="size-[18px] rounded-full border-[1.5px] border-dashed border-border-strong" />
         <span>구글로 계속하기</span>
       </Button>
@@ -135,3 +137,6 @@ export function AuthFooter({ prompt, children }: { prompt: string; children: Rea
 
 /** 맨 아래 줄의 링크. */
 export const authFooterLink = "inline-flex min-h-control-md items-center font-bold text-primary"
+
+/** 칸 아래 오류 글 안의 링크("로그인하거나 비밀번호를 재설정하세요"). */
+export const authInlineLink = "font-bold text-primary hover:text-accent-strong"
