@@ -1,5 +1,5 @@
-// 설정 화면의 데이터 모양. 읽기는 GET /api/me뿐이다.
-// shortcut: 내 정보 고치기, 메일 자동화, 탈퇴가 설계에 없어 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.4의 16~18번)
+// 설정 화면의 데이터 모양. 내 정보는 GET /api/me에서 만든다. 탈퇴는 GET /api/me/withdrawal의 일부다(서버는 그룹마다 id와 이어받을 사람을 더 준다, 로그인 문서 7절 19번).
+// shortcut: 메일 자동화는 설계에 없어 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.4의 16번)
 
 export interface AccountInfo {
   name: string
