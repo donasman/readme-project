@@ -48,13 +48,15 @@ interface PostCheckFormProps {
   notice?: ReactNode
   /** 확인한 값을 보낸다. 끝나면 부르는 화면이 옮기거나 알린다 */
   onSubmit: (upload: PostUpload) => Promise<void>
+  /** 그룹 밖 화면의 본문 폭(1120px) */
+  narrow?: boolean
 }
 
 /**
  * 칸 확인(시안 7차, 10차 "내 공고 넣기"): 읽어 온 칸을 고치고 보낸다. 오른쪽에 읽어 온 원문을 둔다.
  * 그룹에 올리기와 내 공고 넣기가 함께 쓰고, 다른 것은 글자와 보낸 뒤의 일뿐이다.
  */
-export function PostCheckForm({ draft, backTo, backLabel, submitLabel, optionalNote, unknownNote, notice, onSubmit }: PostCheckFormProps) {
+export function PostCheckForm({ draft, backTo, backLabel, submitLabel, optionalNote, unknownNote, notice, onSubmit, narrow }: PostCheckFormProps) {
   const [company, setCompany] = useState(draft.company)
   const [title, setTitle] = useState(draft.title)
   const [dueMode, setDueMode] = useState<DueMode>(draft.deadline.kind === "unknown" && draft.unread.includes("deadline") ? "date" : draft.deadline.kind)
@@ -116,7 +118,7 @@ export function PostCheckForm({ draft, backTo, backLabel, submitLabel, optionalN
   )
 
   return (
-    <Page className="gap-6 pt-10">
+    <Page narrow={narrow} className="gap-6 pt-10">
       <BackLink to={backTo}>{backLabel}</BackLink>
       <div className="flex flex-col gap-2">
         <h1 className={subpageTitle}>칸 확인</h1>

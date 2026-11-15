@@ -10,6 +10,9 @@ export const paths = {
   welcome: () => "/welcome",
   myPosts: () => "/my-posts",
   myPost: (postingId: string) => `/my-posts/${seg(postingId)}`,
+  /** 그룹 없이 내 공고에 넣기와 그 다음 칸 확인 */
+  myPostNew: () => "/my-posts/new",
+  myPostCheck: () => "/my-posts/new/check",
   /** 지원 현황. postingId를 주면 그 공고의 상태 바꾸기를 연다 */
   board: (postingId?: string) => (postingId === undefined ? "/board" : `/board?posting=${seg(postingId)}`),
   calendar: () => "/calendar",

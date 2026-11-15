@@ -24,6 +24,15 @@ export const myPostsRoutes: RouteObject[] = [
     },
   },
   {
+    // 그룹 없이 내 공고에 넣기(시안 10차). 읽은 결과는 칸 확인으로 넘긴다(주소에는 싣지 않는다)
+    path: "/my-posts/new",
+    lazy: async () => ({ Component: (await import("./pages/my-post-new-page")).MyPostNewPage }),
+  },
+  {
+    path: "/my-posts/new/check",
+    lazy: async () => ({ Component: (await import("./pages/my-post-check-page")).MyPostCheckPage }),
+  },
+  {
     path: "/my-posts/:postingId",
     lazy: async () => {
       const { MyPostPage, myPostLoader } = await import("./pages/my-post-page")

@@ -2,6 +2,7 @@
 // 내 공고와 지원 현황(my-db.ts), 그룹 공고의 내 상태(db.ts), 메일 확인함의 반영(mail-db.ts)이 모두 이것을 읽고 쓴다.
 // db.ts와 my-db.ts가 서로 부르지 않게 따로 둔다. 이 폴더는 shared와 타입만 불러온다.
 import type { MyState } from "@/domain/posting/my-state"
+import type { PostSection } from "@/domain/posting/types"
 import type { MyPosting } from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
@@ -10,9 +11,11 @@ export interface Entry extends MyState {
   id: string
   /** [그룹, 그 그룹의 공고 id]. 첫 것을 본체로 읽는다 */
   refs: [string, string][]
-  /** 그룹을 나가 본체를 못 읽을 때 쓰는 마지막 값 */
+  /** 그룹을 나가 본체를 못 읽을 때 쓰는 마지막 값. 그룹 없이 넣은 공고는 처음부터 이 값이다 */
   snapshot: Pick<MyPosting, "company" | "title" | "deadline"> | null
   memo: string
+  /** 그룹 없이 넣은 공고의 나머지 본체(어느 그룹 공고에도 걸려 있지 않다) */
+  own?: { applyAt: string | null; sourceUrl: string | null; sections: PostSection[]; keywords: string[] }
 }
 
 const applied = (stage: MyState["stage"], result: MyState["result"]): MyState => ({ decision: "applied", stage, result })
@@ -35,6 +38,15 @@ function createEntries(): Entry[] {
 
 let store: Entry[] | null = null
 export const entries = () => (store ??= createEntries())
+
+let nextId = 1
+
+/** 그룹 없이 넣은 공고의 행을 맨 앞에 만든다(서버처럼 넣은 시각의 역순). 지원 상태는 미정으로 시작한다. */
+export function addEntry(snapshot: NonNullable<Entry["snapshot"]>, own: NonNullable<Entry["own"]>): Entry {
+  const e: Entry = { id: `p-new${nextId++}`, refs: [], snapshot, memo: "", own, decision: "undecided", stage: null, result: null }
+  entries().unshift(e)
+  return e
+}
 
 export function rawEntry(id: string): Entry {
   const found = entries().find((e) => e.id === id)
