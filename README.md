@@ -43,7 +43,7 @@ npm run dev:server   # 서버를 부른다. 서버 없이 가짜 서버로만 �
 
 - `http://localhost:8080/actuator/health` 가 `{"status":"UP"}` 을 돌려준다. 서버가 뜰 때 Flyway 가 테이블 21개를 만들므로, 서버가 떴다면 DB 연결과 테이블 생성까지 된 것이다.
 - 서버는 dev 프로필로 뜨고, 빈 DB 에 개발용 사용자와 예시 그룹·공고를 넣는다. 예시 사용자는 개발용 비밀번호로 로그인한다: `POST /api/auth/login` 에 `{ "email": "daon@example.com", "password": "readme1234" }`(`docs/리드미_백엔드_구조.md` 6.2).
-- `http://localhost:5173` 은 로그인하지 않았으면 랜딩(`/welcome`)을 보인다. 예시 사용자로 로그인하면 홈(`/`)이 열린다. `npm run dev:server` 에서는 경험카드의 자료·추출과 메일 자동화를 빼고 모두 서버를 부른다(아래 "지금 들어 있는 것"의 frontend). `npm run dev` 는 서버 없이 가짜 서버만 부르고, 예시 사용자로 로그인한 채 시작한다.
+- `http://localhost:5173` 은 로그인하지 않았으면 랜딩(`/welcome`)을 보인다. 예시 사용자로 로그인하면 홈(`/`)이 열린다. `npm run dev:server` 에서는 카드 추출과 메일(확인함, 자동화)을 빼고 모두 서버를 부른다(아래 "지금 들어 있는 것"의 frontend). `npm run dev` 는 서버 없이 가짜 서버만 부르고, 예시 사용자로 로그인한 채 시작한다.
 - 보낸 메일(가입 확인, 비밀번호 재설정)은 `http://localhost:8025` 에서 본다.
 
 ## 빌드와 테스트
@@ -101,7 +101,7 @@ git switch -c feat/frontend-something  # 작업 브랜치
 - 구조: `src/app`(라우터, 틀, 헤더), `src/features/<기능>`(`auth`, `cards`, `group-posts`, `groups`, `mail`, `my-posts`, `settings`), `src/domain`(`session`, `group`, `posting`), `src/shared`(공용 부품과 `lib`), `src/mocks`(가짜 서버). 규칙은 `frontend/CLAUDE.md`, 근거는 `docs/리드미_프런트_구조_계획.md`.
 - 데이터: 각 층의 `api.ts` 가 데이터를 읽고 고치는 한 곳이다. 서버는 `src/shared/lib/api.ts` 의 `request` 로 부른다(쿠키 포함, CSRF 헤더, 오류는 `ApiError`). `npm run dev` 는 모두 가짜 서버(`src/mocks`, 예시 데이터를 메모리에 둔다)를 부르고, `npm run dev:server` 와 빌드는 아래의 서버를 부른다. 서버 주소는 `VITE_API_ORIGIN`(없으면 `http://localhost:8080`)이고 개발 프록시는 두지 않았다.
 - 서버를 부르는 것: 로그인 쪽 화면 모두(로그인, 회원가입, 이메일 인증, 비밀번호 재설정, 구글 로그인 시작), 보는 사람(`GET /api/me`), 초대, 그룹과 멤버·초대 관리, 그룹 공고(읽어 오기, 올리기, 관심, 댓글, 마감일, 내리기 포함), 홈, 내 공고, 지원 현황, 달력, 경험카드(목록, 상세·편집, 확인, 지우기, 태그 제안), 내 정보, 이름 바꾸기, 로그아웃, 탈퇴.
-- 아직 가짜 서버만 부르는 것: 경험카드의 자료(목록, 올리기, 지우기)와 카드 추출, 메일 확인함, 메일 자동화 설정, 홈의 "메일에서 온 변경". `npm run dev:server` 에서도 이 자리는 예시 데이터를 보인다. 자료는 서버에 API가 있고(`/api/card-sources`), 카드 추출과 메일 자동화는 서버에도 없다. 화면이 바라는데 서버에 없는 칸은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
+- 아직 가짜 서버만 부르는 것: 메일 확인함, 메일 자동화 설정, 홈의 "메일에서 온 변경". `npm run dev:server` 에서도 이 자리는 예시 데이터를 보인다. 카드 추출은 서버에 없어 `npm run dev:server` 에서 "카드 뽑기 시작"을 누르면 준비 중이라고 알린다. 메일 자동화도 서버에 없다. 화면이 바라는데 서버에 없는 칸은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
 - 동작이 없는 자리: 헤더의 정보공유(화면이 없다), 경험카드의 직접 만들기(시안이 없다), 내 공고의 공고 넣기(그룹 없이 넣는 화면이 없다), 설정의 구글 연결(서버에 없다), 원문 주소가 없는 공고의 원문 열기. 이런 자리와 나중에 고칠 것은 코드에 `shortcut:` 으로 적혀 있다.
 - 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 67개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
 - `src/index.css`: Arc 변수(`src/components/arc/foundation.css`) 위에 리드미 값(색 A)을 덮고, shadcn/ui 색 이름을 Arc 변수에 연결한다.
@@ -121,7 +121,7 @@ git switch -c feat/frontend-something  # 작업 브랜치
 
 1. 서버: 2026-11-15에 남은 결정을 정하고(각 설계 문서의 "정함"), 구글 로그인, 내 계정·탈퇴, 그룹 초대, 내 공고, 그룹 공고 고치기, 경험카드, 자료 올리기, 공고 읽어 오기를 만들었다. 서버 쪽 다음 일은 카드 추출(LLM), 공고 읽어 오기의 파일 입력과 LLM 보완, 그룹 없이 내 공고에 넣기, 메일 자동화다. 화면이 요구하는데 서버에 없는 것은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
 2. GitHub Actions 가 도는지 확인한다. 저장소는 GitHub 에 올렸고(비공개), `gradlew` 의 실행 권한은 git 에 넣었다(`100755`).
-3. 화면: 시안이 나온 25개를 모두 프런트에 옮겼다(`docs/리드미_화면_API_대응.md` 1절). 2026-11-15부터 로그인 쪽 화면과 `GET /api/me`, 내 정보 읽기, 로그아웃은 서버를 부른다(`npm run dev:server`, 띄우는 법은 `frontend/CLAUDE.md`). 다음은 나머지 화면을 서버에 붙이는 것이다.
+3. 화면: 시안이 나온 25개를 모두 프런트에 옮겼다(`docs/리드미_화면_API_대응.md` 1절). 2026-11-15에 서버에 API가 있는 화면을 모두 서버에 붙였다(`npm run dev:server`, 띄우는 법은 `frontend/CLAUDE.md`). 남은 것은 서버에 없는 카드 추출과 메일 자동화를 붙이는 것, 그리고 공고 문서 8절 23~25번(관심 멤버에 나를 넣는 조건, 상세의 관심 끄기, 공고 고치기 화면)이다.
 4. 구글 로그인을 켠다. 서버 코드는 있다(2026-11-15). Google Cloud 에서 OAuth 클라이언트를 만들어 `backend/application-local.yml`에 넣는다(`docs/리드미_설계_로그인.md` 6.1).
 
 ## 문서
