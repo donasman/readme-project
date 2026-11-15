@@ -152,7 +152,8 @@ export function createExampleGroups(): ExampleGroup[] {
       commentCount: p.comments,
       deadlineName: null,
       applyAt: null,
-      sourceUrl: null,
+      // 시안처럼 예시 공고에는 모두 원문 주소가 있다. 주소 없는 공고(본문 붙여넣기)는 화면이 "원문 보기"를 감춘다
+      sourceUrl: `https://careers.example.com/jobs/${p.id}`,
       sections: [],
       keywords: [],
       comments: [],

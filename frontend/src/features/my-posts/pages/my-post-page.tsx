@@ -13,7 +13,6 @@ import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel, PanelNote } from "@/shared/components/panel"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { ExternalLinkIcon } from "@/shared/icons"
 import { formatDateWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
@@ -51,17 +50,12 @@ export function MyPostPage() {
           <DdayBadge text={due.main} soon={due.soon} />
           <span>{full}</span>
           {posting.applyAt && <span className="text-text-secondary">지원하는 곳: {posting.applyAt}</span>}
-          {posting.sourceUrl ? (
+          {/* 원문 주소가 없는 공고(링크 없이 본문을 붙여넣은 공고)는 갈 곳이 없어 감춘다 */}
+          {posting.sourceUrl && (
             <a href={posting.sourceUrl} target="_blank" rel="noreferrer" className={sourceLink}>
               <span>원문 보기</span>
               <ExternalLinkIcon aria-hidden="true" className="size-4" />
             </a>
-          ) : (
-            // shortcut: 원문 주소가 없으면 눌러도 아무 일이 없는 자리만 둔다, 서버를 붙일 때 주소 없는 공고에서 감출지 정한다
-            <PlaceholderLink className={sourceLink}>
-              <span>원문 보기</span>
-              <ExternalLinkIcon aria-hidden="true" className="size-4" />
-            </PlaceholderLink>
           )}
         </div>
       </div>
