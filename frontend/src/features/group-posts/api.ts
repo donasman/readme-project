@@ -29,8 +29,8 @@ export async function addComment(groupId: string, postId: string, text: string):
   return request("POST", apiPath`/api/groups/${groupId}/posts/${postId}/comments`, { text })
 }
 
-/** 읽어 오기의 응답(공고 문서 4.6). 못 읽은 칸은 ""이고, 그 그룹에 같은 공고가 있으면 duplicate가 붙는다. */
-interface ReadResponse extends Omit<PostDraft, "unread" | "keywords"> {
+/** 읽어 오기의 응답(공고 문서 4.6). 못 읽은 칸은 ""이고, 그 그룹에 같은 공고가 있으면 duplicate가 붙는다. 키워드는 사전의 대표 표기다. */
+interface ReadResponse extends Omit<PostDraft, "unread"> {
   unread: string[]
   duplicate?: Pick<GroupPost, "company" | "title" | "postedBy" | "postedAt"> & { postId: string }
 }
@@ -51,21 +51,21 @@ export async function readPost(groupId: string, input: PostReadInput): Promise<R
       const { postId, ...post } = duplicate
       return { status: "duplicate", post: { id: postId, ...post } }
     }
-    // shortcut: 서버가 키워드를 아직 뽑지 않는다(공고 문서 8절 19번), 키워드 사전을 읽어 오기에 붙이면 응답의 keywords를 쓴다
-    return { status: "ok", draft: { ...draft, keywords: [], unread: unread.filter((f): f is DraftField => DRAFT_FIELDS.includes(f)) } }
+    return { status: "ok", draft: { ...draft, unread: unread.filter((f): f is DraftField => DRAFT_FIELDS.includes(f)) } }
   } catch (error) {
     if (isApiError(error, "FETCH_BLOCKED", "FETCH_FAILED")) return { status: "failed", message: sentence(error.message) }
     throw error
   }
 }
 
-/** 칸을 확인한 공고를 그룹에 올린다. 같은 공고가 이 그룹에 있으면 409 ALREADY_IN_GROUP과 그 공고의 id. */
+/**
+ * 칸을 확인한 공고를 그룹에 올린다. 같은 공고가 이 그룹에 있으면 409 ALREADY_IN_GROUP과 그 공고의 id.
+ * 서버가 키워드를 대표 표기로 바꾸고 묶음을 다시 검사한다. 묶음이 모두 합쳐 5만 자를 넘는 400은 화면 아래 알림이 서버의 글로 보인다.
+ */
 export async function uploadPost(groupId: string, input: PostUpload): Promise<UploadPostResult> {
   if (mockServer) return db.uploadPost(groupId, input)
-  // shortcut: 서버의 올리기는 묶음(sections)과 키워드를 받지 않아 보내지 않는다, 서버가 받기로 하면 함께 보낸다(화면 API 대응 3.2의 8번)
-  const { company, title, deadline, sourceUrl, applyAt } = input
   try {
-    const { post } = await request<GroupPostData>("POST", apiPath`/api/groups/${groupId}/posts`, { company, title, deadline, sourceUrl, applyAt })
+    const { post } = await request<GroupPostData>("POST", apiPath`/api/groups/${groupId}/posts`, input)
     return { ok: true, postId: post.id }
   } catch (error) {
     if (isApiError(error, "ALREADY_IN_GROUP")) return { ok: false, error: "ALREADY_IN_GROUP", postId: String(error.body.postId) }

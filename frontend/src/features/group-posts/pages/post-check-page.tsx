@@ -33,6 +33,8 @@ const DUE_MODES: { value: DueMode; label: string }[] = [
   { value: "always", label: "상시" },
   { value: "unknown", label: "모름" },
 ]
+/** 서버가 받는 칸의 길이(공고 문서 4.4의 올리기 요청) */
+const MAX_LENGTH = { company: 200, title: 300, sourceUrl: 2000, applyAt: 100 }
 const FIELD_NAMES: Record<DraftField, string> = { company: "회사명", title: "공고명", deadline: "마감일", sourceUrl: "원문 링크", applyAt: "지원하는 곳" }
 
 /** 읽지 못한 칸: 하이라이트 테두리와 옅은 바탕. */
@@ -105,6 +107,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
         id={`pc-${key}`}
         type={type}
         value={value}
+        maxLength={MAX_LENGTH[key]}
         aria-invalid={errors[key] ? true : undefined}
         aria-describedby={noteId(`pc-${key}`)}
         onChange={(e) => {
@@ -195,7 +198,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
               <p className="text-sm text-text-secondary">비워 두어도 올릴 수 있습니다.</p>
             </div>
             <Field id="pc-at" label="지원하는 곳" evidence={draft.evidence.applyAt}>
-              <Input id="pc-at" value={applyAt} onChange={(e) => setApplyAt(e.target.value)} className="md:text-base" />
+              <Input id="pc-at" value={applyAt} maxLength={MAX_LENGTH.applyAt} onChange={(e) => setApplyAt(e.target.value)} className="md:text-base" />
             </Field>
             {sections.map((section, i) => (
               <Field key={section.title} id={`pc-section-${i}`} label={section.title} evidence={section.from ? `원문의 "${section.from}" 부분` : undefined}>
