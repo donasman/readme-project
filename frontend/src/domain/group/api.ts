@@ -2,20 +2,12 @@
 import * as db from "@/mocks/db"
 import { apiPath, mockServer, request } from "@/shared/lib/api"
 
-import type { Disclosure, Group, GroupResponse } from "./types"
-
-/** 서버의 그룹을 화면의 모양으로: id(숫자)를 문자열로 바꾼다. */
-export const toGroup = (g: GroupResponse): Group => ({
-  ...g,
-  id: String(g.id),
-  members: g.members.map((m) => ({ ...m, id: String(m.id) })),
-  leaderId: g.leaderId === null ? null : String(g.leaderId),
-})
+import type { Disclosure, Group } from "./types"
 
 /** 내가 속한 그룹들(들어간 순서). 그룹 전환 메뉴와 첫 화면에서 쓴다. */
 export async function getMyGroups(): Promise<Group[]> {
   if (mockServer) return db.listGroups()
-  return (await request<GroupResponse[]>("GET", "/api/groups")).map(toGroup)
+  return request<Group[]>("GET", "/api/groups")
 }
 
 /** 이 그룹에 보일 내 공개 범위를 정한다. 멤버 화면과 "공개 범위" 창이 쓴다. */

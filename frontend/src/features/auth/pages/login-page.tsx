@@ -4,13 +4,11 @@ import { Link, useNavigate, useSearchParams } from "react-router"
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
+import { sentence } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 
 import { login, type LoginResult } from "../api"
 import { AuthField, AuthFooter, AuthFrame, authFooterLink, authInlineLink, OrGoogle } from "../components/auth-parts"
-
-/** 서버의 오류 글은 마침표 없이 온다. 칸 아래 다른 글처럼 문장으로 끝낸다. */
-const sentence = (text: string) => (/[.?!]$/.test(text) ? text : `${text}.`)
 
 /**
  * 로그인(시안 3종의 "A · 로그인", 모바일 390px). 넓은 화면에서는 같은 폭의 단을 가운데 둔다.

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { memberName } from "@/domain/group/member"
 import type { Viewer } from "@/domain/session/types"
 import { Chip } from "@/shared/components/chip"
 import { Heading } from "@/shared/components/heading"
@@ -18,8 +19,8 @@ interface PostContentProps {
 
 /** 공고 내용: 올린 사람과 날, 주요 업무 등 묶음, 키워드. */
 export function PostContent({ post, viewer, canTakeDown, onTakeDown }: PostContentProps) {
-  const byMe = post.postedBy.id === viewer.id
-  const poster = byMe ? "내가" : `${post.postedBy.name}${subjectParticle(post.postedBy.name)}`
+  const byMe = post.postedBy?.id === viewer.id
+  const poster = byMe ? "내가" : `${memberName(post.postedBy)}${subjectParticle(memberName(post.postedBy))}`
   const empty = post.sections.length === 0 && post.keywords.length === 0
 
   return (

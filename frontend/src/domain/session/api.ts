@@ -8,8 +8,8 @@ import type { MeResponse, Viewer } from "./types"
 export async function getViewer(): Promise<Viewer | null> {
   if (mockServer) return db.viewer()
   try {
-    const me = await request<MeResponse>("GET", "/api/me")
-    return { id: String(me.id), name: me.name }
+    const { id, name } = await request<MeResponse>("GET", "/api/me")
+    return { id, name }
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return null
     throw error

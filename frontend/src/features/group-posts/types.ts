@@ -1,4 +1,4 @@
-// 그룹 공고의 데이터 모양. 서버가 생기면 응답이 이 모양으로 온다고 보고 화면을 짠다.
+// 그룹 공고의 데이터 모양. 서버의 응답(공고 문서 4.4) 그대로다. id는 shared/lib/api.ts가 문자열로 읽는다.
 // 날짜는 모두 한국 시간 기준 "YYYY-MM-DD"(댓글만 시각까지 ISO 8601).
 // 그룹과 멤버는 domain/group, 보는 사람은 domain/session에 있다.
 import type { Member } from "@/domain/group/types"
@@ -13,7 +13,7 @@ export type { Deadline, PostSection }
 export interface Interest {
   member: Member
   applied: boolean
-  /** 예: "면접 단계" */
+  /** 서버의 상태 글자. 예: "1차 면접 단계" */
   progress?: string
 }
 
@@ -32,7 +32,8 @@ export interface GroupPost {
   company: string
   title: string
   deadline: Deadline
-  postedBy: Member
+  /** 탈퇴한 사람이면 null */
+  postedBy: Member | null
   postedAt: string
   /** 관심을 켠 다른 멤버들(보는 사람 제외) */
   interests: Interest[]
@@ -46,7 +47,9 @@ export type CommentPart = { text: string; href?: string }
 /** "그룹 × 공고"에 달린 댓글. */
 export interface Comment {
   id: string
-  author: Member
+  /** 탈퇴한 사람이면 null */
+  author: Member | null
+  /** +09:00이 붙은 ISO 8601. 서버가 만든 것은 소수 초가 붙을 수 있다 */
   createdAt: string
   body: CommentPart[]
 }

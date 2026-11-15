@@ -29,9 +29,9 @@ describe("apiPath", () => {
 
 describe("request", () => {
   it("읽기: 쿠키와 함께 보내고 JSON을 돌려준다. CSRF 값은 싣지 않는다", async () => {
-    const { calls, doc } = serve({ status: 200, body: { id: 1 } })
+    const { calls, doc } = serve({ status: 200, body: { name: "다온" } })
     doc.cookie = "XSRF-TOKEN=t1"
-    expect(await request("GET", "/api/me")).toEqual({ id: 1 })
+    expect(await request("GET", "/api/me")).toEqual({ name: "다온" })
     expect(calls[0].headers["X-XSRF-TOKEN"]).toBeUndefined()
   })
 
@@ -58,11 +58,20 @@ describe("request", () => {
     expect(calls).toHaveLength(2)
   })
 
+  it("id이거나 Id로 끝나는 숫자 칸은 문자열로 읽는다. 다른 숫자와 null은 그대로다", async () => {
+    serve(
+      { status: 200, body: { id: 1, leaderId: null, members: [{ id: 2 }], openPostCount: 6, me: { postId: 3 } } },
+      { status: 409, body: { code: "ALREADY_IN_GROUP", message: "x", postId: 12 } },
+    )
+    expect(await request("GET", "/api/groups")).toEqual({ id: "1", leaderId: null, members: [{ id: "2" }], openPostCount: 6, me: { postId: "3" } })
+    await expect(request("POST", "/api/x")).rejects.toMatchObject({ body: { postId: "12" } })
+  })
+
   it("오류는 서버의 code와 message, 함께 실린 값을 담는다. 본문이 JSON이 아니어도 status는 남는다", async () => {
     serve({ status: 409, body: { code: "ALREADY_IN_GROUP", message: "이미 있습니다", postId: 12 } }, { status: 502 })
     const error = await request("POST", "/api/x").catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ApiError)
-    expect(error).toMatchObject({ status: 409, code: "ALREADY_IN_GROUP", message: "이미 있습니다", body: { postId: 12 } })
+    expect(error).toMatchObject({ status: 409, code: "ALREADY_IN_GROUP", message: "이미 있습니다", body: { postId: "12" } })
     await expect(request("GET", "/api/x")).rejects.toMatchObject({ status: 502, code: "" })
   })
 })

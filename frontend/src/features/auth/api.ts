@@ -1,5 +1,5 @@
 // 계정 화면(로그인, 가입, 이메일 인증, 비밀번호 재설정, 초대)이 서버와 주고받는 유일한 곳. 주소와 오류 이름은 docs/리드미_설계_로그인.md 4절이다.
-import type { GroupResponse } from "@/domain/group/types"
+import type { Group } from "@/domain/group/types"
 import * as db from "@/mocks/db"
 import { apiPath, isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
 
@@ -105,8 +105,8 @@ export async function getInvite(token: string): Promise<InviteView> {
 export async function acceptInvite(token: string): Promise<AcceptInviteResult> {
   if (mockServer) return db.acceptInvite(token)
   try {
-    const group = await request<GroupResponse>("POST", apiPath`/api/group-invites/${token}/accept`)
-    return { ok: true, groupId: String(group.id) }
+    const group = await request<Group>("POST", apiPath`/api/group-invites/${token}/accept`)
+    return { ok: true, groupId: group.id }
   } catch (error) {
     if (isApiError(error, "INVITE_NOT_FOUND", "INVITE_EXPIRED")) return { ok: false, error: "INVITE_EXPIRED" }
     throw error

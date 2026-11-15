@@ -1,4 +1,4 @@
-// 그룹의 데이터 모양. 서버의 응답(그룹 문서 4.2)에서 id만 문자열로 바꾼 것이다(api.ts의 toGroup).
+// 그룹의 데이터 모양. 서버의 응답(그룹 문서 4.2) 그대로다. id는 shared/lib/api.ts가 문자열로 읽는다.
 
 /** 그룹 멤버. 보는 사람(나)도 멤버다. */
 export interface Member {
@@ -31,11 +31,4 @@ export interface Group {
   myDisclosure: Disclosure
   /** 진행 중인 공고 가운데 마감일이 가장 가까운 것. 없으면 null */
   nearestDeadline: { date: string; company: string; title: string } | null
-}
-
-/** 서버가 보내는 그룹(GET /api/groups의 한 항목). 그룹 만들기, 공개 범위 바꾸기, 초대 수락도 이 모양이다. */
-export type GroupResponse = Omit<Group, "id" | "members" | "leaderId"> & {
-  id: number
-  members: { id: number; name: string; joinedAt: string }[]
-  leaderId: number | null
 }

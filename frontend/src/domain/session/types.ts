@@ -4,10 +4,8 @@ export interface Viewer {
   name: string
 }
 
-/** GET /api/me의 응답(로그인 문서 4절). id는 서버의 숫자다. 화면은 id, name을 Viewer로 쓰고 내 정보 화면이 나머지를 쓴다. */
-export interface MeResponse {
-  id: number
-  name: string
+/** GET /api/me의 응답(로그인 문서 4절). 화면은 id, name을 Viewer로 쓰고 내 정보 화면이 나머지를 쓴다. */
+export interface MeResponse extends Viewer {
   email: string
   hasPassword: boolean
   providers: string[]
