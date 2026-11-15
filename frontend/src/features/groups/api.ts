@@ -7,6 +7,8 @@ import { seoulToday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
 import { firstChar } from "@/shared/lib/utils"
 
+import type { CreatedInvite } from "./types"
+
 /** 내 그룹 목록과 오늘(가장 가까운 마감의 D-day를 센다). 서버는 그룹 목록에 오늘을 싣지 않아 한국 날짜로 센다. */
 export async function getGroupList(): Promise<{ today: string; groups: Group[] }> {
   return { today: mockServer ? db.today() : seoulToday(), groups: await getMyGroups() }
@@ -20,12 +22,7 @@ export async function createGroup(input: { name: string; mark: string }): Promis
   return toGroup(await request<GroupResponse>("POST", "/api/groups", { name, mark }))
 }
 
-/** 만든 초대 링크와 쓸 수 있는 마지막 날("YYYY-MM-DD"). 링크는 만들 때만 알 수 있다(서버는 토큰의 해시만 둔다). */
-export interface CreatedInvite {
-  link: string
-  expiresAt: string
-}
-
+/** 초대 링크를 만든다. */
 export async function createInvite(groupId: string): Promise<CreatedInvite> {
   if (mockServer) {
     const { token, expiresAt } = db.createInvite(groupId)

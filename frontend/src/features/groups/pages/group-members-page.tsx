@@ -19,7 +19,8 @@ import { copyText } from "@/shared/lib/clipboard"
 import { paths } from "@/shared/lib/paths"
 import { firstChar, joinClasses } from "@/shared/lib/utils"
 
-import { createInvite, leaveGroup, type CreatedInvite } from "../api"
+import { createInvite, leaveGroup } from "../api"
+import type { CreatedInvite } from "../types"
 import { RoleChip } from "../components/role-chip"
 
 /** 그룹을 막 만들고 왔을 때 넘기는 값: 만들면서 만든 초대 링크. */
