@@ -10,6 +10,7 @@ import java.util.OptionalLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.Session;
@@ -43,6 +44,9 @@ class AccountService {
 
 	/** 같은 사람에게 같은 종류의 링크를 최근 24시간 동안 보내는 최대 수(2026-11-15 정함). */
 	static final int LINKS_PER_DAY = 5;
+
+	/** LINKS_PER_DAY 를 세는 기간. 이보다 오래된 링크 행은 세지 않으므로 deleteSpentLinks 가 지울 수 있다. */
+	static final Duration LINK_COUNT_WINDOW = Duration.ofDays(1);
 
 	private final AccountRepository accounts;
 
@@ -206,6 +210,17 @@ class AccountService {
 	}
 
 	/**
+	 * 매일 04:00(서울)에 더 쓸 데가 없는 링크 행을 지운다(2026-11-16 정함). 24시간 안에 만든 행은 sendLink 가 세므로 남긴다.
+	 * 그보다 오래되었어도 아직 쓸 수 있는 링크는 남긴다. 서버가 여러 대면 모두 돌지만 같은 행을 지우므로 괜찮다.
+	 */
+	@Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
+	@Transactional
+	void deleteSpentLinks() {
+		Instant now = this.clock.instant();
+		log.info("지난 링크 {}개를 지웠다", this.tokens.deleteSpent(now.minus(LINK_COUNT_WINDOW), now));
+	}
+
+	/**
 	 * 전에 보낸 같은 종류의 링크를 쓸 수 없게 하고, 새 링크를 만들어 커밋 뒤에 메일로 보낸다.
 	 * 1분 안에 보냈거나 최근 24시간 동안 5번 보냈으면 아무것도 하지 않는다. 전에 보낸 링크는 그대로 쓸 수 있고, 응답도 같다.
 	 */
@@ -213,7 +228,7 @@ class AccountService {
 		// shortcut: simultaneous requests (up to the pool size, 5) can all pass these counts and each send a link,
 		// lock the users row before counting if that gets abused
 		if (this.tokens.countCreatedSince(account.id(), purpose, now.minus(LINK_COOLDOWN)) > 0
-				|| this.tokens.countCreatedSince(account.id(), purpose, now.minus(Duration.ofDays(1))) >= LINKS_PER_DAY) {
+				|| this.tokens.countCreatedSince(account.id(), purpose, now.minus(LINK_COUNT_WINDOW)) >= LINKS_PER_DAY) {
 			return;
 		}
 		this.tokens.cancelUnused(account.id(), purpose.name(), now);
