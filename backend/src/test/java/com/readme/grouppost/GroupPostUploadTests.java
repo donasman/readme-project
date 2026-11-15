@@ -160,7 +160,8 @@ class GroupPostUploadTests {
 		String url = "https://careers.example.com/jobs/" + "a".repeat(400);
 		String body = """
 				{ "company": "긴 주소 회사", "title": "백엔드", "deadline": { "kind": "date", "date": "2026-11-20" },
-				  "deadlineName": "서류 마감", "applyAt": "홈페이지", "sourceUrl": "%s" }
+				  "deadlineName": "서류 마감", "applyAt": "홈페이지", "sourceUrl": "%s",
+				  "keywords": [ "자바" ], "sections": [ { "title": "주요 업무", "items": [ "API 개발" ] } ] }
 				""".formatted(url);
 
 		MvcTestResult first = upload(this.group, this.me, body).exchange();
@@ -180,6 +181,10 @@ class GroupPostUploadTests {
 				  "deadline": { "kind": "date", "date": "2026-11-20" }, "deadlineName": "서류 마감", "applyAt": "홈페이지",
 				  "sourceUrl": "%s", "postedBy": { "id": %d }, "postedAt": "2026-11-13" } }
 				""".formatted(firstId, url, this.me));
+		// 키 없이 넣은 공고에도 키워드와 공고 내용 묶음이 들어간다
+		assertThat(first).bodyJson().extractingPath("$.post.keywords").isEqualTo(List.of("Java"));
+		assertThat(first).bodyJson().extractingPath("$.post.sections").isEqualTo(
+				List.of(Map.of("title", "주요 업무", "items", List.of("API 개발"))));
 	}
 
 	@Test
