@@ -10,6 +10,7 @@ import tools.jackson.databind.json.JsonMapper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
@@ -87,6 +88,8 @@ public class SecurityConfig {
 				.requestMatchers("/api/auth/**").permitAll()
 				// 구글 로그인의 두 주소(로그인 설계 4절). 켜져 있으면 아래 oauth2Login 의 필터가 먼저 받는다. 꺼져 있으면 404 다.
 				.requestMatchers("/oauth2/authorization/google", "/login/oauth2/code/google").permitAll()
+				// 초대 미리 보기. 손님도 그룹 이름을 보고 로그인·가입으로 간다(그룹 설계 4.1). 수락(POST …/accept)은 로그인해야 한다
+				.requestMatchers(HttpMethod.GET, "/api/group-invites/*").permitAll()
 				.anyRequest().authenticated())
 			// 로그인 전 요청을 세션에 저장해 두지 않는다. 로그인 뒤 돌아갈 화면은 프런트가 정하고,
 			// 저장해 두면 로그인 전 요청마다 세션 행이 생긴다.

@@ -48,8 +48,8 @@ class GroupWriteTests {
 		assertThat(result).bodyJson().isStrictlyEqualTo("""
 				{
 				  "id": %d, "name": "백엔드 스터디", "mark": "BE",
-				  "members": [ { "id": %d, "name": "다온" } ],
-				  "leaderId": %d, "openPostCount": 0, "myDisclosure": "applied"
+				  "members": [ { "id": %d, "name": "다온", "joinedAt": "2026-11-13" } ],
+				  "leaderId": %d, "openPostCount": 0, "myDisclosure": "applied", "nearestDeadline": null
 				}
 				""".formatted(groupId, me, me));
 		assertThat(this.mvc.get().uri("/api/groups").with(loginAs(me))).bodyJson()
