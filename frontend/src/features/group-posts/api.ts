@@ -1,9 +1,9 @@
 // 그룹 공고 화면이 공고 데이터를 가져오고 바꾸는 유일한 곳. 주소와 오류 이름은 공고 문서 4.1, 4.3이다. 그룹과 보는 사람은 domain에서 읽는다.
+import type { PostUpload } from "@/domain/posting/types"
 import * as db from "@/mocks/db"
-import { apiPath, isApiError, mockServer, request, tooLargeMessage } from "@/shared/lib/api"
-import { sentence } from "@/shared/lib/korean"
+import { apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
 
-import type { Comment, Deadline, DraftField, GroupPost, GroupPostData, GroupPostsData, MyState, PostDraft, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
+import type { Comment, Deadline, GroupPostData, GroupPostsData, MyState, UploadPostResult } from "./types"
 
 /** 그룹 공고 목록. 내린 공고는 빠지고 마감된 공고는 들어 있다. */
 export async function getGroupPosts(groupId: string): Promise<GroupPostsData> {
@@ -27,44 +27,6 @@ export async function setInterest(groupId: string, postId: string, interested: b
 export async function addComment(groupId: string, postId: string, text: string): Promise<Comment> {
   if (mockServer) return db.addComment(groupId, postId, text)
   return request("POST", apiPath`/api/groups/${groupId}/posts/${postId}/comments`, { text })
-}
-
-/** 읽어 오기의 응답(공고 문서 4.6). 못 읽은 칸은 ""이고, 그 그룹에 같은 공고가 있으면 duplicate가 붙는다. 키워드는 사전의 대표 표기다. */
-interface ReadResponse extends Omit<PostDraft, "unread"> {
-  unread: string[]
-  duplicate?: Pick<GroupPost, "company" | "title" | "postedBy" | "postedAt"> & { postId: string }
-}
-
-/** 칸 확인 화면이 아는 칸. 서버의 unread에는 화면에 없는 deadlineName도 늘 들어 있다(공고 문서 8절 16번). */
-const DRAFT_FIELDS: readonly string[] = ["company", "title", "deadline", "sourceUrl", "applyAt"] satisfies DraftField[]
-
-/** 읽어 오기의 본문. groupId를 주면 서버가 그 그룹에 같은 공고가 있는지 함께 본다(파일은 멤버인지만 본다). 서버의 id는 숫자다. */
-function readBody(groupId: string, input: PostReadInput) {
-  if (input.kind === "url") return { url: input.url, groupId: Number(groupId) }
-  if (input.kind === "text") return { text: input.text, sourceUrl: input.sourceUrl, groupId: Number(groupId) }
-  const form = new FormData()
-  form.append("file", input.file)
-  form.append("groupId", groupId)
-  return form
-}
-
-/** 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일(PDF, DOCX, HWPX, HWP). 이 그룹에 이미 있으면 그 공고를, 읽지 못하면 이유를 돌려준다. */
-export async function readPost(groupId: string, input: PostReadInput): Promise<ReadPostResult> {
-  if (mockServer) return db.readPosting(groupId, input.kind === "file" ? { kind: "file", name: input.file.name } : input)
-  try {
-    const { duplicate, unread, ...draft } = await request<ReadResponse>("POST", "/api/postings/read", readBody(groupId, input))
-    if (duplicate) {
-      const { postId, ...post } = duplicate
-      return { status: "duplicate", post: { id: postId, ...post } }
-    }
-    return { status: "ok", draft: { ...draft, unread: unread.filter((f): f is DraftField => DRAFT_FIELDS.includes(f)) } }
-  } catch (error) {
-    const tooLarge = tooLargeMessage(error)
-    if (tooLarge) return { status: "failed", message: tooLarge }
-    // 서버의 글에 이유와 붙여넣기 안내가 있다
-    if (isApiError(error, "FETCH_BLOCKED", "FETCH_FAILED", "FILE_UNSUPPORTED_TYPE", "FILE_UNREADABLE", "FILE_NO_TEXT")) return { status: "failed", message: sentence(error.message) }
-    throw error
-  }
 }
 
 /**

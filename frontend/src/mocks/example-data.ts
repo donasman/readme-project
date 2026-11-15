@@ -2,7 +2,8 @@
 // 이름, 회사, 공고, 댓글은 모두 지어낸 예시다. 보는 사람은 "다온"이고 디자인처럼 오늘은 2026-11-13이다.
 // 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
 import type { Disclosure, GroupMember, Member } from "@/domain/group/types"
-import type { Comment, Deadline, GroupPostDetail, PostDraft } from "@/features/group-posts/types"
+import type { PostDraft } from "@/domain/posting/types"
+import type { Comment, Deadline, GroupPostDetail } from "@/features/group-posts/types"
 
 export const EXAMPLE_TODAY = "2026-11-13"
 
