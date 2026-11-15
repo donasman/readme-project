@@ -4,6 +4,8 @@ import static com.readme.TestRequests.loginAs;
 import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.jayway.jsonpath.JsonPath;
@@ -117,6 +119,33 @@ class MyPostingAddTests {
 	}
 
 	@Test
+	void keywordsAndSectionsComeBackInMyDetailAndTheFirstUploadersStay() throws Exception {
+		String url = "https://www.wanted.co.kr/wd/" + jobNumber();
+		MvcTestResult first = add(this.me, """
+				{ "company": "키워드 회사", "title": "백엔드", "deadline": { "kind": "always" }, "sourceUrl": "%s",
+				  "keywords": [ "자바", "Spring Boot", "사전에 없는 낱말" ],
+				  "sections": [ { "title": "주요 업무", "items": [ "주문 API 개발", " " ], "from": "담당 업무" } ] }
+				""".formatted(url)).exchange();
+
+		assertThat(first).hasStatus(HttpStatus.CREATED);
+		assertThat(first).bodyJson().extractingPath("$.posting.keywords").isEqualTo(List.of("Java", "Spring Boot"));
+		assertThat(first).bodyJson().extractingPath("$.posting.sections").isEqualTo(
+				List.of(Map.of("title", "주요 업무", "items", List.of("주문 API 개발"))));
+
+		// 같은 공고를 다른 사람이 다른 키워드·묶음으로 넣어도 처음 넣은 값이 남는다
+		long other = this.fixtures.user("가람");
+		MvcTestResult second = add(other, """
+				{ "company": "키워드 회사", "title": "백엔드", "deadline": { "kind": "always" }, "sourceUrl": "%s",
+				  "keywords": [ "Python" ], "sections": [ { "title": "우대 사항", "items": [ "AWS" ] } ] }
+				""".formatted(url)).exchange();
+
+		assertThat(second).hasStatus(HttpStatus.CREATED);
+		assertThat(postingIdOf(second)).isEqualTo(postingIdOf(first));
+		assertThat(second).bodyJson().extractingPath("$.posting.keywords").isEqualTo(List.of("Java", "Spring Boot"));
+		assertThat(second).bodyJson().extractingPath("$.posting.sections[0].title").isEqualTo("주요 업무");
+	}
+
+	@Test
 	void addChecksTheInputAndPutsNothingInMyJobs() {
 		assertInvalid(add(this.me, """
 				{ "title": "공고", "deadline": { "kind": "unknown" } }
@@ -137,6 +166,14 @@ class MyPostingAddTests {
 		// 원문 주소는 http·https 만, 역슬래시 없이
 		assertInvalid(add(this.me, job("회사", "javascript:alert(1)")));
 		assertInvalid(add(this.me, job("회사", "https://evil.example\\\\@www.saramin.co.kr/?rec_idx=" + jobNumber())));
+		// 키워드와 묶음도 그룹에 올리기와 같이 검사한다(GroupPostUploadTests)
+		assertInvalid(add(this.me, """
+				{ "company": "회사", "title": "공고", "deadline": { "kind": "always" },
+				  "sections": [ { "title": "", "items": [ "항목" ] } ] }
+				"""));
+		assertInvalid(add(this.me, """
+				{ "company": "회사", "title": "공고", "deadline": { "kind": "always" }, "keywords": [ "%s" ] }
+				""".formatted("a".repeat(101))));
 
 		assertThat(this.mvc.get().uri("/api/me/postings").with(loginAs(this.me)))
 			.bodyJson().extractingPath("$.postings").asArray().isEmpty();

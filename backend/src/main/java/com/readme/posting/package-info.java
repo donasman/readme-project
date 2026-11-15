@@ -5,7 +5,7 @@
  * <p>다른 기능은 {@link com.readme.posting.ApplicationStatus} 로 상태 글자를 만들고,
  * {@link com.readme.posting.UserPostings} 로 내 공고 행을 만든다.
  * 올리기 본문({@link com.readme.posting.UploadRequest}, {@link com.readme.posting.DeadlineInput})은 그룹에 올리기와
- * 내 공고 넣기가 함께 쓴다. 마감과 공고 내용 묶음의 응답 모양
+ * 내 공고 넣기가 함께 쓴다. 올리기의 키워드는 keyword 의 KeywordDictionary 로 대표 표기로 바꾼다. 마감과 공고 내용 묶음의 응답 모양
  * ({@link com.readme.posting.DeadlineResponse}, {@link com.readme.posting.PostSection})은 그룹 공고와 함께 쓴다.
  * 근거: docs/리드미_설계_공고.md.
  */

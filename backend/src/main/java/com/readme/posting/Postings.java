@@ -3,6 +3,9 @@ package com.readme.posting;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Optional;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,27 +23,45 @@ public class Postings {
 
 	private final Clock clock;
 
-	Postings(PostingRepository repository, Clock clock) {
+	private final JsonMapper jsonMapper;
+
+	Postings(PostingRepository repository, Clock clock, JsonMapper jsonMapper) {
 		this.repository = repository;
 		this.clock = clock;
+		this.jsonMapper = jsonMapper;
 	}
 
 	/**
 	 * 같은 공고가 이미 있으면 그 공고의 id 를, 없으면 새로 만들어 id 를 돌려준다. 같은 공고는 공고키로 알아본다(설계 가정 3).
-	 * 이미 있는 공고의 값은 고치지 않는다. 처음 올린 사람이 넣은 값이 남는다.
+	 * 이미 있는 공고의 값은 고치지 않는다. 처음 올린 사람이 넣은 값이 남는다. 공고 내용 묶음과 키워드도 새로 만들 때만 넣는다.
 	 */
 	@Transactional
 	public long findOrCreate(PostingDraft draft, long userId) {
 		Instant now = this.clock.instant();
 		String key = draft.key().key();
 		if (key.length() > MAX_KEY_LENGTH) {
-			return this.repository.save(new Posting(draft, null, userId, now)).getId();
+			return withContent(this.repository.save(new Posting(draft, null, userId, now)).getId(), draft);
 		}
-		return this.repository.findIdByKey(key).orElseGet(() -> {
-			this.repository.insertIfKeyIsNew(key, draft.company(), draft.title(), draft.deadlineKind().name(),
-					draft.deadlineDate(), draft.deadlineName(), draft.applyAt(), draft.sourceUrl(), userId, now);
-			return this.repository.findIdByKey(key).orElseThrow();
-		});
+		Optional<Long> found = this.repository.findIdByKey(key);
+		if (found.isPresent()) {
+			return found.get();
+		}
+		boolean created = this.repository.insertIfKeyIsNew(key, draft.company(), draft.title(),
+				draft.deadlineKind().name(), draft.deadlineDate(), draft.deadlineName(), draft.applyAt(),
+				draft.sourceUrl(), userId, now) == 1;
+		long postingId = this.repository.findIdByKey(key).orElseThrow();
+		return created ? withContent(postingId, draft) : postingId;
+	}
+
+	/** 막 만든 공고에 공고 내용 묶음(postings.sections)과 키워드(posting_keywords, 넣은 순서가 seq)를 넣는다. */
+	private long withContent(long postingId, PostingDraft draft) {
+		if (!draft.sections().isEmpty()) {
+			this.repository.setSections(postingId, this.jsonMapper.writeValueAsString(draft.sections()));
+		}
+		if (!draft.keywords().isEmpty()) {
+			this.repository.insertKeywords(postingId, this.jsonMapper.writeValueAsString(draft.keywords()));
+		}
+		return postingId;
 	}
 
 	/**
