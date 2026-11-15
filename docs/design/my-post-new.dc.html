@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>내 공고 넣기</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="readme-frame.css">
+<link rel="stylesheet" href="readme-tabs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="rm-root pal-a" data-theme="{{theme}}" style="position: relative; min-height: 100vh; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: 16px; line-height: 1.4; letter-spacing: -0.01em; word-break: keep-all; text-wrap: pretty">
+<header style="background: var(--background)">
+<div style="display: flex; flex-wrap: wrap; min-height: 72px; box-sizing: border-box; align-items: center; gap: 8px 20px; padding: 8px 24px; border-bottom: 1px solid var(--border-subtle); background: var(--surface)">
+<a href="Dashboard.dc.html" aria-label="리드미 홈" style="display: inline-flex; flex: none; align-items: center; gap: 8px; color: var(--foreground); font-size: 16px; font-weight: 700; line-height: 1.4; text-decoration: none"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="10" style="fill: var(--accent)"></rect><rect x="8" y="7.5" width="12" height="3" rx="1.5" style="fill: var(--accent-foreground)"></rect><rect x="5" y="13" width="22" height="7" rx="2.5" style="fill: var(--highlight)"></rect><rect x="8" y="15" width="16" height="3" rx="1.5" style="fill: var(--highlight-foreground)"></rect><rect x="8" y="22.5" width="9" height="3" rx="1.5" style="fill: var(--accent-foreground)"></rect></svg><span>리드미</span></a>
+<nav aria-label="주요 메뉴" style="min-width: 0">
+<ul style="display: flex; flex-wrap: wrap; margin: 0; padding: 0; align-items: center; gap: 4px; list-style: none">
+<li><a href="Groups.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">스터디</a></li>
+<li><a href="#" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">정보공유</a></li>
+<li><a href="Main.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">경험카드</a></li>
+</ul>
+</nav>
+<div style="display: flex; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: 8px">
+<a href="Account.dc.html" aria-label="내 계정" style="display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); border-radius: 50%; background: var(--surface-sunken); color: var(--foreground); font-size: 13px; font-weight: 700; text-decoration: none">다</a>
+</div>
+</div>
+</header>
+<main style="max-width: 760px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px 64px; display: flex; flex-direction: column; gap: 24px">
+<a href="MyPosts.dc.html" style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; min-height: 44px; color: var(--text-secondary); font-size: 14px; font-weight: 700; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg><span>내 공고</span></a>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: var(--font-display); font-size: 32px; font-weight: 700; line-height: 1.15; letter-spacing: -0.03em">공고 넣기</h1>
+<p style="margin: 0; color: var(--text-secondary)">그룹에 올리지 않고 내 공고에만 넣습니다.</p>
+</div>
+
+<sc-if value="{{isFailed}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; border-radius: var(--radius-control); background: var(--highlight-subtle); font-size: 14px">
+<strong style="font-weight: 700">이 링크는 읽지 못했습니다</strong>
+<span>로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요.</span>
+</div>
+</sc-if>
+
+<section aria-label="공고 읽어 오기" style="display: flex; flex-direction: column; gap: 20px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div role="group" aria-label="넣는 방법" style="display: inline-flex; min-width: 0; max-width: 100%; border-radius: var(--radius-pill); background: var(--surface-muted); align-self: flex-start">
+<div class="rm-scroll" style="display: flex; min-width: 0; gap: 2px; padding: 3px; border-radius: var(--radius-pill); overflow-x: auto">
+<sc-for list="{{vias}}" as="v" hint-placeholder-count="3">
+<sc-if value="{{v.on}}"><button type="button" aria-pressed="true" onClick="{{v.pick}}" style="flex: 0 0 auto; min-height: var(--control-height-sm); padding: 0 15px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface); box-shadow: var(--shadow-resting); color: var(--foreground); font-size: 14px; font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">{{v.label}}</button></sc-if>
+<sc-if value="{{v.off}}"><button type="button" aria-pressed="false" onClick="{{v.pick}}" style="flex: 0 0 auto; min-height: var(--control-height-sm); padding: 0 16px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--text-muted); font-size: 14px; font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">{{v.label}}</button></sc-if>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{viaUrl}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="mn-url" style="font-size: 14px; font-weight: 500">공고 링크</label>
+<input id="mn-url" type="url" placeholder="https://" style="height: var(--control-height-md); width: 100%; min-width: 0; box-sizing: border-box; padding: 4px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; letter-spacing: inherit">
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">사람인, 잡코리아, 원티드, 점핏, 회사 채용 페이지의 공고 주소를 넣으세요.</p>
+</div>
+<a href="MyPostCheck.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid transparent; background: var(--accent); color: var(--accent-foreground); font-weight: 700; white-space: nowrap; text-decoration: none; align-self: flex-end">읽어 오기</a>
+</sc-if>
+
+<sc-if value="{{viaText}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="mn-text" style="font-size: 14px; font-weight: 500">공고 본문</label>
+<textarea id="mn-text" rows="8" placeholder="공고 내용을 그대로 붙여넣으세요" style="width: 100%; min-height: 200px; box-sizing: border-box; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; line-height: 1.4; letter-spacing: inherit; resize: vertical"></textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="mn-src" style="font-size: 14px; font-weight: 500">원문 링크 <span style="font-weight: 400; color: var(--text-secondary)">(없으면 비워 둡니다)</span></label>
+<input id="mn-src" type="url" placeholder="https://" style="height: var(--control-height-md); width: 100%; min-width: 0; box-sizing: border-box; padding: 4px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; letter-spacing: inherit">
+</div>
+<a href="MyPostCheck.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid transparent; background: var(--accent); color: var(--accent-foreground); font-weight: 700; white-space: nowrap; text-decoration: none; align-self: flex-end">칸 채우기</a>
+</sc-if>
+
+<sc-if value="{{viaFile}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 24px; border: 1.5px dashed var(--border-strong); border-radius: var(--radius-control); background: var(--surface-muted); text-align: center">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--foreground)"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+<p style="margin: 0; font-weight: 700">공고문 파일을 여기에 끌어 놓으세요</p>
+<p style="margin: 0; font-size: 13px">PDF, DOCX, HWPX, HWP · 20MB까지</p>
+<a href="MyPostCheck.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid transparent; background: var(--accent); color: var(--accent-foreground); font-weight: 700; white-space: nowrap; text-decoration: none">파일 고르기</a>
+</div>
+</sc-if>
+</section>
+
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">넣은 공고는 그룹에 올라가지 않습니다. 지원 상태는 "미정"으로 시작하고 지원 현황에서 바꿉니다.</p>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"via":{"editor":"enum","options":["url","text","file"],"default":"url"},"notice":{"editor":"enum","options":["none","failed"],"default":"none"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+var props = this.props || {};
+var st = this.state || {};
+var self = this;
+var theme = props.dark ? 'dark' : 'light';
+var notice = props.notice || 'none';
+var via = st.via || props.via || (notice === 'failed' ? 'text' : 'url');
+var vias = [['url', '링크'], ['text', '본문 붙여넣기'], ['file', '파일']].map(function (v) {
+var on = v[0] === via;
+return { label: v[1], on: on, off: !on, pick: function () { self.setState({ via: v[0] }); } };
+});
+return {
+theme: theme,
+vias: vias,
+viaUrl: via === 'url',
+viaText: via === 'text',
+viaFile: via === 'file',
+isFailed: notice === 'failed'
+};
+}
+}
+</script>
+</body>
+</html>
