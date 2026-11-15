@@ -26,7 +26,7 @@ import com.readme.card.CardRequests.CardInput;
 /**
  * 경험카드(experience_cards). 태그, 문항 유형, 근거 숫자는 카드별 행으로 따로 둔다(설계 가정 C1).
  *
- * <p>자료(source_id)와 추출 작업(job_id)은 자료·추출(설계 4.2)을 만들 때 매핑한다. 직접 만든 카드에는 둘 다 없다.
+ * <p>자료(source_id), 추출 작업(job_id), 조각 번호(source_part)는 자료에서 뽑은 카드에만 있다. 직접 만든 카드에는 없다.
  */
 @Entity
 @Table(name = "experience_cards")
@@ -64,6 +64,13 @@ class ExperienceCard {
 	/** 지금은 PRIVATE 하나다(설계 가정 C4) */
 	private String visibility;
 
+	private Long sourceId;
+
+	private Long jobId;
+
+	/** 카드가 나온 자료 조각(1부터) */
+	private Integer sourcePart;
+
 	/** 추출 때 생긴 안내 목록(jsonb). 카드를 확인하면 비운다 */
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<String> extractionNotes;
@@ -100,6 +107,16 @@ class ExperienceCard {
 		this.visibility = "PRIVATE";
 		this.createdAt = now;
 		edit(card, now);
+	}
+
+	/** 자료에서 뽑은 카드(설계 4.6). 확인 전이고, 추출 때 생긴 안내를 단다. */
+	ExperienceCard(long userId, CardInput card, long sourceId, long jobId, int sourcePart, List<String> notes,
+			Instant now) {
+		this(userId, card, now);
+		this.sourceId = sourceId;
+		this.jobId = jobId;
+		this.sourcePart = sourcePart;
+		this.extractionNotes = notes.isEmpty() ? null : List.copyOf(notes);
 	}
 
 	Long getId() {

@@ -13,6 +13,9 @@ public enum ExtractionErrorCode implements ErrorCode {
 	/** 내 자료가 아니거나 없다. 둘을 구분하지 않는다. */
 	SOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자료를 찾을 수 없습니다"),
 
+	/** 내 추출 작업이 아니거나 없다(자료를 지우면 작업도 지워진다). */
+	JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "카드 뽑기 작업을 찾을 수 없습니다"),
+
 	/** 파일이 20MB 를 넘는다. 읽어 낸 글이 너무 길거나 압축을 풀면 너무 큰 파일도 이 코드에 상황에 맞는 메시지를 붙인다. */
 	SOURCE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "20MB까지 올릴 수 있습니다"),
 

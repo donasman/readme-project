@@ -11,10 +11,11 @@ import java.util.List;
  * @param facts           근거 숫자. 넣은 순서다
  * @param sourceId        뽑아 온 자료. 직접 만든 카드나 자료를 지운 카드는 null
  * @param sourceName      뽑아 온 파일의 이름. 자료가 없거나 붙여넣은 글이면 null
+ * @param sourceExcerpt   카드가 나온 자료 조각(5,000자까지). 직접 만든 카드, 자료를 지운 카드, 추출 전에 만든 카드는 null
  * @param extractionNotes 추출 때 생긴 안내. 카드를 확인하면 빈다
  * @param issues          카드 검사 결과(CardRules)
  */
 record CardResponse(long id, String title, String period, String org, String role, List<String> tags, String summary,
 		List<String> usableFor, boolean verified, Star star, List<String> facts, String visibility, Long sourceId,
-		String sourceName, List<String> extractionNotes, List<CardIssue> issues) {
+		String sourceName, String sourceExcerpt, List<String> extractionNotes, List<CardIssue> issues) {
 }

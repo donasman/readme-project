@@ -18,6 +18,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 import com.readme.card.CardRules.Content;
+import com.readme.extraction.SourceParts;
 
 /**
  * 카드 화면에 내보내는 것을 읽는다. 카드는 쿼리 넷(카드, 태그, 문항 유형, 근거 숫자)으로 읽고, 검사 결과는 읽은 값으로 매긴다.
@@ -32,7 +33,7 @@ class CardQueries {
 	/** 카드 줄. 자료가 파일이면 그 이름이 붙는다(붙여넣은 글은 이름이 없다). */
 	private static final String CARDS = """
 			select c.id, c.title, c.period, c.org, c.role, c.summary, c.situation, c.task, c.action, c.result,
-			       c.verified, c.visibility, c.source_id, c.extraction_notes::text as extraction_notes,
+			       c.verified, c.visibility, c.source_id, c.source_part, c.extraction_notes::text as extraction_notes,
 			       case when s.kind = 'FILE' then s.file_name end as source_name
 			  from experience_cards c
 			  left join card_sources s on s.id = c.source_id
@@ -150,7 +151,29 @@ class CardQueries {
 		tags.values().forEach((list) -> list.sort(TAG_ORDER));
 		Map<Long, List<String>> types = values(TYPES + oneCard, userId, cardId);
 		types.values().forEach((list) -> list.sort(Comparator.comparingInt(CardRules.QUESTION_TYPES::indexOf)));
-		return new Children(tags, types, values(FACTS + oneCard + " order by f.card_id, f.seq", userId, cardId));
+		return new Children(tags, types, values(FACTS + oneCard + " order by f.card_id, f.seq", userId, cardId),
+				sourceParts(userId, cardId));
+	}
+
+	/**
+	 * 카드가 나온 자료의 조각들(자료 id → 조각). 원문 조각(sourceExcerpt)을 싣는 데 쓴다. 자료마다 본문을 한 번 읽어 나눈다.
+	 *
+	 * <p>shortcut: 목록도 카드마다 원문 조각을 싣는다(카드 확인 화면이 목록으로 받는다), 그래서 자료에서 뽑은 카드가 있는 자료의
+	 * 본문을 모두 읽는다. 자료가 많아지면 조각을 칸으로 두거나 상세에만 싣는다.
+	 */
+	private Map<Long, List<String>> sourceParts(long userId, Long cardId) {
+		String oneCard = (cardId != null) ? " and c.id = :cardId" : "";
+		JdbcClient.StatementSpec statement = this.jdbc
+			.sql("select s.id, s.body from card_sources s where s.id in (select c.source_id from experience_cards c"
+					+ " where c.user_id = :userId and c.source_part is not null" + oneCard + ")")
+			.param("userId", userId);
+		if (cardId != null) {
+			statement = statement.param("cardId", cardId);
+		}
+		return statement.query((rs, rowNum) -> Map.entry(rs.getLong("id"), SourceParts.split(rs.getString("body"))))
+			.list()
+			.stream()
+			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
 	private Map<Long, List<String>> values(String sql, long userId, Long cardId) {
@@ -177,9 +200,13 @@ class CardQueries {
 		List<String> types = children.types().getOrDefault(id, List.of());
 		List<String> facts = children.facts().getOrDefault(id, List.of());
 		String notes = rs.getString("extraction_notes");
+		Long sourceId = rs.getObject("source_id", Long.class);
+		Integer part = rs.getObject("source_part", Integer.class);
+		List<String> parts = (sourceId != null) ? children.sourceParts().get(sourceId) : null;
+		String excerpt = (part != null && parts != null && part <= parts.size()) ? parts.get(part - 1) : null;
 		return new CardResponse(id, title, period, rs.getString("org"), rs.getString("role"), tags,
 				(summary != null) ? summary : "", types, rs.getBoolean("verified"), star, facts,
-				rs.getString("visibility"), rs.getObject("source_id", Long.class), rs.getString("source_name"),
+				rs.getString("visibility"), sourceId, rs.getString("source_name"), excerpt,
 				(notes != null) ? this.jsonMapper.readValue(notes, STRINGS) : List.of(), List.of());
 	}
 
@@ -189,14 +216,15 @@ class CardQueries {
 				card.usableFor(), card.star(), card.facts()));
 		return new CardResponse(card.id(), card.title(), card.period(), card.org(), card.role(), card.tags(),
 				card.summary(), card.usableFor(), card.verified(), card.star(), card.facts(), card.visibility(),
-				card.sourceId(), card.sourceName(), card.extractionNotes(), issues);
+				card.sourceId(), card.sourceName(), card.sourceExcerpt(), card.extractionNotes(), issues);
 	}
 
 	/** 목록의 거르기. 태그는 대표 표기, 문항 유형은 6종 중 하나다. */
 	record CardFilter(String tag, String type, Boolean verified, Long jobId, String q) {
 	}
 
-	private record Children(Map<Long, List<String>> tags, Map<Long, List<String>> types, Map<Long, List<String>> facts) {
+	private record Children(Map<Long, List<String>> tags, Map<Long, List<String>> types, Map<Long, List<String>> facts,
+			Map<Long, List<String>> sourceParts) {
 	}
 
 }

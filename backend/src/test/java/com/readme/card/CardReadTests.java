@@ -46,7 +46,7 @@ class CardReadTests {
 				  "verified": false,
 				  "star": { "situation": "상황", "task": "과제", "action": "행동", "result": "결과" },
 				  "facts": ["처리 시간 2시간 → 10분"],
-				  "visibility": "PRIVATE", "sourceId": %d, "sourceName": "예시_이력서.docx",
+				  "visibility": "PRIVATE", "sourceId": %d, "sourceName": "예시_이력서.docx", "sourceExcerpt": null,
 				  "extractionNotes": ["결과의 30%%는 자료 원문에 없어 [확인 필요: 30%%]로 바꿨습니다."],
 				  "issues": []
 				}
