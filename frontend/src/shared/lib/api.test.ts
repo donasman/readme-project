@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { ApiError, apiPath, request } from "./api"
+import { ApiError, apiPath, errorMessage, networkError, request } from "./api"
 
 type Call = { url: string; method: string; headers: Record<string, string>; body?: unknown }
 
@@ -19,6 +19,16 @@ function serve(...answers: { status: number; body?: unknown; cookie?: string }[]
 }
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe("errorMessage", () => {
+  it("서버가 이유를 준 4xx는 그 글을 문장으로, 끊긴 연결은 연결 안내, 5xx와 code 없는 응답, 다른 오류는 다시 해 보라는 글", () => {
+    expect(errorMessage(new ApiError(404, { code: "POST_NOT_FOUND", message: "공고를 찾을 수 없습니다" }))).toBe("공고를 찾을 수 없습니다.")
+    expect(errorMessage(networkError())).toBe("서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 해 주세요.")
+    expect(errorMessage(new ApiError(500, { code: "INTERNAL_ERROR", message: "x" }))).toBe("서버에 문제가 생겼습니다. 잠시 뒤 다시 해 주세요.")
+    expect(errorMessage(new ApiError(413, {}))).toBe("서버에 문제가 생겼습니다. 잠시 뒤 다시 해 주세요.")
+    expect(errorMessage(new TypeError("x is undefined"))).toBe("문제가 생겼습니다. 다시 해 주세요.")
+  })
+})
 
 describe("apiPath", () => {
   it("끼워 넣는 값만 인코딩한다", () => {
@@ -50,6 +60,14 @@ describe("request", () => {
     await request("POST", "/api/card-sources", form)
     expect(calls[0].headers["Content-Type"]).toBeUndefined()
     expect(calls[0].body).toBe(form)
+  })
+
+  it("연결이 안 되면(fetch의 TypeError) 상태 0의 ApiError로 던진다", async () => {
+    vi.stubGlobal("document", { cookie: "" })
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError("Failed to fetch")
+    })
+    await expect(request("GET", "/api/me")).rejects.toMatchObject({ status: 0 })
   })
 
   it("CSRF로 막히면 서버가 새로 준 쿠키로 한 번만 다시 보낸다", async () => {

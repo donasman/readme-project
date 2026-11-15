@@ -1,5 +1,6 @@
 // 서버를 부르는 곳. 각 층의 api.ts만 쓴다. 규칙은 docs/리드미_백엔드_구조.md 5절(쿠키, CSRF, 오류 꼴)이다.
-// shortcut: 서버 오류(500)와 끊긴 연결은 화면에 알리지 않는다(loader에서 나면 오류 화면, 버튼에서 나면 그대로 멈춘다), 알릴 자리를 시안에 그리면 그때 한 곳에서 잡는다
+// loader에서 난 오류는 오류 화면(app/route-error.tsx)이, 버튼에서 나서 화면이 다루지 않은 오류는 아래 알림(app/action-error.tsx)이 보인다.
+import { sentence } from "./korean"
 
 /**
  * 가짜 서버(mocks/)를 부르는지. 각 api.ts가 이 값으로 고른다.
@@ -24,6 +25,16 @@ export class ApiError extends Error {
     this.code = typeof body.code === "string" ? body.code : ""
     this.body = body
   }
+}
+
+/** 서버에 닿지 못했다(끊긴 연결, 꺼진 서버). 응답이 없어 상태는 0이다. 가짜 서버도 ?mock=offline에서 이것을 던진다. */
+export const networkError = () => new ApiError(0, { message: "서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 해 주세요." })
+
+/** 오류를 사람에게 보일 글: 서버가 이유를 준 오류(4xx)는 그 글, 끊긴 연결은 연결 안내, 그 밖(서버 고장, 화면의 버그)은 다시 해 보라는 글. */
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError && (error.status === 0 || (error.status < 500 && error.code))) return sentence(error.message)
+  if (error instanceof ApiError) return "서버에 문제가 생겼습니다. 잠시 뒤 다시 해 주세요."
+  return "문제가 생겼습니다. 다시 해 주세요."
 }
 
 type Method = "GET" | "POST" | "PUT" | "DELETE"
@@ -64,6 +75,9 @@ async function send(method: Method, path: string, body: unknown): Promise<Respon
     headers,
     credentials: "include",
     body: json ? JSON.stringify(body) : (body as FormData | undefined),
+  }).catch(() => {
+    // fetch는 연결이 안 되면 TypeError를 던진다. 화면의 버그(TypeError)와 나누려고 바꾼다
+    throw networkError()
   })
   if (response.ok) return response
   const error = await readBody(response).catch(() => undefined)
