@@ -96,7 +96,7 @@ export function CardReviewPage() {
           <div className="flex min-w-0 flex-col gap-2">
             <h1 className={subpageTitle}>카드 확인</h1>
             <p className="text-text-secondary">
-              {card.sourceName ? `${card.sourceName}에서 뽑은 카드입니다.` : "자료에서 뽑은 카드입니다."} 내 경험과 맞는지 한 장씩 봅니다.
+              {card.sourceName ? `${card.sourceName}에서 뽑은 카드입니다.` : "확인을 기다리는 카드입니다."} 내 경험과 맞는지 한 장씩 봅니다.
             </p>
           </div>
           <div className="flex min-w-40 flex-[0_1_220px] flex-col gap-2">

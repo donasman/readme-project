@@ -63,7 +63,7 @@ export function CardsPage() {
             <span>확인 필요 {unverified}장</span>
           </span>
           <p className="min-w-0 flex-[1_1_320px] text-sm">
-            자료에서 뽑은 카드 {unverified}장이 확인을 기다립니다. 원문에 없는 숫자는 [확인 필요]로 표시해 두었습니다.
+            확인을 기다리는 카드가 {unverified}장 있습니다. 원문에 없는 숫자는 [확인 필요]로 표시해 두었습니다.
           </p>
           <Link
             to={paths.cardReview()}
