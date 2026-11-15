@@ -56,3 +56,6 @@ export function formatCommentTime(createdAt: string, now: number = Date.now()): 
   const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? ""
   return `${pick("month")}.${pick("day")}`
 }
+
+/** 한국의 오늘("YYYY-MM-DD"). 서버가 오늘을 주지 않는 화면(내 그룹)의 D-day를 센다. 서버도 한국 날짜로 센다(구조 문서 5.1). */
+export const seoulToday = (now = new Date()): string => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(now)

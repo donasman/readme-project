@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { ApiError, request } from "./api"
+import { ApiError, apiPath, request } from "./api"
 
 type Call = { url: string; method: string; headers: Record<string, string>; body?: string }
 
@@ -19,6 +19,13 @@ function serve(...answers: { status: number; body?: unknown; cookie?: string }[]
 }
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe("apiPath", () => {
+  it("끼워 넣는 값만 인코딩한다", () => {
+    expect(apiPath`/api/groups/${"12"}/posts/${"a/b?c"}`).toBe("/api/groups/12/posts/a%2Fb%3Fc")
+    expect(apiPath`/api/groups`).toBe("/api/groups")
+  })
+})
 
 describe("request", () => {
   it("읽기: 쿠키와 함께 보내고 JSON을 돌려준다. CSRF 값은 싣지 않는다", async () => {

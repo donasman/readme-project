@@ -19,12 +19,12 @@ import { copyText } from "@/shared/lib/clipboard"
 import { paths } from "@/shared/lib/paths"
 import { firstChar, joinClasses } from "@/shared/lib/utils"
 
-import { createInvite, leaveGroup } from "../api"
+import { createInvite, leaveGroup, type CreatedInvite } from "../api"
 import { RoleChip } from "../components/role-chip"
 
 /** 그룹을 막 만들고 왔을 때 넘기는 값: 만들면서 만든 초대 링크. */
 export interface MembersPageState {
-  invite?: { token: string; expiresAt: string }
+  invite?: CreatedInvite
 }
 
 /** 멤버·초대 관리(시안 7차 "멤버"): 멤버 목록, 내 공개 범위, 초대 링크, 그룹 나가기. */
@@ -108,7 +108,7 @@ export function GroupMembersPage() {
             <h2 id="members-invite" className={sectionTitle}>
               초대 링크
             </h2>
-            {invite ? <InviteLink key={invite.token} token={invite.token} expiresAt={invite.expiresAt} /> : <p className="text-sm text-text-secondary">지금 쓸 수 있는 링크가 없습니다. 링크를 만들어 들어올 사람에게 보내세요.</p>}
+            {invite ? <InviteLink key={invite.link} {...invite} /> : <p className="text-sm text-text-secondary">지금 쓸 수 있는 링크가 없습니다. 링크를 만들어 들어올 사람에게 보내세요.</p>}
           </Panel>
 
           <Panel aria-labelledby="members-leave" className="flex flex-col gap-4 p-6">
@@ -150,8 +150,7 @@ export function GroupMembersPage() {
 }
 
 /** 만든 초대 링크: 읽기만 하는 칸, 복사 버튼, 쓸 수 있는 날. 링크는 만들 때만 보여 줄 수 있다. */
-function InviteLink({ token, expiresAt }: { token: string; expiresAt: string }) {
-  const url = `${window.location.origin}${paths.invite(token)}`
+function InviteLink({ link: url, expiresAt }: CreatedInvite) {
   const [copied, setCopied] = useState(false)
 
   async function copy() {
