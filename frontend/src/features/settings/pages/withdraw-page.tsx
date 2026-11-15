@@ -38,7 +38,7 @@ export function WithdrawPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    const next = { password: password.trim() ? undefined : `${what}${objectParticle(what)} 넣어 주세요.`, agreed: agreed ? undefined : "확인 표시를 해 주세요." }
+    const next = { password: (hasPassword ? password : password.trim()) ? undefined : `${what}${objectParticle(what)} 넣어 주세요.`, agreed: agreed ? undefined : "확인 표시를 해 주세요." }
     setErrors(next)
     if (next.password || next.agreed) return
     const confirmed = await withdraw(hasPassword ? { password } : { email: password.trim() })
