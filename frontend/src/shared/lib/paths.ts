@@ -35,6 +35,7 @@ export const paths = {
   invite: (token: string) => `/invite/${seg(token)}`,
   cards: () => "/cards",
   card: (cardId: string) => `/cards/${cardId}`,
+  cardNew: () => "/cards/new",
   cardEdit: (cardId: string) => `/cards/${cardId}/edit`,
   cardSources: () => "/cards/sources",
   /** 카드 확인. cardId를 주면 그 카드부터 본다 */

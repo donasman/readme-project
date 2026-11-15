@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Heading, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
@@ -41,11 +41,11 @@ export function CardsPage() {
           <p className="text-text-secondary">문항 유형별로 꺼내 쓸 경험을 카드 한 장씩 정리합니다.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* shortcut: 직접 만들기는 시안이 없어 눌러도 아무 일이 없다, 시안이 나오면 만든다 */}
-          <Button variant="outline">
+          {/* 직접 만들기는 시안이 없어 카드 고치기 화면을 빈 카드로 연다 */}
+          <Link to={paths.cardNew()} className={buttonVariants({ variant: "outline" })}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             직접 만들기
-          </Button>
+          </Link>
           <Link to={paths.cardSources()} className={buttonVariants()}>
             <FileUpIcon data-icon="inline-start" aria-hidden="true" />
             자료로 카드 만들기

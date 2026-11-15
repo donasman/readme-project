@@ -84,6 +84,7 @@ const SCENARIOS = [
   { name: "cards-dark", path: "/cards", width: 1280, theme: "dark" },
   { name: "card", path: "/cards/1", width: 1280 },
   { name: "card-edit", path: "/cards/1/edit", width: 1280 },
+  { name: "card-new", path: "/cards/new", width: 1280 },
   { name: "card-sources", path: "/cards/sources", width: 1280 },
   { name: "card-sources-mobile", path: "/cards/sources", width: 390, scale: 2 },
   { name: "card-review", path: "/cards/review", width: 1280 },

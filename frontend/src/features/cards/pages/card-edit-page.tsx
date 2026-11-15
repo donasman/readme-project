@@ -14,24 +14,33 @@ import { LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn, joinClasses } from "@/shared/lib/utils"
 
-import { getCard, suggestKeywords, updateCard } from "../api"
+import { createCard, getCard, suggestKeywords, updateCard } from "../api"
 import { STAR_PARTS } from "../card-rules"
 import { flaggedValues, SUMMARY_LIMIT } from "../card-text"
+import { CardsSubpage } from "../components/card-bits"
+import { QUESTION_TYPES, type CardInput, type KeywordSuggestion, type QuestionType } from "../types"
 
 // 칸의 maxLength는 서버가 받는 길이다(경험카드 문서 4.3). 넘으면 서버가 400으로 거절한다
-import { CardsSubpage } from "../components/card-bits"
-import { QUESTION_TYPES, type KeywordSuggestion, type QuestionType } from "../types"
 
-export function cardEditLoader({ params }: LoaderFunctionArgs) {
+/** 고치기는 그 카드를, 직접 만들기는 빈 카드를 같은 화면에 연다. id가 null이면 새 카드다. */
+type EditTarget = CardInput & { id: string | null }
+
+export function cardEditLoader({ params }: LoaderFunctionArgs): Promise<EditTarget> {
   return getCard(params.cardId ?? "")
+}
+
+export function cardNewLoader(): EditTarget {
+  return { id: null, title: "", period: null, org: null, role: null, summary: "", tags: [], usableFor: [], star: { situation: "", task: "", action: "", result: "" }, facts: [] }
 }
 
 let factSeq = 0
 const withIds = (facts: string[]) => facts.map((text) => ({ id: ++factSeq, text }))
 
-/** 카드 고치기(6차 "카드 편집"). 저장하면 서버가 검사 결과를 다시 매기고 상세로 돌아간다. */
+/** 카드 고치기(6차 "카드 편집")와 직접 만들기. 저장하면 서버가 검사 결과를 매기고 그 카드의 상세로 간다. */
 export function CardEditPage() {
-  const card = useLoaderData<typeof cardEditLoader>()
+  const card = useLoaderData<typeof cardNewLoader>()
+  // 취소하면 고치던 카드로, 새 카드면 목록으로 돌아간다
+  const back = card.id === null ? paths.cards() : paths.card(card.id)
   const navigate = useNavigate()
   const [title, setTitle] = useState(card.title)
   const [period, setPeriod] = useState(card.period ?? "")
@@ -52,7 +61,7 @@ export function CardEditPage() {
     if (!title.trim()) return setTitleEmpty(true)
     setSaving(true)
     try {
-      await updateCard(card.id, {
+      const input: CardInput = {
         title: title.trim(),
         period: period.trim() || null,
         org: org.trim() || null,
@@ -62,8 +71,9 @@ export function CardEditPage() {
         facts: facts.map((f) => f.text.trim()).filter(Boolean),
         tags,
         usableFor: QUESTION_TYPES.filter((t) => types.includes(t)),
-      })
-      navigate(paths.card(card.id))
+      }
+      const saved = card.id === null ? await createCard(input) : await updateCard(card.id, input)
+      navigate(paths.card(saved.id))
     } finally {
       setSaving(false)
     }
@@ -73,9 +83,9 @@ export function CardEditPage() {
     <CardsSubpage>
       <form onSubmit={save} className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-          <h1 className={subpageTitle}>카드 고치기</h1>
+          <h1 className={subpageTitle}>{card.id === null ? "카드 만들기" : "카드 고치기"}</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" onClick={() => navigate(paths.card(card.id))}>
+            <Button type="button" variant="outline" onClick={() => navigate(back)}>
               취소
             </Button>
             <Button type="submit" className="px-6" disabled={saving}>
