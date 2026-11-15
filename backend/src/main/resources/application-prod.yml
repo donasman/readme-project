@@ -40,3 +40,5 @@ app:
   frontend-origin: ${FRONTEND_ORIGIN}           # 예: https://app.도메인
   csrf-cookie-domain: ${CSRF_COOKIE_DOMAIN}     # 예: 도메인 (app. 과 api. 의 상위 도메인)
   mail-from: ${MAIL_FROM}                       # 예: 리드미 <no-reply@도메인>. 메일 발송 서비스에서 인증한 주소
+  posting-read:
+    contact: ${FETCHER_CONTACT}                 # 공고 링크를 받을 때 User-Agent 에 붙는 연락처. 공개 페이지나 mailto: 주소(로그인 화면이면 안 된다)
