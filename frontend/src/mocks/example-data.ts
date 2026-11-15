@@ -179,13 +179,18 @@ export function createExampleDraft(sourceUrl: string): PostDraft {
     unread: ["deadline"],
     source: {
       title: "[예시 에듀테크] 백엔드 엔지니어 채용",
-      paragraphs: [
-        { heading: "주요 업무", text: "학습 기록 API 개발과 운영, 배치 작업 개선" },
-        { heading: "자격 요건", text: "Java, Spring Boot 사용 경험. RDBMS 설계 경험" },
-        { heading: "우대 사항", text: "JPA, MySQL 성능 개선 경험. 교육 서비스에 대한 관심" },
-        { heading: null, text: "접수: 채용 시 마감" },
-      ],
-      note: `"채용 시 마감"은 날짜가 아니라서 마감일을 비워 두었습니다.`,
+      text: [
+        "주요 업무",
+        "학습 기록 API 개발과 운영, 배치 작업 개선",
+        "",
+        "자격 요건",
+        "Java, Spring Boot 사용 경험. RDBMS 설계 경험",
+        "",
+        "우대 사항",
+        "JPA, MySQL 성능 개선 경험. 교육 서비스에 대한 관심",
+        "",
+        "접수: 채용 시 마감",
+      ].join("\n"),
     },
   }
 }

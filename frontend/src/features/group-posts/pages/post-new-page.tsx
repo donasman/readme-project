@@ -83,7 +83,7 @@ export function PostNewPage() {
           </Notice>
         ) : (
           <Notice title="이 링크는 읽지 못했습니다">
-            <span>로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요.</span>
+            <span>{notice.message}</span>
           </Notice>
         ))}
 
