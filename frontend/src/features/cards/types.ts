@@ -16,7 +16,7 @@ export interface ExperienceCard {
   tags: string[]
   summary: string
   usableFor: QuestionType[]
-  /** 자료에서 뽑은 카드는 사람이 확인하기 전까지 false */
+  /** 뽑은 카드도 직접 만든 카드도 사람이 확인하기 전까지 false */
   verified: boolean
 }
 
