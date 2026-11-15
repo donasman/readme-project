@@ -66,7 +66,8 @@ class MyPostingAddTests {
 				    "id": %d, "company": "예시 커머스", "title": "백엔드 개발자 신입",
 				    "deadline": { "kind": "date", "date": "2026-11-16" },
 				    "decision": "undecided", "stage": null, "result": null, "status": null, "groups": [],
-				    "applyAt": null, "sourceUrl": "%s", "sections": [], "keywords": [], "memo": null, "groupStates": []
+				    "applyAt": null, "sourceUrl": "%s", "sections": [], "keywords": [], "analysis": null, "memo": null,
+				    "groupStates": []
 				  }
 				}
 				""".formatted(postingId, url));

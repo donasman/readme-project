@@ -113,7 +113,7 @@ class MyPostingQueries {
 
 	private Details details(long userId, long postingId) {
 		return this.jdbc.sql("""
-				select p.apply_at, p.source_url, p.sections::text as sections, up.memo
+				select p.apply_at, p.source_url, p.sections::text as sections, p.analysis::text as analysis, up.memo
 				  from user_postings up
 				  join postings p on p.id = up.posting_id
 				 where up.user_id = :userId and up.posting_id = :postingId
@@ -121,7 +121,10 @@ class MyPostingQueries {
 			.param("userId", userId)
 			.param("postingId", postingId)
 			.query((rs, rowNum) -> new Details(rs.getString("apply_at"), rs.getString("source_url"),
-					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS), rs.getString("memo")))
+					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS),
+					(rs.getString("analysis") != null)
+							? this.jsonMapper.readValue(rs.getString("analysis"), PostingAnalysis.class) : null,
+					rs.getString("memo")))
 			.single();
 	}
 

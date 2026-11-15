@@ -45,6 +45,32 @@ interface PostingRepository extends JpaRepository<Posting, Long> {
 	int insertKeywords(@Param("postingId") long postingId, @Param("keywords") String keywords);
 
 	/**
+	 * 공고 분석을 잡는다. 분석이 없고, 돌고 있는 분석이 없거나 staleBefore 보다 먼저 시작한 것일 때만. 잡았으면 1, 아니면 0.
+	 */
+	@Modifying
+	@Query(value = """
+			update postings set analysis_started_at = :startedAt
+			 where id = :postingId and analysis is null
+			   and (analysis_started_at is null or analysis_started_at < :staleBefore)
+			""", nativeQuery = true)
+	int startAnalysis(@Param("postingId") long postingId, @Param("startedAt") Instant startedAt,
+			@Param("staleBefore") Instant staleBefore);
+
+	/** 공고 분석을 넣는다. 이미 있으면 그대로 둔다. analysis 는 JSON 글자다. */
+	@Modifying
+	@Query(value = "update postings set analysis = cast(:analysis as jsonb) where id = :postingId and analysis is null",
+			nativeQuery = true)
+	int saveAnalysis(@Param("postingId") long postingId, @Param("analysis") String analysis);
+
+	/** 잡은 공고 분석을 놓는다. 그 사이 다른 분석이 다시 잡았으면(시작 시각이 다르면) 그대로 둔다. */
+	@Modifying
+	@Query(value = """
+			update postings set analysis_started_at = null
+			 where id = :postingId and analysis_started_at = :startedAt
+			""", nativeQuery = true)
+	int endAnalysis(@Param("postingId") long postingId, @Param("startedAt") Instant startedAt);
+
+	/**
 	 * 공고 고치기. 회사명, 공고명, 마감만 바꾸고 원문 주소와 공고키는 그대로 둔다.
 	 * UNKNOWN 으로는 마감이 아직 UNKNOWN 일 때만 바꾼다(마감이 있는 공고를 되돌리지 않는다). 바꿨으면 1, 아니면 0.
 	 */

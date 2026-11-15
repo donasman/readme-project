@@ -23,6 +23,7 @@ import com.readme.grouppost.GroupPostDetailResponse.PostingDetails;
 import com.readme.posting.ApplicationStatus;
 import com.readme.posting.DeadlineResponse;
 import com.readme.posting.PostSection;
+import com.readme.posting.PostingAnalysis;
 
 /**
  * 그룹 공고 화면에 내보내는 것을 읽는다. 목록은 쿼리 둘(공고, 관심 멤버)로 읽는다(설계 6절 16번).
@@ -236,10 +237,15 @@ class GroupPostQueries {
 
 	private PostingDetails details(long postingId) {
 		return this.jdbc
-			.sql("select deadline_name, apply_at, sections::text as sections from postings where id = :postingId")
+			.sql("""
+					select deadline_name, apply_at, sections::text as sections, analysis::text as analysis
+					  from postings where id = :postingId
+					""")
 			.param("postingId", postingId)
 			.query((rs, rowNum) -> new PostingDetails(rs.getString("deadline_name"), rs.getString("apply_at"),
-					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS)))
+					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS),
+					(rs.getString("analysis") != null)
+							? this.jsonMapper.readValue(rs.getString("analysis"), PostingAnalysis.class) : null))
 			.single();
 	}
 

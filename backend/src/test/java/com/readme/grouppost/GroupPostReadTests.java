@@ -199,7 +199,7 @@ class GroupPostReadTests {
 					    "interests": [], "me": { "interested": false, "status": null }, "commentCount": 2,
 					    "deadlineName": "서류 접수 마감", "applyAt": "회사 채용 홈페이지", "sourceUrl": "https://example.com/jobs/1",
 					    "sections": [ { "title": "주요 업무", "items": [ "주문·결제 서버 API 개발과 운영" ] } ],
-					    "keywords": [ "Java", "Spring Boot" ],
+					    "keywords": [ "Java", "Spring Boot" ], "analysis": null,
 					    "comments": [
 					      {
 					        "id": %d, "author": null, "createdAt": "2026-11-08T12:00:00+09:00",

@@ -87,7 +87,7 @@ class GroupPostUploadTests {
 				    "postedBy": { "id": %d, "name": "다온" }, "postedAt": "2026-11-13",
 				    "interests": [], "me": { "interested": false, "status": null }, "commentCount": 0,
 				    "deadlineName": "서류 접수 마감", "applyAt": null, "sourceUrl": "%s",
-				    "sections": [], "keywords": [], "comments": []
+				    "sections": [], "keywords": [], "analysis": null, "comments": []
 				  }
 				}
 				""".formatted(postId, this.group, this.me, url));

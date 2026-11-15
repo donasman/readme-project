@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,18 +26,30 @@ public class Postings {
 
 	private final JsonMapper jsonMapper;
 
-	Postings(PostingRepository repository, Clock clock, JsonMapper jsonMapper) {
+	private final ApplicationEventPublisher events;
+
+	Postings(PostingRepository repository, Clock clock, JsonMapper jsonMapper, ApplicationEventPublisher events) {
 		this.repository = repository;
 		this.clock = clock;
 		this.jsonMapper = jsonMapper;
+		this.events = events;
 	}
 
 	/**
 	 * 같은 공고가 이미 있으면 그 공고의 id 를, 없으면 새로 만들어 id 를 돌려준다. 같은 공고는 공고키로 알아본다(설계 가정 3).
 	 * 이미 있는 공고의 값은 고치지 않는다. 처음 올린 사람이 넣은 값이 남는다. 공고 내용 묶음과 키워드도 새로 만들 때만 넣는다.
+	 *
+	 * <p>그룹에 올리기와 내 공고 넣기가 부른다. 트랜잭션이 커밋되면 그 공고에 분석이 없을 때 뒤에서 분석한다({@link PostingAnalyses},
+	 * 설계 4.7). 사용액은 userId 에게 든다.
 	 */
 	@Transactional
 	public long findOrCreate(PostingDraft draft, long userId) {
+		long postingId = findOrInsert(draft, userId);
+		this.events.publishEvent(new PostingAnalyses.Requested(postingId, userId));
+		return postingId;
+	}
+
+	private long findOrInsert(PostingDraft draft, long userId) {
 		Instant now = this.clock.instant();
 		String key = draft.key().key();
 		if (key.length() > MAX_KEY_LENGTH) {
@@ -95,6 +108,27 @@ public class Postings {
 			throw new IllegalArgumentException("날짜는 DATE 일 때만, 꼭 넣는다: " + kind + ", " + date);
 		}
 		return this.repository.edit(postingId, company, title, kind.name(), date, this.clock.instant()) == 1;
+	}
+
+	/**
+	 * 공고 분석을 맡는다(설계 4.7). 아직 분석이 없고 돌고 있는 분석이 없을 때만 잡고 true. staleBefore 보다 먼저 시작해
+	 * 끝나지 않은 분석은 멈춘 것으로 보고 다시 잡는다. 두 사람이 같은 공고를 같이 올려도 하나만 잡는다.
+	 */
+	@Transactional
+	boolean startAnalysis(long postingId, Instant startedAt, Instant staleBefore) {
+		return this.repository.startAnalysis(postingId, startedAt, staleBefore) == 1;
+	}
+
+	/** 분석을 넣는다. 이미 있으면 그대로 둔다. analysis 는 {@link PostingAnalysis} 의 JSON 글자다. */
+	@Transactional
+	void saveAnalysis(long postingId, String analysis) {
+		this.repository.saveAnalysis(postingId, analysis);
+	}
+
+	/** 잡은 분석을 놓는다. 그 사이 다른 분석이 다시 잡았으면(시작 시각이 다르면) 그대로 둔다. */
+	@Transactional
+	void endAnalysis(long postingId, Instant startedAt) {
+		this.repository.endAnalysis(postingId, startedAt);
 	}
 
 	private static void requireDateOrAlways(DeadlineKind kind, LocalDate date) {
