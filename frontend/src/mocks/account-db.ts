@@ -49,7 +49,13 @@ export function getWithdrawInfo(): WithdrawInfo {
     sources: listSources().length,
     postings: listMyPostings().length,
     groups: groups.length,
-    leads: groups.filter((g) => g.leaderId === me?.id).map((g) => ({ name: g.name, others: g.members.length - 1 })),
+    leads: groups
+      .filter((g) => g.leaderId === me?.id)
+      .map((g) => {
+        // 서버처럼 나 말고 가장 먼저 들어온 멤버가 이어받는다
+        const next = g.members.filter((m) => m.id !== me?.id).sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))[0]
+        return { id: g.id, name: g.name, others: g.members.length - 1, successor: next ? { id: next.id, name: next.name } : null }
+      }),
   }
 }
 
