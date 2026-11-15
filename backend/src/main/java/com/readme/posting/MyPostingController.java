@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -26,7 +27,7 @@ import com.readme.posting.ApplicationStatus.Result;
 import com.readme.posting.ApplicationStatus.Stage;
 
 /**
- * 내 공고(설계 4.2): 목록, 상세, 지원 상태 바꾸기, 나만 보는 메모. 조회와 메모는 내 공고 행(user_postings)이 있는 공고만 다룬다.
+ * 내 공고(설계 4.2): 목록, 그룹 없이 넣기, 상세, 지원 상태 바꾸기, 나만 보는 메모. 조회와 메모는 내 공고 행(user_postings)이 있는 공고만 다룬다.
  */
 @RestController
 class MyPostingController {
@@ -50,6 +51,17 @@ class MyPostingController {
 	@GetMapping("/api/me/postings")
 	PostingsResponse list(@CurrentUser LoginUser user) {
 		return new PostingsResponse(LocalDate.now(this.clock), this.queries.list(user.id()));
+	}
+
+	/**
+	 * 그룹 없이 내 공고에 넣기. 본문은 그룹에 올리기와 같다. 넣은 공고를 상세와 같은 모양으로 돌려준다.
+	 * 이미 내 공고에 있으면 409 ALREADY_IN_MY_POSTINGS 와 postingId.
+	 */
+	@PostMapping("/api/me/postings")
+	@ResponseStatus(HttpStatus.CREATED)
+	PostingResponse add(@Valid @RequestBody UploadRequest request, @CurrentUser LoginUser user) {
+		long postingId = this.userPostings.add(user.id(), request.toDraft());
+		return detail(postingId, user);
 	}
 
 	/** 내 공고 상세. 내 공고에 없는 공고면 404 POSTING_NOT_FOUND. */

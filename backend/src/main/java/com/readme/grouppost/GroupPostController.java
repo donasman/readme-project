@@ -22,12 +22,12 @@ import com.readme.common.error.ApiException;
 import com.readme.common.error.CommonErrorCode;
 import com.readme.group.GroupAccess;
 import com.readme.grouppost.GroupPostRequests.CommentRequest;
-import com.readme.grouppost.GroupPostRequests.DeadlineInput;
 import com.readme.grouppost.GroupPostRequests.EditRequest;
 import com.readme.grouppost.GroupPostRequests.InterestRequest;
-import com.readme.grouppost.GroupPostRequests.PostRequest;
+import com.readme.posting.DeadlineInput;
 import com.readme.posting.DeadlineKind;
 import com.readme.posting.DeadlineResponse;
+import com.readme.posting.UploadRequest;
 
 /**
  * 그룹 공고 API(설계 4.2). 그룹의 멤버만 부를 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.
@@ -62,9 +62,8 @@ class GroupPostController {
 	/** 올리기. 올린 공고를 상세와 같은 모양으로 돌려준다. 이미 이 그룹에 있으면 409 ALREADY_IN_GROUP 과 postId. */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	GroupPostDataResponse post(@PathVariable long groupId, @Valid @RequestBody PostRequest request,
+	GroupPostDataResponse post(@PathVariable long groupId, @Valid @RequestBody UploadRequest request,
 			@CurrentUser LoginUser user) {
-		requireConsistent(request.deadline());
 		long postingId = this.service.post(groupId, user.id(), request.toDraft());
 		return detail(groupId, postingId, user);
 	}
@@ -85,7 +84,7 @@ class GroupPostController {
 	@PutMapping("/{postId}")
 	GroupPostDataResponse edit(@PathVariable long groupId, @PathVariable long postId,
 			@Valid @RequestBody EditRequest request, @CurrentUser LoginUser user) {
-		DeadlineInput deadline = requireConsistent(request.deadline());
+		DeadlineInput deadline = request.deadline().requireConsistent();
 		this.service.edit(groupId, postId, user.id(), request.company().strip(), request.title().strip(),
 				deadline.kind(), deadline.date());
 		return detail(groupId, postId, user);
@@ -144,14 +143,6 @@ class GroupPostController {
 			throw new ApiException(CommonErrorCode.INVALID_INPUT,
 					"마감은 날짜({\"kind\": \"date\", \"date\": …})나 상시({\"kind\": \"always\"})로 넣어 주세요");
 		}
-	}
-
-	/** 올리기와 공고 고치기의 마감: 날짜는 "date"일 때만, 꼭. 아니면 400 INVALID_INPUT. */
-	private static DeadlineInput requireConsistent(DeadlineInput deadline) {
-		if (!deadline.isConsistent()) {
-			throw new ApiException(CommonErrorCode.INVALID_INPUT, "마감일은 마감이 \"date\"일 때만, 꼭 넣어 주세요");
-		}
-		return deadline;
 	}
 
 	private LocalDate today() {
