@@ -67,6 +67,7 @@ class MyPostingAddTests {
 				    "deadline": { "kind": "date", "date": "2026-11-16" },
 				    "decision": "undecided", "stage": null, "result": null, "status": null, "groups": [],
 				    "applyAt": null, "sourceUrl": "%s", "sections": [], "keywords": [], "analysis": null, "memo": null,
+				    "matches": [], "unmatched": [],
 				    "groupStates": []
 				  }
 				}

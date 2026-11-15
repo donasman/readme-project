@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 import com.readme.group.Disclosure;
+import com.readme.keyword.KeywordDictionary;
 import com.readme.posting.MyPostingDetailResponse.Details;
 import com.readme.posting.MyPostingDetailResponse.GroupState;
 
@@ -83,8 +84,28 @@ class MyPostingQueries {
 			.param("postingId", postingId)
 			.query((rs, rowNum) -> posting(rs, groups))
 			.optional()
-			.map((posting) -> MyPostingDetailResponse.of(posting, details(userId, postingId), keywords(postingId),
-					groups.getOrDefault(postingId, List.of())));
+			.map((posting) -> {
+				Details details = details(userId, postingId);
+				return MyPostingDetailResponse.of(posting, details, keywords(postingId),
+						CardMatching.match(details.analysis(), myCards(userId), KeywordDictionary.standard()),
+						groups.getOrDefault(postingId, List.of()));
+			});
+	}
+
+	/** 내 카드와 태그(card 패키지의 테이블을 읽기만 한다). 먼저 만든 카드가 앞이다. */
+	private List<CardMatching.MatchCard> myCards(long userId) {
+		Map<Long, List<String>> tags = this.jdbc.sql("""
+				select t.card_id, t.tag from card_tags t join experience_cards c on c.id = t.card_id
+				 where c.user_id = :userId order by t.card_id, t.tag
+				""").param("userId", userId).query((rs, rowNum) -> Map.entry(rs.getLong("card_id"), rs.getString("tag")))
+			.list()
+			.stream()
+			.collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+		return this.jdbc.sql("select id, title from experience_cards where user_id = :userId order by created_at, id")
+			.param("userId", userId)
+			.query((rs, rowNum) -> new CardMatching.MatchCard(rs.getLong("id"), rs.getString("title"),
+					tags.getOrDefault(rs.getLong("id"), List.of())))
+			.list();
 	}
 
 	private Map<Long, List<GroupState>> groupStates(String sql, long userId, Long postingId) {

@@ -128,7 +128,7 @@ class MyPostingReadTests {
 					    "applyAt": "회사 채용 홈페이지", "sourceUrl": "https://example.com/jobs/1",
 					    "sections": [ { "title": "주요 업무", "items": [ "주문·결제 서버 API 개발과 운영" ] } ],
 					    "keywords": [ "Java", "Spring Boot" ], "analysis": null,
-					    "memo": null,
+					    "memo": null, "matches": [], "unmatched": [],
 					    "groupStates": [
 					      { "id": %2$d, "name": "첫 그룹", "mark": "첫", "postId": %1$d,
 					        "interested": true, "commentCount": 2, "disclosure": "progress" },
