@@ -18,8 +18,11 @@ public enum AuthErrorCode implements ErrorCode {
 	/** 비밀번호는 맞지만 이메일 인증을 마치지 않았다(가정 L4). */
 	EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "이메일 인증을 마친 뒤 로그인할 수 있습니다"),
 
-	/** 그 이메일로 15분 안에 10번 로그인하지 못했다(LoginThrottle). 계정이 없는 이메일도 같다. */
-	TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "로그인 시도가 너무 많습니다. 잠시 뒤에 다시 시도해 주세요"),
+	/**
+	 * 그 이메일로 15분 안에 10번 로그인하지 못했다(LoginThrottle). 계정이 없는 이메일도 같다. 비밀번호 바꾸기와 탈퇴 확인에서는
+	 * 그 사람이 15분 안에 지금 비밀번호를 10번 틀렸다. 메시지는 셋에 같이 맞게 "로그인"을 넣지 않는다.
+	 */
+	TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "시도가 너무 많습니다. 잠시 뒤에 다시 시도해 주세요"),
 
 	/** 가입 확인이나 비밀번호 재설정 링크가 지났거나, 이미 썼거나, 없다. 셋을 구분하지 않는다. */
 	LINK_EXPIRED(HttpStatus.GONE, "쓸 수 없는 링크입니다. 메일을 다시 받아 주세요"),

@@ -187,7 +187,7 @@ class LoginTests {
 		MvcTestResult blocked = login(email, PASSWORD, null);
 
 		assertThat(blocked).hasStatus(HttpStatus.TOO_MANY_REQUESTS).bodyJson().isStrictlyEqualTo("""
-				{ "code": "TOO_MANY_ATTEMPTS", "message": "로그인 시도가 너무 많습니다. 잠시 뒤에 다시 시도해 주세요" }
+				{ "code": "TOO_MANY_ATTEMPTS", "message": "시도가 너무 많습니다. 잠시 뒤에 다시 시도해 주세요" }
 				""");
 		assertThat(setCookie(blocked, "SESSION")).isNull();
 		// 대소문자와 앞뒤 공백이 달라도 같은 이메일이다

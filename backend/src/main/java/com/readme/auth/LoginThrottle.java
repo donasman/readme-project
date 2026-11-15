@@ -20,6 +20,8 @@ import com.readme.common.error.ApiException;
  * 시도는 비밀번호를 견주기 전에 세고, 성공하면 지운다. 같이 들어온 요청들이 모두 검사를 지나 10번을 넘기지 못하게 하려는 것이다.
  * 이메일은 부르는 쪽(AccountService)이 소문자로 맞춰 넘기고, 계정도 그 글자로 찾는다.
  *
+ * <p>MeService 는 따로 만든 것으로 사용자 id 마다 지금 비밀번호(비밀번호 바꾸기, 탈퇴 확인)를 틀린 수를 같은 규칙으로 센다(2026-11-16).
+ *
  * <p>아무 이메일이나 넣어 메모리를 채우지 못하게 두 가지로 묶는다. 15분마다 지난 시도만 남은 이메일을 지우고,
  * 이메일은 MAX_EMAILS 개까지만 든다. 넘으면 가장 먼저 들어온 이메일부터 버린다.
  *
@@ -54,12 +56,12 @@ class LoginThrottle {
 		this.clock = clock;
 	}
 
-	/** 로그인 시도를 하나 센다. 15분 안에 이미 10번 세었으면 세지 않고 429 TOO_MANY_ATTEMPTS. */
-	synchronized void countAttempt(String email) {
+	/** 시도를 하나 센다. 15분 안에 이미 10번 세었으면 세지 않고 429 TOO_MANY_ATTEMPTS. key 는 이메일이나 사용자 id 다. */
+	synchronized void countAttempt(String key) {
 		Instant now = this.clock.instant();
 		Instant since = now.minus(WINDOW);
 		dropExpired(now, since);
-		Deque<Instant> recent = this.failures.computeIfAbsent(email, (k) -> new ArrayDeque<>());
+		Deque<Instant> recent = this.failures.computeIfAbsent(key, (k) -> new ArrayDeque<>());
 		while (!recent.isEmpty() && !recent.peekFirst().isAfter(since)) {
 			recent.removeFirst();
 		}
@@ -69,9 +71,9 @@ class LoginThrottle {
 		recent.addLast(now);
 	}
 
-	/** 로그인에 성공했거나 비밀번호를 재설정했다. 그 이메일에서 센 것을 지운다. */
-	synchronized void clear(String email) {
-		this.failures.remove(email);
+	/** 확인에 성공했거나 비밀번호를 재설정했다. 그 키에서 센 것을 지운다. */
+	synchronized void clear(String key) {
+		this.failures.remove(key);
 	}
 
 	/** 센 것을 들고 있는 이메일 수. 테스트가 메모리를 비우는지 본다. */

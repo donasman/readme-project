@@ -99,6 +99,41 @@ class MeChangeTests {
 	}
 
 	@Test
+	void theEleventhTryAfterTenWrongCurrentPasswordsIs429ForThatPersonOnly() {
+		long me = this.fixtures.passwordUser("가람", OLD, true);
+		long other = this.fixtures.passwordUser("나래", OLD, true);
+		String email = this.fixtures.emailOf(me);
+		String phone = setCookie(login(email, OLD), "SESSION");
+		String theirs = setCookie(login(this.fixtures.emailOf(other), OLD), "SESSION");
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
+			assertThat(changePassword(phone, "wrong password", NEW)).hasStatus(HttpStatus.BAD_REQUEST);
+		}
+
+		// 막힌 동안에는 맞는 비밀번호도 429 다
+		assertThat(changePassword(phone, OLD, NEW)).hasStatus(HttpStatus.TOO_MANY_REQUESTS).bodyJson().isStrictlyEqualTo("""
+				{ "code": "TOO_MANY_ATTEMPTS", "message": "시도가 너무 많습니다. 잠시 뒤에 다시 시도해 주세요" }
+				""");
+		// 비밀번호는 그대로이고, 로그인 실패와는 따로 센다
+		assertThat(login(email, OLD)).hasStatusOk();
+		// 다른 사람은 따로 센다
+		assertThat(changePassword(theirs, "wrong password", NEW)).hasStatus(HttpStatus.BAD_REQUEST);
+		assertThat(changePassword(theirs, OLD, NEW)).hasStatus(HttpStatus.NO_CONTENT);
+	}
+
+	@Test
+	void theRightCurrentPasswordClearsTheCount() {
+		long me = this.fixtures.passwordUser("가람", OLD, true);
+		String phone = setCookie(login(this.fixtures.emailOf(me), OLD), "SESSION");
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES - 1; i++) {
+			assertThat(changePassword(phone, "wrong password", NEW)).hasStatus(HttpStatus.BAD_REQUEST);
+		}
+		assertThat(changePassword(phone, OLD, NEW)).hasStatus(HttpStatus.NO_CONTENT);
+
+		// 지우지 않았다면 열한 번째 시도라 429 다
+		assertThat(changePassword(phone, "wrong password", OLD)).hasStatus(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
 	void theNewPasswordFollowsTheRule() {
 		long me = this.fixtures.passwordUser("가람", OLD, true);
 		String phone = setCookie(login(this.fixtures.emailOf(me), OLD), "SESSION");

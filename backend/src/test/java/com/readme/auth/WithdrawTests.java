@@ -101,6 +101,22 @@ class WithdrawTests {
 	}
 
 	@Test
+	void wrongPasswordsInWithdrawAndPasswordChangeShareOneCount() {
+		long me = this.fixtures.passwordUser("다온", PASSWORD, true);
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES / 2; i++) {
+			assertThat(withdraw(loginAs(me), "{ \"password\": \"wrong password\" }")).hasStatus(HttpStatus.BAD_REQUEST);
+			assertThat(this.mvc.put().uri("/api/me/password").with(loginAs(me)).with(xsrf())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"currentPassword\": \"wrong password\", \"newPassword\": \"new password\" }"))
+				.hasStatus(HttpStatus.BAD_REQUEST);
+		}
+
+		assertThat(withdraw(loginAs(me), passwordBody())).hasStatus(HttpStatus.TOO_MANY_REQUESTS)
+			.bodyJson().extractingPath("$.code").isEqualTo("TOO_MANY_ATTEMPTS");
+		assertThat(exists("users", "id", me)).isTrue();
+	}
+
+	@Test
 	void withdrawingDeletesTheAccountAndEndsEveryLoginIncludingThisOne() {
 		long me = this.fixtures.passwordUser("다온", PASSWORD, true);
 		String email = this.fixtures.emailOf(me);
