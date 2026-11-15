@@ -70,6 +70,38 @@ class Profile {
 		this.updatedAt = now;
 	}
 
+	/** 빈 칸만 채운다. 목록은 한 줄도 없을 때만. 바뀐 것이 있을 때만 고친 때를 바꾼다. */
+	void fillBlanks(ProfileInput input, Instant now) {
+		boolean changed = false;
+		if (this.name == null && input.name() != null) {
+			this.name = input.name();
+			changed = true;
+		}
+		if (this.birthDate == null && input.birthDate() != null) {
+			this.birthDate = input.birthDate();
+			changed = true;
+		}
+		if (this.gender == null && input.gender() != null) {
+			this.gender = input.gender();
+			changed = true;
+		}
+		changed |= fillIfEmpty(this.educations, input.educations());
+		changed |= fillIfEmpty(this.certificates, input.certificates());
+		changed |= fillIfEmpty(this.languages, input.languages());
+		changed |= fillIfEmpty(this.careers, input.careers());
+		if (changed) {
+			this.updatedAt = now;
+		}
+	}
+
+	private static <T> boolean fillIfEmpty(List<T> rows, List<T> values) {
+		if (!rows.isEmpty() || values.isEmpty()) {
+			return false;
+		}
+		rows.addAll(values);
+		return true;
+	}
+
 	private static <T> void replaceAll(List<T> rows, List<T> values) {
 		rows.clear();
 		rows.addAll(values);
