@@ -73,6 +73,14 @@ public final class KeywordDictionary {
 		return Standard.DICTIONARY;
 	}
 
+	/**
+	 * 자격증 사전(certificates.yaml). 대표 표기와 다른 표기만 읽는다(normalize, contains, find). 관련 역량은 아직 읽지 않는다.
+	 * 키워드 사전과 따로인 이유는 그 파일의 머리말에 있다.
+	 */
+	public static KeywordDictionary certificates() {
+		return Certificates.DICTIONARY;
+	}
+
 	/** 어떤 표기든 대표 표기로. 앞뒤 공백을 지우고, 사전에 없으면 그대로. */
 	public String normalize(String token) {
 		String text = token.strip();
@@ -292,6 +300,26 @@ public final class KeywordDictionary {
 	private static final class Standard {
 
 		static final KeywordDictionary DICTIONARY = read();
+
+	}
+
+	private static final class Certificates {
+
+		static final KeywordDictionary DICTIONARY = readCertificates();
+
+		/** 대표 표기: {다른 표기: [...], 관련 역량: [...]} */
+		private static KeywordDictionary readCertificates() {
+			Map<String, List<String>> variants = new LinkedHashMap<>();
+			yaml("certificates.yaml").forEach((key, value) -> {
+				List<String> forms = new ArrayList<>();
+				forms.add(String.valueOf(key));
+				if (value instanceof Map<?, ?> fields) {
+					forms.addAll(values(fields.get("다른 표기")));
+				}
+				variants.put(String.valueOf(key), List.copyOf(forms));
+			});
+			return new KeywordDictionary(variants, Map.of());
+		}
 
 	}
 
