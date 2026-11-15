@@ -220,7 +220,8 @@ function FileDrop({ busy, onRead }: ReadProps) {
   const failFile = (message: string | null) => setFileError((e) => (message ? { message, tries: (e?.tries ?? 0) + 1 } : null))
 
   const take = (file: File | undefined) => {
-    if (!file) return
+    // 읽는 중에 끌어 놓은 파일은 받지 않는다(버튼만 막혀 있어 두 번 읽고 늦게 끝난 쪽이 칸 확인을 덮는다)
+    if (!file || busy) return
     if (!matchesAccept(file.name, ACCEPT)) return failFile("PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.")
     if (file.size > MAX_BYTES) return failFile("파일이 너무 큽니다. 20MB까지 올릴 수 있습니다.")
     failFile(null)
