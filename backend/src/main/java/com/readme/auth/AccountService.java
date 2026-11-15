@@ -4,6 +4,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.OptionalLong;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.session.FindByIndexNameSessionRepository;
@@ -18,12 +23,14 @@ import com.readme.common.error.ApiException;
 import com.readme.common.token.Tokens;
 
 /**
- * 이메일·비밀번호 계정: 가입, 이메일 인증, 로그인 확인, 비밀번호 재설정(로그인 설계 4절).
+ * 계정: 가입, 이메일 인증, 로그인 확인, 비밀번호 재설정(로그인 설계 4절), 구글 로그인의 계정 찾기·연결·만들기(3.2).
  *
  * <p>메일과 세션 끊기는 DB 의 변경이 커밋된 뒤에 한다. 커밋되지 않은 링크를 메일로 보내지 않기 위해서다.
  */
 @Service
 class AccountService {
+
+	private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
 	/** 가입 확인 링크(가정 L5). */
 	static final Duration VERIFY_LINK_LIFETIME = Duration.ofHours(24);
@@ -132,6 +139,44 @@ class AccountService {
 	}
 
 	/**
+	 * 구글이 확인한 사람의 계정 id. 연결할 계정이 없으면 비어 있다(로그인 설계 3.2, 가정 L3).
+	 * <ol>
+	 * <li>이 구글 계정(sub)이 연결된 계정이 있으면 그 계정이다.</li>
+	 * <li>없으면 구글이 이메일을 확인했을 때만(email_verified) 같은 이메일(대소문자 무시)의 계정에 연결한다. 계정이 없으면
+	 * 인증을 마친, 비밀번호 없는 계정을 만든다. 인증 전 계정이면 비밀번호를 지우고, 이름을 구글의 것으로 바꾸고, 인증을 마치고,
+	 * 보낸 가입 확인 링크를 쓸 수 없게 한 뒤 연결한다. 그 이메일로 먼저 가입만 해 둔 남이 비밀번호로 들어오지 못하게 한다.</li>
+	 * <li>구글이 이메일을 확인하지 않았거나, 그 계정에 다른 구글 계정이 이미 연결되어 있으면 비어 있다.</li>
+	 * </ol>
+	 *
+	 * @param name 구글의 이름. 없으면 이메일의 @ 앞을 쓴다
+	 */
+	@Transactional
+	OptionalLong loginWithGoogle(String sub, String email, boolean emailVerified, String name) {
+		Instant now = this.clock.instant();
+		Long userId = this.queries.findGoogleUser(sub).orElse(null);
+		if (userId == null) {
+			if (!emailVerified || email == null) {
+				log.info("구글 로그인 거부: 구글이 확인하지 않은 이메일");
+				return OptionalLong.empty();
+			}
+			String displayName = displayName(name, email);
+			this.accounts.insertGoogleUserIfEmailIsNew(email, displayName, now);
+			Credentials account = this.queries.findCredentials(email).orElseThrow();
+			if (!account.verified() && this.accounts.takeOverUnverified(account.id(), displayName, now) == 1) {
+				this.tokens.cancelUnused(account.id(), Purpose.VERIFY_EMAIL.name(), now);
+			}
+			if (this.accounts.linkGoogle(account.id(), sub, email, now) == 0
+					&& !this.queries.findGoogleUser(sub).equals(Optional.of(account.id()))) {
+				log.info("구글 로그인 거부: 사용자 {} 에 다른 구글 계정이 연결되어 있다", account.id());
+				return OptionalLong.empty();
+			}
+			userId = account.id();
+		}
+		this.accounts.recordLogin(userId, now);
+		return OptionalLong.of(userId);
+	}
+
+	/**
 	 * 재설정 메일을 보낸다. 계정이 없어도 같은 응답이다. 구글로만 가입한 계정도 받는다. 재설정을 마치면 비밀번호가 생긴다.
 	 */
 	@Transactional
@@ -197,6 +242,12 @@ class AccountService {
 			throw new ApiException(AuthErrorCode.LINK_EXPIRED);
 		}
 		return emailToken;
+	}
+
+	/** 구글의 이름, 없으면 이메일의 @ 앞. users.display_name 의 50자에 맞춰 자른다. */
+	private static String displayName(String name, String email) {
+		String value = (name != null && !name.isBlank()) ? name.strip() : email.substring(0, Math.max(0, email.indexOf('@')));
+		return value.substring(0, value.offsetByCodePoints(0, Math.min(50, value.codePointCount(0, value.length()))));
 	}
 
 	/** 세션의 주인 이름은 사용자 id 다(LoginUser.getName). */

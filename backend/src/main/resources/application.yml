@@ -4,10 +4,7 @@ spring:
     name: readme
   profiles:
     default: dev   # SPRING_PROFILES_ACTIVE 를 주지 않으면 dev 로 뜬다. 운영 서버는 prod 를 준다.
-  config:
-    # 내 PC 에서만 쓰는 값(구글 클라이언트 비밀, Claude API 키 등)을 backend/application-local.yml 에 두면 읽는다.
-    # 이 파일은 git 에 올라가지 않는다.
-    import: optional:file:./application-local.yml
+  # 내 PC 에서만 쓰는 값(backend/application-local.yml)은 dev 프로필만 읽는다(application-dev.yml).
 
   datasource:
     hikari:
