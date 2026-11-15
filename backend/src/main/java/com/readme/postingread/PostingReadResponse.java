@@ -25,12 +25,13 @@ import com.readme.postingread.Deadlines.Read;
  * @param evidence     칸 → 그 값을 읽은 원문 조각(페이지 제목, JSON-LD 값, "마감일 2026.11.20", 붙여넣은 글의 첫 줄)
  * @param unread       읽지 못한 칸: company, title, deadline, deadlineName, applyAt, sourceUrl 가운데 빈 것
  * @param sections     공고 내용 묶음. title 은 화면의 묶음 이름, from 은 원문의 머리 줄
+ * @param keywords     키워드 사전의 대표 표기(k8s → Kubernetes). 주요 업무·필수 요건·우대 사항에서 많이 나온 순으로 15개까지
  * @param source       원문: 페이지 제목(본문이면 첫 줄)과 메뉴를 걷어낸 글자 전체
  * @param duplicate    groupId 를 넣었고 링크의 공고가 이미 그 그룹에 있을 때만
  */
 record PostingReadResponse(String company, String title, DeadlineValue deadline, String deadlineName, String applyAt,
-		String sourceUrl, Map<String, String> evidence, List<String> unread, List<SectionValue> sections, Source source,
-		@JsonInclude(JsonInclude.Include.NON_NULL) Duplicate duplicate) {
+		String sourceUrl, Map<String, String> evidence, List<String> unread, List<SectionValue> sections, List<String> keywords,
+		Source source, @JsonInclude(JsonInclude.Include.NON_NULL) Duplicate duplicate) {
 
 	/** 마감. 올리기의 deadline 과 같은 꼴: { "kind": "date", "date": "2026-11-20" }, { "kind": "always" }, { "kind": "unknown" }. */
 	record DeadlineValue(DeadlineKind kind, @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate date) {
@@ -54,7 +55,7 @@ record PostingReadResponse(String company, String title, DeadlineValue deadline,
 
 	/** 읽은 값으로 응답을 만든다. 근거는 읽은 칸만, 읽지 못한 칸은 unread 에. */
 	static PostingReadResponse read(Found company, Found title, Read deadline, String deadlineFrom, String sourceUrl,
-			List<SectionValue> sections, Source source) {
+			List<SectionValue> sections, List<String> keywords, Source source) {
 		Map<String, String> evidence = new LinkedHashMap<>();
 		List<String> unread = new ArrayList<>();
 		check("company", company, evidence, unread);
@@ -66,17 +67,17 @@ record PostingReadResponse(String company, String title, DeadlineValue deadline,
 			unread.add("sourceUrl");
 		}
 		return new PostingReadResponse(company.value(), title.value(), new DeadlineValue(deadline.kind(), deadline.date()),
-				"", "", sourceUrl, evidence, unread, sections, source, null);
+				"", "", sourceUrl, evidence, unread, sections, keywords, source, null);
 	}
 
 	/** 링크의 공고가 이미 그룹에 있어 받으러 가지 않았을 때. 칸은 비어 있고 duplicate 만 뜻이 있다. */
 	static PostingReadResponse notFetched(String url, Duplicate duplicate) {
-		return read(Found.NONE, Found.NONE, Read.UNKNOWN, "", url, List.of(), new Source("", "")).with(duplicate);
+		return read(Found.NONE, Found.NONE, Read.UNKNOWN, "", url, List.of(), List.of(), new Source("", "")).with(duplicate);
 	}
 
 	PostingReadResponse with(Duplicate duplicate) {
 		return new PostingReadResponse(this.company, this.title, this.deadline, this.deadlineName, this.applyAt,
-				this.sourceUrl, this.evidence, this.unread, this.sections, this.source, duplicate);
+				this.sourceUrl, this.evidence, this.unread, this.sections, this.keywords, this.source, duplicate);
 	}
 
 	private static void check(String field, Found found, Map<String, String> evidence, List<String> unread) {

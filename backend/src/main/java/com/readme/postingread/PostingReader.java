@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,6 +16,7 @@ import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
 
 import com.readme.common.error.ApiException;
+import com.readme.keyword.KeywordDictionary;
 import com.readme.postingread.PageFetcher.Page;
 import com.readme.postingread.PostingMeta.Dated;
 import com.readme.postingread.PostingMeta.Meta;
@@ -45,6 +47,12 @@ class PostingReader {
 
 	private static final int FIRST_LINE_MAX = 120;
 
+	/** 키워드를 찾는 섹션(jobfit 의 섹션 이름): 주요 업무, 필수 요건, 우대 사항. */
+	private static final Set<String> KEYWORD_SECTIONS = Set.of("주요업무", "자격요건", "우대사항");
+
+	/** 키워드 수. jobfit 의 공고 분석이 공고마다 남기는 키워드 수(analyze.py 의 LIST_LIMITS)와 같다. */
+	static final int MAX_KEYWORDS = 15;
+
 	/** 한 서버에서 한 번에 읽는 링크 수. */
 	static final int MAX_READS = 3;
 
@@ -72,8 +80,9 @@ class PostingReader {
 			title = new Found(PostingMeta.cleanJobTitle(bracket.group(2)), first);
 		}
 		Dated deadline = PostingMeta.deadlineFromSummary(clean, today);
+		List<Section> split = PostingSections.split(clean);
 		return PostingReadResponse.read(company, title, deadline.deadline(), deadline.from(),
-				(sourceUrl != null) ? sourceUrl.strip() : "", sections(PostingSections.split(clean)), new Source(first, clean));
+				(sourceUrl != null) ? sourceUrl.strip() : "", sections(split), keywords(split, clean), new Source(first, clean));
 	}
 
 	/**
@@ -118,8 +127,9 @@ class PostingReader {
 				: PostingMeta.deadlineFromSummary(detailText, today);
 		String full = Stream.of(mainText, detailText).filter((t) -> !t.isEmpty()).collect(Collectors.joining("\n\n"));
 		String pageTitle = !meta.pageTitle().isEmpty() ? meta.pageTitle() : firstLine(detailText.isEmpty() ? mainText : detailText);
+		List<Section> split = PostingSections.split(body);
 		return PostingReadResponse.read(new Found(meta.company(), meta.companyFrom()), new Found(meta.title(), meta.titleFrom()),
-				deadline.deadline(), deadline.from(), url, sections(PostingSections.split(body)),
+				deadline.deadline(), deadline.from(), url, sections(split), keywords(split, body),
 				new Source(PostingSections.cleanTitle(pageTitle), full));
 	}
 
@@ -141,6 +151,21 @@ class PostingReader {
 					s.lines().stream().map(PostingReader::item).filter((item) -> !item.isEmpty()).toList(), s.header()))
 			.filter((s) -> !s.items().isEmpty())
 			.toList();
+	}
+
+	/**
+	 * 주요 업무·필수 요건·우대 사항에 나온 사전 낱말의 대표 표기. 셋 다 없거나 내용이 비었으면 섹션을 나눈 글 전체에서 찾는다.
+	 * 많이 나온 순, 같으면 글자 순(jobfit 의 find)으로 MAX_KEYWORDS 개까지.
+	 */
+	private static List<String> keywords(List<Section> sections, String text) {
+		// split 은 머리 줄만 있는 섹션도 남긴다("…경험\n우대 사항", 내용이 머리 줄에 붙은 "주요 업무 Java 로 API 개발")
+		List<String> parts = sections.stream()
+			.filter((s) -> KEYWORD_SECTIONS.contains(s.name()))
+			.map(Section::text)
+			.filter((t) -> !t.isEmpty())
+			.toList();
+		String scanned = parts.isEmpty() ? text : String.join("\n", parts);
+		return KeywordDictionary.standard().find(scanned).keySet().stream().limit(MAX_KEYWORDS).toList();
 	}
 
 	private static String item(String line) {

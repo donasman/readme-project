@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -14,6 +16,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -24,8 +28,8 @@ import org.springframework.core.io.ClassPathResource;
 /**
  * 키워드 사전(resources/dictionary). 대표 표기 하나에 여러 표기가 붙고, 어떤 표기든 대표 표기로 바꾼다(k8s → Kubernetes).
  *
- * <p>jobfit 의 src/jobfit/clean/keywords.py(KeywordDict 의 load, normalize, expand)를 옮겼다. 같은 사전이면 같은 값이 나온다.
- * 글에서 키워드를 찾는 scan·find·forms 는 공고 분석에서 쓰므로 아직 옮기지 않았다.
+ * <p>jobfit 의 src/jobfit/clean/keywords.py(KeywordDict 의 load, normalize, expand, scan, find)를 옮겼다. 같은 사전이면 같은 값이 나온다.
+ * 이력서 표현을 공고 표기로 맞추는 forms 는 쓰는 곳이 없어 옮기지 않았다.
  * 영문은 대소문자를 가리지 않는다. 사전에 없는 낱말은 그대로 둔다.
  *
  * <ul>
@@ -38,15 +42,30 @@ public final class KeywordDictionary {
 
 	private static final String DIRECTORY = "dictionary/";
 
+	/** 앞뒤 글자를 보고 찾는 표기: 영문·숫자로 끝나고 영문·숫자와 . + # / _ 공백 - 로만 된 것. */
+	private static final Pattern ENGLISH_FORM = Pattern.compile("[A-Za-z0-9.+#/_ -]*[A-Za-z0-9]");
+
+	private static final int IGNORE_CASE = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+
 	/** 대표 표기 → 표기들(대표 표기가 맨 앞). keywords.txt, synonyms.yaml 의 순서다. */
 	private final Map<String, List<String>> variants;
 
 	/** 대표 표기 → 그것을 썼으면 함께 쓴 것. 양쪽 모두 대표 표기다. */
 	private final Map<String, List<String>> implies;
 
+	/** 글에서 찾는 순서: 긴 표기부터, 길이가 같으면 소문자의 글자 순(jobfit 의 _ordered). */
+	private final List<Form> forms;
+
 	private KeywordDictionary(Map<String, List<String>> variants, Map<String, List<String>> implies) {
 		this.variants = variants;
 		this.implies = implies;
+		this.forms = variants.entrySet()
+			.stream()
+			.flatMap((entry) -> entry.getValue().stream().map((form) -> Map.entry(form, entry.getKey())))
+			.sorted(Comparator.comparingInt((Map.Entry<String, String> pair) -> -pair.getKey().codePointCount(0, pair.getKey().length()))
+				.thenComparing((pair) -> lower(pair.getKey())))
+			.map((pair) -> new Form(pair.getValue(), pattern(pair.getKey()), fold(pair.getKey()).toString()))
+			.toList();
 	}
 
 	/** 저장소의 사전. 처음 부를 때 한 번 읽는다. */
@@ -79,6 +98,50 @@ public final class KeywordDictionary {
 			}
 		}
 		return out;
+	}
+
+	/**
+	 * 글에 나온 사전 낱말(대표 표기)과 횟수. 많이 나온 순, 같으면 대표 표기의 글자 순이다(jobfit 의 find).
+	 * 긴 표기부터 찾고 찾은 자리를 공백으로 가려서 'Spring Boot' 안의 'Spring', '자바스크립트' 안의 '자바'를 따로 세지 않는다.
+	 */
+	public Map<String, Integer> find(String text) {
+		StringBuilder rest = new StringBuilder(text);
+		StringBuilder folded = fold(text);
+		Map<String, Integer> counts = new HashMap<>();
+		for (Form form : this.forms) {
+			// 정규식은 접은 글에 그 표기가 있는 자리에서만 맞춰 본다. 모든 자리에서 맞춰 보면 표기 수(약 600)만큼 글을 읽어 1MB 에 15초 걸렸다
+			Matcher matcher = form.pattern().matcher(rest).useTransparentBounds(true);
+			// 찾은 자리는 시작·끝 int 둘로만 둔다. MatchResult 는 하나에 약 190바이트라 1MB 에 짧은 표기가 많으면 수백 MB 가 된다
+			int[] spans = new int[16];
+			int size = 0;
+			for (int at = folded.indexOf(form.folded()); at >= 0; at = folded.indexOf(form.folded(), at + 1)) {
+				if (matcher.region(at, rest.length()).lookingAt()) {
+					if (size == spans.length) {
+						spans = Arrays.copyOf(spans, size * 2);
+					}
+					spans[size++] = at;
+					spans[size++] = matcher.end();
+					at = matcher.end() - 1;
+				}
+			}
+			// jobfit 처럼 한 표기를 다 찾은 뒤에 가린다(".NET.NET"의 둘째는 앞 글자 T 때문에 아니다). 가리는 일은 찾은 글자 수만큼이라
+			// 글 길이의 제곱이 되지 않는다(jobfit 은 글을 다시 만든다)
+			for (int s = 0; s < size; s += 2) {
+				for (int i = spans[s]; i < spans[s + 1]; i++) {
+					rest.setCharAt(i, ' ');
+					folded.setCharAt(i, ' ');
+				}
+			}
+			if (size > 0) {
+				counts.merge(form.canonical(), size / 2, Integer::sum);
+			}
+		}
+		Map<String, Integer> sorted = new LinkedHashMap<>();
+		counts.entrySet()
+			.stream()
+			.sorted(Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
+			.forEach((entry) -> sorted.put(entry.getKey(), entry.getValue()));
+		return sorted;
 	}
 
 	/**
@@ -141,6 +204,33 @@ public final class KeywordDictionary {
 
 	private static String lower(String text) {
 		return text.toLowerCase(Locale.ROOT);
+	}
+
+	/**
+	 * jobfit 의 _pattern. 영문·숫자 표기는 앞이 영문·숫자·#·+·. 이 아니고(JS ≠ Node.js) 뒤가 영문·숫자·#·+ 가 아닐 때만
+	 * 맞는다(Java ≠ JavaScript, C ≠ C# ≠ C++). 뒤의 '.'은 문장 끝일 수 있어 막지 않는다. 한 글자(C)는 한글이 바로 붙은 것('C동')도
+	 * 뺀다. 한글이 든 표기와 C#·C++ 는 글자 그대로 찾는다. Python 의 re.I 처럼 유니코드로 대소문자를 가리지 않는다(켈빈 기호 K 도 k).
+	 */
+	private static Pattern pattern(String form) {
+		String quoted = Pattern.quote(form);
+		if (ENGLISH_FORM.matcher(form).matches()) {
+			String tail = (form.length() == 1) ? "(?![A-Za-z0-9#+가-힣])" : "(?![A-Za-z0-9#+])";
+			return Pattern.compile("(?<![A-Za-z0-9#+.])" + quoted + tail, IGNORE_CASE);
+		}
+		return Pattern.compile(quoted, IGNORE_CASE);
+	}
+
+	/** 정규식(CASE_INSENSITIVE | UNICODE_CASE)이 글자를 견주는 꼴. 글자마다 바꾸므로 자리가 원문과 같다. */
+	private static StringBuilder fold(String text) {
+		StringBuilder folded = new StringBuilder(text.length());
+		for (int i = 0; i < text.length(); i++) {
+			folded.append(Character.toLowerCase(Character.toUpperCase(text.charAt(i))));
+		}
+		return folded;
+	}
+
+	/** 표기 하나: 대표 표기, 찾는 정규식, 후보 자리를 찾을 접은 표기. */
+	private record Form(String canonical, Pattern pattern, String folded) {
 	}
 
 	// ── 읽기 ───────────────────────────────────────────────────────────

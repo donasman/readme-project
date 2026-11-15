@@ -102,6 +102,7 @@ class PostingReadTests {
 					    { "title": "주요 업무", "items": ["주문 API 개발"], "from": "주요 업무" },
 					    { "title": "필수 요건", "items": ["Java 3년 이상"], "from": "자격 요건" }
 					  ],
+					  "keywords": ["API", "Java"],
 					  "source": { "title": "[(주)예시랩] 백엔드 개발자(D-7)", "text": "%s" }
 					}
 					""".formatted(json(TEXT)));
@@ -113,7 +114,8 @@ class PostingReadTests {
 			.bodyJson()
 			.isLenientlyEqualTo("""
 					{ "company": "", "title": "", "deadline": { "kind": "unknown" }, "evidence": {},
-					  "unread": ["company", "title", "deadline", "deadlineName", "applyAt", "sourceUrl"], "sections": [] }
+					  "unread": ["company", "title", "deadline", "deadlineName", "applyAt", "sourceUrl"], "sections": [],
+					  "keywords": [] }
 					""");
 	}
 
@@ -150,6 +152,7 @@ class PostingReadTests {
 					    { "title": "주요 업무", "items": ["주문 API 개발", "배치 개선"], "from": "담당 업무" },
 					    { "title": "필수 요건", "items": ["Java 3년 이상"], "from": "자격 요건" }
 					  ],
+					  "keywords": ["API", "Java"],
 					  "source": { "title": "[(주)로컬랩] 서버 개발자(D-3)" }
 					}
 					""".formatted(url));
@@ -223,7 +226,7 @@ class PostingReadTests {
 			.bodyJson()
 			.isLenientlyEqualTo("""
 					{
-					  "company": "", "sourceUrl": "%s",
+					  "company": "", "sourceUrl": "%s", "keywords": [],
 					  "duplicate": {
 					    "postId": %d, "company": "예시 커머스", "title": "백엔드 개발자 신입",
 					    "postedBy": { "id": %d, "name": "가람" }, "postedAt": "2026-11-10"
