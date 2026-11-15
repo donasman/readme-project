@@ -6,20 +6,8 @@
 import type { Disclosure, Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
 import type { AcceptInviteResult, InviteView } from "@/features/auth/types"
-import type {
-  Comment,
-  CommentPart,
-  Deadline,
-  DraftField,
-  DraftSection,
-  GroupPost,
-  GroupPostDetail,
-  MyState,
-  PostDraft,
-  PostUpload,
-  ReadPostResult,
-  UploadPostResult,
-} from "@/features/group-posts/types"
+import type { DraftField, DraftSection, PostDraft, PostUpload, ReadPostResult } from "@/domain/posting/types"
+import type { Comment, CommentPart, Deadline, GroupPost, GroupPostDetail, MyState, UploadPostResult } from "@/features/group-posts/types"
 import { addDays, daysBetween } from "@/shared/lib/date"
 import { networkError } from "@/shared/lib/api"
 import { NotFoundError } from "@/shared/lib/errors"
@@ -344,9 +332,12 @@ function parsePostText(text: string, sourceUrl: string): PostDraft {
   }
 }
 
-/** 공고 읽어 오기. 가짜 서버: 주소에 login이나 fail이 들어가면 읽지 못한 것으로, 그 밖의 링크와 파일은 예시 공고로 읽는다. */
-export function readPosting(groupId: string, input: { kind: "url"; url: string } | { kind: "text"; text: string; sourceUrl: string } | { kind: "file"; name: string }): ReadPostResult {
-  const group = rawGroup(groupId)
+/**
+ * 공고 읽어 오기. 가짜 서버: 주소에 login이나 fail이 들어가면 읽지 못한 것으로, 그 밖의 링크와 파일은 예시 공고로 읽는다.
+ * 그룹 id가 null이면(내 공고 넣기) 같은 공고를 보지 않는다.
+ */
+export function readPosting(groupId: string | null, input: { kind: "url"; url: string } | { kind: "text"; text: string; sourceUrl: string } | { kind: "file"; name: string }): ReadPostResult {
+  const group = groupId === null ? null : rawGroup(groupId)
   const draft =
     input.kind === "url"
       ? /login|fail/i.test(input.url)
@@ -356,7 +347,7 @@ export function readPosting(groupId: string, input: { kind: "url"; url: string }
         ? parsePostText(input.text, input.sourceUrl)
         : { ...createExampleDraft(""), unread: ["deadline", "sourceUrl"] as DraftField[] }
   if (!draft) return { status: "failed", message: "로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요." }
-  const same = findSamePost(group, { url: input.kind === "url" ? input.url : draft.sourceUrl })
+  const same = group && findSamePost(group, { url: input.kind === "url" ? input.url : draft.sourceUrl })
   if (same) {
     const { id, company, title, postedBy, postedAt } = same
     return { status: "duplicate", post: structuredClone({ id, company, title, postedBy, postedAt }) }
