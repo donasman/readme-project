@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>내 정보</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="readme-frame.css">
+<link rel="stylesheet" href="readme-tabs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="rm-root pal-a" data-theme="{{theme}}" style="position: relative; min-height: 100vh; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: 16px; line-height: 1.4; letter-spacing: -0.01em; word-break: keep-all; text-wrap: pretty">
+<header style="background: var(--background)">
+<div style="display: flex; flex-wrap: wrap; min-height: 72px; box-sizing: border-box; align-items: center; gap: 8px 20px; padding: 8px 24px; border-bottom: 1px solid var(--border-subtle); background: var(--surface)">
+<a href="Dashboard.dc.html" aria-label="리드미 홈" style="display: inline-flex; flex: none; align-items: center; gap: 8px; color: var(--foreground); font-size: 16px; font-weight: 700; line-height: 1.4; text-decoration: none"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="10" style="fill: var(--accent)"></rect><rect x="8" y="7.5" width="12" height="3" rx="1.5" style="fill: var(--accent-foreground)"></rect><rect x="5" y="13" width="22" height="7" rx="2.5" style="fill: var(--highlight)"></rect><rect x="8" y="15" width="16" height="3" rx="1.5" style="fill: var(--highlight-foreground)"></rect><rect x="8" y="22.5" width="9" height="3" rx="1.5" style="fill: var(--accent-foreground)"></rect></svg><span>리드미</span></a>
+<nav aria-label="주요 메뉴" style="min-width: 0">
+<ul style="display: flex; flex-wrap: wrap; margin: 0; padding: 0; align-items: center; gap: 4px; list-style: none">
+<li><a href="Groups.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">스터디</a></li>
+<li><a href="#" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">정보공유</a></li>
+<li><a href="Main.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">경험카드</a></li>
+</ul>
+</nav>
+<div style="display: flex; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: 8px">
+<a href="Account.dc.html" aria-label="내 계정" style="display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); border-radius: 50%; background: var(--surface-sunken); color: var(--foreground); font-size: 13px; font-weight: 700; text-decoration: none">다</a>
+</div>
+</div>
+</header>
+<main style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px 64px; display: flex; flex-direction: column; gap: 32px; gap: 24px">
+<h1 style="margin: 0; font-family: var(--font-display); font-size: 36px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">설정</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px 40px">
+<nav aria-label="설정" style="display: flex; flex: 1 1 180px; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%">
+<a href="Account.dc.html" aria-current="page" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; background: var(--accent-subtle); color: var(--accent-strong)">내 정보</a>
+<a href="MailAuto.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">메일 자동화</a>
+<a href="Withdraw.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">탈퇴</a>
+<span style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary); font-weight: 500">외부 연동 (나중에)</span>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 24px; flex: 999 1 560px; min-width: 0; max-width: 720px">
+
+<section aria-labelledby="ac-profile" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<h2 id="ac-profile" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">프로필</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="ac-name" style="font-size: 14px; font-weight: 500">표시 이름</label>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<input id="ac-name" type="text" defaultValue="다온" style="height: var(--control-height-md); width: 100%; min-width: 0; box-sizing: border-box; padding: 4px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; letter-spacing: inherit; flex: 1 1 200px; width: auto">
+<button type="button" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">저장</button>
+</div>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">그룹 멤버에게 보이는 이름입니다.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 16px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 500">이메일</span><span>name@example.com</span></div>
+<span style="display: inline-flex; flex: none; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 12px; font-weight: 700; white-space: nowrap">인증됨</span>
+</div>
+</section>
+
+<section aria-labelledby="ac-login" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting); gap: 0">
+<h2 id="ac-login" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4; margin-bottom: 16px">로그인 방법</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 16px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 500">비밀번호</span><sc-if value="{{pwHas}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; color: var(--text-secondary)">설정되어 있습니다</span></sc-if><sc-if value="{{pwNone}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: var(--text-secondary)">설정되어 있지 않습니다</span></sc-if><sc-if value="{{pwChanged}}" hint-placeholder-val="{{ false }}"><span role="status" style="display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; font-size: 13px; font-weight: 500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px; color: var(--success)"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg><span>비밀번호를 바꿨습니다. 다른 기기는 로그아웃되었습니다.</span></span></sc-if></div>
+<sc-if value="{{pwNone}}" hint-placeholder-val="{{ false }}"><a href="PasswordChange-None.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 6px; height: var(--control-height-sm); box-sizing: border-box; padding: 0 16px; border-radius: var(--radius-pill); font-size: 13px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-weight: 700; white-space: nowrap; text-decoration: none">비밀번호 만들기</a></sc-if><sc-if value="{{pwHas}}" hint-placeholder-val="{{ true }}"><a href="PasswordChange.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 6px; height: var(--control-height-sm); box-sizing: border-box; padding: 0 16px; border-radius: var(--radius-pill); font-size: 13px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-weight: 700; white-space: nowrap; text-decoration: none">비밀번호 바꾸기</a></sc-if>
+</div>
+<sc-if value="{{googleOn}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 16px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 500">구글</span><span style="font-size: 14px; color: var(--text-secondary)">name@gmail.example 계정이 연결되어 있습니다</span></div>
+<span style="display: inline-flex; flex: none; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 12px; font-weight: 700; white-space: nowrap">연결됨</span>
+</div>
+</sc-if>
+<sc-if value="{{googleOff}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 16px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 500">구글</span><span style="font-size: 14px; color: var(--text-secondary)">연결하면 구글로도 로그인할 수 있습니다</span></div>
+<button type="button" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 6px; height: var(--control-height-sm); box-sizing: border-box; padding: 0 16px; border-radius: var(--radius-pill); font-size: 13px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">구글 연결</button>
+</div>
+</sc-if>
+</section>
+
+<button type="button" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer; align-self: flex-start">로그아웃</button>
+
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"google":{"editor":"boolean","default":true},"password":{"editor":"enum","options":["set","changed","none"],"default":"set"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+var props = this.props || {};
+var st = this.state || {};
+var self = this;
+var theme = props.dark ? 'dark' : 'light';
+var google = props.google === undefined ? true : !!props.google;
+var password = props.password || 'set';
+return { theme: theme, googleOn: google, googleOff: !google, pwHas: password !== 'none', pwNone: password === 'none', pwChanged: password === 'changed' };
+}
+}
+</script>
+</body>
+</html>

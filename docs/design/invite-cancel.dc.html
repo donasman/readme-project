@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>창 · 초대 링크 취소</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="readme-frame.css">
+<link rel="stylesheet" href="readme-tabs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="rm-root pal-a" data-theme="{{theme}}" style="position: relative; min-height: 100vh; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: 16px; line-height: 1.4; letter-spacing: -0.01em; word-break: keep-all; text-wrap: pretty">
+<div style="display: flex; min-height: 100vh; box-sizing: border-box; align-items: center; justify-content: center; padding: 24px 16px; background: oklch(0% 0 0 / .45)">
+<div role="dialog" aria-modal="true" aria-labelledby="ic-title" style="display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 440px; box-sizing: border-box; padding: 24px; border: 1px solid var(--float-edge, var(--border-subtle)); border-radius: var(--radius-panel); background: var(--surface-raised); box-shadow: var(--shadow-floating)">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="ic-title" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">초대 링크를 취소할까요?</h2>
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">내가 2026-11-10 09:40에 만든 링크 · 2026-11-17까지</p>
+</div>
+<p style="margin: 0; font-size: 14px">취소하면 이 링크로는 더 들어올 수 없고, 되살릴 수 없습니다. 이미 들어온 멤버와 다른 초대 링크는 그대로입니다.</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px"><a href="Members-Links.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-weight: 700; white-space: nowrap; text-decoration: none">닫기</a><a href="Members-Links.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid transparent; background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--foreground); font-weight: 700; white-space: nowrap; text-decoration: none">링크 취소</a></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":560,"height":560}}'>
+class Component extends DCLogic {
+renderVals() {
+var props = this.props || {};
+return { theme: props.dark ? 'dark' : 'light' };
+}
+}
+</script>
+</body>
+</html>

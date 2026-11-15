@@ -87,11 +87,17 @@ body{margin:0}
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px">
 <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
 <h2 style="margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">공고 내용</h2>
-<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">가람이 11.05에 올림</p>
+<sc-if value="{{byOther}}" hint-placeholder-val="{{ true }}"><p style="margin: 0; font-size: 13px; color: var(--text-secondary)">가람이 11.05에 올림</p></sc-if>
+<sc-if value="{{asPoster}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 13px; color: var(--text-secondary)">내가 11.05에 올림</p></sc-if>
 </div>
-<sc-if value="{{asLeader}}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<sc-if value="{{asPoster}}" hint-placeholder-val="{{ false }}">
+<a href="PostEdit.dc.html" style="display: inline-flex; flex: none; align-items: center; height: var(--control-height-sm); box-sizing: border-box; padding: 0 16px; border: 1px solid var(--outline-border); border-radius: var(--radius-pill); background: var(--outline-fill); color: var(--foreground); font-size: 13px; font-weight: 700; white-space: nowrap; text-decoration: none">공고 고치기</a>
+</sc-if>
+<sc-if value="{{canTakeDown}}">
 <button type="button" style="display: inline-flex; flex: none; align-items: center; height: var(--control-height-sm); padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius-pill); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--foreground); font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer">그룹에서 내리기</button>
 </sc-if>
+</div>
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 20px 32px">
 <div style="display: flex; flex-direction: column; gap: 8px">
@@ -229,7 +235,7 @@ body{margin:0}
 </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"asLeader":{"editor":"boolean","default":false},"listHref":{"editor":null,"default":"GroupPosts.dc.html"},"$preview":{"width":1280,"height":1240}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"asLeader":{"editor":"boolean","default":false},"asPoster":{"editor":"boolean","default":false},"listHref":{"editor":null,"default":"GroupPosts.dc.html"},"$preview":{"width":1280,"height":1240}}'>
 class Component extends DCLogic {
 renderVals() {
 var props = this.props || {};
@@ -242,6 +248,9 @@ return {
 theme: props.dark ? 'dark' : 'light',
 listHref: props.listHref || 'GroupPosts.dc.html',
 asLeader: !!props.asLeader,
+asPoster: !!props.asPoster,
+byOther: !props.asPoster,
+canTakeDown: !!props.asLeader || !!props.asPoster,
 meOn: on,
 meOff: !on,
 toggle: function () { self.setState({ on: !on }); },
