@@ -55,6 +55,7 @@ const SCENARIOS = [
   { name: "dialog-review-drop", path: "/cards/review", width: 1280, steps: [["press", "이 카드 버리기"]] },
   { name: "dialog-leave", path: "/groups/be/members", width: 1280, steps: [["press", "그룹 나가기"]] },
   { name: "dialog-create-group", path: "/groups", width: 1280, steps: [["press", "그룹 만들기"]] },
+  { name: "action-error", path: "/groups/be/posts?mock=offline", width: 1280, steps: [["press", "관심 켜기"]] },
   // 공고 올리기(7차)
   { name: "post-new", path: NEW, width: 1280 },
   { name: "post-new-text", path: NEW, width: 1280, steps: [["press", "본문 붙여넣기"]] },

@@ -21,6 +21,7 @@ import type {
   UploadPostResult,
 } from "@/features/group-posts/types"
 import { addDays, daysBetween } from "@/shared/lib/date"
+import { networkError } from "@/shared/lib/api"
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { KEYWORDS } from "./example-cards"
@@ -31,6 +32,7 @@ import { keepSnapshot, statusOf } from "./user-postings"
  * 가짜 서버만의 보기 설정. 처음 여는 주소에 붙인다(새로 고치면 처음 상태로 돌아간다).
  * ?mock=guest: 로그인하지 않은 사람. ?mock=no-groups: 그룹이 하나도 없는 사람(내 그룹의 빈 상태, 초대 수락).
  * ?mock=no-google: 구글을 연결하지 않은 사람(내 정보).
+ * ?mock=offline: 관심 켜기·끄기가 끊긴 연결처럼 실패한다(버튼 오류 알림, app/action-error.tsx).
  */
 const MOCK = new Set(typeof location === "undefined" ? [] : new URLSearchParams(location.search).getAll("mock"))
 
@@ -219,6 +221,7 @@ export function acceptInvite(token: string): AcceptInviteResult {
 
 /** 이 그룹에서 이 공고의 관심을 켜고 끈다. */
 export function setInterest(groupId: string, postId: string, interested: boolean): MyState {
+  if (MOCK.has("offline")) throw networkError()
   const post = rawPost(groupId, postId)
   post.me.interested = interested
   return myState(post)
