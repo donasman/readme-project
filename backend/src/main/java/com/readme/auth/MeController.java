@@ -19,7 +19,7 @@ import com.readme.common.error.ApiException;
 import com.readme.common.error.CommonErrorCode;
 
 /**
- * 내 계정: 읽기, 표시 이름, 비밀번호 바꾸기, 탈퇴(로그인 설계 4절).
+ * 내 계정: 읽기, 표시 이름, 비밀번호 바꾸기, 구글 연결 시작, 탈퇴(로그인 설계 4절).
  */
 @RestController
 class MeController {
@@ -57,6 +57,17 @@ class MeController {
 		HttpSession session = httpRequest.getSession(false);
 		this.service.changePassword(user.id(), request.currentPassword(), request.newPassword(),
 				(session != null) ? session.getId() : null);
+	}
+
+	/**
+	 * 로그인한 채로 구글 연결을 시작한다(로그인 설계 4.1). 이 세션에 연결할 사람을 적어 둘 뿐이다. 프런트는 204 를 받으면 페이지를
+	 * {@code GET /oauth2/authorization/google} 로 옮기고, 구글에서 돌아오면 GoogleLoginHandler 가 연결한다.
+	 * 로그인 주소로 바로 가지 않고 이것을 거치는 것은 CSRF 검사를 받게 하려는 것이다. 남의 사이트가 연결을 시작하지 못한다.
+	 */
+	@PostMapping("/api/me/google-link")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void startGoogleLink(@CurrentUser LoginUser user, HttpServletRequest httpRequest) {
+		httpRequest.getSession().setAttribute(GoogleLoginHandler.LINK_USER, user.id());
 	}
 
 	/** 탈퇴하면 지워질 것의 수와 내가 그룹장인 그룹(누가 이어받는지, 혼자면 지워진다). */

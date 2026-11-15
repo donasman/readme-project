@@ -1,10 +1,12 @@
 package com.readme.auth;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.OptionalLong;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +31,20 @@ import com.readme.common.config.AppProperties;
  *
  * <p>동의를 거부했거나, 구글이 오류를 냈거나, 연결할 계정이 없으면 프런트의 {@code /login?error=google} 로 보낸다.
  * 이유는 나누지 않는다. 기록에는 토큰과 이메일을 남기지 않는다.
+ *
+ * <p>로그인한 채로 구글 연결하기(4.1): 세션에 {@link #LINK_USER} 가 있으면 로그인 대신 그 사람의 계정에 구글 계정을 연결하고
+ * ({@link AccountService#linkGoogle}) 프런트의 내 정보로 결과를 붙여 보낸다. 성공이든 실패든 돌아오면 {@link #LINK_USER} 를 지운다.
  */
 @Component
 class GoogleLoginHandler implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
+
+	/**
+	 * 세션에 둔 구글 연결의 표시. 값은 연결을 시작한 사용자의 id(Long)다. CSRF 를 검사하는 {@code POST /api/me/google-link} 만
+	 * 넣는다(MeController). 구글에서 돌아오면 지우고, 다른 로그인이 시작되면 {@link LoginSession#start} 가 지운다.
+	 */
+	// shortcut: 표시에 시간 제한이 없어 구글에 가지 않고 떠나면 그 세션의 다음 구글 왕복이 로그인 대신 연결이 된다(본인 브라우저의 구글 계정만),
+	// 문제가 되면 시작한 시각을 함께 두고 몇 분 지난 표시는 버린다
+	static final String LINK_USER = GoogleLoginHandler.class.getName() + ".LINK_USER";
 
 	private static final Logger log = LoggerFactory.getLogger(GoogleLoginHandler.class);
 
@@ -50,6 +63,11 @@ class GoogleLoginHandler implements AuthenticationSuccessHandler, Authentication
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
+		Long linkUser = takeLinkUser(request);
+		if (linkUser != null) {
+			link(linkUser, authentication, request, response);
+			return;
+		}
 		OptionalLong userId = OptionalLong.empty();
 		try {
 			OidcUser google = (OidcUser) authentication.getPrincipal();
@@ -74,11 +92,45 @@ class GoogleLoginHandler implements AuthenticationSuccessHandler, Authentication
 			AuthenticationException exception) throws IOException {
 		log.info("구글 로그인 실패: {}", (exception instanceof OAuth2AuthenticationException oauth2)
 				? oauth2.getError().getErrorCode() : exception.getClass().getSimpleName());
-		response.sendRedirect(errorUrl());
+		// 실패하면 보안 필터가 세션의 로그인 정보를 바꾸지 않는다. 연결을 시작한 사람은 로그인한 채로 내 정보로 돌아간다
+		response.sendRedirect((takeLinkUser(request) != null) ? accountUrl("error") : errorUrl());
+	}
+
+	/** 구글 연결의 끝. 결과와 상관없이 세션의 로그인은 연결을 시작한 사람이다. */
+	private void link(long userId, Authentication authentication, HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
+		String result = "error";
+		try {
+			OidcUser google = (OidcUser) authentication.getPrincipal();
+			result = this.accounts.linkGoogle(userId, google.getSubject(), google.getEmail())
+				.name().toLowerCase(Locale.ROOT).replace('_', '-');
+		}
+		catch (RuntimeException ex) {
+			log.warn("구글 연결을 마치지 못했다: {}", ex.getClass().getSimpleName());
+		}
+		// 보안 필터가 세션의 로그인 정보를 구글의 것으로 바꿔 두었다. 연결을 시작한 사람으로 되돌린다
+		this.loginSession.start(userId, request, response);
+		response.sendRedirect(accountUrl(result));
+	}
+
+	/** 세션의 구글 연결 표시를 꺼내고 지운다. 없으면 null. */
+	private static Long takeLinkUser(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			return null;
+		}
+		Long userId = (Long) session.getAttribute(LINK_USER);
+		session.removeAttribute(LINK_USER);
+		return userId;
 	}
 
 	private String errorUrl() {
 		return this.app.frontendOrigin() + "/login?error=google";
+	}
+
+	/** 프런트의 내 정보. result 는 linked, in-use, has-google, error 다(로그인 설계 7절). */
+	private String accountUrl(String result) {
+		return this.app.frontendOrigin() + "/settings/account?google=" + result;
 	}
 
 }

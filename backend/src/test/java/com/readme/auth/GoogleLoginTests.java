@@ -47,7 +47,7 @@ import com.readme.IntegrationTest;
 import com.readme.TestMailbox;
 
 /**
- * 구글 로그인(로그인 설계 3.2, 4.1). 실제 보안 필터와 세션(spring_session)을 거치고, 구글은 부르지 않는다.
+ * 구글 로그인과 로그인한 채로 구글 연결하기(로그인 설계 3.2, 4.1). 실제 보안 필터와 세션(spring_session)을 거치고, 구글은 부르지 않는다.
  *
  * <p>구글 클라이언트 값을 넣어 구글 로그인을 켜야 하므로 다른 통합 테스트와 서버·DB 를 나눠 쓰지 못하고 따로 띄운다.
  * 구글로 보내는 것(state, nonce 를 세션에 두기)과 돌아온 뒤의 처리는 실제 것이다. 구글 쪽(코드를 토큰으로 바꾸기, ID 토큰 검사,
@@ -63,6 +63,9 @@ class GoogleLoginTests {
 	private static final String HOME = "http://localhost:5173/";
 
 	private static final String LOGIN_ERROR = "http://localhost:5173/login?error=google";
+
+	/** 구글 연결을 마치면 돌아가는 내 정보. 뒤에 결과가 붙는다. */
+	private static final String ACCOUNT = "http://localhost:5173/settings/account?google=";
 
 	private static final String PASSWORD = "correct horse";
 
@@ -238,6 +241,124 @@ class GoogleLoginTests {
 		assertThat(back).hasRedirectedUrl(LOGIN_ERROR);
 	}
 
+	// ── 로그인한 채로 구글 연결하기(4.1, 2026-11-16) ─────────────────────────
+
+	@Test
+	void linkingWhileLoggedInAddsTheGoogleAccountWhateverItsEmail() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		String googleEmail = newEmail();
+		String sub = newSub();
+
+		// 구글 계정의 이메일이 계정의 이메일과 다르고, 구글이 확인하지 않은 이메일이어도 연결한다
+		MvcTestResult back = linkGoogle(login(user, null), sub, googleEmail, false);
+
+		assertThat(back).hasStatus(HttpStatus.FOUND).hasRedirectedUrl(ACCOUNT + "linked");
+		// 연결을 시작한 사람으로 로그인한 채다
+		assertThat(me(back)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "id": %d, "name": "가람", "email": "%s", "hasPassword": true, "providers": ["google"],
+				  "google": { "email": "%s" } }
+				""".formatted(user, this.fixtures.emailOf(user), googleEmail));
+		// 다음부터는 그 구글 계정으로 이 계정에 로그인한다
+		assertThat(me(googleLogin(sub, googleEmail, false, "구글 이름"))).bodyJson().isLenientlyEqualTo("""
+				{ "id": %d }
+				""".formatted(user));
+	}
+
+	@Test
+	void aGoogleAccountLinkedToAnotherAccountStaysThere() {
+		long other = this.fixtures.user("나래");
+		String sub = newSub();
+		link(other, sub);
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+
+		MvcTestResult back = linkGoogle(login(user, null), sub, newEmail(), true);
+
+		assertThat(back).hasRedirectedUrl(ACCOUNT + "in-use");
+		// 그 구글 계정의 사람(나래)으로 바뀌지 않는다
+		assertThat(me(back)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "id": %d, "providers": [], "google": null }
+				""".formatted(user));
+		assertThat(googleUserOf(sub)).isEqualTo(other);
+	}
+
+	@Test
+	void anAccountThatAlreadyHasGoogleKeepsIt() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		String first = newSub();
+		link(user, first);
+
+		MvcTestResult back = linkGoogle(login(user, null), newSub(), newEmail(), true);
+
+		assertThat(back).hasRedirectedUrl(ACCOUNT + "has-google");
+		assertThat(me(back)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "id": %d }
+				""".formatted(user));
+		assertThat(identitiesOf(user)).isEqualTo(1);
+		assertThat(googleUserOf(first)).isEqualTo(user);
+		// 이미 연결된 그 구글 계정으로 다시 연결하면 연결된 것이다
+		assertThat(linkGoogle(login(user, null), first, newEmail(), true)).hasRedirectedUrl(ACCOUNT + "linked");
+	}
+
+	@Test
+	void deniedConsentWhileLinkingGoesBackToMyAccountStillLoggedIn() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		String session = login(user, null);
+		assertThat(startLink(session)).hasStatus(HttpStatus.NO_CONTENT);
+		MvcTestResult start = toGoogle(session);
+
+		MvcTestResult back = this.mvc.get().uri("/login/oauth2/code/google")
+			.param("error", "access_denied")
+			.param("state", query(start).get("state"))
+			.cookie(new Cookie("SESSION", session))
+			.exchange();
+
+		assertThat(back).hasRedirectedUrl(ACCOUNT + "error");
+		assertThat(me(session)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "id": %d }
+				""".formatted(user));
+		// 연결 표시는 돌아오면 지워진다. 다시 구글에 다녀오면 보통의 구글 로그인이다
+		assertThat(googleLogin(toGoogle(session), session, newSub(), newEmail(), true, "새 사람")).hasRedirectedUrl(HOME);
+		assertThat(identitiesOf(user)).isZero();
+	}
+
+	@Test
+	void withoutTheCsrfCheckedStartGoogleLogsInAsBefore() {
+		long user = this.fixtures.passwordUser("가람", PASSWORD, true);
+		String session = login(user, null);
+		// 남의 사이트가 보낸 요청에는 CSRF 토큰이 없다. 로그인하지 않았으면 시작할 수 없다
+		assertThat(this.mvc.post().uri("/api/me/google-link").cookie(new Cookie("SESSION", session)))
+			.hasStatus(HttpStatus.FORBIDDEN).bodyJson().extractingPath("$.code").isEqualTo("CSRF_INVALID");
+		assertThat(this.mvc.post().uri("/api/me/google-link").with(xsrf())).hasStatus(HttpStatus.UNAUTHORIZED);
+		long other = this.fixtures.user("나래");
+		String sub = newSub();
+		link(other, sub);
+
+		// 연결을 시작하지 않았으니, 로그인한 채로 구글에 다녀와도 전처럼 그 구글 계정의 사람으로 로그인한다
+		MvcTestResult back = googleLogin(toGoogle(session), session, sub, newEmail(), true, "나래");
+
+		assertThat(back).hasRedirectedUrl(HOME);
+		assertThat(me(back)).bodyJson().isLenientlyEqualTo("""
+				{ "id": %d }
+				""".formatted(other));
+		assertThat(identitiesOf(user)).isZero();
+	}
+
+	@Test
+	void anotherLoginInTheSameBrowserDropsAnUnfinishedLink() {
+		long first = this.fixtures.passwordUser("가람", PASSWORD, true);
+		long second = this.fixtures.passwordUser("나래", PASSWORD, true);
+		String session = login(first, null);
+		assertThat(startLink(session)).hasStatus(HttpStatus.NO_CONTENT);
+
+		// 가람이 구글에 가지 않고 자리를 떴고, 같은 브라우저에서 나래가 로그인한 뒤 구글로 로그인한다
+		String secondSession = login(second, session);
+		MvcTestResult back = googleLogin(toGoogle(secondSession), secondSession, newSub(), newEmail(), true, "나래 구글");
+
+		// 나래의 구글 계정이 가람의 계정에 붙지 않는다
+		assertThat(back).hasRedirectedUrl(HOME);
+		assertThat(identitiesOf(first)).isZero();
+	}
+
 	/** 구글로 보낸 뒤, 구글이 이 사람을 확인하고 돌려보낸 것처럼 돌아오는 주소를 부른다. */
 	private MvcTestResult googleLogin(String sub, String email, boolean emailVerified, String name) {
 		return googleLogin(this.mvc.get().uri("/oauth2/authorization/google").exchange(), sub, email, emailVerified, name);
@@ -248,6 +369,12 @@ class GoogleLoginTests {
 	 * CSRF 토큰을 지우고 새로 만드는 일(구글 필터, LoginSession)이 실제처럼 두 번 돈다.
 	 */
 	private MvcTestResult googleLogin(MvcTestResult start, String sub, String email, boolean emailVerified, String name) {
+		return googleLogin(start, setCookie(start, "SESSION"), sub, email, emailVerified, name);
+	}
+
+	/** 구글로 보내기 전부터 세션이 있었으면(로그인한 사람) start 는 세션 쿠키를 새로 주지 않는다. 그 세션으로 돌아온다. */
+	private MvcTestResult googleLogin(MvcTestResult start, String session, String sub, String email, boolean emailVerified,
+			String name) {
 		Map<String, String> query = query(start);
 		Map<String, Object> idToken = new HashMap<>();
 		idToken.put("sub", sub);
@@ -262,8 +389,39 @@ class GoogleLoginTests {
 		return this.mvc.get().uri("/login/oauth2/code/google")
 			.param("code", "test-code")
 			.param("state", query.get("state"))
-			.cookie(new Cookie("SESSION", setCookie(start, "SESSION")), new Cookie("XSRF-TOKEN", OLD_XSRF_TOKEN))
+			.cookie(new Cookie("SESSION", session), new Cookie("XSRF-TOKEN", OLD_XSRF_TOKEN))
 			.exchange();
+	}
+
+	/** 이메일·비밀번호로 실제 로그인한 세션. session 이 있으면 그 브라우저에서 로그인한다. 로그인이 바꾼 세션 id 를 돌려준다. */
+	private String login(long userId, String session) {
+		MockMvcTester.MockMvcRequestBuilder request = this.mvc.post().uri("/api/auth/login").with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{ \"email\": \"%s\", \"password\": \"%s\" }".formatted(this.fixtures.emailOf(userId), PASSWORD));
+		if (session != null) {
+			request = request.cookie(new Cookie("SESSION", session));
+		}
+		MvcTestResult login = request.exchange();
+		assertThat(login).hasStatusOk();
+		return setCookie(login, "SESSION");
+	}
+
+	/** 내 정보의 "구글 연결": 연결을 시작하고, 구글로 가서, 구글이 이 사람을 확인하고 돌려보낸다. */
+	private MvcTestResult linkGoogle(String session, String sub, String email, boolean emailVerified) {
+		assertThat(startLink(session)).hasStatus(HttpStatus.NO_CONTENT);
+		return googleLogin(toGoogle(session), session, sub, email, emailVerified, "구글 이름");
+	}
+
+	private MvcTestResult startLink(String session) {
+		return this.mvc.post().uri("/api/me/google-link").with(xsrf()).cookie(new Cookie("SESSION", session)).exchange();
+	}
+
+	private MvcTestResult toGoogle(String session) {
+		return this.mvc.get().uri("/oauth2/authorization/google").cookie(new Cookie("SESSION", session)).exchange();
+	}
+
+	private MvcTestResult me(String session) {
+		return this.mvc.get().uri("/api/me").cookie(new Cookie("SESSION", session)).exchange();
 	}
 
 	/** 돌아온 응답의 세션 쿠키로 GET /api/me. */
@@ -287,6 +445,11 @@ class GoogleLoginTests {
 
 	private long userIdOf(String email) {
 		return this.jdbc.sql("select id from users where email = :email").param("email", email).query(Long.class).single();
+	}
+
+	private long googleUserOf(String sub) {
+		return this.jdbc.sql("select user_id from user_identities where provider_user_id = :sub").param("sub", sub)
+			.query(Long.class).single();
 	}
 
 	private int identitiesOf(long userId) {

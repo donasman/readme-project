@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,7 +23,8 @@ import org.springframework.stereotype.Component;
 /**
  * 로그인 세션을 만든다. 로그인 방식마다 사람을 확인하는 방법만 다르고, 확인한 뒤에는 모두 {@link #start} 를 부른다.
  *
- * <p>하는 일: 세션 id 를 새로 바꾸고(세션 고정 공격 막기), CSRF 토큰을 새로 만들고, 로그인 정보를 세션에 저장한다.
+ * <p>하는 일: 마치지 않은 구글 연결을 버리고, 세션 id 를 새로 바꾸고(세션 고정 공격 막기), CSRF 토큰을 새로 만들고,
+ * 로그인 정보를 세션에 저장한다.
  * 세션은 Spring Session JDBC 가 DB(spring_session)에 둔다.
  */
 @Component
@@ -48,6 +50,11 @@ public class LoginSession {
 
 	/** 이 요청의 사람을 userId 로 로그인시킨다. 이미 다른 사람으로 로그인해 있었으면 바뀐다. */
 	public void start(long userId, HttpServletRequest request, HttpServletResponse response) {
+		// 전에 로그인한 사람이 시작해 두고 마치지 않은 구글 연결을 버린다. 남기면 다음 구글 로그인이 그 사람의 계정에 연결된다
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			session.removeAttribute(GoogleLoginHandler.LINK_USER);
+		}
 		Authentication authentication = authenticationOf(userId);
 		this.sessionStrategy.onAuthentication(authentication, request, response);
 
