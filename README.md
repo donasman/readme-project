@@ -94,16 +94,16 @@ git switch -c feat/frontend-something  # 작업 브랜치
   - 로그인 전: 랜딩 `/welcome`, 로그인 `/login`, 회원가입 `/signup`·`/signup/sent`, 이메일 인증 `/verify-email`, 비밀번호 재설정 `/password-reset`·`/password-reset/sent`·`/password-reset/new`, 초대 `/invite/:token`
   - 홈·지원 관리: 홈 `/`, 내 공고 `/my-posts`·`/my-posts/:postingId`, 지원 현황 `/board`, 달력 `/calendar`, 메일 확인함 `/mail`
   - 그룹: 내 그룹 `/groups`, 그룹 공고 목록·상세 `/groups/:groupId/posts`·`…/posts/:postId`, 공고 올리기와 칸 확인 `…/posts/new`·`…/posts/new/check`, 멤버·초대 관리 `…/members`
-  - 경험카드: 목록 `/cards`, 상세·편집 `/cards/:cardId`·`/cards/:cardId/edit`, 자료로 카드 만들기 `/cards/sources`, 카드 확인 `/cards/review`
+  - 경험카드: 목록 `/cards`, 직접 만들기 `/cards/new`, 상세·편집 `/cards/:cardId`·`/cards/:cardId/edit`, 자료로 카드 만들기 `/cards/sources`, 카드 확인 `/cards/review`
   - 설정: 내 정보 `/settings/account`, 메일 자동화 `/settings/mail`, 탈퇴 `/settings/withdraw`
   - `/` 는 홈이다. 로그인하지 않았으면 랜딩으로, 그룹이 없으면 내 그룹으로 보낸다. 다른 화면은 로그인하지 않았으면 로그인 화면으로 보낸다. `/dev/components` 는 부품 확인용이고 개발 서버에서만 열린다.
 - 화면의 기준: 그룹 공고 두 화면은 `docs/design/`(디자인 원본과 캡처), 나머지는 캔버스 "리드미 시안 3종"의 1~9차 시안이다. 화면마다 어느 차수인지는 `docs/리드미_화면_API_대응.md` 1절에 있다.
 - 구조: `src/app`(라우터, 틀, 헤더), `src/features/<기능>`(`auth`, `cards`, `group-posts`, `groups`, `mail`, `my-posts`, `settings`), `src/domain`(`session`, `group`, `posting`), `src/shared`(공용 부품과 `lib`), `src/mocks`(가짜 서버). 규칙은 `frontend/CLAUDE.md`, 근거는 `docs/리드미_프런트_구조_계획.md`.
 - 데이터: 각 층의 `api.ts` 가 데이터를 읽고 고치는 한 곳이다. 서버는 `src/shared/lib/api.ts` 의 `request` 로 부른다(쿠키 포함, CSRF 헤더, 오류는 `ApiError`). `npm run dev` 는 모두 가짜 서버(`src/mocks`, 예시 데이터를 메모리에 둔다)를 부르고, `npm run dev:server` 와 빌드는 아래의 서버를 부른다. 서버 주소는 `VITE_API_ORIGIN`(없으면 `http://localhost:8080`)이고 개발 프록시는 두지 않았다.
-- 서버를 부르는 것: 로그인 쪽 화면 모두(로그인, 회원가입, 이메일 인증, 비밀번호 재설정, 구글 로그인 시작), 보는 사람(`GET /api/me`), 초대, 그룹과 멤버·초대 관리, 그룹 공고(읽어 오기, 올리기, 관심, 댓글, 마감일, 내리기 포함), 홈, 내 공고, 지원 현황, 달력, 경험카드(목록, 상세·편집, 확인, 지우기, 태그 제안), 내 정보, 이름 바꾸기, 로그아웃, 탈퇴.
+- 서버를 부르는 것: 로그인 쪽 화면 모두(로그인, 회원가입, 이메일 인증, 비밀번호 재설정, 구글 로그인 시작), 보는 사람(`GET /api/me`), 초대, 그룹과 멤버·초대 관리, 그룹 공고(읽어 오기, 올리기, 관심, 댓글, 마감일, 내리기 포함), 홈, 내 공고, 지원 현황, 달력, 경험카드(목록, 직접 만들기, 상세·편집, 확인, 지우기, 태그 제안), 자료(올리기, 목록, 지우기), 내 정보, 이름 바꾸기, 로그아웃, 탈퇴.
 - 아직 가짜 서버만 부르는 것: 메일 확인함, 메일 자동화 설정, 홈의 "메일에서 온 변경". `npm run dev:server` 에서도 이 자리는 예시 데이터를 보인다. 카드 추출은 서버에 없어 `npm run dev:server` 에서 "카드 뽑기 시작"을 누르면 준비 중이라고 알린다. 메일 자동화도 서버에 없다. 화면이 바라는데 서버에 없는 칸은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
-- 동작이 없는 자리: 헤더의 정보공유(화면이 없다), 경험카드의 직접 만들기(시안이 없다), 내 공고의 공고 넣기(그룹 없이 넣는 화면이 없다), 설정의 구글 연결(서버에 없다), 원문 주소가 없는 공고의 원문 열기. 이런 자리와 나중에 고칠 것은 코드에 `shortcut:` 으로 적혀 있다.
-- 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 67개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
+- 동작이 없는 자리: 헤더의 정보공유(화면이 없다), 내 공고의 공고 넣기(그룹 없이 넣는 화면이 없다), 설정의 구글 연결(서버에 없다), 원문 주소가 없는 공고의 원문 열기. 이런 자리와 나중에 고칠 것은 코드에 `shortcut:` 으로 적혀 있다.
+- 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 69개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
 - `src/index.css`: Arc 변수(`src/components/arc/foundation.css`) 위에 리드미 값(색 A)을 덮고, shadcn/ui 색 이름을 Arc 변수에 연결한다.
 - 부품: shadcn/ui 는 `src/components/ui`(button, input, textarea, dialog, dropdown-menu), dsui 는 `src/components/arc`(segmented-control, app-header 와 함께 들어온 기반). 헤더는 `src/app/layouts/group-header.tsx`(그룹 화면)와 `main-header.tsx`(그룹 밖 화면)를 따로 만들어 쓴다. 정한 값은 `reverse-engineering/리드미_디자인_적용_계획.md` 의 "적용 결과"에 있다.
 
