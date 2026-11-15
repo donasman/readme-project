@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Types;
 import java.util.Map;
 
 import com.jayway.jsonpath.JsonPath;
@@ -54,7 +55,7 @@ class CardSourceTests {
 		long id = id(result);
 		assertThat(result).bodyJson().isStrictlyEqualTo("""
 				{
-				  "source": { "id": %d, "name": "이력서.docx", "kind": "file", "chars": 28, "parts": 1,
+				  "source": { "id": %d, "name": "이력서.docx", "kind": "file", "chars": 28, "parts": 1, "cardCount": null,
 				              "createdAt": "2026-11-13", "latestJob": null },
 				  "duplicate": false
 				}
@@ -181,12 +182,43 @@ class CardSourceTests {
 		assertThat(this.mvc.get().uri("/api/card-sources").with(loginAs(me))).hasStatusOk().bodyJson()
 			.isStrictlyEqualTo("""
 					[
-					  { "id": %d, "name": "포트폴리오.md", "kind": "file", "chars": 11, "parts": 1, "createdAt": "2026-11-13",
-					    "latestJob": null },
-					  { "id": %d, "name": null, "kind": "text", "chars": 7, "parts": 1, "createdAt": "2026-11-13",
+					  { "id": %d, "name": "포트폴리오.md", "kind": "file", "chars": 11, "parts": 1, "cardCount": null,
+					    "createdAt": "2026-11-13", "latestJob": null },
+					  { "id": %d, "name": null, "kind": "text", "chars": 7, "parts": 1, "cardCount": 0,
+					    "createdAt": "2026-11-13",
 					    "latestJob": { "id": %d, "status": "running", "doneParts": 2, "totalParts": 3 } }
 					]
 					""".formatted(newer, older, latest));
+	}
+
+	@Test
+	void theListCountsTheCardsLeftFromEachSource() {
+		long me = this.fixtures.user("다온");
+		long extracted = id(uploadText(me, "{ \"text\": \"카드 둘을 뽑은 자료\" }").exchange());
+		long job = job(me, extracted, "DONE", 1, 1);
+		card(me, extracted, job);
+		card(me, extracted, job);
+		long emptied = id(uploadText(me, "{ \"text\": \"뽑은 카드를 모두 지운 자료\" }").exchange());
+		long deleted = card(me, emptied, job(me, emptied, "DONE", 1, 1));
+		this.jdbc.sql("delete from experience_cards where id = :id").param("id", deleted).update();
+		long running = id(uploadText(me, "{ \"text\": \"뽑는 중인 자료\" }").exchange());
+		card(me, running, job(me, running, "RUNNING", 1, 2));
+		long fresh = id(uploadText(me, "{ \"text\": \"아직 뽑지 않은 자료\" }").exchange());
+		card(me, null, null);
+
+		// 지운 카드와 직접 만든 카드는 세지 않는다. 뽑는 중이면 지금까지 만든 카드 수다
+		assertThat(this.mvc.get().uri("/api/card-sources").with(loginAs(me))).hasStatusOk().bodyJson()
+			.isLenientlyEqualTo("""
+					[
+					  { "id": %d, "cardCount": null },
+					  { "id": %d, "cardCount": 1 },
+					  { "id": %d, "cardCount": 0 },
+					  { "id": %d, "cardCount": 2 }
+					]
+					""".formatted(fresh, running, emptied, extracted));
+		// 올리기 응답의 source 도 같은 꼴이다. 이미 올린 자료면 그 자료의 카드 수가 온다
+		assertThat(uploadText(me, "{ \"text\": \"카드 둘을 뽑은 자료\" }")).hasStatusOk().bodyJson()
+			.isLenientlyEqualTo("{ \"source\": { \"id\": %d, \"cardCount\": 2 }, \"duplicate\": true }".formatted(extracted));
 	}
 
 	// ── 지우기 ────────────────────────────────────────────────────────
@@ -196,10 +228,7 @@ class CardSourceTests {
 		long me = this.fixtures.user("다온");
 		long source = id(uploadText(me, "{ \"text\": \"카드를 뽑은 자료\" }").exchange());
 		long job = job(me, source, "DONE", 1, 1);
-		long card = this.jdbc.sql("""
-				insert into experience_cards (user_id, title, source_id, job_id) values (:userId, '카드', :sourceId, :jobId)
-				returning id
-				""").param("userId", me).param("sourceId", source).param("jobId", job).query(Long.class).single();
+		long card = card(me, source, job);
 
 		assertThat(delete(me, source)).hasStatus(HttpStatus.NO_CONTENT);
 
@@ -245,6 +274,19 @@ class CardSourceTests {
 			.param("status", status)
 			.param("totalParts", totalParts)
 			.param("doneParts", doneParts)
+			.query(Long.class)
+			.single();
+	}
+
+	/** 카드 한 장. sourceId, jobId 가 null 이면 직접 만든 카드다. */
+	private long card(long userId, Long sourceId, Long jobId) {
+		return this.jdbc.sql("""
+				insert into experience_cards (user_id, title, source_id, job_id) values (:userId, '카드', :sourceId, :jobId)
+				returning id
+				""")
+			.param("userId", userId)
+			.param("sourceId", sourceId, Types.BIGINT)
+			.param("jobId", jobId, Types.BIGINT)
 			.query(Long.class)
 			.single();
 	}

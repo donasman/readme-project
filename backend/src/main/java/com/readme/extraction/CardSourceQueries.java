@@ -16,10 +16,12 @@ import com.readme.common.config.TimeConfig;
 @Component
 class CardSourceQueries {
 
-	// 자료마다 가장 최근 추출 작업 하나를 붙인다.
+	// 자료마다 그 자료에서 뽑은 카드 수와 가장 최근 추출 작업 하나를 붙인다. 카드 수는 experience_cards 를 읽기만 한다.
 	// shortcut: 조각 수를 세려고 본문을 모두 읽는다, 자료가 많아지거나 본문이 커지면 조각 수를 칸으로 둔다(마이그레이션)
 	private static final String SOURCES = """
 			select s.id, s.kind, s.file_name, s.char_count, s.body, s.created_at,
+			       (select count(*) from experience_cards c
+			         where c.user_id = s.user_id and c.source_id = s.id) as card_count,
 			       j.id as job_id, j.status, j.done_parts, j.total_parts
 			  from card_sources s
 			  left join lateral (
@@ -59,9 +61,12 @@ class CardSourceQueries {
 		CardSourceResponse.LatestJob job = rs.wasNull() ? null
 				: new CardSourceResponse.LatestJob(jobId, rs.getString("status").toLowerCase(Locale.ROOT),
 						rs.getInt("done_parts"), rs.getInt("total_parts"));
+		// 추출 작업이 없고 카드도 없으면 아직 뽑지 않은 자료다(null). 뽑았는데 카드를 모두 지웠으면 0 이다
+		int cards = rs.getInt("card_count");
+		Integer cardCount = (job == null && cards == 0) ? null : cards;
 		return new CardSourceResponse(rs.getLong("id"), rs.getString("file_name"),
 				SourceInput.Kind.valueOf(rs.getString("kind")), rs.getInt("char_count"),
-				SourceParts.count(rs.getString("body")),
+				SourceParts.count(rs.getString("body")), cardCount,
 				LocalDate.ofInstant(rs.getObject("created_at", OffsetDateTime.class).toInstant(), TimeConfig.SEOUL), job);
 	}
 
