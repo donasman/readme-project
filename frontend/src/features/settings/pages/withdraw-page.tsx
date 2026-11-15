@@ -9,18 +9,23 @@ import { FieldError, FormField, noteId } from "@/shared/components/form-field"
 import { sectionTitle, subLabel } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
+import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 
-import { getWithdrawInfo, withdraw } from "../api"
+import { getAccount, getWithdrawInfo, withdraw } from "../api"
 
-export function withdrawLoader() {
-  return getWithdrawInfo()
+/** 지워질 것과, 확인을 비밀번호로 할지 이메일로 할지(비밀번호가 없는 계정). */
+export async function withdrawLoader() {
+  const [info, account] = await Promise.all([getWithdrawInfo(), getAccount()])
+  return { info, hasPassword: account.hasPassword }
 }
 
-/** 탈퇴(시안 9차): 지워지는 것과 남는 것, 내가 그룹장인 그룹, 비밀번호와 확인 표시. */
+/** 탈퇴(시안 9차): 지워지는 것과 남는 것, 내가 그룹장인 그룹, 비밀번호(없는 계정은 이메일)와 확인 표시. */
 export function WithdrawPage() {
-  const info = useLoaderData<typeof withdrawLoader>()
+  const { info, hasPassword } = useLoaderData<typeof withdrawLoader>()
   const navigate = useNavigate()
+  // 비밀번호가 없는 계정(구글로만 가입)은 계정의 이메일로 확인한다(로그인 문서 7절 20번)
+  const what = hasPassword ? "비밀번호" : "이메일"
   const [password, setPassword] = useState("")
   const [agreed, setAgreed] = useState(false)
   const [errors, setErrors] = useState<{ password?: string; agreed?: string }>({})
@@ -33,10 +38,11 @@ export function WithdrawPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    const next = { password: password ? undefined : "비밀번호를 넣어 주세요.", agreed: agreed ? undefined : "확인 표시를 해 주세요." }
+    const next = { password: password.trim() ? undefined : `${what}${objectParticle(what)} 넣어 주세요.`, agreed: agreed ? undefined : "확인 표시를 해 주세요." }
     setErrors(next)
     if (next.password || next.agreed) return
-    if (!(await withdraw(password))) return setErrors({ password: "비밀번호가 맞지 않습니다." })
+    const confirmed = await withdraw(hasPassword ? { password } : { email: password.trim() })
+    if (!confirmed) return setErrors({ password: hasPassword ? "비밀번호가 맞지 않습니다." : "계정의 이메일과 맞지 않습니다." })
     // 로그인한 화면들(세션 라우트) 밖으로 나간다. 안에 머물면 보는 사람을 다시 읽지 않는다
     navigate(paths.welcome(), { replace: true })
   }
@@ -73,9 +79,11 @@ export function WithdrawPage() {
       </Panel>
 
       {info.leads.map((g) => (
-        <Notice key={g.name} title={`${g.name}의 그룹장입니다`}>
+        <Notice key={g.id} title={`${g.name}의 그룹장입니다`}>
           <span>
-            탈퇴하면 이 그룹은 그룹장 없이 남습니다. 멤버 {g.others}명은 그대로 쓸 수 있지만, 그룹장만 할 수 있는 일(남의 공고 내리기, 남의 댓글 지우기)은 아무도 할 수 없게 됩니다.
+            {g.successor
+              ? `탈퇴하면 가장 먼저 들어온 멤버인 ${g.successor.name} 님이 그룹장을 이어받습니다. 멤버 ${g.others}명은 그대로 쓸 수 있습니다.`
+              : "탈퇴하면 이 그룹은 지워집니다. 나 말고 멤버가 없어서입니다. 그룹에 올린 공고와 댓글도 함께 지워집니다."}
           </span>
         </Notice>
       ))}
@@ -85,11 +93,11 @@ export function WithdrawPage() {
           탈퇴 확인
         </h2>
         <form onSubmit={submit} noValidate className="contents">
-          <FormField id="wd-password" label="비밀번호" note={errors.password && <FieldError id="wd-password">{errors.password}</FieldError>}>
+          <FormField id="wd-password" label={what} note={errors.password && <FieldError id="wd-password">{errors.password}</FieldError>}>
             <Input
               id="wd-password"
-              type="password"
-              autoComplete="current-password"
+              type={hasPassword ? "password" : "email"}
+              autoComplete={hasPassword ? "current-password" : "email"}
               value={password}
               aria-invalid={errors.password ? true : undefined}
               aria-describedby={errors.password ? noteId("wd-password") : undefined}
