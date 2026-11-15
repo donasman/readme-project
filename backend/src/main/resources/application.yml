@@ -62,3 +62,16 @@ management:
   health:
     mail:
       enabled: false         # 메일 서버가 꺼져 있어도 서버 상태를 DOWN 으로 보지 않는다
+
+app:
+  # Claude 호출(llm 패키지, 경험카드 설계 4.5). API 키(app.llm.api-key)는 개발은 backend/application-local.yml,
+  # 운영은 ANTHROPIC_API_KEY(application-prod.yml). 테스트는 키 없이 가짜 호출(FakeClaudeApi)을 쓴다.
+  llm:
+    model: claude-opus-5-5     # 모든 기능이 쓰는 모델(정리 문서 7절 "사용할 모델")
+    monthly-limit-usd: 2       # 사용자마다 한 달(서울 기준 달력 월) 사용액 상한(정리 문서 7절 "무료 한도")
+    # 백만 토큰당 달러(platform.claude.com 가격 문서, 2026-11-16 확인). 사용액은 저장할 때 이 표로 낸다.
+    # claude-opus-5 와 claude-opus-4-8 은 서버 쪽 fallback 이 넘겨줄 수 있는 모델이다. 표에 없는 모델은 가장 비싼 단가로 센다.
+    prices:
+      "[claude-opus-5-5]": { input: 4, output: 20, cache-write-5m: 5, cache-write-1h: 8, cache-read: 0.20 }
+      "[claude-opus-5]": { input: 5, output: 25, cache-write-5m: 6.25, cache-write-1h: 10, cache-read: 0.50 }
+      "[claude-opus-4-8]": { input: 5, output: 25, cache-write-5m: 6.25, cache-write-1h: 10, cache-read: 0.50 }

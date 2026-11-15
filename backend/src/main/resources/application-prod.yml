@@ -42,3 +42,5 @@ app:
   mail-from: ${MAIL_FROM}                       # 예: 리드미 <no-reply@도메인>. 메일 발송 서비스에서 인증한 주소
   posting-read:
     contact: ${FETCHER_CONTACT}                 # 공고 링크를 받을 때 User-Agent 에 붙는 연락처. 공개 페이지나 mailto: 주소(로그인 화면이면 안 된다)
+  llm:
+    api-key: ${ANTHROPIC_API_KEY}               # Claude API 키(Console 의 키). 경험카드 설계 4.5
