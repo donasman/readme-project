@@ -19,11 +19,11 @@ record GroupPostDetailResponse(long id, long groupId, String company, String tit
 			List<CommentResponse> comments) {
 		return new GroupPostDetailResponse(post.id(), post.groupId(), post.company(), post.title(), post.deadline(),
 				post.postedBy(), post.postedAt(), post.interests(), post.me(), post.commentCount(),
-				details.deadlineName(), details.applyAt(), details.sourceUrl(), details.sections(), keywords, comments);
+				details.deadlineName(), details.applyAt(), post.sourceUrl(), details.sections(), keywords, comments);
 	}
 
 	/** 상세에만 있는 공고 본체의 값. */
-	record PostingDetails(String deadlineName, String applyAt, String sourceUrl, List<PostSection> sections) {
+	record PostingDetails(String deadlineName, String applyAt, List<PostSection> sections) {
 	}
 
 }

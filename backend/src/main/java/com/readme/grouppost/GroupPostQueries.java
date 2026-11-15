@@ -33,7 +33,7 @@ class GroupPostQueries {
 
 	/** 공고 줄. 보는 사람의 관심, 보는 사람의 지원 상태, 이 그룹의 댓글 수가 붙는다. */
 	private static final String POSTS = """
-			select p.id, p.company, p.title, p.deadline_kind, p.deadline_date, gp.posted_at,
+			select p.id, p.company, p.title, p.deadline_kind, p.deadline_date, p.source_url, gp.posted_at,
 			       u.id as posted_by_id, u.display_name as posted_by_name,
 			       exists (select 1 from group_post_interests i
 			                where i.group_id = gp.group_id and i.posting_id = gp.posting_id
@@ -231,15 +231,15 @@ class GroupPostQueries {
 				DeadlineResponse.of(rs.getString("deadline_kind"), rs.getObject("deadline_date", LocalDate.class)),
 				member(rs, "posted_by_id", "posted_by_name"),
 				LocalDate.ofInstant(instant(rs, "posted_at"), TimeConfig.SEOUL),
-				interests.getOrDefault(postingId, List.of()), me, rs.getInt("comment_count"));
+				interests.getOrDefault(postingId, List.of()), me, rs.getInt("comment_count"), rs.getString("source_url"));
 	}
 
 	private PostingDetails details(long postingId) {
 		return this.jdbc
-			.sql("select deadline_name, apply_at, source_url, sections::text as sections from postings where id = :postingId")
+			.sql("select deadline_name, apply_at, sections::text as sections from postings where id = :postingId")
 			.param("postingId", postingId)
 			.query((rs, rowNum) -> new PostingDetails(rs.getString("deadline_name"), rs.getString("apply_at"),
-					rs.getString("source_url"), this.jsonMapper.readValue(rs.getString("sections"), SECTIONS)))
+					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS)))
 			.single();
 	}
 

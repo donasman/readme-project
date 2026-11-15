@@ -40,6 +40,8 @@ class GroupPostReadTests {
 
 		// 서울 11-13 00:10 에 올렸다. UTC 로는 11-12 라서, 날짜를 UTC 로 구하면 postedAt 이 하루 어긋난다.
 		long dated = this.fixtures.posting("예시 커머스", "백엔드 개발자 신입", "DATE", TODAY.plusDays(3));
+		// 원문 주소는 목록에도 온다(마감일 넣기 창의 원문 링크). 없으면 null 이다
+		this.fixtures.details(dated, null, null, "https://example.com/jobs/1", "[]");
 		this.fixtures.post(group, dated, leader, Instant.parse("2026-11-12T15:10:00Z"));
 		this.fixtures.comment(group, dated, leader, "첫 댓글", NOW);
 		this.fixtures.comment(group, dated, me, "둘째 댓글", NOW);
@@ -60,19 +62,22 @@ class GroupPostReadTests {
 					      "id": %1$d, "groupId": %4$d, "company": "예시 커머스", "title": "백엔드 개발자 신입",
 					      "deadline": { "kind": "date", "date": "2026-11-16" },
 					      "postedBy": { "id": %5$d, "name": "가람" }, "postedAt": "2026-11-13",
-					      "interests": [], "me": { "interested": false, "status": null }, "commentCount": 2
+					      "interests": [], "me": { "interested": false, "status": null }, "commentCount": 2,
+					      "sourceUrl": "https://example.com/jobs/1"
 					    },
 					    {
 					      "id": %2$d, "groupId": %4$d, "company": "예시 SaaS", "title": "서버 개발자",
 					      "deadline": { "kind": "always" },
 					      "postedBy": { "id": %6$d, "name": "다온" }, "postedAt": "2026-11-01",
-					      "interests": [], "me": { "interested": false, "status": null }, "commentCount": 0
+					      "interests": [], "me": { "interested": false, "status": null }, "commentCount": 0,
+					      "sourceUrl": null
 					    },
 					    {
 					      "id": %3$d, "groupId": %4$d, "company": "예시 보안", "title": "주니어 서버 개발",
 					      "deadline": { "kind": "date", "date": "2026-11-06" },
 					      "postedBy": { "id": %5$d, "name": "가람" }, "postedAt": "2026-10-25",
-					      "interests": [], "me": { "interested": false, "status": null }, "commentCount": 0
+					      "interests": [], "me": { "interested": false, "status": null }, "commentCount": 0,
+					      "sourceUrl": null
 					    }
 					  ]
 					}
@@ -131,7 +136,7 @@ class GroupPostReadTests {
 					        { "member": { "id": %d, "name": "미정" }, "applied": false }
 					      ],
 					      "me": { "interested": true, "status": "필기 합격" },
-					      "commentCount": 0
+					      "commentCount": 0, "sourceUrl": null
 					    }
 					  ]
 					}
