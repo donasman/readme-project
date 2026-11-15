@@ -37,7 +37,7 @@ export interface PostingGroupState extends PostingGroup {
 // shortcut: 맞추기 규칙이 없어 가짜 서버가 태그 겹침으로 흉내 낸다, 매칭이 설계되면 맞춘다(화면 API 대응 3.3의 13번)
 /** 맞는 카드: 카드 제목과 겹치는 태그·키워드. */
 export interface CardMatch {
-  cardId: number
+  cardId: string
   title: string
   overlap: string[]
 }

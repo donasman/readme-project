@@ -16,7 +16,7 @@ import { orgAndRole, STAR_PARTS } from "../card-rules"
 import { CardStatusBadge, CardsSubpage, FactList, FlaggedText } from "../components/card-bits"
 
 export function cardLoader({ params }: LoaderFunctionArgs) {
-  return getCard(Number(params.cardId))
+  return getCard(params.cardId ?? "")
 }
 
 /** 카드 상세(6차 "카드 상세"). 확인할 것(검사 결과, 추출 메모)은 옆 칸에 모은다. */

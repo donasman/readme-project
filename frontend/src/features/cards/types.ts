@@ -1,12 +1,11 @@
-// 경험카드의 데이터 모양. docs/리드미_설계_로그인_경험카드.md 4.2절의 카드 응답에서 목록에 쓰는 칸만 둔다.
-// 서버가 생기면 응답이 이 모양으로 온다고 보고 화면을 짠다.
+// 경험카드의 데이터 모양. 서버의 응답(경험카드 문서 4.1, 4.3) 그대로다. id는 shared/lib/api.ts가 문자열로 읽는다.
 
 /** 카드로 답할 수 있는 자소서 문항 유형. 값은 한글 그대로다(설계 문서 3.2). */
 export type QuestionType = "지원동기" | "직무역량" | "협업" | "문제해결" | "성장" | "기타"
 
 /** 경험카드 한 장(목록에 보이는 칸). */
 export interface ExperienceCard {
-  id: number
+  id: string
   title: string
   /** 기간. 글자 그대로("2025-03 ~ 2025-05", "2026 ~ 현재") */
   period: string | null
@@ -55,8 +54,8 @@ export interface CardDetail extends ExperienceCard {
   facts: string[]
   /** 지금은 나만 보기 하나다(설계 가정 9) */
   visibility: "PRIVATE"
-  sourceId: number | null
-  // shortcut: 카드 응답에는 sourceId만 있다, 자료 이름을 싣는 방법이 정해지면 맞춘다(화면 API 대응 3.5의 22번)
+  sourceId: string | null
+  /** 카드를 뽑은 자료의 파일 이름. 직접 만든 카드, 자료를 지운 카드, 붙여넣은 글이면 null */
   sourceName: string | null
   // shortcut: 원문을 주는 API와 조각 위치 칸이 없다, 정해지면 맞춘다(화면 API 대응 3.5의 21번)
   /** 이 카드를 뽑은 자료 원문 부분. 문단은 줄바꿈으로 나눈다 */
@@ -70,7 +69,7 @@ export type CardInput = Pick<CardDetail, "title" | "period" | "org" | "role" | "
 
 /** 올린 자료. 파일은 저장하지 않고 읽어 낸 글만 둔다(설계 가정 7). */
 export interface CardSource {
-  id: number
+  id: string
   name: string
   /** 올린 날(YYYY-MM-DD) */
   createdAt: string
@@ -82,8 +81,8 @@ export interface CardSource {
 
 /** 카드 뽑기 작업(서버가 뒤에서 돌리고 화면이 몇 초마다 묻는다, 설계 가정 8). */
 export interface ExtractionJob {
-  id: number
-  sourceId: number
+  id: string
+  sourceId: string
   totalChunks: number
   doneChunks: number
   /** 지금까지 만든 카드 수 */
@@ -94,7 +93,6 @@ export interface ExtractionJob {
   skippedSameAs: string[]
 }
 
-// shortcut: 응답 모양은 프런트가 정했다, 설계에 응답이 정해지면 맞춘다(화면 API 대응 3.5의 25번)
 /** 태그 입력 후보(GET /api/keywords?q=): 다른 표기를 쳐도 대표 표기를 준다. */
 export interface KeywordSuggestion {
   label: string

@@ -6,7 +6,7 @@ import type { ExperienceCard } from "./types"
 let seq = 0
 function card(over: Partial<ExperienceCard> = {}): ExperienceCard {
   seq += 1
-  return { id: seq, title: `카드${seq}`, period: null, org: null, role: null, tags: [], summary: "", usableFor: ["기타"], verified: true, ...over }
+  return { id: String(seq), title: `카드${seq}`, period: null, org: null, role: null, tags: [], summary: "", usableFor: ["기타"], verified: true, ...over }
 }
 const titles = (cards: ExperienceCard[]) => cards.map((c) => c.title)
 const filters = (over: Partial<CardFilters> = {}): CardFilters => ({ ...DEFAULT_CARD_FILTERS, ...over })
@@ -58,13 +58,14 @@ describe("orgAndRole", () => {
 })
 
 describe("startFrom", () => {
-  const cards = [{ id: 1 }, { id: 2 }, { id: 3 }]
+  const cards = [{ id: "1" }, { id: "2" }, { id: "3" }]
   it("고른 카드부터 보고 앞 카드를 뒤로 돌려 하나도 빠뜨리지 않는다", () => {
-    expect(startFrom(cards, 3).map((c) => c.id)).toEqual([3, 1, 2])
+    expect(startFrom(cards, "3").map((c) => c.id)).toEqual(["3", "1", "2"])
   })
   it("첫 카드나 없는 id면 그대로", () => {
-    expect(startFrom(cards, 1).map((c) => c.id)).toEqual([1, 2, 3])
-    expect(startFrom(cards, 9).map((c) => c.id)).toEqual([1, 2, 3])
+    expect(startFrom(cards, "1").map((c) => c.id)).toEqual(["1", "2", "3"])
+    expect(startFrom(cards, "9").map((c) => c.id)).toEqual(["1", "2", "3"])
+    expect(startFrom(cards, null).map((c) => c.id)).toEqual(["1", "2", "3"])
   })
 })
 

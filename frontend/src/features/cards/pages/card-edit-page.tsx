@@ -17,11 +17,13 @@ import { cn, joinClasses } from "@/shared/lib/utils"
 import { getCard, suggestKeywords, updateCard } from "../api"
 import { STAR_PARTS } from "../card-rules"
 import { flaggedValues, SUMMARY_LIMIT } from "../card-text"
+
+// 칸의 maxLength는 서버가 받는 길이다(경험카드 문서 4.3). 넘으면 서버가 400으로 거절한다
 import { CardsSubpage } from "../components/card-bits"
 import { QUESTION_TYPES, type KeywordSuggestion, type QuestionType } from "../types"
 
 export function cardEditLoader({ params }: LoaderFunctionArgs) {
-  return getCard(Number(params.cardId))
+  return getCard(params.cardId ?? "")
 }
 
 let factSeq = 0
@@ -91,6 +93,7 @@ export function CardEditPage() {
               <Field id="edit-title" label="제목" note={titleEmpty && <FieldError id="edit-title">제목을 넣어 주세요.</FieldError>}>
                 <Input
                   id="edit-title"
+                  maxLength={200}
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value)
@@ -104,14 +107,14 @@ export function CardEditPage() {
               </Field>
               <div className="flex flex-wrap gap-4">
                 <Field id="edit-period" label="기간" note={<FieldHint id="edit-period">예: 2025-03 ~ 2025-05, 2026 ~ 현재</FieldHint>} className="min-w-0 flex-[1_1_200px]">
-                  <Input id="edit-period" value={period} onChange={(e) => setPeriod(e.target.value)} aria-describedby={noteId("edit-period")} className="md:text-base" />
+                  <Input id="edit-period" maxLength={50} value={period} onChange={(e) => setPeriod(e.target.value)} aria-describedby={noteId("edit-period")} className="md:text-base" />
                 </Field>
                 <Field id="edit-org" label="어디서" className="min-w-0 flex-[2_1_280px]">
-                  <Input id="edit-org" value={org} onChange={(e) => setOrg(e.target.value)} className="md:text-base" />
+                  <Input id="edit-org" maxLength={200} value={org} onChange={(e) => setOrg(e.target.value)} className="md:text-base" />
                 </Field>
               </div>
               <Field id="edit-role" label="맡은 일">
-                <Input id="edit-role" value={role} onChange={(e) => setRole(e.target.value)} className="md:text-base" />
+                <Input id="edit-role" maxLength={200} value={role} onChange={(e) => setRole(e.target.value)} className="md:text-base" />
               </Field>
               <Field
                 id="edit-summary"
@@ -122,7 +125,7 @@ export function CardEditPage() {
                   </span>
                 }
               >
-                <Input id="edit-summary" value={summary} onChange={(e) => setSummary(e.target.value)} className="md:text-base" />
+                <Input id="edit-summary" maxLength={200} value={summary} onChange={(e) => setSummary(e.target.value)} className="md:text-base" />
               </Field>
             </Panel>
 
@@ -135,6 +138,7 @@ export function CardEditPage() {
                   <Textarea
                     id={`edit-star-${key}`}
                     rows={3}
+                    maxLength={2000}
                     value={star[key]}
                     onChange={(e) => setStar((s) => ({ ...s, [key]: e.target.value }))}
                     className="min-h-24"
@@ -154,6 +158,7 @@ export function CardEditPage() {
                 <div key={fact.id} className="flex items-center gap-2">
                   <Input
                     aria-label={`근거 숫자 ${i + 1}`}
+                    maxLength={500}
                     value={fact.text}
                     onChange={(e) => setFacts((fs) => fs.map((f) => (f.id === fact.id ? { ...f, text: e.target.value } : f)))}
                     className="flex-1 md:text-base"
@@ -262,6 +267,7 @@ function TagInput({ onAdd }: { onAdd: (tag: string) => void }) {
       </label>
       <Input
         id="edit-tag"
+        maxLength={100}
         value={text}
         autoComplete="off"
         aria-describedby="edit-tag-hint"

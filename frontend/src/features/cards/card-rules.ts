@@ -53,7 +53,7 @@ export function orgAndRole(card: Pick<ExperienceCard, "org" | "role">): string {
 }
 
 /** 카드 확인의 순서: id인 카드부터 보고, 그 앞 카드들은 뒤로 돌린다. 없는 id면 그대로 둔다. */
-export function startFrom<T extends { id: number }>(cards: T[], id: number): T[] {
+export function startFrom<T extends { id: string }>(cards: T[], id: string | null): T[] {
   const i = cards.findIndex((c) => c.id === id)
   return i <= 0 ? cards : [...cards.slice(i), ...cards.slice(0, i)]
 }

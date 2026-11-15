@@ -34,9 +34,9 @@ export const paths = {
   /** 초대 링크가 여는 주소 */
   invite: (token: string) => `/invite/${seg(token)}`,
   cards: () => "/cards",
-  card: (cardId: number) => `/cards/${cardId}`,
-  cardEdit: (cardId: number) => `/cards/${cardId}/edit`,
+  card: (cardId: string) => `/cards/${cardId}`,
+  cardEdit: (cardId: string) => `/cards/${cardId}/edit`,
   cardSources: () => "/cards/sources",
   /** 카드 확인. cardId를 주면 그 카드부터 본다 */
-  cardReview: (cardId?: number) => (cardId === undefined ? "/cards/review" : `/cards/review?card=${cardId}`),
+  cardReview: (cardId?: string) => (cardId === undefined ? "/cards/review" : `/cards/review?card=${cardId}`),
 }

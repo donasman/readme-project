@@ -22,22 +22,22 @@ const card = (base: Base, more: Partial<CardDetail> = {}): CardDetail => ({
 /** 올린 자료(새 것이 앞). */
 export function createExampleSources(): CardSource[] {
   return [
-    { id: 1, name: "예시_포트폴리오.pdf", createdAt: "2026-11-12", chars: 12480, cardCount: 2 },
-    { id: 2, name: "예시_이력서.docx", createdAt: "2026-11-10", chars: 3210, cardCount: 2 },
-    { id: 3, name: "붙여넣은 글", createdAt: "2026-11-08", chars: 1840, cardCount: 1 },
+    { id: "1", name: "예시_포트폴리오.pdf", createdAt: "2026-11-12", chars: 12480, cardCount: 2 },
+    { id: "2", name: "예시_이력서.docx", createdAt: "2026-11-10", chars: 3210, cardCount: 2 },
+    { id: "3", name: "붙여넣은 글", createdAt: "2026-11-08", chars: 1840, cardCount: 1 },
   ]
 }
 
-const PORTFOLIO = { sourceId: 1, sourceName: "예시_포트폴리오.pdf" }
-const RESUME = { sourceId: 2, sourceName: "예시_이력서.docx" }
-const PASTED = { sourceId: 3, sourceName: "붙여넣은 글" }
+const PORTFOLIO = { sourceId: "1", sourceName: "예시_포트폴리오.pdf" }
+const RESUME = { sourceId: "2", sourceName: "예시_이력서.docx" }
+const PASTED = { sourceId: "3", sourceName: "붙여넣은 글" }
 
 /** 예시 카드를 새로 만든다. db.ts가 처음 한 번 불러 메모리에 둔다. */
 export function createExampleCards(): CardDetail[] {
   return [
     card(
       {
-        id: 1,
+        id: "1",
         title: "주문 조회 API 응답 시간 개선",
         period: "2025-03 ~ 2025-05",
         org: "예시 커머스 사내 프로젝트",
@@ -64,7 +64,7 @@ export function createExampleCards(): CardDetail[] {
     ),
     card(
       {
-        id: 2,
+        id: "2",
         title: "배치 작업 재실행 구조 만들기",
         period: "2025-07 ~ 2025-08",
         org: "예시 물류 회사 인턴",
@@ -78,7 +78,7 @@ export function createExampleCards(): CardDetail[] {
     ),
     card(
       {
-        id: 3,
+        id: "3",
         title: "알고리즘 스터디 운영",
         period: "2026 ~ 현재",
         org: "예시 스터디",
@@ -92,7 +92,7 @@ export function createExampleCards(): CardDetail[] {
     ),
     card(
       {
-        id: 4,
+        id: "4",
         title: "캡스톤 프로젝트 일정 조율",
         period: "2024-09 ~ 2024-12",
         org: "예시 대학교 캡스톤",
@@ -115,7 +115,7 @@ export function createExampleCards(): CardDetail[] {
       }
     ),
     card({
-      id: 5,
+      id: "5",
       title: "로그인 기능 직접 구현",
       period: "2025-01 ~ 2025-02",
       org: "개인 프로젝트",
@@ -127,7 +127,7 @@ export function createExampleCards(): CardDetail[] {
     }),
     card(
       {
-        id: 6,
+        id: "6",
         title: "사내 API 문서 정리",
         period: "2024-07 ~ 2024-08",
         org: "예시 스타트업 인턴",
