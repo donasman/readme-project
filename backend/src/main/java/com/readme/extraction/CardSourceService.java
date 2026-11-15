@@ -25,14 +25,16 @@ class CardSourceService {
 	}
 
 	/**
-	 * 자료를 저장한다. 같은 사람이 같은 본문(다듬은 본문의 SHA-256 이 같은 것)을 이미 올렸으면 새로 만들지 않고 그 자료를 가리킨다.
+	 * 자료를 저장한다. 본문의 주민번호·전화번호 꼴은 가려서 저장한다(PersonalNumbers). 그래서 뒤의 LLM 호출에도 가린 본문이 간다.
+	 * 같은 사람이 같은 본문(다듬고 가린 본문의 SHA-256 이 같은 것)을 이미 올렸으면 새로 만들지 않고 그 자료를 가리킨다.
 	 * 파일 이름이 달라도, 같은 글을 붙여넣어도 같은 자료다.
 	 */
 	@Transactional
 	Saved save(long userId, SourceInput input) {
-		String sha256 = Tokens.sha256Hex(input.text());
+		String text = PersonalNumbers.mask(input.text());
+		String sha256 = Tokens.sha256Hex(text);
 		int inserted = this.sources.insertIfAbsent(userId, input.kind().name(), input.fileName(), input.contentType(),
-				input.byteSize(), sha256, input.text(), input.chars(), this.clock.instant());
+				input.byteSize(), sha256, text, SourceText.length(text), this.clock.instant());
 		long id = this.sources.findIdByUserIdAndSha256(userId, sha256).orElseThrow();
 		return new Saved(id, inserted == 0);
 	}
