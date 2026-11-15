@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/shared/components/heading"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { CheckIcon, ExternalLinkIcon } from "@/shared/icons"
 
 import { deadlineText } from "@/domain/posting/deadline"
@@ -60,17 +59,12 @@ export function DeadlineCard({ post, today, onToggleInterest }: DeadlineCardProp
               관심 켜기
             </Button>
           )}
-          {post.sourceUrl ? (
+          {/* 원문 주소가 없는 공고(링크 없이 본문을 붙여넣은 공고)는 갈 곳이 없어 감춘다 */}
+          {post.sourceUrl && (
             <a href={post.sourceUrl} target="_blank" rel="noreferrer" className={sourceLink}>
               <span>원문 보기</span>
               <ExternalLinkIcon aria-hidden="true" className="size-4" />
             </a>
-          ) : (
-            // shortcut: 원문 주소가 없으면 눌러도 아무 일이 없는 자리만 둔다, 서버를 붙일 때 주소 없는 공고에서 감출지 정한다
-            <PlaceholderLink className={sourceLink}>
-              <span>원문 보기</span>
-              <ExternalLinkIcon aria-hidden="true" className="size-4" />
-            </PlaceholderLink>
           )}
         </div>
         <p className="mt-1 text-label-sm">
