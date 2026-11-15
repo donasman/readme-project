@@ -4,6 +4,8 @@ import static com.readme.TestRequests.setCookie;
 import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
@@ -16,9 +18,11 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
+import com.readme.FixedClockConfiguration;
 import com.readme.Fixtures;
 import com.readme.IntegrationTest;
 import com.readme.TestMailbox;
+import com.readme.common.token.Tokens;
 
 /**
  * 비밀번호 재설정: 메일 받기, 링크 미리 확인, 새 비밀번호(로그인 설계 4절, 2026-11-14 정한 것).
@@ -90,10 +94,26 @@ class PasswordResetTests {
 	}
 
 	@Test
+	void resettingLiftsTheLoginBlock() {
+		// 비밀번호를 잊어 10번 틀린 사람이 재설정한다
+		String email = this.fixtures.emailOf(this.fixtures.passwordUser("가람", OLD, true));
+		for (int i = 0; i < LoginThrottle.MAX_FAILURES; i++) {
+			assertThat(login(email, "wrong password")).hasStatus(HttpStatus.UNAUTHORIZED);
+		}
+		assertThat(login(email, OLD)).hasStatus(HttpStatus.TOO_MANY_REQUESTS);
+		request(email).exchange();
+
+		assertThat(confirm(this.mailbox.lastTokenTo(email), NEW)).hasStatus(HttpStatus.NO_CONTENT);
+
+		assertThat(login(email, NEW)).hasStatusOk();
+	}
+
+	@Test
 	void theLinkWorksOnceAndANewRequestEndsTheOlderLink() {
 		String email = this.fixtures.emailOf(this.fixtures.passwordUser("가람", OLD, true));
 		request(email).exchange();
 		String older = this.mailbox.lastTokenTo(email);
+		this.fixtures.ageLinks(email, Duration.ofMinutes(1));
 		request(email).exchange();
 		String newer = this.mailbox.lastTokenTo(email);
 
@@ -101,6 +121,32 @@ class PasswordResetTests {
 		assertThat(confirm(newer, NEW)).hasStatus(HttpStatus.NO_CONTENT);
 		assertThat(confirm(newer, "another password")).hasStatus(HttpStatus.GONE);
 		assertThat(login(email, NEW)).hasStatusOk();
+	}
+
+	@Test
+	void confirmEndsTheOtherResetLinksButKeepsTheirRows() {
+		String email = this.fixtures.emailOf(this.fixtures.passwordUser("가람", OLD, true));
+		request(email).exchange();
+		// 같이 들어온 요청 둘이 모두 링크를 보냈다
+		String other = Tokens.newToken();
+		this.jdbc.sql("""
+				insert into email_tokens (user_id, purpose, token_hash, expires_at, created_at)
+				values ((select id from users where email = :email), 'RESET_PASSWORD', :hash, :expiresAt, :now)
+				""")
+			.param("hash", Tokens.sha256Hex(other))
+			.param("expiresAt", Timestamp.from(FixedClockConfiguration.NOW.plus(Duration.ofHours(1))))
+			.param("now", Timestamp.from(FixedClockConfiguration.NOW))
+			.param("email", email)
+			.update();
+
+		assertThat(confirm(this.mailbox.lastTokenTo(email), NEW)).hasStatus(HttpStatus.NO_CONTENT);
+
+		assertThat(check(other)).hasStatus(HttpStatus.GONE);
+		// 보낸 수를 세려고 행은 남긴다
+		assertThat(this.jdbc.sql("""
+				select count(*) from email_tokens
+				 where user_id = (select id from users where email = :email) and used_at is not null
+				""").param("email", email).query(Integer.class).single()).isEqualTo(2);
 	}
 
 	@Test

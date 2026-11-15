@@ -3,6 +3,7 @@ package com.readme.auth;
 import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -107,6 +108,7 @@ class SignupTests {
 		String email = newEmail();
 		signup("남", email, "someone else's").exchange();
 		String oldToken = this.mailbox.lastTokenTo(email);
+		this.fixtures.ageLinks(email, Duration.ofMinutes(1));
 
 		assertThat(signup("다온", email, PASSWORD)).hasStatus(HttpStatus.NO_CONTENT);
 
@@ -125,6 +127,7 @@ class SignupTests {
 		String email = newEmail();
 		signup("다온", email, PASSWORD).exchange();
 		String oldToken = this.mailbox.lastTokenTo(email);
+		this.fixtures.ageLinks(email, Duration.ofMinutes(1));
 
 		assertThat(resend(email)).hasStatus(HttpStatus.NO_CONTENT);
 
