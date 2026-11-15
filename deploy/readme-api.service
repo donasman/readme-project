@@ -11,8 +11,9 @@ User=readme
 Group=readme
 WorkingDirectory=/opt/readme
 EnvironmentFile=/etc/readme/readme.env
-# 2GB 서버 기준. 서버 크기를 바꾸면 -Xmx 도 같이 본다.
-ExecStart=/usr/bin/java -Xmx768m -jar /opt/readme/readme-backend.jar
+# 2GB 서버 기준. 서버 크기를 바꾸면 -Xmx 도 같이 본다. 자료(PDF·HWP)를 읽는 프로세스가 따로 256MB 씩 두 개까지 뜬다.
+# 메모리가 모자라면 반쯤 죽은 채로 남지 않고 끝나서 아래의 Restart 로 다시 뜬다.
+ExecStart=/usr/bin/java -Xmx768m -XX:+ExitOnOutOfMemoryError -jar /opt/readme/readme-backend.jar
 SuccessExitStatus=143
 Restart=on-failure
 RestartSec=5
