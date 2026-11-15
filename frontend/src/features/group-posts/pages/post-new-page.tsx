@@ -27,6 +27,7 @@ const VIAS: { value: Via; label: string }[] = [
 ]
 // shortcut: 크기(20MB)는 안내 글뿐이고 막지 않는다, 서버가 받는 형식과 크기를 정하면 여기서도 막는다(화면 API 대응 3.2의 7번)
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
+const TEXT_MAX = 50_000
 
 type ReadNotice = Exclude<ReadPostResult, { status: "ok" }>
 
@@ -83,7 +84,7 @@ export function PostNewPage() {
           </Notice>
         ) : (
           <Notice title="이 링크는 읽지 못했습니다">
-            <span>로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요.</span>
+            <span>{notice.message}</span>
           </Notice>
         ))}
 
@@ -154,7 +155,8 @@ function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
   function submit(event: FormEvent) {
     event.preventDefault()
     const next = {
-      text: text.trim() ? undefined : "공고 본문을 붙여넣어 주세요.",
+      // 서버가 받는 길이(공고 문서 4.6). 넘으면 400이라 여기서 알린다
+      text: !text.trim() ? "공고 본문을 붙여넣어 주세요." : text.length > TEXT_MAX ? "본문은 5만 자까지 넣을 수 있습니다." : undefined,
       url: !sourceUrl.trim() || isHttpUrl(sourceUrl.trim()) ? undefined : "https:// 로 시작하는 주소를 넣거나 비워 두세요.",
     }
     setError(next)

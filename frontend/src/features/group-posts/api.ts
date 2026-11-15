@@ -1,8 +1,9 @@
 // 그룹 공고 화면이 공고 데이터를 가져오고 바꾸는 유일한 곳. 주소와 오류 이름은 공고 문서 4.1, 4.3이다. 그룹과 보는 사람은 domain에서 읽는다.
 import * as db from "@/mocks/db"
 import { apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
+import { sentence } from "@/shared/lib/korean"
 
-import type { Comment, Deadline, GroupPostData, GroupPostsData, MyState, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
+import type { Comment, Deadline, DraftField, GroupPost, GroupPostData, GroupPostsData, MyState, PostDraft, PostReadInput, PostUpload, ReadPostResult, UploadPostResult } from "./types"
 
 /** 그룹 공고 목록. 내린 공고는 빠지고 마감된 공고는 들어 있다. */
 export async function getGroupPosts(groupId: string): Promise<GroupPostsData> {
@@ -28,10 +29,34 @@ export async function addComment(groupId: string, postId: string, text: string):
   return request("POST", apiPath`/api/groups/${groupId}/posts/${postId}/comments`, { text })
 }
 
-/** 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일. 이 그룹에 이미 있으면 그 공고를, 읽지 못하면 failed를 돌려준다. */
+/** 읽어 오기의 응답(공고 문서 4.6). 못 읽은 칸은 ""이고, 그 그룹에 같은 공고가 있으면 duplicate가 붙는다. */
+interface ReadResponse extends Omit<PostDraft, "unread" | "keywords"> {
+  unread: string[]
+  duplicate?: Pick<GroupPost, "company" | "title" | "postedBy" | "postedAt"> & { postId: string }
+}
+
+/** 칸 확인 화면이 아는 칸. 서버의 unread에는 화면에 없는 deadlineName도 늘 들어 있다(공고 문서 8절 16번). */
+const DRAFT_FIELDS: readonly string[] = ["company", "title", "deadline", "sourceUrl", "applyAt"] satisfies DraftField[]
+
+/** 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일. 이 그룹에 이미 있으면 그 공고를, 읽지 못하면 이유를 돌려준다. */
 export async function readPost(groupId: string, input: PostReadInput): Promise<ReadPostResult> {
-  // shortcut: 읽어 오기는 아직 가짜 서버를 부르고 파일은 이름만 보낸다, 공고 올리기를 붙이는 브랜치에서 POST /api/postings/read로 바꾼다(공고 문서 4.6, 8절 13~20번)
-  return db.readPosting(groupId, input.kind === "file" ? { kind: "file", name: input.file.name } : input)
+  if (mockServer) return db.readPosting(groupId, input.kind === "file" ? { kind: "file", name: input.file.name } : input)
+  // shortcut: 서버에 파일 읽기가 아직 없어 붙여넣기로 보낸다, 서버가 파일을 받으면 보낸다(공고 문서 4.6)
+  if (input.kind === "file") return { status: "failed", message: "파일은 아직 읽지 못합니다. 공고 본문을 복사해 붙여넣어 주세요." }
+  const from = input.kind === "url" ? { url: input.url } : { text: input.text, sourceUrl: input.sourceUrl }
+  try {
+    // groupId를 주면 서버가 그 그룹에 같은 공고가 있는지 함께 본다. 서버의 id는 숫자다
+    const { duplicate, unread, ...draft } = await request<ReadResponse>("POST", "/api/postings/read", { ...from, groupId: Number(groupId) })
+    if (duplicate) {
+      const { postId, ...post } = duplicate
+      return { status: "duplicate", post: { id: postId, ...post } }
+    }
+    // shortcut: 서버가 키워드를 아직 뽑지 않는다(공고 문서 8절 19번), 키워드 사전을 읽어 오기에 붙이면 응답의 keywords를 쓴다
+    return { status: "ok", draft: { ...draft, keywords: [], unread: unread.filter((f): f is DraftField => DRAFT_FIELDS.includes(f)) } }
+  } catch (error) {
+    if (isApiError(error, "FETCH_BLOCKED", "FETCH_FAILED")) return { status: "failed", message: sentence(error.message) }
+    throw error
+  }
 }
 
 /** 칸을 확인한 공고를 그룹에 올린다. 같은 공고가 이 그룹에 있으면 409 ALREADY_IN_GROUP과 그 공고의 id. */

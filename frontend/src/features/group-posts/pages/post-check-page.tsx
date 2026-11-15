@@ -19,6 +19,7 @@ import { paths } from "@/shared/lib/paths"
 import { isHttpUrl, joinClasses } from "@/shared/lib/utils"
 
 import { uploadPost } from "../api"
+import { sourceParagraphs } from "../post-source"
 import type { Deadline, DraftField, PostDraft } from "../types"
 
 /** 공고 올리기가 읽은 결과를 들고 이 화면으로 온다. 새로 고쳐 결과가 없으면 공고 올리기로 돌아간다. */
@@ -39,7 +40,7 @@ const unreadInput = "border-2 border-highlight-strong bg-highlight-subtle dark:b
 
 /** 칸 확인(시안 7차): 읽어 온 칸을 고치고 그룹에 올린다. 오른쪽에 읽어 온 원문을 둔다. */
 export function PostCheckPage() {
-  // shortcut: 읽은 결과를 주소 상태로만 들고 와서 새로 고치면 공고 올리기로 돌아간다, 결과를 어디에 둘지 정하면 바꾼다(화면 API 대응 3.2의 7번)
+  // shortcut: 읽은 결과는 서버에 두지 않아(공고 문서 4.6) 주소 상태로만 들고 온다. 새로 고치면 공고 올리기로 돌아간다, 남겨야 하면 sessionStorage에 둔다
   const draft = (useLocation().state as PostCheckState | null)?.draft
   const { group } = useGroup()
   if (!draft) return <Navigate to={paths.groupPostNew(group.id)} replace />
@@ -238,8 +239,8 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
           </h2>
           <div className="flex flex-col gap-3 rounded-panel bg-surface-muted p-5 text-sm">
             <p className="font-bold">{draft.source.title}</p>
-            {draft.source.paragraphs.map((p, i) => (
-              <p key={i}>
+            {sourceParagraphs(draft.source.text, draft.sections.map((s) => s.from)).map((p, i) => (
+              <p key={i} className="whitespace-pre-line">
                 {p.heading && (
                   <>
                     <strong className="font-bold text-accent-strong">{p.heading}</strong>
@@ -250,7 +251,7 @@ function PostCheckForm({ draft }: { draft: PostDraft }) {
               </p>
             ))}
           </div>
-          <p className="text-label-sm text-text-secondary">굵은 글자가 칸을 채운 근거입니다. {draft.source.note}</p>
+          <p className="text-label-sm text-text-secondary">굵은 글자가 칸을 채운 근거입니다.</p>
         </aside>
       </div>
     </Page>

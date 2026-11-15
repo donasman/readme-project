@@ -84,7 +84,7 @@ export interface GroupPostData {
 }
 
 // ---- 공고 올리기(시안 7차 "공고 올리기", "칸 확인") ----
-// shortcut: 읽어 오기의 모양은 프런트가 정했다, 설계가 생기면 맞춘다(화면 API 대응 3.2의 7~9번)
+// 읽어 오기(POST /api/postings/read, 공고 문서 4.6)의 응답을 api.ts의 readPost가 아래 모양으로 나눈다.
 
 /** 공고를 넣는 방법: 링크, 붙여넣은 본문(원문 링크는 비워도 된다), 파일. */
 export type PostReadInput =
@@ -113,15 +113,15 @@ export interface PostDraft {
   evidence: Partial<Record<DraftField, string>>
   /** 읽지 못한 칸(노란 칸) */
   unread: DraftField[]
-  /** 오른쪽에 보이는 원문: 제목, 문단(머리는 굵게), 읽은 쪽의 덧붙임 */
-  source: { title: string; paragraphs: { heading: string | null; text: string }[]; note: string | null }
+  /** 오른쪽에 보이는 원문: 제목과 줄바꿈이 든 글. 문단은 sections[].from(머리 줄)으로 나눈다(post-source.ts) */
+  source: { title: string; text: string }
 }
 
-/** 읽어 오기 결과: 읽음 / 이 그룹에 이미 있는 공고 / 읽지 못함. */
+/** 읽어 오기 결과: 읽음 / 이 그룹에 이미 있는 공고 / 읽지 못함(서버가 준 이유와 붙여넣기 안내). */
 export type ReadPostResult =
   | { status: "ok"; draft: PostDraft }
   | { status: "duplicate"; post: Pick<GroupPost, "id" | "company" | "title" | "postedBy" | "postedAt"> }
-  | { status: "failed" }
+  | { status: "failed"; message: string }
 
 /** 그룹에 올리는 값(POST /api/groups/{groupId}/posts. 키워드와 묶음은 화면 API 대응 3.2의 8번). */
 export interface PostUpload {

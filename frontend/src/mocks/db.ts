@@ -318,18 +318,10 @@ function parsePostText(text: string, sourceUrl: string): PostDraft {
       ? { kind: "always" }
       : { kind: "unknown" }
   const sections: DraftSection[] = []
-  const paragraphs: PostDraft["source"]["paragraphs"] = []
   for (const line of lines.slice(1)) {
     const title = SECTION_HEADINGS[line]
-    if (title) {
-      sections.push({ title, items: [], from: line })
-      paragraphs.push({ heading: line, text: "" })
-    } else {
-      sections.at(-1)?.items.push(line)
-      const last = paragraphs.at(-1)
-      if (last?.heading && !last.text) last.text = line
-      else paragraphs.push({ heading: null, text: line })
-    }
+    if (title) sections.push({ title, items: [], from: line })
+    else sections.at(-1)?.items.push(line)
   }
   const unread: DraftField[] = []
   if (!head) unread.push("company", "title")
@@ -345,7 +337,7 @@ function parsePostText(text: string, sourceUrl: string): PostDraft {
     keywords: KEYWORDS.filter((k) => text.toLowerCase().includes(k.toLowerCase())),
     evidence: head ? { company: `첫 줄 "${first}"`, title: "첫 줄" } : {},
     unread,
-    source: { title: first, paragraphs, note: null },
+    source: { title: first, text: lines.slice(1).join("\n") },
   }
 }
 
@@ -360,7 +352,7 @@ export function readPosting(groupId: string, input: { kind: "url"; url: string }
       : input.kind === "text"
         ? parsePostText(input.text, input.sourceUrl)
         : { ...createExampleDraft(""), unread: ["deadline", "sourceUrl"] as DraftField[] }
-  if (!draft) return { status: "failed" }
+  if (!draft) return { status: "failed", message: "로그인이 필요하거나 내용이 그림으로 된 페이지일 수 있습니다. 공고 본문을 붙여넣어 주세요." }
   const same = findSamePost(group, { url: input.kind === "url" ? input.url : draft.sourceUrl })
   if (same) {
     const { id, company, title, postedBy, postedAt } = same
