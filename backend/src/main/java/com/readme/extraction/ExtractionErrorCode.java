@@ -6,8 +6,9 @@ import com.readme.common.error.ErrorCode;
 
 /**
  * 자료 올리기의 오류(경험카드 설계 4.2). 표는 설계 문서의 "만들면서 정한 것"에 있다.
+ * 공고 읽어 오기(postingread)가 UploadedFiles 의 오류를 자기 코드로 바꾸려고 public 이다.
  */
-enum ExtractionErrorCode implements ErrorCode {
+public enum ExtractionErrorCode implements ErrorCode {
 
 	/** 내 자료가 아니거나 없다. 둘을 구분하지 않는다. */
 	SOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "자료를 찾을 수 없습니다"),

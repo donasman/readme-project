@@ -4,12 +4,21 @@ import static com.readme.TestRequests.loginAs;
 import static com.readme.TestRequests.xsrf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
@@ -278,6 +288,76 @@ class PostingReadTests {
 		assertThat(site.hits(path)).isZero();
 	}
 
+	// ── 파일 ───────────────────────────────────────────────────────────
+
+	@Test
+	void fileIsReadLikeTheSamePastedText() throws Exception {
+		String pasted = read(this.me, "{ \"text\": \"%s\" }".formatted(json(TEXT))).exchange().getResponse()
+			.getContentAsString();
+		byte[] file = docx(paragraphs(TEXT.split("\n")));
+
+		// 원문 제목은 붙여넣은 본문처럼 첫 줄이고, 원문 링크가 없어 sourceUrl 은 "" 이고 unread 에 있다
+		assertThat(readFile(this.me, "공고.docx", file).param("groupId", String.valueOf(this.group)))
+			.hasStatusOk()
+			.bodyJson()
+			.isStrictlyEqualTo(pasted);
+	}
+
+	@Test
+	void nonMemberGroupIs404ForAFileToo() {
+		byte[] file = docx(paragraphs(TEXT.split("\n")));
+		assertThat(readFile(this.fixtures.user("마루"), "공고.docx", file).param("groupId", String.valueOf(this.group)))
+			.hasStatus(HttpStatus.NOT_FOUND)
+			.bodyJson()
+			.extractingPath("$.code")
+			.isEqualTo("GROUP_NOT_FOUND");
+	}
+
+	@Test
+	void fileOverTwentyMegabytesIsTooLarge() {
+		assertFileError(readFile(this.me, "공고.pdf", new byte[20 * 1024 * 1024 + 1]), HttpStatus.CONTENT_TOO_LARGE,
+				"FILE_TOO_LARGE");
+	}
+
+	@Test
+	void fileWithMoreTextThanCanBePastedIsTooLarge() {
+		assertFileError(readFile(this.me, "공고.docx", docx(paragraphs("가".repeat(PostingReadRequest.MAX_TEXT + 1)))),
+				HttpStatus.CONTENT_TOO_LARGE, "FILE_TOO_LARGE");
+	}
+
+	@Test
+	void onlyPdfDocxHwpxAndHwpAreRead() {
+		// 자료 올리기는 읽는 글 파일도 공고 읽어 오기는 받지 않는다
+		assertFileError(readFile(this.me, "공고.txt", TEXT.getBytes(StandardCharsets.UTF_8)), HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+				"FILE_UNSUPPORTED_TYPE");
+	}
+
+	@Test
+	void brokenFileIsUnreadable() {
+		assertFileError(readFile(this.me, "공고.docx", docx("<w:document><w:p><w:t>깨진")), HttpStatus.UNPROCESSABLE_CONTENT,
+				"FILE_UNREADABLE");
+	}
+
+	@Test
+	void scannedPdfHasNoText() throws IOException {
+		assertFileError(readFile(this.me, "스캔.pdf", blankPdf()), HttpStatus.UNPROCESSABLE_CONTENT, "FILE_NO_TEXT");
+	}
+
+	@Test
+	void fileFormNeedsTheFileAndANumericGroupId() {
+		assertThat(this.mvc.post().uri("/api/postings/read").with(loginAs(this.me)).with(xsrf()).multipart()
+			.file(new MockMultipartFile("other", "공고.docx", "application/octet-stream", docx(paragraphs("본문")))))
+			.hasStatus(HttpStatus.BAD_REQUEST)
+			.bodyJson()
+			.extractingPath("$.code")
+			.isEqualTo("INVALID_INPUT");
+		assertThat(readFile(this.me, "공고.docx", docx(paragraphs("본문"))).param("groupId", "abc"))
+			.hasStatus(HttpStatus.BAD_REQUEST)
+			.bodyJson()
+			.extractingPath("$.code")
+			.isEqualTo("INVALID_INPUT");
+	}
+
 	// ── 입력 검사, 로그인 ────────────────────────────────────────────────
 
 	@Test
@@ -310,6 +390,45 @@ class PostingReadTests {
 	private MockMvcTester.MockMvcRequestBuilder read(long userId, String body) {
 		return this.mvc.post().uri("/api/postings/read").with(loginAs(userId)).with(xsrf())
 			.contentType(MediaType.APPLICATION_JSON).content(body);
+	}
+
+	private MockMvcTester.MockMultipartMvcRequestBuilder readFile(long userId, String name, byte[] bytes) {
+		return this.mvc.post().uri("/api/postings/read").with(loginAs(userId)).with(xsrf()).multipart()
+			.file(new MockMultipartFile("file", name, "application/octet-stream", bytes));
+	}
+
+	private static void assertFileError(MockMvcTester.MockMultipartMvcRequestBuilder request, HttpStatus status, String code) {
+		MvcTestResult result = request.exchange();
+		assertThat(result).hasStatus(status).bodyJson().extractingPath("$.code").isEqualTo(code);
+		assertThat(result).bodyJson().extractingPath("$.message").asString().contains("공고 본문을 복사해 붙여넣어 주세요");
+	}
+
+	/** 문단마다 한 줄인 DOCX 본문. 글에 &lt; &amp; 가 없어야 한다. */
+	private static String paragraphs(String... lines) {
+		return Arrays.stream(lines).map((line) -> "<w:p><w:t>" + line + "</w:t></w:p>")
+			.collect(Collectors.joining("", "<w:document><w:body>", "</w:body></w:document>"));
+	}
+
+	private static byte[] docx(String documentXml) {
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
+			zip.putNextEntry(new ZipEntry("word/document.xml"));
+			zip.write(documentXml.getBytes(StandardCharsets.UTF_8));
+		}
+		catch (IOException ex) {
+			throw new IllegalStateException(ex);
+		}
+		return bytes.toByteArray();
+	}
+
+	/** 글자 층이 없는 한 쪽짜리 PDF(스캔본). */
+	private static byte[] blankPdf() throws IOException {
+		try (PDDocument document = new PDDocument()) {
+			document.addPage(new PDPage());
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			document.save(out);
+			return out.toByteArray();
+		}
 	}
 
 	private static void assertFetchError(MockMvcTester.MockMvcRequestBuilder request, String code, String why) {
