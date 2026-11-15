@@ -160,7 +160,8 @@ class GroupPostUploadTests {
 		String url = "https://careers.example.com/jobs/" + "a".repeat(400);
 		String body = """
 				{ "company": "긴 주소 회사", "title": "백엔드", "deadline": { "kind": "date", "date": "2026-11-20" },
-				  "deadlineName": "서류 마감", "applyAt": "홈페이지", "sourceUrl": "%s" }
+				  "deadlineName": "서류 마감", "applyAt": "홈페이지", "sourceUrl": "%s",
+				  "keywords": [ "자바" ], "sections": [ { "title": "주요 업무", "items": [ "API 개발" ] } ] }
 				""".formatted(url);
 
 		MvcTestResult first = upload(this.group, this.me, body).exchange();
@@ -180,6 +181,10 @@ class GroupPostUploadTests {
 				  "deadline": { "kind": "date", "date": "2026-11-20" }, "deadlineName": "서류 마감", "applyAt": "홈페이지",
 				  "sourceUrl": "%s", "postedBy": { "id": %d }, "postedAt": "2026-11-13" } }
 				""".formatted(firstId, url, this.me));
+		// 키 없이 넣은 공고에도 키워드와 공고 내용 묶음이 들어간다
+		assertThat(first).bodyJson().extractingPath("$.post.keywords").isEqualTo(List.of("Java"));
+		assertThat(first).bodyJson().extractingPath("$.post.sections").isEqualTo(
+				List.of(Map.of("title", "주요 업무", "items", List.of("API 개발"))));
 	}
 
 	@Test
@@ -231,6 +236,59 @@ class GroupPostUploadTests {
 		assertInvalid(upload(this.group, this.me, job("회사", "https://evil.example\\\\@www.saramin.co.kr/?rec_idx=" + jobNumber())));
 		assertThat(upload(this.group, this.me, job("회사", url.replace("https", "HTTPS") + jobNumber())))
 			.hasStatus(HttpStatus.CREATED);
+	}
+
+	@Test
+	void uploadKeepsDictionaryKeywordsAndNonEmptySectionsAndTheDetailShowsThem() throws Exception {
+		// 칸 확인 화면이 보내는 묶음에는 from 이 붙어 있다. 서버는 버린다
+		MvcTestResult result = upload(this.group, this.me, """
+				{ "company": "키워드 회사", "title": "백엔드", "deadline": { "kind": "always" },
+				  "sourceUrl": "https://www.wanted.co.kr/wd/%d",
+				  "keywords": [ "스프링부트", " java ", "Java", "", "  ", "사전에 없는 낱말", "k8s" ],
+				  "sections": [
+				    { "title": " 주요 업무 ", "items": [ " 주문 API 개발 ", "", "  ", "운영" ], "from": "담당 업무" },
+				    { "title": "우대 사항", "items": [ " ", "" ], "from": "우대" },
+				    { "title": "필수 요건", "items": [ "Java 3년" ] }
+				  ] }
+				""".formatted(jobNumber())).exchange();
+
+		assertThat(result).hasStatus(HttpStatus.CREATED);
+		assertThat(result).bodyJson().isLenientlyEqualTo("""
+				{ "post": {
+				  "keywords": [ "Spring Boot", "Java", "Kubernetes" ],
+				  "sections": [
+				    { "title": "주요 업무", "items": [ "주문 API 개발", "운영" ] },
+				    { "title": "필수 요건", "items": [ "Java 3년" ] }
+				  ] } }
+				""");
+		assertThat(result).bodyJson().extractingPath("$.post.sections[0]").isEqualTo(
+				Map.of("title", "주요 업무", "items", List.of("주문 API 개발", "운영")));
+		assertThat(this.jdbc.sql("select keyword || ':' || seq from posting_keywords where posting_id = :id order by seq")
+			.param("id", postIdOf(result)).query(String.class).list())
+			.containsExactly("Spring Boot:1", "Java:2", "Kubernetes:3");
+	}
+
+	@Test
+	void uploadChecksTheKeywordsAndSections() {
+		String job = """
+				{ "company": "회사", "title": "공고", "deadline": { "kind": "always" }, %s }
+				""";
+		String keywords101 = "\"keywords\": [" + "\"Java\",".repeat(100) + "\"Java\"]";
+		String sections101 = "\"sections\": [" + "{ \"title\": \"묶음\", \"items\": [\"항목\"] },".repeat(100)
+				+ "{ \"title\": \"묶음\", \"items\": [\"항목\"] }]";
+		assertInvalid(upload(this.group, this.me, job.formatted(keywords101)));
+		assertInvalid(upload(this.group, this.me, job.formatted("\"keywords\": [\"%s\"]".formatted("a".repeat(101)))));
+		assertInvalid(upload(this.group, this.me, job.formatted(sections101)));
+		assertInvalid(upload(this.group, this.me, job.formatted("\"sections\": [{ \"title\": \" \", \"items\": [\"항목\"] }]")));
+		assertInvalid(upload(this.group, this.me,
+				job.formatted("\"sections\": [{ \"title\": \"%s\", \"items\": [\"항목\"] }]".formatted("가".repeat(51)))));
+		// 묶음의 이름과 항목을 모두 더해 50,000자까지다(읽어 오기가 받는 본문의 한도)
+		String atLimit = "\"sections\": [{ \"title\": \"가\", \"items\": [\"%s\", \"%s\"] }]"
+			.formatted("나".repeat(25_000), "다".repeat(24_999));
+		assertThat(upload(this.group, this.me, """
+				{ "company": "한도 회사 %s", "title": "공고", "deadline": { "kind": "always" }, %s }
+				""".formatted(UUID.randomUUID(), atLimit))).hasStatus(HttpStatus.CREATED);
+		assertInvalid(upload(this.group, this.me, job.formatted(atLimit.replace("\"가\"", "\"가가\""))));
 	}
 
 	@Test

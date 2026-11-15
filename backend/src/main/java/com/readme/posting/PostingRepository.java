@@ -30,6 +30,20 @@ interface PostingRepository extends JpaRepository<Posting, Long> {
 			@Param("deadlineName") String deadlineName, @Param("applyAt") String applyAt,
 			@Param("sourceUrl") String sourceUrl, @Param("userId") long userId, @Param("now") Instant now);
 
+	/** 공고 내용 묶음. sections 는 [{ "title": …, "items": […] }] 꼴의 JSON 글자다. */
+	@Modifying
+	@Query(value = "update postings set sections = cast(:sections as jsonb) where id = :postingId", nativeQuery = true)
+	int setSections(@Param("postingId") long postingId, @Param("sections") String sections);
+
+	/** 키워드를 받은 순서대로 넣는다(seq 1부터). keywords 는 겹치지 않는 대표 표기의 JSON 배열 글자다. */
+	@Modifying
+	@Query(value = """
+			insert into posting_keywords (posting_id, keyword, seq)
+			select :postingId, k.keyword, k.seq
+			  from jsonb_array_elements_text(cast(:keywords as jsonb)) with ordinality as k(keyword, seq)
+			""", nativeQuery = true)
+	int insertKeywords(@Param("postingId") long postingId, @Param("keywords") String keywords);
+
 	/**
 	 * 공고 고치기. 회사명, 공고명, 마감만 바꾸고 원문 주소와 공고키는 그대로 둔다.
 	 * UNKNOWN 으로는 마감이 아직 UNKNOWN 일 때만 바꾼다(마감이 있는 공고를 되돌리지 않는다). 바꿨으면 1, 아니면 0.

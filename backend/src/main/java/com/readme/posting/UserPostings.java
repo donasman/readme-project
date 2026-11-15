@@ -28,7 +28,8 @@ public class UserPostings {
 	/**
 	 * 그룹 없이 내 공고에 넣는다(설계 4.2). 같은 공고(공고키가 같은 공고)가 있으면 그 공고에 내 행을 만들고, 그 공고의 값은
 	 * 고치지 않는다. 내 행은 관심을 켤 때처럼 미정으로 시작한다. 넣은 공고의 id 를 돌려준다.
-	 * 이미 내 공고에 있으면 409 ALREADY_IN_MY_POSTINGS 와 그 공고의 postingId. 두 번 눌러도 행은 하나다.
+	 * 이미 내 공고에 있으면 409 ALREADY_IN_MY_POSTINGS 와 그 공고의 postingId. 공고키가 있는 공고는 두 번 눌러도 행이 하나다.
+	 * 키를 만들 수 없는 아주 긴 주소의 공고는 같은 공고로 알아보지 못하므로 넣을 때마다 새 공고와 새 행이 생긴다.
 	 */
 	@Transactional
 	long add(long userId, PostingDraft draft) {

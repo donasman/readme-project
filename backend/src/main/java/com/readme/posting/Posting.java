@@ -14,7 +14,8 @@ import jakarta.persistence.Table;
 /**
  * 공고 본체(postings). 그룹과 무관하게 공고 하나에 한 행이고, 여러 그룹이 같은 행을 가리킨다(설계 가정 2).
  *
- * <p>공고 내용 묶음(sections), 날짜 넣은 사람·시각은 여기서 다루지 않는다. 처음 만들 때는 DB 기본값이 들어간다.
+ * <p>공고 내용 묶음(sections), 날짜 넣은 사람·시각은 여기서 다루지 않는다. 처음 만들 때는 DB 기본값이 들어가고,
+ * 올린 묶음은 {@link Postings} 가 native update 로 넣는다.
  */
 @Entity
 @Table(name = "postings")
