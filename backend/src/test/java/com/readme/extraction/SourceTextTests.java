@@ -54,7 +54,6 @@ class SourceTextTests {
 		assertThat(input.fileName()).isNull();
 		assertThat(input.contentType()).isNull();
 		assertThat(input.byteSize()).isNull();
-		assertThat(input.chars()).isEqualTo(5);
 		assertCode(() -> SourceInput.text("   "), ExtractionErrorCode.SOURCE_EMPTY);
 		// 다듬기 전에 READ_LIMIT 를 넘으면 사본을 만들지 않고 거부한다
 		assertCode(() -> SourceInput.text(" ".repeat(SourceText.READ_LIMIT + 1)), ExtractionErrorCode.SOURCE_TOO_LARGE);

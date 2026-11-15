@@ -117,6 +117,27 @@ class CardSourceTests {
 			.hasStatus(HttpStatus.CREATED).bodyJson().extractingPath("$.duplicate").isEqualTo(false);
 	}
 
+	@Test
+	void residentAndPhoneNumbersAreMaskedBeforeSaving() {
+		long me = this.fixtures.user("다온");
+		String raw = "홍길동 010-1234-5678\n주민등록번호 950101-1234567\n2023.03 ~ 2024.02 주문 조회 API 개선";
+		String masked = "홍길동 [전화번호]\n주민등록번호 [주민번호]\n2023.03 ~ 2024.02 주문 조회 API 개선";
+
+		MvcTestResult result = uploadText(me, "{ \"text\": \"" + raw.replace("\n", "\\n") + "\" }").exchange();
+
+		assertThat(result).hasStatus(HttpStatus.CREATED).bodyJson()
+			.isLenientlyEqualTo("{ \"source\": { \"chars\": %d } }".formatted(SourceText.length(masked)));
+		long id = id(result);
+		assertThat(this.jdbc.sql("select body, sha256, char_count from card_sources where id = :id").param("id", id)
+			.query().singleRow())
+			.containsEntry("body", masked)
+			.containsEntry("sha256", Tokens.sha256Hex(masked))
+			.containsEntry("char_count", SourceText.length(masked));
+		// 가리기 전의 같은 글을 파일로 다시 올려도 같은 자료다
+		assertThat(uploadFile(me, "이력서.txt", raw.getBytes(StandardCharsets.UTF_8))).hasStatusOk().bodyJson()
+			.isLenientlyEqualTo("{ \"source\": { \"id\": %d }, \"duplicate\": true }".formatted(id));
+	}
+
 	// ── 올리기 오류 ──────────────────────────────────────────────────────
 
 	@Test

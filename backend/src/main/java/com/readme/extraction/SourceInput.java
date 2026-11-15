@@ -52,10 +52,6 @@ record SourceInput(Kind kind, String fileName, String contentType, Long byteSize
 		return new SourceInput(Kind.TEXT, null, null, null, text);
 	}
 
-	int chars() {
-		return SourceText.length(this.text);
-	}
-
 	/**
 	 * 브라우저가 보낸 파일 이름에서 경로(옛 브라우저는 C:\…\이력서.pdf 를 보낸다)와 제어 문자를 지우고 NFC 로 합친다
 	 * (macOS 는 한글 파일 이름을 자모로 풀어 보낸다). 255자를 넘으면 자른다. 남는 것이 없으면 null.
