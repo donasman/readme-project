@@ -35,14 +35,18 @@ const filters = (over: Partial<ListFilters> = {}): ListFilters => ({ ...DEFAULT_
 const ids = (list: ReturnType<typeof buildPostList>) => list.sections.map((s) => [s.title, s.rows.map((r) => r.post.company)])
 
 describe("toRow", () => {
-  it("관심을 켰거나 지원 상태가 있으면 나를 관심 멤버 맨 앞에 둔다", () => {
+  it("관심을 켰으면 나를 관심 멤버 맨 앞에 둔다", () => {
     const interests = [{ member: NARAE, applied: true }]
     expect(toRow(post({ interests, me: { interested: true, status: null } }), TODAY).fans).toEqual([
       { kind: "me" },
       { kind: "member", member: NARAE, applied: true },
     ])
-    expect(toRow(post({ me: { interested: false, status: "필기 단계" } }), TODAY).meOn).toBe(true)
     expect(toRow(post({ interests }), TODAY).fans).toEqual([{ kind: "member", member: NARAE, applied: true }])
+  })
+  it("관심을 끈 공고는 지원 상태가 있어도 나를 넣지 않는다(다른 멤버가 보는 것과 같다, 공고 문서 4.5)", () => {
+    const row = toRow(post({ me: { interested: false, status: "필기 단계" } }), TODAY)
+    expect(row.meOn).toBe(false)
+    expect(row.fans).toEqual([])
   })
 })
 

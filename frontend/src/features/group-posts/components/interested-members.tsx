@@ -8,7 +8,6 @@ import { SurfaceCard } from "@/shared/components/surface-card"
 import { textLink } from "@/shared/components/text-link"
 import { firstChar, joinClasses } from "@/shared/lib/utils"
 
-import { isInterestedOrApplied } from "../my-state"
 import type { GroupPostDetail } from "../types"
 import { AppliedBadge } from "./chips"
 
@@ -29,7 +28,8 @@ function myVisibleState(status: string | null, disclosure: Disclosure): string |
 
 /** 관심 멤버: 나를 맨 위에, 지원한 멤버는 지원 표시(공개 범위만큼). */
 export function InterestedMembers({ post, viewer, myDisclosure, onChangeDisclosure }: InterestedMembersProps) {
-  const meOn = isInterestedOrApplied(post.me)
+  // 관심을 켠 공고만 나를 넣는다(list-rules.ts의 toRow와 같다)
+  const meOn = post.me.interested
   const mine = myVisibleState(post.me.status, myDisclosure)
   const count = (meOn ? 1 : 0) + post.interests.length
 

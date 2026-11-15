@@ -16,7 +16,7 @@ interface DeadlineCardProps {
 const sourceLink =
   "inline-flex min-h-control-md flex-none items-center gap-1.5 rounded-full px-4 text-sm font-bold whitespace-nowrap text-highlight-foreground underline underline-offset-4"
 
-/** 상세 맨 위의 하이라이트 카드: 마감(강조색 상자), 회사와 공고명, 관심 켜기·끄기, 원문 보기. */
+/** 상세 맨 위의 하이라이트 카드: 마감(강조색 상자), 회사와 공고명, 내 지원 상태, 관심 켜기·끄기, 원문 보기. */
 export function DeadlineCard({ post, today, onToggleInterest }: DeadlineCardProps) {
   const due = deadlineText(post.deadline, today)
   const unknown = post.deadline.kind === "unknown"
@@ -44,9 +44,9 @@ export function DeadlineCard({ post, today, onToggleInterest }: DeadlineCardProp
         </Heading>
         {post.applyAt && <p className="text-sm">지원처 · {post.applyAt}</p>}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {post.me.status ? (
-            <StatusPill>{post.me.status}</StatusPill>
-          ) : post.me.interested ? (
+          {post.me.status && <StatusPill>{post.me.status}</StatusPill>}
+          {/* 지원 상태가 있어도 관심을 끌 수 있다. 끄면 이 그룹의 관심만 빠지고 내 공고와 지원 상태는 남는다(공고 문서 4.5) */}
+          {post.me.interested ? (
             <Button
               aria-pressed="true"
               className="bg-surface text-foreground shadow-resting hover:bg-surface/90"
