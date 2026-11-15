@@ -6,19 +6,25 @@ import { listCards, listSources } from "./cards-db"
 import { listGroups, mockFlag, signOut, viewer } from "./db"
 import { listMyPostings } from "./my-db"
 
-/** 내 정보. 구글은 ?mock=no-google이면 연결 전으로 본다. */
+/** 내 정보. 구글은 ?mock=no-google이면 연결 전으로, 비밀번호는 ?mock=no-password이면 없는 계정(구글로만 가입)으로 본다. */
 export function getAccount(): AccountInfo {
   const me = viewer()
   return {
     name: me?.name ?? "",
     email: "name@example.com",
     emailVerified: true,
-    hasPassword: true,
+    hasPassword: !mockFlag("no-password"),
     google: mockFlag("no-google") ? null : { email: "name@gmail.example" },
   }
 }
 
-export { renameViewer as rename, signOut as logout } from "./db"
+export { renameViewer as rename, requestPasswordReset, signOut as logout } from "./db"
+
+/** 비밀번호 바꾸기(PUT /api/me/password). 가짜 서버의 지금 비밀번호는 서버의 예시 계정과 같은 readme1234다. */
+export function changePassword(currentPassword: string): "done" | "wrong" | "none" {
+  if (mockFlag("no-password")) return "none"
+  return currentPassword === "readme1234" ? "done" : "wrong"
+}
 
 let inbound = "daon-7f3k9x2m@in.readme.example"
 let senders = ["name@gmail.example"]

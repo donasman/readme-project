@@ -7,7 +7,7 @@ import { paths } from "@/shared/lib/paths"
 
 import { signup } from "../api"
 import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, authInlineLink, AuthText, OrGoogle } from "../components/auth-parts"
-import { PASSWORD_TOO_LONG, passwordTooLong } from "../password"
+import { PASSWORD_TOO_LONG, passwordTooLong } from "@/domain/session/password"
 
 /** 회원가입(5차 "회원가입"). 가입하면 확인 메일을 보냈다는 화면으로 간다. 이미 있는 이메일이면 그 자리에서 알려 준다. */
 export function SignupPage() {
