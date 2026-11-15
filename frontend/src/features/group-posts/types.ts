@@ -39,6 +39,8 @@ export interface GroupPost {
   interests: Interest[]
   me: MyState
   commentCount: number
+  /** 원문 주소. 링크 없이 본문을 붙여넣은 공고는 null */
+  sourceUrl: string | null
 }
 
 /** 댓글 본문은 글자와 링크만 받는다. */
@@ -65,7 +67,6 @@ export interface GroupPostDetail extends GroupPost {
   deadlineName: string | null
   /** 지원처. 예: "회사 채용 홈페이지" */
   applyAt: string | null
-  sourceUrl: string | null
   sections: PostSection[]
   keywords: string[]
   comments: Comment[]

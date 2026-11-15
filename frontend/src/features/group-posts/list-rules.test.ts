@@ -27,6 +27,7 @@ function post(over: Partial<GroupPost> & { due?: string } = {}): GroupPost {
     interests: [],
     me: { interested: false, status: null },
     commentCount: 0,
+    sourceUrl: null,
     ...rest,
   }
 }

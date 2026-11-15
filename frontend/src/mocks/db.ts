@@ -125,8 +125,8 @@ function toGroup(g: ExampleGroup): Group {
 const myState = (p: GroupPostDetail): MyState => ({ interested: p.me.interested, status: statusOf(p.groupId, p.id) })
 
 function toSummary(p: GroupPostDetail): GroupPost {
-  const { id, groupId, company, title, deadline, postedBy, postedAt, interests, commentCount } = p
-  return structuredClone({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me: myState(p), commentCount })
+  const { id, groupId, company, title, deadline, postedBy, postedAt, interests, commentCount, sourceUrl } = p
+  return structuredClone({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me: myState(p), commentCount, sourceUrl })
 }
 
 /** 내가 속한 그룹들. */

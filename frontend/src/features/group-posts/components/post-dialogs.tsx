@@ -8,7 +8,6 @@ import type { Disclosure, Group } from "@/domain/group/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 
 import type { Comment, Deadline, GroupPost } from "../types"
 
@@ -41,12 +40,12 @@ export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<Gr
         </>
       }
     >
-      {target && <DeadlineForm key={target.id} onSave={onSave} />}
+      {target && <DeadlineForm key={target.id} sourceUrl={target.sourceUrl} onSave={onSave} />}
     </AppDialog>
   )
 }
 
-function DeadlineForm({ onSave }: { onSave: (deadline: Deadline) => Promise<void> }) {
+function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave: (deadline: Deadline) => Promise<void> }) {
   const [date, setDate] = useState("")
   const [always, setAlways] = useState(false)
   const [missing, setMissing] = useState(false)
@@ -89,8 +88,12 @@ function DeadlineForm({ onSave }: { onSave: (deadline: Deadline) => Promise<void
       </label>
       <p className="text-label-sm text-text-secondary">
         넣은 날짜는 이 공고가 올라간 모든 그룹에 보이고, 한 번 넣으면 바꿀 수 없습니다.{" "}
-        {/* shortcut: 목록 응답(GET …/posts)에 원문 주소가 없어 눌러도 아무 일이 없는 자리만 둔다, 서버가 목록에 원문 주소를 싣기로 하면 링크로 바꾼다 */}
-        <PlaceholderLink className={sourceLink}>원문 열기</PlaceholderLink>
+        {/* 원문 주소가 없는 공고(본문을 붙여넣은 공고)는 갈 곳이 없어 감춘다 */}
+        {sourceUrl && (
+          <a href={sourceUrl} target="_blank" rel="noreferrer" className={sourceLink}>
+            원문 열기
+          </a>
+        )}
       </p>
     </form>
   )
