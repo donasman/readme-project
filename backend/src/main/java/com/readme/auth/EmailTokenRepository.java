@@ -25,15 +25,25 @@ interface EmailTokenRepository extends JpaRepository<EmailToken, Long> {
 
 	/**
 	 * 그 사람에게 보낸 같은 종류의 쓰지 않은 링크를 쓴 것으로 두어 쓸 수 없게 한다. 메일함의 옛 링크는 410 이 된다.
-	 * 지우지 않는다. 보낸 링크의 수를 created_at 으로 세기 때문이다.
+	 * 지우지 않는다. 보낸 링크의 수를 created_at 으로 세기 때문이다. 24시간이 지나면 deleteSpent 가 지운다.
 	 */
-	// shortcut: rows are never deleted, delete rows older than a day in a scheduled job when the table grows
 	@Modifying
 	@Query(value = """
 			update email_tokens set used_at = :now
 			 where user_id = :userId and purpose = :purpose and used_at is null
 			""", nativeQuery = true)
 	int cancelUnused(@Param("userId") long userId, @Param("purpose") String purpose, @Param("now") Instant now);
+
+	/**
+	 * 더 쓸 데가 없는 링크를 지운다. before 와 같거나 앞서 만들었고(countCreatedSince 가 세지 않는다), 썼거나 지난 것이다.
+	 * 지운 행 수를 돌려준다.
+	 */
+	@Modifying
+	@Query(value = """
+			delete from email_tokens
+			 where created_at <= :before and (used_at is not null or expires_at <= :now)
+			""", nativeQuery = true)
+	int deleteSpent(@Param("before") Instant before, @Param("now") Instant now);
 
 	/** 그 사람에게 since 뒤에 만든 같은 종류의 링크 수. 쓴 것과 쓸 수 없게 한 것도 센다. */
 	@Query("""
