@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { ApiError, apiPath, request } from "./api"
 
-type Call = { url: string; method: string; headers: Record<string, string>; body?: string }
+type Call = { url: string; method: string; headers: Record<string, string>; body?: unknown }
 
 /** 가짜 fetch: 답을 차례로 돌려주고 받은 요청을 모은다. 응답마다 쿠키를 바꿀 수 있다(서버가 새 XSRF-TOKEN을 준 것처럼). */
 function serve(...answers: { status: number; body?: unknown; cookie?: string }[]) {
@@ -10,7 +10,7 @@ function serve(...answers: { status: number; body?: unknown; cookie?: string }[]
   const doc = { cookie: "" }
   vi.stubGlobal("document", doc)
   vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
-    calls.push({ url, method: String(init.method), headers: init.headers as Record<string, string>, body: init.body as string | undefined })
+    calls.push({ url, method: String(init.method), headers: init.headers as Record<string, string>, body: init.body })
     const answer = answers.shift()!
     if (answer.cookie) doc.cookie = answer.cookie
     return new Response(answer.body === undefined ? null : JSON.stringify(answer.body), { status: answer.status })
@@ -41,6 +41,15 @@ describe("request", () => {
     expect(await request("POST", "/api/auth/logout", { a: 1 })).toBeUndefined()
     expect(calls[0].headers).toEqual({ "Content-Type": "application/json", "X-XSRF-TOKEN": "t1" })
     expect(calls[0].body).toBe('{"a":1}')
+  })
+
+  it("파일(FormData)은 JSON으로 바꾸지 않고 Content-Type 없이 보낸다", async () => {
+    const { calls } = serve({ status: 201, body: { ok: true } })
+    const form = new FormData()
+    form.append("file", new Blob(["가나다"]), "이력서.txt")
+    await request("POST", "/api/card-sources", form)
+    expect(calls[0].headers["Content-Type"]).toBeUndefined()
+    expect(calls[0].body).toBe(form)
   })
 
   it("CSRF로 막히면 서버가 새로 준 쿠키로 한 번만 다시 보낸다", async () => {
