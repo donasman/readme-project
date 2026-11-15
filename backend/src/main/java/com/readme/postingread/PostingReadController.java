@@ -30,6 +30,7 @@ import com.readme.postingread.PostingReadResponse.Duplicate;
  * 공고 읽어 오기(공고 설계 4.6). 로그인한 사람이면 부를 수 있고, groupId 를 넣으면 그 그룹의 멤버만이다.
  * 같은 주소가 JSON(링크나 붙여넣은 본문)과 파일(multipart, 칸 이름 file)을 받는다. 파일의 글은 붙여넣은 본문과 같은 길로 읽는다.
  * 읽은 결과는 저장하지 않는다. 읽지 못하면 FETCH_…·FILE_… 오류의 메시지로 본문 붙여넣기를 안내한다.
+ * 규칙으로 못 읽은 필수 칸은 LLM 으로 채운다(PostingFieldsByLlm, 읽는 사람의 사용액).
  */
 @RestController
 class PostingReadController {
@@ -42,14 +43,17 @@ class PostingReadController {
 
 	private final UploadedFiles files;
 
+	private final PostingFieldsByLlm llmFields;
+
 	private final Clock clock;
 
 	PostingReadController(GroupAccess access, PostingReadQueries queries, PostingReader reader, UploadedFiles files,
-			Clock clock) {
+			PostingFieldsByLlm llmFields, Clock clock) {
 		this.access = access;
 		this.queries = queries;
 		this.reader = reader;
 		this.files = files;
+		this.llmFields = llmFields;
 		this.clock = clock;
 	}
 
@@ -70,12 +74,13 @@ class PostingReadController {
 		}
 		LocalDate today = LocalDate.now(this.clock);
 		if (!byUrl) {
-			return this.reader.fromText(request.text(), link, today).with(duplicate);
+			return this.llmFields.fill(this.reader.fromText(request.text(), link, today), user.id(), today)
+				.with(duplicate);
 		}
 		if (duplicate != null) {
 			return PostingReadResponse.notFetched(link, duplicate); // 이미 그룹에 있는 공고의 페이지는 다시 받지 않는다
 		}
-		return this.reader.fromUrl(link, today);
+		return this.llmFields.fill(this.reader.fromUrl(link, today), user.id(), today);
 	}
 
 	/**
@@ -98,7 +103,8 @@ class PostingReadController {
 		if (text.length() > PostingReadRequest.MAX_TEXT) {
 			throw new ApiException(PostingReadErrorCode.FILE_TOO_LARGE);
 		}
-		return this.reader.fromText(text, null, LocalDate.now(this.clock));
+		LocalDate today = LocalDate.now(this.clock);
+		return this.llmFields.fill(this.reader.fromText(text, null, today), user.id(), today);
 	}
 
 	/**
