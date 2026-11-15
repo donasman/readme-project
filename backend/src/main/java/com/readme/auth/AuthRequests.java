@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * 로그인·가입·재설정 API 가 받는 본문. 길이 제한은 users 칸(이메일 320자, 표시 이름 50자)과 같다.
+ * 로그인·가입·재설정과 내 계정(/api/me) API 가 받는 본문. 길이 제한은 users 칸(이메일 320자, 표시 이름 50자)과 같다.
  * 이메일과 표시 이름은 검사하기 전에 앞뒤 공백을 지운다(레코드의 생성자). 비밀번호는 그대로 쓴다.
  */
 final class AuthRequests {
@@ -51,6 +51,31 @@ final class AuthRequests {
 
 	/** POST /api/auth/password-reset/confirm */
 	record ResetPasswordRequest(@NotBlank String token, @PasswordRule String password) {
+	}
+
+	/** PUT /api/me. 표시 이름 바꾸기 */
+	record RenameRequest(@NotBlank @Size(max = 50) String name) {
+
+		RenameRequest {
+			name = strip(name);
+		}
+
+	}
+
+	/**
+	 * PUT /api/me/password. 지금 비밀번호는 규칙도 빈칸도 보지 않는다. 틀리면 400 WRONG_PASSWORD 이고, 비밀번호가 없는 계정은
+	 * 무엇을 넣어도 409 NO_PASSWORD 다.
+	 */
+	record ChangePasswordRequest(String currentPassword, @PasswordRule String newPassword) {
+	}
+
+	/** POST /api/me/withdraw. 비밀번호가 있는 계정은 password, 없는 계정(구글로만 가입)은 email 로 확인한다. */
+	record WithdrawRequest(String password, String email) {
+
+		WithdrawRequest {
+			email = strip(email);
+		}
+
 	}
 
 	private static String strip(String text) {

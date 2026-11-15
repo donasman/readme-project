@@ -47,6 +47,11 @@ interface AccountRepository extends JpaRepository<Account, Long> {
 			""", nativeQuery = true)
 	int changePassword(@Param("id") long id, @Param("passwordHash") String passwordHash, @Param("now") Instant now);
 
+	/** 표시 이름을 바꾼다. 계정이 없으면(지워졌으면) 0. */
+	@Modifying
+	@Query(value = "update users set display_name = :name, updated_at = :now where id = :id", nativeQuery = true)
+	int rename(@Param("id") long id, @Param("name") String name, @Param("now") Instant now);
+
 	@Modifying
 	@Query(value = "update users set last_login_at = :now where id = :id", nativeQuery = true)
 	int recordLogin(@Param("id") long id, @Param("now") Instant now);

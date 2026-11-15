@@ -3,6 +3,7 @@
  *
  * <p>테이블: groups, group_members, group_invites. API: /api/groups, /api/group-invites.
  * <p>다른 기능은 {@link com.readme.group.GroupAccess} 로 "이 사람이 이 그룹의 멤버인가"를 확인한다.
+ * <p>탈퇴: auth 가 계정을 지우기 전에 내는 이벤트(AccountDeleting)를 LeaderHandover 가 받아 그룹장을 넘긴다.
  * 근거: docs/리드미_설계_그룹_공고.md.
  */
 package com.readme.group;

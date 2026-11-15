@@ -50,7 +50,7 @@ class LoginTests {
 		MvcTestResult login = login(this.fixtures.emailOf(user), PASSWORD, null);
 
 		assertThat(login).hasStatusOk().bodyJson().isStrictlyEqualTo("""
-				{ "id": %d, "name": "가람", "email": "%s", "hasPassword": true, "providers": [] }
+				{ "id": %d, "name": "가람", "email": "%s", "hasPassword": true, "providers": [], "google": null }
 				""".formatted(user, this.fixtures.emailOf(user)));
 		assertThat(sessionRows()).isEqualTo(before + 1);
 		String session = setCookie(login, "SESSION");
