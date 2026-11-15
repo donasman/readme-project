@@ -21,6 +21,8 @@ import com.readme.group.Disclosure;
 import com.readme.group.MemberResponse;
 import com.readme.grouppost.GroupPostDetailResponse.PostingDetails;
 import com.readme.posting.ApplicationStatus;
+import com.readme.posting.DeadlineResponse;
+import com.readme.posting.PostSection;
 
 /**
  * 그룹 공고 화면에 내보내는 것을 읽는다. 목록은 쿼리 둘(공고, 관심 멤버)로 읽는다(설계 6절 16번).

@@ -26,6 +26,7 @@ import com.readme.grouppost.GroupPostRequests.DeadlineInput;
 import com.readme.grouppost.GroupPostRequests.InterestRequest;
 import com.readme.grouppost.GroupPostRequests.PostRequest;
 import com.readme.posting.DeadlineKind;
+import com.readme.posting.DeadlineResponse;
 
 /**
  * 그룹 공고 API(설계 4.2). 그룹의 멤버만 부를 수 있고, 멤버가 아니면 그룹이 없을 때와 같은 404 다.

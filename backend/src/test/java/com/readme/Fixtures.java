@@ -195,11 +195,14 @@ public class Fixtures {
 			.update();
 	}
 
-	/** 내 공고 행을 이 상태로 둔다. stage, result 는 지원함(APPLIED)일 때만 넣는다. */
+	/**
+	 * 내 공고 행을 이 상태로 둔다. stage, result 는 지원함(APPLIED)일 때만 넣는다.
+	 * 행을 처음 만들 때 내 공고에 넣은 때(created_at)가 순서용 시각이 된다. 내 공고 목록은 이 시각의 역순이다.
+	 */
 	public void status(long userId, long postingId, String decision, String stage, String result) {
 		this.jdbc.sql("""
-				insert into user_postings (user_id, posting_id, decision, stage, result)
-				values (:userId, :postingId, :decision, :stage, :result)
+				insert into user_postings (user_id, posting_id, decision, stage, result, created_at)
+				values (:userId, :postingId, :decision, :stage, :result, :createdAt)
 				on conflict (user_id, posting_id)
 				do update set decision = excluded.decision, stage = excluded.stage, result = excluded.result
 				""")
@@ -208,6 +211,7 @@ public class Fixtures {
 			.param("decision", decision)
 			.param("stage", stage, Types.VARCHAR)
 			.param("result", result, Types.VARCHAR)
+			.param("createdAt", nextMoment())
 			.update();
 	}
 

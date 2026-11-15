@@ -28,4 +28,13 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 			@Param("decision") String decision, @Param("stage") String stage, @Param("result") String result,
 			@Param("now") Instant now);
 
+	/** 메모만 이 값으로 둔다(지원 상태는 그대로). 내 공고 행이 있으면 1, 없으면 0. */
+	@Modifying
+	@Query(value = """
+			update user_postings set memo = cast(:memo as varchar), updated_at = :now
+			 where user_id = :userId and posting_id = :postingId
+			""", nativeQuery = true)
+	int updateMemo(@Param("userId") long userId, @Param("postingId") long postingId, @Param("memo") String memo,
+			@Param("now") Instant now);
+
 }

@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.readme.group.MemberResponse;
+import com.readme.posting.DeadlineResponse;
+import com.readme.posting.PostSection;
 
 /**
  * 그룹 공고 상세. 목록의 한 줄에 공고 내용과 댓글이 더해진다. 프런트의 GroupPostDetail 모양이다.
