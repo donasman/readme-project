@@ -23,6 +23,7 @@ import com.readme.llm.FakeClaudeApi;
  * 로그인한 요청은 {@link TestRequests#loginAs}, 바꾸는 요청에는 {@link TestRequests#xsrf} 를 붙인다.</li>
  * <li>메일은 보내지 않고 주입받은 {@link TestMailbox} 에 모인다.</li>
  * <li>Claude 는 부르지 않고 주입받은 {@link FakeClaudeApi} 가 정해 둔 답을 준다.</li>
+ * <li>@Async 일(커밋 뒤의 공고 분석)은 요청이 돌아오기 전에 끝난다({@link AwaitAsyncConfiguration}).</li>
  * </ul>
  *
  * <p>이 표시만 붙인 테스트들은 같은 Spring 설정을 쓰므로 서버와 DB 를 한 번만 띄워 나눠 쓴다.
@@ -35,6 +36,6 @@ import com.readme.llm.FakeClaudeApi;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Import({ TestcontainersConfiguration.class, FixedClockConfiguration.class, Fixtures.class, TestMailbox.class,
-		FakeClaudeApi.class })
+		FakeClaudeApi.class, AwaitAsyncConfiguration.class })
 public @interface IntegrationTest {
 }

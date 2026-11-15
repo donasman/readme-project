@@ -88,6 +88,11 @@ public final class KeywordDictionary {
 		return (canonical != null) ? canonical : text;
 	}
 
+	/** 대표 표기 전부. keywords.txt, synonyms.yaml 의 순서다. 공고 분석의 프롬프트가 싣는다(공고 설계 4.7). */
+	public List<String> canonicals() {
+		return List.copyOf(this.variants.keySet());
+	}
+
 	/** 사전에 있는 표기(대표 표기나 다른 표기)인지. 대소문자는 가리지 않는다. */
 	public boolean contains(String token) {
 		return canonicalOf(token.strip()) != null;

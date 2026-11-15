@@ -11,23 +11,26 @@ import com.readme.posting.ApplicationStatus.Stage;
  * 내 공고 상세. 목록의 한 줄에 공고 내용, 나만 보는 메모, 그룹마다의 내 모습이 더해진다. 프런트의 MyPostingDetail 모양이다.
  * 맞는 카드(matches, unmatched)는 아직 없다(화면·API 대응 문서 3절 13번).
  *
+ * @param analysis    공고 분석(설계 4.7). 아직 없으면 null. 프런트 타입에는 아직 없다(설계 8절 30번)
  * @param memo        나만 보는 메모. 없으면 null
  * @param groupStates groups 와 같은 그룹들에 그 그룹에서의 내 관심, 댓글 수, 내 공개 범위가 붙는다
  */
 record MyPostingDetailResponse(long id, String company, String title, DeadlineResponse deadline, Decision decision,
 		Stage stage, Result result, String status, List<MyPostingResponse.Group> groups, String applyAt,
-		String sourceUrl, List<PostSection> sections, List<String> keywords, String memo,
+		String sourceUrl, List<PostSection> sections, List<String> keywords, PostingAnalysis analysis, String memo,
 		List<GroupState> groupStates) {
 
 	static MyPostingDetailResponse of(MyPostingResponse posting, Details details, List<String> keywords,
 			List<GroupState> groupStates) {
 		return new MyPostingDetailResponse(posting.id(), posting.company(), posting.title(), posting.deadline(),
 				posting.decision(), posting.stage(), posting.result(), posting.status(), posting.groups(),
-				details.applyAt(), details.sourceUrl(), details.sections(), keywords, details.memo(), groupStates);
+				details.applyAt(), details.sourceUrl(), details.sections(), keywords, details.analysis(),
+				details.memo(), groupStates);
 	}
 
 	/** 상세에만 있는 공고 본체의 값과 내 메모. */
-	record Details(String applyAt, String sourceUrl, List<PostSection> sections, String memo) {
+	record Details(String applyAt, String sourceUrl, List<PostSection> sections, PostingAnalysis analysis,
+			String memo) {
 	}
 
 	/**
