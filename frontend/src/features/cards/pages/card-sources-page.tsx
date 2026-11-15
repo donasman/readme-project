@@ -58,6 +58,7 @@ export function CardSourcesPage() {
   async function read(input: { file: File } | { text: string }): Promise<string | null> {
     const result = await uploadSource(input)
     if (!result.ok) return result.message
+    setNoExtraction(false)
     setStep({ kind: "ready", source: result.source, chunks: result.chunks })
     void revalidator.revalidate()
     return null
