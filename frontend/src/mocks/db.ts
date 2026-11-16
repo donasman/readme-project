@@ -6,6 +6,7 @@
 import type { Disclosure, Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
 import type { AcceptInviteResult, InviteView } from "@/features/auth/types"
+import type { LiveInvite } from "@/features/groups/types"
 import type { DraftField, DraftSection, PostDraft, PostUpload, ReadPostResult } from "@/domain/posting/types"
 import type { Comment, CommentPart, Deadline, GroupPost, GroupPostDetail, MyState, UploadPostResult } from "@/features/group-posts/types"
 import { addDays, daysBetween } from "@/shared/lib/date"
@@ -164,26 +165,58 @@ export function leaveGroup(groupId: string): void {
 // ---- 초대 링크. 링크는 7일 동안 쓸 수 있고, 멤버 누구나 만든다(그룹 설계 가정 6) ----
 
 interface Invite {
+  id: string
   groupId: string
-  inviter: Viewer
+  /** 만든 사람. 계정을 지웠으면 null */
+  inviter: Viewer | null
+  /** "YYYY-MM-DD HH:mm" */
+  createdAt: string
   expiresAt: string
+  revoked?: boolean
 }
-/** 예시 초대: 가람이 만든 백엔드 스터디 링크(시안 7차 "초대 수락"). "expired"는 지난 링크로 친다. */
-const invites = new Map<string, Invite>([["Xk3f9QmT2a", { groupId: "be", inviter: { id: "garam", name: "가람" }, expiresAt: "2026-11-20" }]])
+/**
+ * 예시 초대: 백엔드 스터디의 링크 셋(시안 10차 멤버의 links "some"). 가람의 링크는 시안 7차 "초대 수락"의 주소다.
+ * 없는 주소는 지난 링크로 친다.
+ */
+const invites = new Map<string, Invite>([
+  ["Xk3f9QmT2a", { id: "3", groupId: "be", inviter: { id: "garam", name: "가람" }, createdAt: "2026-11-12 21:05", expiresAt: "2026-11-19" }],
+  ["Pq7Lm2Vd8s", { id: "2", groupId: "be", inviter: structuredClone(VIEWER), createdAt: "2026-11-10 09:40", expiresAt: "2026-11-17" }],
+  ["Hn4Rt6Wc1z", { id: "1", groupId: "be", inviter: null, createdAt: "2026-11-08 18:12", expiresAt: "2026-11-15" }],
+])
 
-/** 초대 링크 만들기(POST /api/groups/{groupId}/invites). 링크는 만들 때만 보여 준다. */
+/** 초대 링크 만들기(POST /api/groups/{groupId}/invites). 링크는 만들 때만 보여 준다. 만든 때는 시안의 시각으로 둔다. */
 export function createInvite(groupId: string): { token: string; expiresAt: string } {
   rawGroup(groupId)
   const token = Math.random().toString(36).slice(2, 12)
   const expiresAt = addDays(today(), 7)
-  invites.set(token, { groupId, inviter: structuredClone(VIEWER), expiresAt })
+  invites.set(token, { id: String(invites.size + 1), groupId, inviter: structuredClone(VIEWER), createdAt: `${today()} 14:20`, expiresAt })
   return { token, expiresAt }
+}
+
+const live = (invite: Invite) => !invite.revoked && daysBetween(today(), invite.expiresAt) >= 0
+
+/** 쓸 수 있는 초대 링크들, 새것부터(GET /api/groups/{groupId}/invites). 멤버만 본다. */
+export function liveInvites(groupId: string): LiveInvite[] {
+  rawGroup(groupId)
+  return [...invites.values()]
+    .filter((i) => i.groupId === groupId && live(i))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || Number(b.id) - Number(a.id))
+    .map((i) => ({ id: i.id, createdBy: structuredClone(i.inviter), createdAt: i.createdAt, expiresAt: i.expiresAt }))
+}
+
+/** 초대 링크 취소(DELETE /api/groups/{groupId}/invites/{inviteId}). 만든 사람과 그룹장만. 이미 취소한 링크도 성공이다. */
+export function revokeInvite(groupId: string, inviteId: string): void {
+  const group = rawGroup(groupId)
+  const invite = [...invites.values()].find((i) => i.groupId === groupId && i.id === inviteId)
+  if (!invite) throw new NotFoundError("초대 링크")
+  if (group.leaderId !== VIEWER.id && invite.inviter?.id !== VIEWER.id) throw new Error("링크를 만든 사람과 그룹장만 취소할 수 있습니다.")
+  invite.revoked = true
 }
 
 function openInvite(token: string): { invite: Invite; group: ExampleGroup } | null {
   const invite = invites.get(token)
   const group = invite && data().find((g) => g.id === invite.groupId)
-  if (!invite || !group || daysBetween(today(), invite.expiresAt) < 0) return null
+  if (!invite || !group || !live(invite)) return null
   return { invite, group }
 }
 
@@ -192,7 +225,7 @@ export function getInvite(token: string): InviteView {
   const found = openInvite(token)
   if (!found) return { status: "expired" }
   const { invite, group } = found
-  return { status: "open", groupName: group.name, mark: group.mark, inviterName: invite.inviter.name, memberCount: group.members.length }
+  return { status: "open", groupName: group.name, mark: group.mark, inviterName: invite.inviter?.name ?? null, memberCount: group.members.length }
 }
 
 /** 초대 수락(POST /api/group-invites/{token}/accept). 이미 멤버면 그대로 둔다. 지난 링크는 410 INVITE_EXPIRED. */

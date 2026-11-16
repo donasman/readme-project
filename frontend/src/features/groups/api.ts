@@ -7,7 +7,7 @@ import { seoulToday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
 import { firstChar } from "@/shared/lib/utils"
 
-import type { CreatedInvite } from "./types"
+import type { CreatedInvite, LiveInvite } from "./types"
 
 /** 내 그룹 목록과 오늘(가장 가까운 마감의 D-day를 센다). 서버는 그룹 목록에 오늘을 싣지 않아 한국 날짜로 센다. */
 export async function getGroupList(): Promise<{ today: string; groups: Group[] }> {
@@ -31,6 +31,19 @@ export async function createInvite(groupId: string): Promise<CreatedInvite> {
   const invite = await request<CreatedInvite>("POST", apiPath`/api/groups/${groupId}/invites`)
   // 만료 시각은 +09:00이 붙은 ISO 8601이라 앞 10자가 한국 날짜다
   return { link: invite.link, expiresAt: invite.expiresAt.slice(0, 10) }
+}
+
+/** 쓸 수 있는 초대 링크들, 새것부터. 멤버만 본다. 시각은 +09:00이 붙은 ISO 8601이라 앞부분이 한국 날짜와 시각이다. */
+export async function getInvites(groupId: string): Promise<LiveInvite[]> {
+  if (mockServer) return db.liveInvites(groupId)
+  const invites = await request<LiveInvite[]>("GET", apiPath`/api/groups/${groupId}/invites`)
+  return invites.map((i) => ({ ...i, createdAt: `${i.createdAt.slice(0, 10)} ${i.createdAt.slice(11, 16)}`, expiresAt: i.expiresAt.slice(0, 10) }))
+}
+
+/** 초대 링크를 취소한다. 만든 사람과 그룹장만 한다(화면이 그 사람에게만 버튼을 보인다. 서버는 403). 이미 취소한 링크도 성공이다. */
+export async function revokeInvite(groupId: string, inviteId: string): Promise<void> {
+  if (mockServer) return db.revokeInvite(groupId, inviteId)
+  await request("DELETE", apiPath`/api/groups/${groupId}/invites/${inviteId}`)
 }
 
 /** 그룹에서 나간다. 그룹장은 나갈 수 없다(화면이 버튼을 보이지 않는다. 서버는 409 LEADER_CANNOT_LEAVE). */
