@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -94,6 +95,18 @@ class MyPostingController {
 		}
 		this.userPostings.setStatus(user.id(), postingId, status);
 		return new StatusResponse(postingId, status.decision(), status.stage(), status.result(), status.label());
+	}
+
+	/**
+	 * 내 공고에서 빼기(설계 4.2). 지원 상태, 메모, 전형 일정을 지우고 내 그룹들에서 켜 둔 이 공고의 관심을 끈다. 공고 본체와 그룹 공고는
+	 * 남는다. 내 공고에 없는 공고면 404 POSTING_NOT_FOUND.
+	 */
+	@DeleteMapping("/api/me/postings/{postingId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void remove(@PathVariable long postingId, @CurrentUser LoginUser user) {
+		if (!this.userPostings.remove(user.id(), postingId)) {
+			throw new ApiException(PostingErrorCode.POSTING_NOT_FOUND);
+		}
 	}
 
 	/**

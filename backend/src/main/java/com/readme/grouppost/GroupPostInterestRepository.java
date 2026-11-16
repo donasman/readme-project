@@ -26,4 +26,10 @@ interface GroupPostInterestRepository extends JpaRepository<GroupPostInterest, G
 			""", nativeQuery = true)
 	int deleteIfPresent(@Param("groupId") long groupId, @Param("postingId") long postingId, @Param("userId") long userId);
 
+	/** 이 사람이 모든 그룹에서 켜 둔 이 공고의 관심을 끈다. */
+	@Modifying
+	@Query(value = "delete from group_post_interests where posting_id = :postingId and user_id = :userId",
+			nativeQuery = true)
+	int deleteEverywhere(@Param("postingId") long postingId, @Param("userId") long userId);
+
 }
