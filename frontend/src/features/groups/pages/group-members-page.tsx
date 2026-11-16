@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLoaderData, useLocation, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { Button } from "@/components/ui/button"
@@ -42,10 +42,15 @@ export function GroupMembersPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const revalidator = useRevalidator()
-  const [invite, setInvite] = useState((location.state as MembersPageState | null)?.invite ?? null)
+  // 그룹을 만들고 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(새로 고침과 뒤로 가기에 남으면 취소한 주소가 다시 보인다)
+  const [invite, setInvite] = useState(() => (location.state as MembersPageState | null)?.invite ?? null)
+  useEffect(() => {
+    if (location.state) void navigate(".", { replace: true, state: null })
+  }, [location.state, navigate])
   const [disclosure, setDisclosure] = useState<Disclosure>(group.myDisclosure)
   const [leaving, setLeaving] = useState(false)
   const [cancelling, setCancelling] = useState<LiveInvite | null>(null)
+  const [cancelled, setCancelled] = useState(false)
   const isLeader = group.leaderId === viewer.id
   const mine = (i: LiveInvite) => i.createdBy?.id === viewer.id
   const members = [...group.members].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))
@@ -62,11 +67,18 @@ export function GroupMembersPage() {
     void revalidator.revalidate()
   }
 
+  function askCancel(target: LiveInvite) {
+    // 앞 취소의 알림을 비워 두어야 같은 글이 다시 들어갈 때 다시 읽힌다
+    setCancelled(false)
+    setCancelling(target)
+  }
+
   async function cancelInvite(target: LiveInvite) {
     await revokeInvite(group.id, target.id)
     // shortcut: 만들기 응답에 링크 id가 없어 내가 만든 가장 새 링크를 위 칸의 주소로 본다, 응답에 id가 생기면 그것으로 맞춘다
     if (target.id === invites.find(mine)?.id) setInvite(null)
     setCancelling(null)
+    setCancelled(true)
     void revalidator.revalidate()
   }
 
@@ -150,7 +162,7 @@ export function GroupMembersPage() {
                         </div>
                       </div>
                       {(isLeader || mine(i)) && (
-                        <Button type="button" variant="outline" size="sm" className="h-(--control-height-md) flex-none" aria-label={`${inviteMaker(i, mine(i))} ${i.createdAt}에 만든 링크 취소`} onClick={() => setCancelling(i)}>
+                        <Button type="button" variant="outline" size="sm" className="h-(--control-height-md) flex-none" aria-label={`${inviteMaker(i, mine(i))} ${i.createdAt}에 만든 링크 취소`} onClick={() => askCancel(i)}>
                           취소
                         </Button>
                       )}
@@ -162,6 +174,10 @@ export function GroupMembersPage() {
                 </p>
               </div>
             )}
+            {/* 취소한 줄과 창을 연 버튼이 함께 사라져, 결과를 말로 알린다 */}
+            <p role="status" className="sr-only">
+              {cancelled ? "초대 링크를 취소했습니다." : ""}
+            </p>
           </Panel>
 
           <Panel aria-labelledby="members-leave" className="flex flex-col gap-4 p-6">
