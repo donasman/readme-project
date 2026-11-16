@@ -32,6 +32,15 @@ describe("달력 칸", () => {
     expect(cells.slice(0, 3).map((c) => c.day)).toEqual([null, null, 1])
     expect(cells.length % 7).toBe(0)
   })
+  it("칩에 남은 날, 3일 안인지, 지원했는지를 싣는다", () => {
+    const applied: MyPosting = { ...posting("핀테크", { kind: "date", date: "2026-11-20" }), decision: "applied", stage: "document", result: "in_progress" }
+    const events = monthEvents("2026-11", [...list, applied], TODAY)
+    expect(events.map((e) => [e.company, e.due, e.soon, e.applied])).toEqual([
+      ["보안", "마감", false, false],
+      ["제조", "D-2", true, false],
+      ["핀테크", "D-7", false, true],
+    ])
+  })
   it("그달의 마감만, 상시는 빼고", () => {
     expect(monthEvents("2026-11", list, TODAY).map((e) => [e.company, e.closed])).toEqual([["보안", true], ["제조", false]])
   })

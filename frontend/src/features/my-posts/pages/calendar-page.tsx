@@ -8,8 +8,8 @@ import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
 import { Panel, PanelRow } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
-import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/icons"
-import { formatDday, formatMonthDayWeekday } from "@/shared/lib/date"
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from "@/shared/icons"
+import { formatMonthDayWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
@@ -61,7 +61,21 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {/* 달력 칸은 넓을 때만. 좁으면 아래 목록만 본다 */}
+      {/* 달력 칸은 넓을 때만. 좁으면 아래 목록만 본다. 칩은 3일 안(진한 색), 그 뒤(옅은 색), 지난 마감(줄 그음), 지원함(체크)으로 나눈다 */}
+      <p className="hidden flex-wrap items-center gap-x-4 gap-y-2 text-label-sm text-text-secondary md:flex">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="rounded-[6px] bg-primary px-1.5 font-bold text-primary-foreground">D-2</span>3일 안 마감
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="rounded-[6px] bg-accent-subtle px-1.5 font-bold text-accent-strong">D-7</span>그 뒤
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="rounded-[6px] bg-surface-sunken px-1.5 font-bold text-foreground line-through">회사</span>지난 마감
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <CheckIcon aria-hidden="true" className="size-3.5 text-foreground" />지원함
+        </span>
+      </p>
       <Panel as="div" className="hidden overflow-hidden md:block">
         <div aria-hidden="true" className="grid grid-cols-7 py-3 text-center text-xs font-bold text-text-secondary">
           {WEEKDAYS.map((d) => (
@@ -92,11 +106,13 @@ export function CalendarPage() {
                   key={e.postingId}
                   to={paths.myPost(e.postingId)}
                   className={joinClasses(
-                    "block rounded-[8px] px-2 py-1 text-xs leading-[1.3] font-bold",
-                    e.closed ? "bg-surface-sunken text-foreground" : "bg-accent-subtle text-accent-strong"
+                    "flex items-center gap-1 rounded-[8px] px-2 py-1 text-xs leading-[1.3] font-bold",
+                    e.closed ? "bg-surface-sunken text-foreground line-through" : e.soon ? "bg-primary text-primary-foreground" : "bg-accent-subtle text-accent-strong"
                   )}
                 >
-                  마감 · {e.company}
+                  {e.applied && <CheckIcon aria-hidden="true" className="size-3 flex-none" />}
+                  <span className="min-w-0 truncate">{e.closed ? e.company : `${e.due} ${e.company}`}</span>
+                  <span className="sr-only">{`${e.closed ? " 지난 마감" : " 마감"}${e.applied ? ", 지원함" : ""}`}</span>
                 </Link>
               ))}
             </div>
@@ -114,7 +130,7 @@ export function CalendarPage() {
               <PanelRow key={e.postingId} first={i === 0} className="gap-x-4 py-3.5">
                 <span className="w-24 flex-none font-bold whitespace-nowrap">{formatMonthDayWeekday(e.date)}</span>
                 <PostingLink id={e.postingId} company={e.company} title={e.title} className="flex-[1_1_200px]" />
-                {e.closed ? <Pill tone="muted">마감</Pill> : <DdayBadge text={formatDday(today, e.date)} soon={false} />}
+                {e.closed ? <Pill tone="muted">마감</Pill> : <DdayBadge text={e.due} soon={e.soon} />}
               </PanelRow>
             ))}
           </Panel>
