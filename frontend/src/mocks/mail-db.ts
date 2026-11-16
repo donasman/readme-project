@@ -2,15 +2,15 @@
 // 상태를 바꾸는 것은 눌러야 반영되고, 새 공고는 바로 넣는다. 이 폴더는 shared와 타입만 불러온다.
 // 지금 상태(before)는 저장하지 않고 내 공고 행(user-postings.ts)에서 읽는다. 9차의 두 메일은 8차 상태에서 이미 반영된 값이라,
 // 반영하면 바뀌는 메일로 고쳤다: 예시 보안은 1차 면접 다음(2차 면접), 서류 결과는 서류 진행 중인 예시 핀테크.
-import type { MailAdded, MailChange, Mailbox } from "@/features/mail/types"
+import type { MailAdded, MailChange, MailForwarding, Mailbox } from "@/features/mail/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
-import { updateMyState } from "./my-db"
+import { addSchedule, updateMyState } from "./my-db"
 import { stateOf } from "./user-postings"
 
 type StoredMail = Omit<MailChange, "before">
 
-function createMailbox(): { pending: StoredMail[]; added: MailAdded[] } {
+function createMailbox(): { pending: StoredMail[]; added: MailAdded[]; forwarding: MailForwarding[]; waiting: number } {
   return {
     pending: [
       {
@@ -23,6 +23,7 @@ function createMailbox(): { pending: StoredMail[]; added: MailAdded[] } {
         company: "예시 보안",
         title: "주니어 서버 개발",
         after: { decision: "applied", stage: "interview_2", result: "in_progress" },
+        schedule: { stage: "interview_2", date: "2026-11-17", time: "14:00" },
         quote: "1차 면접에 합격하셨습니다. 2차 면접은 11월 17일입니다.",
       },
       {
@@ -35,10 +36,13 @@ function createMailbox(): { pending: StoredMail[]; added: MailAdded[] } {
         company: "예시 핀테크",
         title: "서버 개발 인턴",
         after: { decision: "applied", stage: "document", result: "failed" },
+        schedule: null,
         quote: "아쉽게도 이번 전형에서는 모시지 못하게 되었습니다.",
       },
     ],
-    added: [{ id: "a1", from: "예시 채용 사이트", receivedAt: "2026-11-12", note: "새 공고로 내 공고에 넣음", company: "예시 클라우드", title: "플랫폼 엔지니어 신입" }],
+    added: [{ id: "a1", from: "예시 채용 사이트", receivedAt: "2026-11-12", company: "예시 클라우드", title: "플랫폼 엔지니어 신입" }],
+    forwarding: [{ id: "f1", receivedAt: "2026-11-10", subject: "(#482913) Gmail 전달 확인 - 받은 메일 전달", code: "482913571" }],
+    waiting: 1,
   }
 }
 
@@ -47,8 +51,8 @@ const box = () => (store ??= createMailbox())
 
 /** 메일 확인함. 바뀌기 전 상태는 지금 내 공고의 상태다. */
 export function getMailbox(): Mailbox {
-  const { pending, added } = structuredClone(box())
-  return { pending: pending.map((m) => ({ ...m, before: stateOf(m.postingId) })), added }
+  const { pending, added, forwarding, waiting } = structuredClone(box())
+  return { pending: pending.map((m) => ({ ...m, before: stateOf(m.postingId) })), added, forwarding, waiting }
 }
 
 /** 홈의 "메일에서 온 변경 N건: …". */
@@ -68,11 +72,13 @@ function take(id: string): StoredMail {
 export function applyMail(id: string): void {
   const m = take(id)
   updateMyState(m.postingId, m.after)
+  if (m.schedule) addSchedule({ postingId: m.postingId, company: m.company, title: m.title, ...m.schedule })
 }
 
-/** 무시: 상태는 그대로 두고 확인함에서 뺀다. */
+/** 무시: 상태는 그대로 두고 확인함에서 뺀다. 전달 확인 메일도 같다. */
 export function ignoreMail(id: string): void {
-  take(id)
+  if (box().forwarding.some((f) => f.id === id)) box().forwarding = box().forwarding.filter((f) => f.id !== id)
+  else take(id)
 }
 
 /** 되돌리기: 메일로 넣은 공고를 내 공고에서 뺀다. */

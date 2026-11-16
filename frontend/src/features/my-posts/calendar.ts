@@ -3,7 +3,7 @@ import { isClosed } from "@/domain/posting/deadline"
 import { daysBetween } from "@/shared/lib/date"
 
 import { dueText } from "./status"
-import type { MyPosting } from "./types"
+import type { MyPosting, Schedule } from "./types"
 
 /** 날짜의 달("2026-11-13" → "2026-11"). */
 export const monthOf = (date: string) => date.slice(0, 7)
@@ -46,6 +46,8 @@ export interface DayCell {
   isToday: boolean
   isPast: boolean
   events: DeadlineEvent[]
+  /** 이날의 전형 일정(시각 순) */
+  schedules: Schedule[]
 }
 
 /** 그달에 마감하는 내 공고(마감일 순). 상시와 마감일 모름은 놓이지 않는다. */
@@ -59,17 +61,30 @@ export function monthEvents(month: string, postings: MyPosting[], today: string)
     .sort((a, b) => a.date.localeCompare(b.date) || a.company.localeCompare(b.company))
 }
 
+/** 그달의 전형 일정(날짜, 시각 순. 시각이 없는 것이 그날 앞). */
+export function monthSchedules(month: string, schedules: Schedule[]): Schedule[] {
+  return schedules.filter((s) => monthOf(s.date) === month).sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""))
+}
+
 /** 일요일부터 시작하는 주 단위 칸. 그달 앞뒤의 빈칸을 채워 7의 배수로 만든다. */
-export function monthCells(month: string, postings: MyPosting[], today: string): DayCell[] {
+export function monthCells(month: string, postings: MyPosting[], today: string, schedules: Schedule[]): DayCell[] {
   const [y, m] = month.split("-").map(Number)
   const offset = new Date(Date.UTC(y, m - 1, 1)).getUTCDay()
   const days = new Date(Date.UTC(y, m, 0)).getUTCDate()
   const events = monthEvents(month, postings, today)
+  const daySchedules = monthSchedules(month, schedules)
   const total = Math.ceil((offset + days) / 7) * 7
   return Array.from({ length: total }, (_, i) => {
     const day = i - offset + 1
-    if (day < 1 || day > days) return { date: null, day: null, isToday: false, isPast: false, events: [] }
+    if (day < 1 || day > days) return { date: null, day: null, isToday: false, isPast: false, events: [], schedules: [] }
     const date = `${month}-${String(day).padStart(2, "0")}`
-    return { date, day, isToday: date === today, isPast: daysBetween(today, date) < 0, events: events.filter((e) => e.date === date) }
+    return {
+      date,
+      day,
+      isToday: date === today,
+      isPast: daysBetween(today, date) < 0,
+      events: events.filter((e) => e.date === date),
+      schedules: daySchedules.filter((s) => s.date === date),
+    }
   })
 }

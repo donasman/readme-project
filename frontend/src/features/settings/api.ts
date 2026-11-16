@@ -1,5 +1,4 @@
-// 설정 화면이 서버와 주고받는 곳. 내 정보, 표시 이름, 로그아웃, 탈퇴는 서버를 부른다(로그인 문서 4절).
-// shortcut: 메일 자동화는 설계에 없어 가짜 서버를 부른다, 설계가 생기면 함수 안만 그 API로 바꾼다(화면 API 대응 3.4의 16번)
+// 설정 화면이 서버와 주고받는 곳. 내 정보, 표시 이름, 로그아웃, 탈퇴는 로그인 문서 4절, 메일 자동화는 메일 설계 4.2다.
 import type { MeResponse } from "@/domain/session/types"
 import * as db from "@/mocks/account-db"
 import { isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
@@ -55,20 +54,40 @@ export async function logout(): Promise<void> {
   await request("POST", "/api/auth/logout")
 }
 
+/** 메일 자동화 설정. 처음 부르면 서버가 수신 주소를 만들고 계정 이메일을 보내는 주소에 넣는다. */
 export async function getMailSettings(): Promise<MailSettings> {
-  return db.getMailSettings()
+  if (mockServer) return db.getMailSettings()
+  return request("GET", "/api/me/mail-settings")
 }
 
+/** 수신 주소를 새로 만든다(옛 주소로 온 메일은 받지 않는다). */
 export async function renewInboundAddress(): Promise<void> {
-  db.renewInbound()
+  if (mockServer) return void db.renewInbound()
+  await request("POST", "/api/me/mail-settings/inbound-address")
 }
 
-export async function addSender(email: string): Promise<void> {
-  db.addSender(email)
+/** 보내는 주소 더하기 결과: 형식이 틀렸거나(400 INVALID_INPUT) 이미 10개면(409 TOO_MANY_SENDERS) 칸 아래에 보일 서버의 글. */
+export type AddSenderResult = { ok: true } | { ok: false; message: string }
+
+/** 보내는 주소를 더한다. 이미 있으면 그대로 둔다. */
+export async function addSender(email: string): Promise<AddSenderResult> {
+  if (mockServer) {
+    db.addSender(email)
+    return { ok: true }
+  }
+  try {
+    await request("POST", "/api/me/mail-settings/senders", { email: email.trim() })
+    return { ok: true }
+  } catch (error) {
+    if (isApiError(error, "INVALID_INPUT", "TOO_MANY_SENDERS")) return { ok: false, message: error.message }
+    throw error
+  }
 }
 
+/** 보내는 주소를 지운다. 주소는 경로가 아니라 ?email=로 보낸다(메일 설계 5절). */
 export async function removeSender(email: string): Promise<void> {
-  db.removeSender(email)
+  if (mockServer) return db.removeSender(email)
+  await request("DELETE", `/api/me/mail-settings/senders?email=${encodeURIComponent(email)}`)
 }
 
 /** 탈퇴하면 지워질 것의 수와 내가 그룹장인 그룹. */

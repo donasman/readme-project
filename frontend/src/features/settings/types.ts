@@ -12,8 +12,8 @@ export interface AccountInfo {
 }
 
 export interface MailSettings {
-  /** 내 수신 주소. 남이 추측할 수 없게 만든다 */
-  inboundAddress: string
+  /** 내 수신 주소. 남이 추측할 수 없게 만든다. 수신 도메인이 없는 서버면 null */
+  inboundAddress: string | null
   /** 여기 적힌 주소에서 온 메일만 받는다 */
   senders: string[]
 }

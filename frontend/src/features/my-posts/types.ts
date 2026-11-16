@@ -4,6 +4,8 @@ import type { Disclosure } from "@/domain/group/types"
 import type { MyState } from "@/domain/posting/my-state"
 import type { Deadline, PostSection } from "@/domain/posting/types"
 
+import type { Stage } from "@/domain/posting/my-state"
+
 export type { Decision, MyState, Result, Stage } from "@/domain/posting/my-state"
 
 /** 그룹의 이름과 표시 글자. */
@@ -81,4 +83,16 @@ export type AddPostingResult = { ok: true; postingId: string } | { ok: false; er
 /** 내 공고 넣기가 이미 있는 공고의 상세로 보낼 때 넘기는 값. 상세가 "이미 내 공고에 있는 공고입니다"를 띄운다. */
 export interface ArrivedState {
   arrived: true
+}
+
+/** 내 전형 일정 하나(GET /api/me/schedules, 메일 설계 4.5). 메일에서 반영하면 생긴다. */
+export interface Schedule {
+  postingId: string
+  company: string
+  title: string
+  stage: Stage
+  /** "YYYY-MM-DD" */
+  date: string
+  /** "HH:mm". 없으면 null */
+  time: string | null
 }

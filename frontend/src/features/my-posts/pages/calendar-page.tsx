@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useSearchParams } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { STAGE_LABELS } from "@/domain/posting/my-state"
 import { PostingLink } from "@/domain/posting/posting-link"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
@@ -13,25 +14,30 @@ import { formatMonthDayWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
-import { getMyPostings } from "../api"
-import { addMonths, formatMonth, isMonth, monthCells, monthEvents, monthOf } from "../calendar"
+import { getMyPostings, getSchedules } from "../api"
+import { addMonths, formatMonth, isMonth, monthCells, monthEvents, monthOf, monthSchedules } from "../calendar"
 import { DdayBadge } from "../components/my-bits"
 
-export function calendarLoader() {
-  return getMyPostings()
+export async function calendarLoader() {
+  const [{ today, postings }, schedules] = await Promise.all([getMyPostings(), getSchedules()])
+  return { today, postings, schedules }
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"]
 
-/** 달력(시안 9차): 내 공고의 마감일을 한 달 칸에 놓고 아래에 그달의 마감을 모은다. 768px 미만은 목록만. 달은 ?month=에 둔다. */
+/**
+ * 달력(시안 9차): 내 공고의 마감일과 전형 일정(메일 설계 4.5)을 한 달 칸에 놓고 아래에 그달의 마감과 일정을 모은다.
+ * 768px 미만은 목록만. 달은 ?month=에 둔다.
+ */
 export function CalendarPage() {
-  const { today, postings } = useLoaderData<typeof calendarLoader>()
+  const { today, postings, schedules } = useLoaderData<typeof calendarLoader>()
   const [params, setParams] = useSearchParams()
   const asked = params.get("month")
   const month = isMonth(asked) ? asked : monthOf(today)
   const go = (next: string) => setParams(next === monthOf(today) ? {} : { month: next }, { replace: true, preventScrollReset: true })
-  const cells = monthCells(month, postings, today)
+  const cells = monthCells(month, postings, today, schedules)
   const events = monthEvents(month, postings, today)
+  const steps = monthSchedules(month, schedules)
   const monthNumber = Number(month.slice(5))
 
   return (
@@ -43,7 +49,7 @@ export function CalendarPage() {
           <Heading level={1} size="text-3xl">
             달력
           </Heading>
-          <p className="text-text-secondary">내 공고의 마감일이 날짜에 놓입니다.</p>
+          <p className="text-text-secondary">내 공고의 마감일과 전형 일정이 날짜에 놓입니다.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button type="button" variant="outline" size="icon-sm" aria-label="이전 달" onClick={() => go(addMonths(month, -1))}>
@@ -74,6 +80,9 @@ export function CalendarPage() {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <CheckIcon aria-hidden="true" className="size-3.5 text-foreground" />지원함
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="rounded-[6px] bg-highlight-subtle px-1.5 font-bold text-foreground">1차 면접</span>전형 일정
         </span>
       </p>
       <Panel as="div" className="hidden overflow-hidden md:block">
@@ -115,6 +124,16 @@ export function CalendarPage() {
                   <span className="sr-only">{`${e.closed ? " 지난 마감" : " 마감"}${e.applied ? ", 지원함" : ""}`}</span>
                 </Link>
               ))}
+              {cell.schedules.map((s) => (
+                <Link
+                  key={`${s.postingId}-${s.stage}`}
+                  to={paths.myPost(s.postingId)}
+                  className="block truncate rounded-[8px] bg-highlight-subtle px-2 py-1 text-xs leading-[1.3] font-bold text-foreground"
+                >
+                  {STAGE_LABELS[s.stage]}
+                  {s.time && ` ${s.time}`} · {s.company}
+                </Link>
+              ))}
             </div>
           ))}
         </div>
@@ -139,6 +158,27 @@ export function CalendarPage() {
         )}
         <p className="text-label-sm text-text-secondary">상시 채용과 마감일을 모르는 공고는 달력에 놓이지 않습니다. 내 공고에서 봅니다.</p>
       </section>
+
+      {steps.length > 0 && (
+        <section aria-labelledby="cal-steps" className="flex flex-col gap-3">
+          <h2 id="cal-steps" className={sectionTitle}>
+            {monthNumber}월의 전형 일정
+          </h2>
+          <Panel as="ul" className="flex flex-col">
+            {steps.map((s, i) => (
+              <PanelRow key={`${s.postingId}-${s.stage}`} first={i === 0} className="gap-x-4 py-3.5">
+                <span className="w-24 flex-none font-bold whitespace-nowrap">
+                  {formatMonthDayWeekday(s.date)}
+                  {s.time && <span className="block text-label-sm font-normal text-text-secondary">{s.time}</span>}
+                </span>
+                <PostingLink id={s.postingId} company={s.company} title={s.title} className="flex-[1_1_200px]" />
+                <Pill tone="highlight">{STAGE_LABELS[s.stage]}</Pill>
+              </PanelRow>
+            ))}
+          </Panel>
+          <p className="text-label-sm text-text-secondary">전형 일정은 메일 확인함에서 반영한 메일로 들어옵니다.</p>
+        </section>
+      )}
     </Page>
   )
 }
