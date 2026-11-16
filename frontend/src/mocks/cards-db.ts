@@ -115,7 +115,7 @@ export const listSources = (): CardSource[] => structuredClone(sources())
 
 /** 자료 올리기. 서버가 글을 읽어 글자 수를 센다(파일은 저장하지 않는다). */
 export function addSource(name: string, chars: number): CardSource {
-  const source: CardSource = { id: String(nextId++), name, createdAt: EXAMPLE_TODAY, chars, cardCount: null }
+  const source: CardSource = { id: String(nextId++), name, createdAt: EXAMPLE_TODAY, chars, cardCount: null, runningJobId: null }
   sources().unshift(source)
   return structuredClone(source)
 }
@@ -132,7 +132,7 @@ const CHUNK_MS = 1200
 export function startExtraction(sourceId: string, totalChunks: number): ExtractionJob {
   const source = sources().find((s) => s.id === sourceId)
   if (!source) throw new NotFoundError("자료")
-  const job = { id: String(nextId++), sourceId, totalChunks, doneChunks: 0, cardsSoFar: 0, status: "RUNNING" as const, newCards: 0, skippedSameAs: [], startedAt: Date.now() }
+  const job = { id: String(nextId++), sourceId, totalChunks, doneChunks: 0, cardsSoFar: 0, status: "RUNNING" as const, newCards: 0, skippedSameAs: [], error: null, startedAt: Date.now() }
   jobs.set(job.id, job)
   return copyJob(job)
 }

@@ -34,23 +34,45 @@ type Step =
   | { kind: "ready"; source: CardSource; chunks: number }
   | { kind: "running"; source: CardSource; job: ExtractionJob }
   | { kind: "done"; job: ExtractionJob }
+  | { kind: "failed"; source: CardSource; job: ExtractionJob }
 
-/** 자료로 카드 만들기(6차): 올리기 → 읽은 뒤 → 뽑는 중 → 끝남. 뽑는 동안 화면이 1초마다 서버에 묻는다. */
+/**
+ * 자료로 카드 만들기(6차): 올리기 → 읽은 뒤 → 뽑는 중 → 끝남(또는 실패). 뽑는 동안 화면이 1초마다 서버에 묻는다.
+ * 실패하면 "이어서 뽑기"가 마친 조각 다음부터 다시 돌린다(경험카드 문서 4.6).
+ */
 export function CardSourcesPage() {
   const sources = useLoaderData<typeof cardSourcesLoader>()
   const revalidator = useRevalidator()
-  // shortcut: 뽑는 중인 작업은 이 화면의 상태에만 있어 나갔다 오면 찾지 못한다, 진행 중인 작업을 찾는 방법이 정해지면 바꾼다(화면 API 대응 3.5의 23번)
   const [step, setStep] = useState<Step>({ kind: "upload" })
-  const [noExtraction, setNoExtraction] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
 
-  // 뽑는 중: 1초마다 작업 상태를 묻고, 끝나면 "끝남"으로 넘어간다.
+  // 화면에 들어왔을 때 뽑는 중인 자료가 있으면(나갔다 온 경우) 그 작업을 이어서 보인다(화면 API 대응 3.5의 23번)
+  const resumable = sources.find((s) => s.runningJobId !== null)
+  useEffect(() => {
+    if (!resumable?.runningJobId) return
+    let stale = false
+    void getExtractionJob(resumable.runningJobId).then((job) => {
+      if (!stale && job?.status === "RUNNING") setStep((s) => (s.kind === "upload" ? { kind: "running", source: resumable, job } : s))
+    })
+    return () => {
+      stale = true
+    }
+  }, [resumable])
+
+  // 뽑는 중: 1초마다 작업 상태를 묻고, 끝나면 "끝남"이나 "실패"로 넘어간다. 자료를 지워 작업이 없어지면 올리기로 돌아간다.
   const runningJobId = step.kind === "running" ? step.job.id : null
   useEffect(() => {
     if (runningJobId === null) return
     const timer = setInterval(async () => {
       const job = await getExtractionJob(runningJobId)
-      setStep((s) => (s.kind !== "running" ? s : job.status === "DONE" ? { kind: "done", job } : { ...s, job }))
-      if (job.status === "DONE") void revalidator.revalidate()
+      setStep((s) => {
+        if (s.kind !== "running") return s
+        if (job === null) return { kind: "upload" }
+        if (job.status === "DONE") return { kind: "done", job }
+        if (job.status === "FAILED") return { kind: "failed", source: s.source, job }
+        return { ...s, job }
+      })
+      if (job === null || job.status !== "RUNNING") void revalidator.revalidate()
     }, POLL_MS)
     return () => clearInterval(timer)
   }, [runningJobId, revalidator])
@@ -59,16 +81,17 @@ export function CardSourcesPage() {
   async function read(input: { file: File } | { text: string }): Promise<string | null> {
     const result = await uploadSource(input)
     if (!result.ok) return result.message
-    setNoExtraction(false)
+    setStartError(null)
     setStep({ kind: "ready", source: result.source, chunks: result.chunks })
     void revalidator.revalidate()
     return null
   }
 
   async function extract(source: CardSource) {
-    const job = await startExtraction(source)
-    if (job) setStep({ kind: "running", source, job })
-    else setNoExtraction(true)
+    setStartError(null)
+    const result = await startExtraction(source)
+    if (result.ok) setStep({ kind: "running", source, job: result.job })
+    else setStartError(result.message)
   }
 
   return (
@@ -88,7 +111,9 @@ export function CardSourcesPage() {
                 ? "카드를 뽑는 중입니다."
                 : step.kind === "done"
                   ? `카드 ${step.job.newCards}장을 만들었습니다.`
-                  : ""}
+                  : step.kind === "failed"
+                    ? "카드를 다 뽑지 못했습니다."
+                    : ""}
           </p>
           {step.kind === "upload" && <UploadStep onRead={read} />}
           {step.kind === "ready" && (
@@ -116,9 +141,9 @@ export function CardSourcesPage() {
                   카드 뽑기 시작
                 </Button>
               </div>
-              {noExtraction && (
+              {startError && (
                 <div role="alert">
-                  <IconNote tone="warning">카드 뽑기는 아직 준비 중입니다. 올린 자료는 목록에 남아 있어 나중에 뽑을 수 있습니다.</IconNote>
+                  <IconNote tone="warning">{startError}</IconNote>
                 </div>
               )}
             </Panel>
@@ -138,6 +163,33 @@ export function CardSourcesPage() {
                 <ProgressBar label="카드 뽑기 진행" value={step.job.doneChunks} max={step.job.totalChunks} />
               </div>
               <p className="text-sm text-text-secondary">이 화면을 닫아도 계속됩니다. 끝나면 경험카드 목록에 "확인 필요"로 들어옵니다.</p>
+            </Panel>
+          )}
+          {step.kind === "failed" && (
+            <Panel aria-labelledby="src-failed" className="flex flex-col gap-5 p-6">
+              <h2 id="src-failed" className={sectionTitle}>
+                카드를 다 뽑지 못했습니다
+              </h2>
+              <div className="flex flex-col gap-2">
+                <IconNote tone="danger">{step.job.error ?? "카드를 뽑다가 문제가 생겼습니다."}</IconNote>
+                <p className="text-sm text-text-secondary">
+                  조각 {step.job.totalChunks}개 가운데 {step.job.doneChunks}개를 마쳤습니다.
+                  {step.job.cardsSoFar > 0 && ` 그동안 만든 카드 ${step.job.cardsSoFar}장은 "확인 필요"로 목록에 있습니다.`} 이어서 뽑으면 마친 조각 다음부터 다시 합니다.
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setStep({ kind: "upload" })}>
+                  자료 더 올리기
+                </Button>
+                <Button type="button" className="px-6" onClick={() => void extract(step.source)}>
+                  이어서 뽑기
+                </Button>
+              </div>
+              {startError && (
+                <div role="alert">
+                  <IconNote tone="warning">{startError}</IconNote>
+                </div>
+              )}
             </Panel>
           )}
           {step.kind === "done" && (

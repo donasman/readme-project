@@ -76,6 +76,8 @@ export interface CardSource {
   chars: number
   /** 이 자료에서 만든 카드 수. 아직 뽑지 않았으면 null */
   cardCount: number | null
+  /** 이 자료에서 뽑는 중인 작업. 화면을 나갔다 와도 이 작업을 이어서 보인다 */
+  runningJobId: string | null
 }
 
 /** 카드 뽑기 작업(서버가 뒤에서 돌리고 화면이 몇 초마다 묻는다, 설계 가정 8). */
@@ -86,10 +88,13 @@ export interface ExtractionJob {
   doneChunks: number
   /** 지금까지 만든 카드 수 */
   cardsSoFar: number
-  status: "RUNNING" | "DONE"
+  /** 뽑는 중(서버의 queued·running), 끝남, 실패(다시 시작하면 마친 조각 다음부터 이어서 뽑는다) */
+  status: "RUNNING" | "DONE" | "FAILED"
   /** 끝났을 때: 새로 만든 카드 수와 건너뛴 경험(이미 있는 카드의 제목) */
   newCards: number
   skippedSameAs: string[]
+  /** 실패했을 때 보일 이유. 아니면 null */
+  error: string | null
 }
 
 /** 태그 입력 후보(GET /api/keywords?q=): 다른 표기를 쳐도 대표 표기를 준다. */
