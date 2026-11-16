@@ -2,10 +2,10 @@ import type { ReactNode } from "react"
 import { Link, redirect, useLoaderData } from "react-router"
 
 import { getMyGroups } from "@/domain/group/api"
+import { GroupMark } from "@/domain/group/group-mark"
 import { isClosed } from "@/domain/posting/deadline"
 import { PostingLink } from "@/domain/posting/posting-link"
 import type { FillDeadlineState } from "@/domain/posting/types"
-import { Avatar } from "@/shared/components/avatar"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -136,9 +136,7 @@ export function HomePage() {
                 {news.map((n) => (
                   <li key={`${n.group.id}-${n.postId}-${n.text}`}>
                     <Link to={n.postId ? paths.groupPost(n.group.id, n.postId) : paths.groupPosts(n.group.id)} className="flex min-h-13 items-center gap-3 text-foreground">
-                      <Avatar size={32} tone="accent">
-                        {n.group.mark}
-                      </Avatar>
+                      <GroupMark group={n.group} />
                       <span className="flex min-w-0 flex-col">
                         <span className="text-sm font-bold">{n.group.name}</span>
                         <span className="text-label-sm text-text-secondary">{n.text}</span>

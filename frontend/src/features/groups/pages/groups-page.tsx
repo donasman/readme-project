@@ -2,9 +2,9 @@ import { useState } from "react"
 import { Link, useLoaderData, useLocation, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { GroupMark } from "@/domain/group/group-mark"
 import type { Group } from "@/domain/group/types"
 import { useViewer } from "@/domain/session/use-viewer"
-import { Avatar } from "@/shared/components/avatar"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
@@ -98,9 +98,7 @@ function GroupCard({ group, today }: { group: Group; today: string }) {
   return (
     <Panel as="article" className="relative flex flex-1 flex-col gap-4 p-6">
       <div className="flex items-center gap-3">
-        <Avatar size={40} tone="accent">
-          {group.mark}
-        </Avatar>
+        <GroupMark group={group} size={40} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h2 className={sectionTitle}>
             {/* 칸 어디를 눌러도 그룹으로 간다(링크의 ::after가 칸을 덮는다) */}

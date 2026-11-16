@@ -62,7 +62,7 @@ export const router = createBrowserRouter([
               ...groupMembersRoutes,
             ],
           },
-          // 그룹 밖 화면: 위쪽 헤더(스터디·정보공유·경험카드) 아래에 붙는다.
+          // 그룹 밖 화면: 위쪽 헤더(홈·내 그룹·경험카드·정보공유) 아래에 붙는다.
           // 첫 화면(/)은 홈이다. 그룹이 없으면 홈의 loader가 내 그룹(빈 상태)으로 보낸다.
           { element: <MainLayout />, children: [...myPostsRoutes, ...mailRoutes, ...groupsRoutes, ...cardsRoutes, ...settingsRoutes] },
         ],

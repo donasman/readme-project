@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input"
 import { useGroup } from "@/domain/group/use-group"
 import type { FillDeadlineState } from "@/domain/posting/types"
 import { useViewer } from "@/domain/session/use-viewer"
-import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
-import { pageHead } from "@/shared/components/page-layout"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -58,40 +56,32 @@ export function GroupPostsPage() {
   )
 
   return (
-    <Page className="gap-6 pt-10">
+    <Page className="gap-6 pt-6">
       <title>{docTitle("공고", group.name)}</title>
-      <div className={pageHead}>
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-sm text-text-secondary">
-            {group.name} · 멤버 {group.members.length}명
-          </p>
-          <Heading level={1} size="text-[clamp(2.5rem,10cqw,var(--text-5xl))]">
-            공고
-          </Heading>
+      {/* 그룹 이름과 공고·멤버 탭은 위의 그룹 머리 영역이 보인다. 제목은 화면 읽기에만 둔다 */}
+      <h1 className="sr-only">공고</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="relative flex max-w-80 min-w-0 flex-[1_1_200px] items-center">
+          <label htmlFor="post-search" className="sr-only">
+            회사명, 공고명 검색
+          </label>
+          <SearchIcon aria-hidden="true" className="pointer-events-none absolute left-3.5 size-4 text-text-secondary" />
+          <Input
+            id="post-search"
+            type="search"
+            placeholder="회사명, 공고명"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setFilters({ query: event.target.value })
+            }}
+            className="pl-10 md:text-base"
+          />
         </div>
-        <div className="flex min-w-0 flex-[1_1_320px] flex-wrap items-center justify-end gap-2">
-          <div className="relative flex max-w-80 min-w-0 flex-[1_1_200px] items-center">
-            <label htmlFor="post-search" className="sr-only">
-              회사명, 공고명 검색
-            </label>
-            <SearchIcon aria-hidden="true" className="pointer-events-none absolute left-3.5 size-4 text-text-secondary" />
-            <Input
-              id="post-search"
-              type="search"
-              placeholder="회사명, 공고명"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value)
-                setFilters({ query: event.target.value })
-              }}
-              className="pl-10 md:text-base"
-            />
-          </div>
-          <Link to={paths.groupPostNew(group.id)} className={buttonVariants({ className: "flex-none" })}>
-            <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            공고 올리기
-          </Link>
-        </div>
+        <Link to={paths.groupPostNew(group.id)} className={buttonVariants({ className: "flex-none" })}>
+          <PlusIcon data-icon="inline-start" aria-hidden="true" />
+          공고 올리기
+        </Link>
       </div>
 
       <ListToolbar filters={filters} counts={list.counts} members={others} onChange={setFilters} />
