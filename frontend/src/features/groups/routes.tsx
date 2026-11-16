@@ -23,6 +23,9 @@ export const groupMembersRoutes: RouteObject[] = [
   {
     path: "members",
     handle: { section: "members" } satisfies GroupRouteHandle,
-    lazy: async () => ({ Component: (await import("./pages/group-members-page")).GroupMembersPage }),
+    lazy: async () => {
+      const { GroupMembersPage, membersLoader } = await import("./pages/group-members-page")
+      return { loader: membersLoader, Component: GroupMembersPage }
+    },
   },
 ]

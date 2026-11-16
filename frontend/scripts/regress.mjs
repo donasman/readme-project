@@ -69,6 +69,10 @@ const SCENARIOS = [
   { name: "members", path: "/groups/be/members", width: 1280 },
   { name: "members-leader", path: "/groups/mes/members", width: 1280 },
   { name: "members-mobile", path: "/groups/be/members", width: 390, scale: 2 },
+  // 초대 목록·취소(10차). 백엔드 스터디에는 쓸 수 있는 링크가 셋 있고(내 것 하나), MES 준비반은 내가 그룹장이고 링크가 없다
+  { name: "members-link-made", path: "/groups/mes/members", width: 1280, steps: [["press", "초대 링크 만들기"]] },
+  { name: "dialog-invite-cancel", path: "/groups/be/members", width: 1280, steps: [["press", "내가 2026-11-10 09:40에 만든 링크 취소"]] },
+  { name: "members-link-cancelled", path: "/groups/be/members", width: 1280, steps: [["press", "내가 2026-11-10 09:40에 만든 링크 취소"], ["press", "링크 취소"]] },
   { name: "invite", path: "/invite/Xk3f9QmT2a", width: 1280 },
   { name: "invite-guest", path: "/invite/Xk3f9QmT2a?mock=guest", width: 1280 },
   { name: "invite-expired", path: "/invite/nope", width: 1280 },

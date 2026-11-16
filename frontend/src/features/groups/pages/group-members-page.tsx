@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLocation, useNavigate, useRevalidator } from "react-router"
+import { useLoaderData, useLocation, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,17 +10,18 @@ import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Avatar } from "@/shared/components/avatar"
-import { Heading, sectionTitle } from "@/shared/components/heading"
+import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
 import { Panel, PanelRow } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
+import { subjectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { firstChar, joinClasses } from "@/shared/lib/utils"
 
-import { createInvite, leaveGroup } from "../api"
-import type { CreatedInvite } from "../types"
+import { createInvite, getInvites, leaveGroup, revokeInvite } from "../api"
+import type { CreatedInvite, LiveInvite } from "../types"
 import { RoleChip } from "../components/role-chip"
 
 /** 그룹을 막 만들고 왔을 때 넘기는 값: 만들면서 만든 초대 링크. */
@@ -28,8 +29,14 @@ export interface MembersPageState {
   invite?: CreatedInvite
 }
 
-/** 멤버·초대 관리(시안 7차 "멤버"): 멤버 목록, 내 공개 범위, 초대 링크, 그룹 나가기. */
+/** 쓸 수 있는 초대 링크들. 그룹 값은 그룹 라우트가 읽는다. */
+export function membersLoader({ params }: LoaderFunctionArgs) {
+  return getInvites(params.groupId ?? "")
+}
+
+/** 멤버·초대 관리(시안 7차 "멤버", 10차 초대 목록·취소): 멤버 목록, 내 공개 범위, 초대 링크와 쓸 수 있는 링크, 그룹 나가기. */
 export function GroupMembersPage() {
+  const invites = useLoaderData<typeof membersLoader>()
   const { group } = useGroup()
   const viewer = useViewer()
   const location = useLocation()
@@ -38,13 +45,28 @@ export function GroupMembersPage() {
   const [invite, setInvite] = useState((location.state as MembersPageState | null)?.invite ?? null)
   const [disclosure, setDisclosure] = useState<Disclosure>(group.myDisclosure)
   const [leaving, setLeaving] = useState(false)
+  const [cancelling, setCancelling] = useState<LiveInvite | null>(null)
   const isLeader = group.leaderId === viewer.id
+  const mine = (i: LiveInvite) => i.createdBy?.id === viewer.id
   const members = [...group.members].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))
 
   async function changeDisclosure(next: Disclosure) {
     setDisclosure(next)
     await setMyDisclosure(group.id, next)
     // 그룹의 값(공고 상세의 "내 공개 범위는 …")도 새로 읽는다
+    void revalidator.revalidate()
+  }
+
+  async function makeInvite() {
+    setInvite(await createInvite(group.id))
+    void revalidator.revalidate()
+  }
+
+  async function cancelInvite(target: LiveInvite) {
+    await revokeInvite(group.id, target.id)
+    // shortcut: 만들기 응답에 링크 id가 없어 내가 만든 가장 새 링크를 위 칸의 주소로 본다, 응답에 id가 생기면 그것으로 맞춘다
+    if (target.id === invites.find(mine)?.id) setInvite(null)
+    setCancelling(null)
     void revalidator.revalidate()
   }
 
@@ -64,7 +86,7 @@ export function GroupMembersPage() {
             멤버
           </Heading>
         </div>
-        <Button type="button" className="flex-none" onClick={async () => setInvite(await createInvite(group.id))}>
+        <Button type="button" className="flex-none" onClick={() => void makeInvite()}>
           <LinkIcon data-icon="inline-start" aria-hidden="true" />
           초대 링크 만들기
         </Button>
@@ -109,7 +131,37 @@ export function GroupMembersPage() {
             <h2 id="members-invite" className={sectionTitle}>
               초대 링크
             </h2>
-            {invite ? <InviteLink key={invite.link} {...invite} /> : <p className="text-sm text-text-secondary">지금 쓸 수 있는 링크가 없습니다. 링크를 만들어 들어올 사람에게 보내세요.</p>}
+            {!invite && invites.length === 0 && <p className="text-sm text-text-secondary">지금 쓸 수 있는 링크가 없습니다. 링크를 만들어 들어올 사람에게 보내세요.</p>}
+            {invite && <InviteLink key={invite.link} {...invite} />}
+            {invites.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <h3 className={subLabel}>쓸 수 있는 링크 {invites.length}개</h3>
+                <ul className="flex flex-col">
+                  {invites.map((i) => (
+                    <li key={i.id} className="flex items-center gap-3 border-t border-border-subtle py-2.5">
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                          <span className="text-sm font-bold">{i.createdBy?.name ?? "탈퇴한 멤버"}</span>
+                          {mine(i) && <RoleChip role="me" />}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 text-label-sm text-text-secondary">
+                          <span className="whitespace-nowrap">{i.createdAt} 만듦</span>
+                          <span className="whitespace-nowrap">{i.expiresAt}까지</span>
+                        </div>
+                      </div>
+                      {(isLeader || mine(i)) && (
+                        <Button type="button" variant="outline" size="sm" className="h-(--control-height-md) flex-none" aria-label={`${inviteMaker(i, mine(i))} ${i.createdAt}에 만든 링크 취소`} onClick={() => setCancelling(i)}>
+                          취소
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-label-sm text-text-secondary">
+                  {`${isLeader ? "그룹장은 모든 링크를 취소할 수 있습니다." : "내가 만든 링크만 취소할 수 있습니다. 그룹장은 모든 링크를 취소합니다."} 링크 주소는 만든 직후에만 보여 목록에는 나오지 않습니다.`}
+                </p>
+              </div>
+            )}
           </Panel>
 
           <Panel aria-labelledby="members-leave" className="flex flex-col gap-4 p-6">
@@ -146,8 +198,33 @@ export function GroupMembersPage() {
       >
         <p className="text-sm">이 그룹에서 켠 관심이 지워집니다. 내 공고 목록과 내가 쓴 댓글은 남습니다. 다시 들어오려면 초대 링크가 있어야 합니다.</p>
       </AppDialog>
+
+      <AppDialog
+        open={cancelling !== null}
+        onOpenChange={(open) => !open && setCancelling(null)}
+        title="초대 링크를 취소할까요?"
+        subtitle={cancelling && `${inviteMaker(cancelling, mine(cancelling))} ${cancelling.createdAt}에 만든 링크 · ${cancelling.expiresAt}까지`}
+        actions={
+          <>
+            {/* 링크 "취소"와 겹치지 않게 닫기로 쓴다(시안 10차) */}
+            <DialogCancel>닫기</DialogCancel>
+            <Button type="button" variant="danger" onClick={() => cancelling && void cancelInvite(cancelling)}>
+              링크 취소
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm">취소하면 이 링크로는 더 들어올 수 없고, 되살릴 수 없습니다. 이미 들어온 멤버와 다른 초대 링크는 그대로입니다.</p>
+      </AppDialog>
     </Page>
   )
+}
+
+/** 취소 버튼과 창의 "누가": 내가, 가람이, 탈퇴한 멤버가. 같은 분에 만든 링크끼리 버튼 이름이 겹치지 않게 넣는다. */
+function inviteMaker(invite: LiveInvite, mine: boolean): string {
+  if (mine) return "내가"
+  const name = invite.createdBy?.name ?? "탈퇴한 멤버"
+  return name + subjectParticle(name)
 }
 
 /** 만든 초대 링크: 읽기만 하는 칸, 복사 버튼, 쓸 수 있는 날. 링크는 만들 때만 보여 줄 수 있다. */
@@ -171,7 +248,7 @@ function InviteLink({ link: url, expiresAt }: CreatedInvite) {
         </Button>
       </div>
       <p className="text-label-sm text-text-secondary">
-        {expiresAt}까지 쓸 수 있습니다(7일). 링크를 가진 사람은 누구나 들어올 수 있습니다.
+        {expiresAt}까지 쓸 수 있습니다(7일). 링크를 가진 사람은 누구나 들어올 수 있습니다. 주소는 지금만 보이니 복사해 두세요.
       </p>
       <p role="status" className="sr-only">
         {copied ? "초대 링크를 복사했습니다." : ""}
