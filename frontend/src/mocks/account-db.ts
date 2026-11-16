@@ -18,7 +18,7 @@ export function getAccount(): AccountInfo {
   }
 }
 
-export { renameViewer as rename, requestPasswordReset, signOut as logout } from "./db"
+export { renameViewer as rename, signOut as logout } from "./db"
 
 /** 비밀번호 바꾸기(PUT /api/me/password). 가짜 서버의 지금 비밀번호는 서버의 예시 계정과 같은 readme1234다. */
 export function changePassword(currentPassword: string): "done" | "wrong" | "none" {

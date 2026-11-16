@@ -3,13 +3,14 @@ import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { requestPasswordReset } from "@/domain/session/api"
 import { PASSWORD_TOO_LONG, passwordTooLong } from "@/domain/session/password"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
-import { changePassword, sendPasswordMail } from "../api"
+import { changePassword } from "../api"
 
 /** 창의 단계: 바꾸기(비밀번호가 있는 계정), 만들기(없는 계정), 재설정 메일을 보낸 뒤 */
 type Step = "change" | "create" | "sent"
@@ -60,7 +61,7 @@ export function PasswordDialog({ open, onClose, email, hasPassword, onChanged }:
   async function sendMail() {
     setBusy(true)
     try {
-      await sendPasswordMail(email)
+      await requestPasswordReset(email)
       setStep("sent")
     } finally {
       setBusy(false)

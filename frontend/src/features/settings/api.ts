@@ -35,15 +35,6 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
 }
 
-/**
- * 계정 이메일로 비밀번호 재설정 메일을 보낸다(비밀번호가 없는 계정의 "비밀번호 만들기"). 서버는 1분에 한 번, 24시간에 5번까지 보내고
- * 넘으면 메일 없이 204만 준다(로그인 문서 4.1).
- */
-export async function sendPasswordMail(email: string): Promise<void> {
-  if (mockServer) return db.requestPasswordReset(email)
-  await request("POST", "/api/auth/password-reset/request", { email })
-}
-
 /** 로그아웃(POST /api/auth/logout). 로그인하지 않았어도 성공이다. */
 export async function logout(): Promise<void> {
   if (mockServer) return db.logout()
