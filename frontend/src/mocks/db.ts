@@ -8,7 +8,7 @@ import type { Viewer } from "@/domain/session/types"
 import type { AcceptInviteResult, InviteView } from "@/features/auth/types"
 import type { LiveInvite } from "@/features/groups/types"
 import type { DraftField, DraftSection, PostDraft, PostUpload, ReadPostResult } from "@/domain/posting/types"
-import type { Comment, CommentPart, Deadline, GroupPost, GroupPostDetail, MyState, UploadPostResult } from "@/features/group-posts/types"
+import type { Comment, CommentPart, Deadline, EditPostResult, GroupPost, GroupPostDetail, MyState, PostEdit, UploadPostResult } from "@/features/group-posts/types"
 import { addDays, daysBetween } from "@/shared/lib/date"
 import { networkError } from "@/shared/lib/api"
 import { NotFoundError } from "@/shared/lib/errors"
@@ -302,6 +302,22 @@ export function setDeadline(groupId: string, postId: string, deadline: Deadline)
   if (post.deadline.kind !== "unknown") return { ok: false, error: "DEADLINE_ALREADY_SET" }
   post.deadline = structuredClone(deadline)
   return { ok: true, deadline: structuredClone(post.deadline) }
+}
+
+/** 다른 사람이 다른 그룹에도 올린 공고. 가짜 서버는 그룹마다 공고를 따로 두어 id로만 흉내 낸다. */
+const SHARED_POSTS = new Set(["mes1"])
+
+/**
+ * 공고 고치기(PUT …/posts/{postId}). 이 그룹에 올린 사람만, 남과 함께 쓰지 않는 공고만 고친다(409 POSTING_SHARED).
+ * 마감을 "모름"으로 되돌리지는 않는다(409 DEADLINE_ALREADY_SET).
+ */
+export function editPost(groupId: string, postId: string, edit: PostEdit): EditPostResult {
+  const post = rawPost(groupId, postId)
+  if (post.postedBy?.id !== VIEWER.id) throw new Error("올린 사람만 고칠 수 있습니다.")
+  if (SHARED_POSTS.has(postId)) return { ok: false, error: "POSTING_SHARED", message: "다른 사람이 다른 그룹에도 올린 공고라 고칠 수 없습니다" }
+  if (edit.deadline.kind === "unknown" && post.deadline.kind !== "unknown") throw new Error("이미 마감일이 들어간 공고입니다.")
+  Object.assign(post, structuredClone(edit))
+  return { ok: true }
 }
 
 /** 그룹에서 내린 공고. 같은 공고를 다시 올리면 댓글과 관심 그대로 돌아온다(그룹 설계 가정 4). */

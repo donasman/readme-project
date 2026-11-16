@@ -1,5 +1,6 @@
-import { useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 
+import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,8 +9,9 @@ import type { Disclosure, Group } from "@/domain/group/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
+import { Notice } from "@/shared/components/notice"
 
-import type { Comment, Deadline, GroupPost } from "../types"
+import type { Comment, Deadline, EditPostResult, GroupPost, PostEdit } from "../types"
 
 // 그룹 공고 화면의 창들(시안 7차 "창 · …"). 연 쪽이 대상(공고, 댓글)을 넘기고, 대상이 null이면 닫힌다.
 // 저장은 연 쪽이 넘긴 함수가 하고, 창은 그 뒤 닫힌다.
@@ -95,6 +97,157 @@ function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave:
           </a>
         )}
       </p>
+    </form>
+  )
+}
+
+/**
+ * 공고 고치기(시안 10차): 회사명, 공고명, 마감. 남과 함께 쓰는 공고인지는 상세에 없어 저장해 봐야 안다.
+ * 서버가 막으면 칸을 잠그고 그 까닭과 "닫기"만 보인다. 다시 열어도 그대로다(이 창은 공고 하나의 상세에서만 연다).
+ */
+export function PostEditDialog({ target, onClose, onSave }: TargetDialogProps<GroupPost> & { onSave: (edit: PostEdit) => Promise<EditPostResult> }) {
+  const [shared, setShared] = useState<string | null>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  // 누른 "저장"이 사라지고 칸이 잠기므로 초점을 남은 "닫기"로 옮긴다
+  useEffect(() => {
+    if (shared) closeRef.current?.focus()
+  }, [shared])
+  return (
+    <AppDialog
+      open={target !== null}
+      onOpenChange={(open) => !open && onClose()}
+      title="공고 고치기"
+      subtitle="회사명, 공고명, 마감을 고칩니다. 원문 링크는 고칠 수 없습니다."
+      actions={
+        shared ? (
+          <DialogCancel ref={closeRef}>닫기</DialogCancel>
+        ) : (
+          <>
+            <DialogCancel />
+            <Button type="submit" form="post-edit-form">
+              저장
+            </Button>
+          </>
+        )
+      }
+    >
+      {target && (
+        <PostEditForm
+          key={target.id}
+          post={target}
+          locked={shared !== null}
+          onSave={async (edit) => {
+            const result = await onSave(edit)
+            if (!result.ok) setShared(result.message)
+          }}
+        />
+      )}
+      {shared ? (
+        <Notice title="고칠 수 없는 공고입니다">
+          <span>{shared}. 회사명, 공고명, 마감은 이 공고를 올린 그룹들이 함께 보는 값입니다.</span>
+        </Notice>
+      ) : (
+        <p className="text-label-sm text-text-secondary">고친 값은 이 공고를 보는 멤버 모두에게 보입니다. 내가 다른 그룹에도 올린 공고면 그 그룹에도 보입니다.</p>
+      )}
+    </AppDialog>
+  )
+}
+
+type DueMode = Deadline["kind"]
+/** "모름"은 아직 모르는 공고에만 둔다(서버가 되돌리기를 받지 않는다) */
+const DUE_MODES: { value: DueMode; label: string }[] = [
+  { value: "date", label: "날짜" },
+  { value: "always", label: "상시" },
+  { value: "unknown", label: "모름" },
+]
+type EditField = "company" | "title" | "deadline"
+
+function PostEditForm({ post, locked, onSave }: { post: GroupPost; locked: boolean; onSave: (edit: PostEdit) => Promise<void> }) {
+  const wasUnknown = post.deadline.kind === "unknown"
+  const [company, setCompany] = useState(post.company)
+  const [title, setTitle] = useState(post.title)
+  const [dueMode, setDueMode] = useState<DueMode>(post.deadline.kind)
+  const [dueDate, setDueDate] = useState(post.deadline.kind === "date" ? post.deadline.date : "")
+  const [errors, setErrors] = useState<Partial<Record<EditField, string>>>({})
+  const clear = (key: EditField) => setErrors((er) => ({ ...er, [key]: undefined }))
+
+  // 서버가 받는 길이(공고 문서 4.5의 고치기 요청)
+  const text = (key: "company" | "title", label: string, value: string, set: (v: string) => void, maxLength: number) => (
+    <FormField id={`pe-${key}`} label={label} note={errors[key] && <FieldError id={`pe-${key}`}>{errors[key]}</FieldError>}>
+      <Input
+        id={`pe-${key}`}
+        value={value}
+        maxLength={maxLength}
+        aria-invalid={errors[key] ? true : undefined}
+        aria-describedby={errors[key] ? noteId(`pe-${key}`) : undefined}
+        onChange={(e) => {
+          set(e.target.value)
+          clear(key)
+        }}
+        className="md:text-base aria-invalid:ring-0"
+      />
+    </FormField>
+  )
+
+  let dueNote: ReactNode = null
+  if (errors.deadline) dueNote = <FieldError id="pe-due">{errors.deadline}</FieldError>
+  else if (wasUnknown) dueNote = <FieldHint id="pe-due">마감일을 아직 모르는 공고입니다. 날짜나 상시로 저장하면 다시 &quot;모름&quot;으로 돌릴 수 없습니다.</FieldHint>
+
+  return (
+    <form
+      id="post-edit-form"
+      noValidate
+      className="contents"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const next: Partial<Record<EditField, string>> = {}
+        if (!company.trim()) next.company = "회사명을 넣어 주세요."
+        if (!title.trim()) next.title = "공고명을 넣어 주세요."
+        if (dueMode === "date" && !dueDate) next.deadline = wasUnknown ? "마감일을 넣거나 상시, 모름을 고르세요." : "마감일을 넣거나 상시를 고르세요."
+        setErrors(next)
+        if (Object.keys(next).length) return
+        void onSave({ company: company.trim(), title: title.trim(), deadline: dueMode === "date" ? { kind: "date", date: dueDate } : { kind: dueMode } })
+      }}
+    >
+      {/* 함께 쓰는 공고로 막히면 칸을 모두 잠근다 */}
+      <fieldset disabled={locked} className="flex min-w-0 flex-col gap-5">
+        {text("company", "회사명", company, setCompany, 200)}
+        {text("title", "공고명", title, setTitle, 300)}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">마감</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <SegmentedControl
+              label="마감"
+              value={dueMode}
+              onValueChange={(value) => {
+                setDueMode(value as DueMode)
+                clear("deadline")
+              }}
+              options={wasUnknown ? DUE_MODES : DUE_MODES.slice(0, 2)}
+            />
+            {dueMode === "date" && (
+              <>
+                <label htmlFor="pe-due" className="sr-only">
+                  마감일
+                </label>
+                <Input
+                  id="pe-due"
+                  type="date"
+                  value={dueDate}
+                  aria-invalid={errors.deadline ? true : undefined}
+                  aria-describedby={dueNote ? noteId("pe-due") : undefined}
+                  onChange={(e) => {
+                    setDueDate(e.target.value)
+                    clear("deadline")
+                  }}
+                  className="max-w-[220px] flex-[1_1_180px] md:text-base aria-invalid:ring-0"
+                />
+              </>
+            )}
+          </div>
+          {dueNote}
+        </div>
+      </fieldset>
     </form>
   )
 }

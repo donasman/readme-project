@@ -12,12 +12,12 @@ import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
-import { addComment, deleteComment, getGroupPost, takeDownPost, updateComment } from "../api"
+import { addComment, deleteComment, editPost, getGroupPost, takeDownPost, updateComment } from "../api"
 import { Comments } from "../components/comments"
 import { DeadlineCard } from "../components/deadline-card"
 import { InterestedMembers } from "../components/interested-members"
 import { PostContent } from "../components/post-content"
-import { CommentDeleteDialog, CommentEditDialog, DisclosureDialog, TakedownDialog } from "../components/post-dialogs"
+import { CommentDeleteDialog, CommentEditDialog, DisclosureDialog, PostEditDialog, TakedownDialog } from "../components/post-dialogs"
 import type { Comment, GroupPostDetail, ListReturnState } from "../types"
 import { useInterest } from "../use-interest"
 
@@ -34,6 +34,7 @@ export function GroupPostPage() {
   const revalidator = useRevalidator()
   const navigate = useNavigate()
   const location = useLocation()
+  const [editingPost, setEditingPost] = useState<GroupPostDetail | null>(null)
   const [takingDown, setTakingDown] = useState<GroupPostDetail | null>(null)
   const [editing, setEditing] = useState<Comment | null>(null)
   const [deleting, setDeleting] = useState<Comment | null>(null)
@@ -42,7 +43,8 @@ export function GroupPostPage() {
   const post = interest.apply(data.post)
 
   const isLeader = group.leaderId === viewer.id
-  const canTakeDown = isLeader || post.postedBy?.id === viewer.id
+  const isPoster = post.postedBy?.id === viewer.id
+  const canTakeDown = isLeader || isPoster
   // 목록에서 왔으면 그때 고른 필터 그대로 돌아간다(브라우저 뒤로 가기와 같게)
   const listPath = paths.groupPosts(group.id) + ((location.state as ListReturnState | null)?.listSearch ?? "")
 
@@ -53,7 +55,7 @@ export function GroupPostPage() {
       <div className={columns}>
         <div className={joinClasses(mainColumn, "gap-6")}>
           <DeadlineCard post={post} today={today} onToggleInterest={(on) => void interest.toggle(post.id, on)} />
-          <PostContent post={post} viewer={viewer} canTakeDown={canTakeDown} onTakeDown={() => setTakingDown(post)} />
+          <PostContent post={post} viewer={viewer} canEdit={isPoster} onEdit={() => setEditingPost(post)} canTakeDown={canTakeDown} onTakeDown={() => setTakingDown(post)} />
         </div>
         <div className={joinClasses(sideColumn(340), "gap-6")}>
           <InterestedMembers post={post} viewer={viewer} myDisclosure={group.myDisclosure} onChangeDisclosure={() => setDisclosureFor(group)} />
@@ -71,6 +73,18 @@ export function GroupPostPage() {
         </div>
       </div>
 
+      <PostEditDialog
+        target={editingPost}
+        onClose={() => setEditingPost(null)}
+        onSave={async (edit) => {
+          const result = await editPost(group.id, post.id, edit)
+          if (result.ok) {
+            await revalidator.revalidate()
+            setEditingPost(null)
+          }
+          return result
+        }}
+      />
       <TakedownDialog
         target={takingDown}
         onClose={() => setTakingDown(null)}

@@ -89,3 +89,15 @@ export interface GroupPostData {
 
 /** 올리기 결과. 같은 공고가 이 그룹에 있으면 서버가 409 ALREADY_IN_GROUP과 그 공고를 알려 준다. */
 export type UploadPostResult = { ok: true; postId: string } | { ok: false; error: "ALREADY_IN_GROUP"; postId: string }
+
+// ---- 공고 고치기(시안 10차 "창 · 공고 고치기") ----
+
+/** 고칠 수 있는 값: 회사명, 공고명, 마감. 원문 링크와 공고 내용은 고치지 않는다. */
+export interface PostEdit {
+  company: string
+  title: string
+  deadline: Deadline
+}
+
+/** 고치기 결과. 다른 사람이 다른 그룹에도 올린 공고면 서버가 409 POSTING_SHARED와 그 까닭을 알려 준다. */
+export type EditPostResult = { ok: true } | { ok: false; error: "POSTING_SHARED"; message: string }

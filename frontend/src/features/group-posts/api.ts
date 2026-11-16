@@ -3,7 +3,7 @@ import type { PostUpload } from "@/domain/posting/types"
 import * as db from "@/mocks/db"
 import { apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
 
-import type { Comment, Deadline, GroupPostData, GroupPostsData, MyState, UploadPostResult } from "./types"
+import type { Comment, Deadline, EditPostResult, GroupPostData, GroupPostsData, MyState, PostEdit, UploadPostResult } from "./types"
 
 /** 그룹 공고 목록. 내린 공고는 빠지고 마감된 공고는 들어 있다. */
 export async function getGroupPosts(groupId: string): Promise<GroupPostsData> {
@@ -52,6 +52,21 @@ export async function setDeadline(groupId: string, postId: string, deadline: Dea
     return true
   } catch (error) {
     if (isApiError(error, "DEADLINE_ALREADY_SET")) return false
+    throw error
+  }
+}
+
+/**
+ * 공고의 회사명, 공고명, 마감을 고친다. 이 그룹에 올린 사람만 한다(화면이 그 사람에게만 버튼을 보인다. 서버는 403).
+ * 다른 사람이 다른 그룹에도 올린 공고면 409 POSTING_SHARED이고, 그 까닭(서버의 글)을 돌려준다. 상세에는 미리 알 값이 없다.
+ */
+export async function editPost(groupId: string, postId: string, edit: PostEdit): Promise<EditPostResult> {
+  if (mockServer) return db.editPost(groupId, postId, edit)
+  try {
+    await request("PUT", apiPath`/api/groups/${groupId}/posts/${postId}`, edit)
+    return { ok: true }
+  } catch (error) {
+    if (isApiError(error, "POSTING_SHARED")) return { ok: false, error: "POSTING_SHARED", message: error.message }
     throw error
   }
 }
