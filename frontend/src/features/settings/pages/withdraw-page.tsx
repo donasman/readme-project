@@ -3,6 +3,7 @@ import { Link, useLoaderData, useNavigate } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TOO_MANY_TRIES } from "@/domain/session/password"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import { Dot } from "@/shared/components/dot"
 import { FieldError, FormField, noteId } from "@/shared/components/form-field"
@@ -41,8 +42,9 @@ export function WithdrawPage() {
     const next = { password: (hasPassword ? password : password.trim()) ? undefined : `${what}${objectParticle(what)} 넣어 주세요.`, agreed: agreed ? undefined : "확인 표시를 해 주세요." }
     setErrors(next)
     if (next.password || next.agreed) return
-    const confirmed = await withdraw(hasPassword ? { password } : { email: password.trim() })
-    if (!confirmed) return setErrors({ password: hasPassword ? "비밀번호가 맞지 않습니다." : "계정의 이메일과 맞지 않습니다." })
+    const result = await withdraw(hasPassword ? { password } : { email: password.trim() })
+    if (result === "throttled") return setErrors({ password: TOO_MANY_TRIES })
+    if (result === "wrong") return setErrors({ password: hasPassword ? "비밀번호가 맞지 않습니다." : "계정의 이메일과 맞지 않습니다." })
     // 로그인한 화면들(세션 라우트) 밖으로 나간다. 안에 머물면 보는 사람을 다시 읽지 않는다
     navigate(paths.welcome(), { replace: true })
   }

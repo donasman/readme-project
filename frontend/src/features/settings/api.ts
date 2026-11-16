@@ -21,15 +21,17 @@ export async function renameMe(name: string): Promise<void> {
 
 /**
  * 로그인한 채로 비밀번호를 바꾼다(PUT /api/me/password, 로그인 문서 4.1). 이 기기는 로그인된 채로 있고 다른 기기는 모두 로그아웃된다.
- * 지금 비밀번호가 틀리면(400 WRONG_PASSWORD) "wrong", 비밀번호가 없는 계정이면(409 NO_PASSWORD) "none".
+ * 지금 비밀번호가 틀리면(400 WRONG_PASSWORD) "wrong", 15분 안에 10번 틀렸으면(429 TOO_MANY_ATTEMPTS) "throttled",
+ * 비밀번호가 없는 계정이면(409 NO_PASSWORD) "none".
  */
-export async function changePassword(currentPassword: string, newPassword: string): Promise<"done" | "wrong" | "none"> {
+export async function changePassword(currentPassword: string, newPassword: string): Promise<"done" | "wrong" | "throttled" | "none"> {
   if (mockServer) return db.changePassword(currentPassword)
   try {
     await request("PUT", "/api/me/password", { currentPassword, newPassword })
     return "done"
   } catch (error) {
     if (isApiError(error, "WRONG_PASSWORD")) return "wrong"
+    if (isApiError(error, "TOO_MANY_ATTEMPTS")) return "throttled"
     if (isApiError(error, "NO_PASSWORD")) return "none"
     throw error
   }
@@ -63,14 +65,18 @@ export async function getWithdrawInfo(): Promise<WithdrawInfo> {
   return request("GET", "/api/me/withdrawal")
 }
 
-/** 탈퇴한다. 확인이 틀리면(400 WRONG_PASSWORD, WRONG_EMAIL) false. 성공하면 서버가 세션을 지워 로그인하지 않은 상태가 된다. */
-export async function withdraw(confirm: WithdrawConfirm): Promise<boolean> {
-  if (mockServer) return db.withdraw("password" in confirm ? confirm.password : confirm.email).ok
+/**
+ * 탈퇴한다. 확인이 틀리면(400 WRONG_PASSWORD, WRONG_EMAIL) "wrong", 비밀번호를 15분 안에 10번 틀렸으면(429 TOO_MANY_ATTEMPTS) "throttled".
+ * 성공하면 서버가 세션을 지워 로그인하지 않은 상태가 된다.
+ */
+export async function withdraw(confirm: WithdrawConfirm): Promise<"done" | "wrong" | "throttled"> {
+  if (mockServer) return db.withdraw("password" in confirm ? confirm.password : confirm.email).ok ? "done" : "wrong"
   try {
     await request("POST", "/api/me/withdraw", confirm)
-    return true
+    return "done"
   } catch (error) {
-    if (isApiError(error, "WRONG_PASSWORD", "WRONG_EMAIL")) return false
+    if (isApiError(error, "WRONG_PASSWORD", "WRONG_EMAIL")) return "wrong"
+    if (isApiError(error, "TOO_MANY_ATTEMPTS")) return "throttled"
     throw error
   }
 }
