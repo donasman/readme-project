@@ -9,4 +9,8 @@ app:
     host-interval: 0s                # 테스트끼리 같은 127.0.0.1 을 읽으므로 기다리지 않는다. 간격은 HostThrottleTests 가 본다
     read-timeout: 2s                 # 시간 초과 테스트가 10초를 기다리지 않게
   extraction:
-    synchronous: true                # 카드 뽑기 작업을 요청한 스레드에서 바로 돌린다(ExtractionRunner). 결과를 바로 본다
+    synchronous: true
+  inbound-mail:
+    domain: inbound.readme.test
+    secret: test-inbound-secret
+    sweep-cron: "-"                  # 10분마다 다시 보기를 끈다. 다른 테스트의 FakeClaudeApi 답을 가져가지 않게. 테스트는 classify 를 직접 부른다                # 카드 뽑기 작업을 요청한 스레드에서 바로 돌린다(ExtractionRunner). 결과를 바로 본다

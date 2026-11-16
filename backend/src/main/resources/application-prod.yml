@@ -44,4 +44,8 @@ app:
   posting-read:
     contact: ${FETCHER_CONTACT}                 # 공고 링크를 받을 때 User-Agent 에 붙는 연락처. 공개 페이지나 mailto: 주소(로그인 화면이면 안 된다)
   llm:
-    api-key: ${ANTHROPIC_API_KEY}               # Claude API 키(Console 의 키). 경험카드 설계 4.5
+    api-key: ${ANTHROPIC_API_KEY}
+  inbound-mail:
+    # 메일 자동화(메일 설계 6절). 수신 전용 도메인을 사기 전에는 비워 둔다(수신 주소가 없고 받는 API 는 모두 401)
+    domain: ${INBOUND_MAIL_DOMAIN:}             # 예: 수신 전용 도메인. Cloudflare Email Routing 의 모든 주소 받기를 Worker 로
+    secret: ${INBOUND_MAIL_SECRET:}             # Worker 의 INBOUND_MAIL_SECRET 과 같은 값. 32바이트 이상의 무작위 값               # Claude API 키(Console 의 키). 경험카드 설계 4.5

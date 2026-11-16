@@ -64,6 +64,12 @@ class MyPostingController {
 		return detail(postingId, user);
 	}
 
+	/** 내 전형 일정 전부(메일 설계 4.5). 지금은 메일 확인함에서 반영한 일정만 있다. */
+	@GetMapping("/api/me/schedules")
+	List<ScheduleResponse> schedules(@CurrentUser LoginUser user) {
+		return this.queries.schedules(user.id());
+	}
+
 	/** 내 공고 상세. 내 공고에 없는 공고면 404 POSTING_NOT_FOUND. */
 	@GetMapping("/api/me/postings/{postingId}")
 	PostingResponse detail(@PathVariable long postingId, @CurrentUser LoginUser user) {

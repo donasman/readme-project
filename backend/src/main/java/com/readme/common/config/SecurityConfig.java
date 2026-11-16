@@ -43,13 +43,16 @@ import com.readme.common.error.ErrorCode;
  * 로그인 확인은 서버 세션 쿠키로 한다(Spring Session JDBC).
  *
  * <p>지금 들어 있는 것: CORS, CSRF, 로그인이 필요한 주소 구분, 로그아웃, 비밀번호 해시, 보안 필터가 막은 요청의 오류 응답(401, 403),
- * 구글 로그인(oauth2Login, 구글 클라이언트 값이 있을 때만).
+ * 구글 로그인(oauth2Login, 구글 클라이언트 값이 있을 때만), 받은 메일을 넘기는 주소(로그인과 CSRF 없이, 서명으로 확인한다).
  * 이메일·비밀번호 로그인은 auth 의 AuthController 가, 구글 로그인의 끝은 auth 의 GoogleLoginHandler 가,
  * 로그인 세션을 만드는 것은 auth 의 LoginSession 이 한다.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+	/** Cloudflare Email Worker 가 받은 메일을 넘기는 주소(메일 설계 4.1) */
+	private static final String INBOUND_MAIL = "/api/inbound-mail";
 
 	private final AppProperties app;
 
@@ -74,7 +77,8 @@ public class SecurityConfig {
 			.cors(Customizer.withDefaults())
 			// spa(): CSRF 토큰을 XSRF-TOKEN 쿠키로 내려 주고, 프런트가 X-XSRF-TOKEN 헤더로 돌려보낸 값을 확인한다.
 			// 쿠키는 읽기 요청의 응답에도 실린다(요청에 없을 때). 그래서 프런트의 첫 로그인 요청도 토큰을 보낼 수 있다(LoginTests).
-			.csrf((csrf) -> csrf.spa().csrfTokenRepository(csrfTokenRepository))
+			// 받은 메일을 넘기는 Worker(메일 설계 M1)에는 세션도 CSRF 토큰도 없다. 서명으로 확인한다(inboundmail 의 InboundMailController)
+			.csrf((csrf) -> csrf.spa().csrfTokenRepository(csrfTokenRepository).ignoringRequestMatchers(INBOUND_MAIL))
 			// 로그아웃: 세션을 지우고(세션 행과 쿠키) 204 를 준다. 다음 로그인에 쓸 새 XSRF-TOKEN 쿠키도 준다.
 			.logout((logout) -> logout.logoutUrl("/api/auth/logout")
 				.logoutSuccessHandler((request, response, authentication) -> {
@@ -90,6 +94,8 @@ public class SecurityConfig {
 				.requestMatchers("/oauth2/authorization/google", "/login/oauth2/code/google").permitAll()
 				// 초대 미리 보기. 손님도 그룹 이름을 보고 로그인·가입으로 간다(그룹 설계 4.1). 수락(POST …/accept)은 로그인해야 한다
 				.requestMatchers(HttpMethod.GET, "/api/group-invites/*").permitAll()
+				// 받은 메일을 넘기는 Worker. 로그인 대신 서명을 본다(메일 설계 M1, 2026-11-16 사용자 결정)
+				.requestMatchers(HttpMethod.POST, INBOUND_MAIL).permitAll()
 				.anyRequest().authenticated())
 			// 로그인 전 요청을 세션에 저장해 두지 않는다. 로그인 뒤 돌아갈 화면은 프런트가 정하고,
 			// 저장해 두면 로그인 전 요청마다 세션 행이 생긴다.

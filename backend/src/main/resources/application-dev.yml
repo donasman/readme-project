@@ -18,3 +18,6 @@ app:
   frontend-origin: http://localhost:5173
   csrf-cookie-domain:        # 개발에서는 비워 둔다
   mail-from: 리드미 <no-reply@readme.local>
+  inbound-mail:
+    domain: inbound.readme.local     # 내 PC 에는 메일이 오지 않는다. 받는 API 는 이 비밀 값으로 서명해 직접 부른다(메일 설계 6절)
+    secret: dev-inbound-secret

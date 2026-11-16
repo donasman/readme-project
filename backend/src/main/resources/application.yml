@@ -64,6 +64,11 @@ management:
       enabled: false         # 메일 서버가 꺼져 있어도 서버 상태를 DOWN 으로 보지 않는다
 
 app:
+  # 메일 자동화(docs/리드미_설계_메일.md). 수신 도메인과 Worker 와 함께 쓰는 서명 비밀 값.
+  # 비어 있으면 수신 주소가 없고(domain), 받는 API 가 모두 401 이다(secret). 운영은 INBOUND_MAIL_DOMAIN, INBOUND_MAIL_SECRET.
+  inbound-mail:
+    domain:
+    secret:
   # Claude 호출(llm 패키지, 경험카드 설계 4.5). API 키(app.llm.api-key)는 개발은 backend/application-local.yml,
   # 운영은 ANTHROPIC_API_KEY(application-prod.yml). 테스트는 키 없이 가짜 호출(FakeClaudeApi)을 쓴다.
   llm:

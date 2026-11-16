@@ -1,6 +1,8 @@
 package com.readme.posting;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -36,5 +38,21 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 			""", nativeQuery = true)
 	int updateMemo(@Param("userId") long userId, @Param("postingId") long postingId, @Param("memo") String memo,
 			@Param("now") Instant now);
+
+	/** 내 공고 행을 지운다. 전형 일정은 외래 키로 함께 지워진다. */
+	@Modifying
+	@Query(value = "delete from user_postings where user_id = :userId and posting_id = :postingId", nativeQuery = true)
+	int deleteRow(@Param("userId") long userId, @Param("postingId") long postingId);
+
+	/** 이 단계의 전형 일정을 이 값으로 둔다. 같은 요청을 두 번 보내도 결과가 같다. */
+	@Modifying
+	@Query(value = """
+			insert into user_posting_schedules (user_id, posting_id, stage, on_date, at_time, updated_at)
+			values (:userId, :postingId, :stage, :date, cast(:time as time), :now)
+			on conflict (user_id, posting_id, stage)
+			do update set on_date = excluded.on_date, at_time = excluded.at_time, updated_at = excluded.updated_at
+			""", nativeQuery = true)
+	int upsertSchedule(@Param("userId") long userId, @Param("postingId") long postingId, @Param("stage") String stage,
+			@Param("date") LocalDate date, @Param("time") LocalTime time, @Param("now") Instant now);
 
 }

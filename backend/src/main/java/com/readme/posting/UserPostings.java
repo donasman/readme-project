@@ -1,11 +1,15 @@
 package com.readme.posting;
 
 import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.readme.common.error.ApiException;
+import com.readme.posting.ApplicationStatus.Stage;
 
 /**
  * 내 공고(user_postings)를 바꾸는 곳. 다른 기능은 이 클래스로만 내 공고 행을 만들고 고친다.
@@ -46,9 +50,49 @@ public class UserPostings {
 		this.repository.insertIfAbsent(userId, postingId);
 	}
 
-	/** 내 지원 상태를 바꾼다. 내 공고 행이 없으면 만든다. 값의 짝은 부르는 쪽이 확인한다({@link ApplicationStatus#isConsistent}). */
+	/**
+	 * 메일에서 읽은 공고를 내 공고에 넣는다(메일 설계 M11). 같은 공고(공고키)가 있으면 그 공고를 쓴다. 내 행은 미정으로 시작한다.
+	 * 이미 내 공고에 있으면 그대로 두고 created 가 false 다.
+	 *
+	 * @param deadline 메일에서 읽은 마감일. 없으면 null(마감을 모르는 공고)
+	 */
 	@Transactional
-	void setStatus(long userId, long postingId, ApplicationStatus status) {
+	public Added addFromMail(long userId, String company, String title, LocalDate deadline) {
+		PostingDraft draft = new PostingDraft(company, title, (deadline != null) ? DeadlineKind.DATE : DeadlineKind.UNKNOWN,
+				deadline, null, null, null, List.of(), List.of());
+		long postingId = this.postings.findOrCreate(draft, userId);
+		return new Added(postingId, this.repository.insertIfAbsent(userId, postingId) == 1);
+	}
+
+	/** {@link #addFromMail} 의 결과. created 는 이번에 내 공고 행을 새로 만들었는지다. */
+	public record Added(long postingId, boolean created) {
+	}
+
+	/**
+	 * 내 공고에서 뺀다. 지원 상태, 메모, 전형 일정도 함께 지워진다. 공고 본체는 남긴다.
+	 * 메일로 넣은 공고를 되돌릴 때 부른다(메일 설계 M12). 없으면 아무 일도 하지 않는다.
+	 */
+	@Transactional
+	public void remove(long userId, long postingId) {
+		this.repository.deleteRow(userId, postingId);
+	}
+
+	/**
+	 * 전형 일정(user_posting_schedules)을 둔다. 같은 단계의 일정이 있으면 바꾼다(메일 설계 M13). 내 공고 행이 있어야 한다.
+	 *
+	 * @param time 없으면 null
+	 */
+	@Transactional
+	public void setSchedule(long userId, long postingId, Stage stage, LocalDate date, LocalTime time) {
+		this.repository.upsertSchedule(userId, postingId, stage.name(), date, time, this.clock.instant());
+	}
+
+	/**
+	 * 내 지원 상태를 바꾼다. 내 공고 행이 없으면 만든다. 값의 짝은 부르는 쪽이 확인한다({@link ApplicationStatus#isConsistent}).
+	 * 메일 확인함의 반영도 이것을 부른다.
+	 */
+	@Transactional
+	public void setStatus(long userId, long postingId, ApplicationStatus status) {
 		this.repository.upsertStatus(userId, postingId, status.decision().name(),
 				(status.stage() != null) ? status.stage().name() : null,
 				(status.result() != null) ? status.result().name() : null, this.clock.instant());
