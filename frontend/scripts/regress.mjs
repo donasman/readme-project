@@ -115,6 +115,9 @@ const SCENARIOS = [
   // 설정(9차)
   { name: "account", path: "/settings/account", width: 1280 },
   { name: "account-no-google", path: "/settings/account?mock=no-google", width: 1280 },
+  // 구글 연결에서 돌아온 결과(로그인 문서 7절 23번)
+  { name: "account-google-linked", path: "/settings/account?google=linked", width: 1280 },
+  { name: "account-google-in-use", path: "/settings/account?mock=no-google&google=in-use", width: 1280 },
   // 비밀번호 바꾸기(10차). 창의 버튼은 내 정보의 버튼과 글자가 같아 선택자로 누른다. 가짜 서버의 지금 비밀번호는 readme1234다
   { name: "dialog-password", path: "/settings/account", width: 1280, steps: [["press", "비밀번호 바꾸기"]] },
   { name: "dialog-password-wrong", path: "/settings/account", width: 1280, steps: [["press", "비밀번호 바꾸기"], ["fill", "#pw-current", "nope1234"], ["fill", "#pw-new", "readme5678"], ["click", "[role=dialog] button[type=submit]"]] },
