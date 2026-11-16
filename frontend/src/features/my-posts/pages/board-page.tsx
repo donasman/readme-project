@@ -84,9 +84,12 @@ export function BoardPage() {
                         <StageCell cell={cell} stage={STAGES[i]} />
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => pick(p.id)} aria-label={`${p.company} ${p.title} 상태 바꾸기`}>
-                      바꾸기
-                    </Button>
+                    {/* 표가 칸보다 넓어 옆으로 밀릴 때(1024 폭, 휴대폰)도 "바꾸기"는 오른쪽 끝에 붙어 보인다. 줄의 오른쪽 여백까지 덮어 밑의 칸을 가린다 */}
+                    <div className={joinClasses("sticky right-0 -mr-5 flex justify-end self-stretch pr-5", p.id === selected?.id ? "bg-surface-muted" : "bg-surface")}>
+                      <Button type="button" variant="outline" size="sm" className="self-center" onClick={() => pick(p.id)} aria-label={`${p.company} ${p.title} 상태 바꾸기`}>
+                        바꾸기
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
