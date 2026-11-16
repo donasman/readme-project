@@ -10,6 +10,7 @@ import { IconNote } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { getAccount, logout, renameMe } from "../api"
 import { PasswordDialog } from "../components/password-dialog"
@@ -55,6 +56,7 @@ export function AccountPage() {
 
   return (
     <>
+      <title>{docTitle("내 정보", "설정")}</title>
       <Panel aria-labelledby="ac-profile" className="flex flex-col gap-4 p-6">
         <h2 id="ac-profile" className={sectionTitle}>
           프로필

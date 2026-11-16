@@ -13,6 +13,7 @@ import { SurfaceCard } from "@/shared/components/surface-card"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { useSearchText } from "@/shared/lib/router"
+import { docTitle } from "@/shared/lib/utils"
 
 import { getGroupPosts, setDeadline } from "../api"
 import { AppliedBadge } from "../components/chips"
@@ -58,6 +59,7 @@ export function GroupPostsPage() {
 
   return (
     <Page className="gap-6 pt-10">
+      <title>{docTitle("공고", group.name)}</title>
       <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-sm text-text-secondary">

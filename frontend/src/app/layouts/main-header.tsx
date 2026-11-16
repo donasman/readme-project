@@ -22,10 +22,11 @@ export function MainHeader() {
 
   return (
     <header className="bg-background">
-      <div className="flex min-h-18 flex-wrap items-center gap-x-5 gap-y-2 border-b border-border-subtle bg-surface px-6 py-2">
+      {/* 휴대폰(640px 아래)에서는 로고 글자를 숨겨 메뉴와 내 계정이 한 줄에 들어가게 한다 */}
+      <div className="flex min-h-18 items-center gap-3 border-b border-border-subtle bg-surface px-6 py-2 sm:gap-5">
         <Link to={paths.home()} aria-label="리드미 홈" className="inline-flex flex-none items-center gap-2 text-base font-bold text-foreground">
           <LogoMark size={26} />
-          <span>리드미</span>
+          <span className="hidden sm:inline">리드미</span>
         </Link>
         <nav aria-label="주요 메뉴" className="min-w-0">
           <ul className="flex flex-wrap items-center gap-1">

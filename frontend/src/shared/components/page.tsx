@@ -11,6 +11,7 @@ interface PageProps extends HTMLAttributes<HTMLElement> {
 export function Page({ narrow = false, className, ...props }: PageProps) {
   return (
     <main
+      id="main"
       className={joinClasses("mx-auto flex flex-col pb-16", narrow ? "max-w-[1120px] px-6" : "max-w-[1240px] px-4", className)}
       {...props}
     />

@@ -7,7 +7,7 @@ import { Heading } from "@/shared/components/heading"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { IconNote } from "@/shared/components/notice"
 import { paths } from "@/shared/lib/paths"
-import { cn, joinClasses } from "@/shared/lib/utils"
+import { cn, docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { startGoogleLogin } from "../api"
 
@@ -17,7 +17,7 @@ import { startGoogleLogin } from "../api"
 /** 가운데 390px 한 줄과 맨 위 로고. 아래 줄(AuthFooter)은 맨 아래에 붙는다. */
 export function AuthFrame({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-svh max-w-[390px] flex-col gap-8 px-6 pt-14 pb-6">
+    <main id="main" className="mx-auto flex min-h-svh max-w-[390px] flex-col gap-8 px-6 pt-14 pb-6">
       <Link
         to={paths.home()}
         aria-label="리드미 홈"
@@ -35,6 +35,7 @@ export function AuthFrame({ children }: { children: ReactNode }) {
 export function AuthHeading({ title, children }: { title: ReactNode; children?: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
+      {typeof title === "string" && <title>{docTitle(title)}</title>}
       <Heading level={1} size="text-[28px]">
         {title}
       </Heading>

@@ -9,7 +9,7 @@ import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
 import { orgAndRole, STAR_PARTS, startFrom } from "../card-rules"
@@ -52,6 +52,7 @@ export function CardReviewPage() {
   if (!card) {
     return (
       <CardsSubpage>
+        <title>{docTitle("카드 확인", "경험카드")}</title>
         <div className="flex max-w-[560px] flex-col gap-6">
           <span aria-hidden="true" className="inline-flex size-12 items-center justify-center rounded-control bg-accent-subtle text-accent-strong">
             <CheckIcon className="size-6" />
@@ -91,6 +92,7 @@ export function CardReviewPage() {
 
   return (
     <CardsSubpage>
+      <title>{docTitle("카드 확인", "경험카드")}</title>
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
           <div className="flex min-w-0 flex-col gap-2">

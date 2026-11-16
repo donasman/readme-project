@@ -11,6 +11,7 @@ import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { ArrowRightIcon, MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { applyMail, getMailbox, ignoreMail, revertAdded } from "../api"
 
@@ -33,6 +34,7 @@ export function MailPage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
+      <title>{docTitle("메일 확인함")}</title>
       <MySpaceNav current="mail" />
       <p role="status" className="sr-only">
         {done}

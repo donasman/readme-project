@@ -6,6 +6,7 @@ import { Heading } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { sentence } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { login, type LoginResult } from "../api"
 import { AuthField, AuthFooter, AuthFrame, authFooterLink, authInlineLink, OrGoogle } from "../components/auth-parts"
@@ -35,6 +36,7 @@ export function LoginPage() {
 
   return (
     <AuthFrame>
+      <title>{docTitle("로그인")}</title>
       <Heading level={1} size="text-[28px]" className="flex flex-col items-start gap-1.5">
         <span>취업준비생을 위한</span>
         <span className="-ml-1 rounded-sm bg-highlight px-2.5 py-1 text-highlight-foreground">정보공유·스터디</span>

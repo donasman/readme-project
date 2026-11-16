@@ -14,7 +14,7 @@ import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel, PanelNote } from "@/shared/components/panel"
 import { CheckIcon, XIcon } from "@/shared/icons"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings, updateMyState } from "../api"
 import { BigStat } from "../components/my-bits"
@@ -26,7 +26,11 @@ export async function boardLoader() {
   return { ...data, groups }
 }
 
-const GRID = "grid grid-cols-[minmax(220px,1.6fr)_repeat(5,minmax(84px,1fr))_96px] items-center gap-2"
+// 옆 창(320px)에 "단계" 다섯 개가 다 보이도록 조각의 좌우 여백(arc의 --space-4, 16px)을 이 창에서만 줄인다. 넘치면 "서류"가 밀려 가려진다
+const SEGMENT = "self-start [--space-4:8px]"
+
+// 칸 최소 폭의 합(708px)이 1280~1440 화면의 본문 칸(약 726px)에 들어가야 맨 끝의 "바꾸기"가 잘리지 않는다
+const GRID = "grid grid-cols-[minmax(200px,1.6fr)_repeat(5,minmax(68px,1fr))_80px] items-center gap-2"
 
 /** 지원 현황(시안 8차): 지원한 공고의 단계를 한 줄씩 보고, 옆 칸에서 상태를 바꾼다. 고른 공고는 주소의 ?posting=에 둔다. */
 export function BoardPage() {
@@ -42,6 +46,7 @@ export function BoardPage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
+      <title>{docTitle("지원 현황")}</title>
       <MySpaceNav current="board" />
       <div className="flex flex-col gap-2">
         <Heading level={1} size="text-3xl">
@@ -61,7 +66,7 @@ export function BoardPage() {
         <section aria-label="지원한 공고" className={joinClasses(mainColumn, "gap-3")}>
           {rows.length > 0 ? (
             <Panel as="div" className="overflow-x-auto">
-              <div className="flex min-w-[760px] flex-col">
+              <div className="flex min-w-[708px] flex-col">
                 <div aria-hidden="true" className={`${GRID} px-5 py-3 text-xs font-bold text-text-secondary`}>
                   <span>회사 · 공고</span>
                   {STAGES.map((s) => (
@@ -79,9 +84,12 @@ export function BoardPage() {
                         <StageCell cell={cell} stage={STAGES[i]} />
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => pick(p.id)} aria-label={`${p.company} ${p.title} 상태 바꾸기`}>
-                      바꾸기
-                    </Button>
+                    {/* 표가 칸보다 넓어 옆으로 밀릴 때(1024 폭, 휴대폰)도 "바꾸기"는 오른쪽 끝에 붙어 보인다. 줄의 오른쪽 여백까지 덮어 밑의 칸을 가린다 */}
+                    <div className={joinClasses("sticky right-0 -mr-5 flex justify-end self-stretch pr-5", p.id === selected?.id ? "bg-surface-muted" : "bg-surface")}>
+                      <Button type="button" variant="outline" size="sm" className="self-center" onClick={() => pick(p.id)} aria-label={`${p.company} ${p.title} 상태 바꾸기`}>
+                        바꾸기
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -169,7 +177,7 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
           value={state.decision}
           onValueChange={(d) => setState((s) => withDecision(s, d as Decision))}
           options={DECISIONS.map((d) => ({ value: d, label: DECISION_LABELS[d] }))}
-          className="self-start"
+          className={SEGMENT}
         />
       </div>
       {applied ? (
@@ -181,7 +189,7 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
               value={state.stage ?? "document"}
               onValueChange={(stage) => setState((s) => ({ ...s, stage: stage as Stage }))}
               options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-              className="self-start"
+              className={SEGMENT}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -191,7 +199,7 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
               value={state.result ?? "in_progress"}
               onValueChange={(result) => setState((s) => ({ ...s, result: result as Result }))}
               options={RESULTS.map((r) => ({ value: r, label: RESULT_LABELS[r] }))}
-              className="self-start"
+              className={SEGMENT}
             />
           </div>
         </>

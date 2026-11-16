@@ -7,6 +7,7 @@ import { LogoMark } from "@/shared/components/logo-mark"
 import { Panel } from "@/shared/components/panel"
 import { CalendarIcon, FileTextIcon, UsersIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   {
@@ -33,6 +34,7 @@ const sectionTitle = "font-heading text-[28px] leading-[1.2] font-bold tracking-
 export function LandingPage() {
   return (
     <>
+      <title>{docTitle("취업준비생을 위한 정보공유·스터디")}</title>
       <header className="bg-background">
         <div className="mx-auto flex min-h-18 max-w-[1120px] flex-wrap items-center justify-between gap-x-5 gap-y-2 px-6 py-2">
           <Link to={paths.welcome()} aria-label="리드미 홈" className="inline-flex min-h-control-md flex-none items-center gap-2 text-base font-bold text-foreground">
@@ -50,7 +52,7 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-[1120px] flex-col gap-18 px-6 pt-14 pb-20">
+      <main id="main" className="mx-auto flex max-w-[1120px] flex-col gap-18 px-6 pt-14 pb-20">
         <section aria-labelledby="ld-hero" className="flex flex-col items-start gap-6">
           <h1
             id="ld-hero"

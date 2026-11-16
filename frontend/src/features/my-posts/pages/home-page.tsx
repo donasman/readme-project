@@ -14,7 +14,7 @@ import { Panel, PanelRow } from "@/shared/components/panel"
 import { ArrowRightIcon } from "@/shared/icons"
 import { daysBetween, formatLongDate } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { getHome } from "../api"
 import { BigStat, DdayBadge, MyStatusPill } from "../components/my-bits"
@@ -55,6 +55,7 @@ export function HomePage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
+      <title>{docTitle("홈")}</title>
       <MySpaceNav current="home" />
       <div className="flex flex-col gap-2">
         <p className="text-sm text-text-secondary">{formatLongDate(today)}</p>
@@ -92,7 +93,7 @@ export function HomePage() {
                       <span className="text-xs text-text-secondary">{due.sub}</span>
                     </div>
                     <PostingLink id={p.id} company={p.company} title={p.title} className="flex-[1_1_220px]" />
-                    <div className="flex flex-none flex-col items-end gap-1">
+                    <div className="ml-auto flex flex-none flex-col items-end gap-1">
                       <MyStatusPill state={p} />
                       <span className="text-xs text-text-secondary">{p.groups.map((g) => g.name).join(", ")}</span>
                     </div>

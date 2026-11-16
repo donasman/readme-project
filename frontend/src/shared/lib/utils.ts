@@ -8,6 +8,11 @@ export function joinClasses(...classes: Array<string | false | null | undefined>
   return classes.filter(Boolean).join(" ")
 }
 
+/** 브라우저 탭 제목: 좁은 것부터 넓은 것 순서로 받아 "공고 · 백엔드 스터디 · 리드미"처럼 잇는다. */
+export function docTitle(...parts: string[]): string {
+  return [...parts, "리드미"].join(" · ")
+}
+
 /** http·https 주소인가. 다른 사람이 누를 링크로 보여 줄 값(원문 링크 등)을 받을 때 쓴다. */
 export function isHttpUrl(value: string): boolean {
   try {

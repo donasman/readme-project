@@ -7,6 +7,7 @@ import { BackLink } from "@/shared/components/back-link"
 import { subpageTitle } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 /** 공고 올리기(시안 7차): 링크, 본문 붙여넣기, 파일 가운데 하나로 읽고 칸 확인으로 간다. 이 그룹에 이미 있으면 그 공고를 알린다. */
 export function PostNewPage() {
@@ -14,7 +15,8 @@ export function PostNewPage() {
   const navigate = useNavigate()
 
   return (
-    <main className="mx-auto flex max-w-[760px] flex-col gap-6 px-4 pt-6 pb-16">
+    <main id="main" className="mx-auto flex max-w-[760px] flex-col gap-6 px-4 pt-6 pb-16">
+      <title>{docTitle("공고 올리기", group.name)}</title>
       <BackLink to={paths.groupPosts(group.id)}>공고</BackLink>
       <div className="flex flex-col gap-1">
         <p className="text-sm text-text-secondary">{group.name}</p>

@@ -12,7 +12,7 @@ import { Panel } from "@/shared/components/panel"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { cn, joinClasses } from "@/shared/lib/utils"
+import { cn, docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { createCard, getCard, suggestKeywords, updateCard } from "../api"
 import { STAR_PARTS } from "../card-rules"
@@ -81,6 +81,7 @@ export function CardEditPage() {
 
   return (
     <CardsSubpage>
+      <title>{docTitle(card.id === null ? "카드 만들기" : "카드 고치기", "경험카드")}</title>
       <form onSubmit={save} className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
           <h1 className={subpageTitle}>{card.id === null ? "카드 만들기" : "카드 고치기"}</h1>

@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from "react-router"
 import { PostCheckForm } from "@/domain/posting/post-check-form"
 import type { PostCheckState } from "@/domain/posting/types"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { addMyPosting } from "../api"
 import type { ArrivedState } from "../types"
@@ -15,20 +16,23 @@ export function MyPostCheckPage() {
   if (!draft) return <Navigate to={paths.myPostNew()} replace />
 
   return (
-    <PostCheckForm
-      narrow
-      draft={draft}
-      backTo={paths.myPostNew()}
-      backLabel="공고 넣기"
-      submitLabel="내 공고에 넣기"
-      optionalNote="비워 두어도 넣을 수 있습니다."
-      unknownNote={`"모름"으로 넣으면 내 공고에 "확인 필요"로 보입니다.`}
-      onSubmit={async (upload) => {
-        const result = await addMyPosting(upload)
-        // 이미 내 공고에 있으면 그 공고로 가서 알린다(지원 상태와 메모는 그대로다). 뒤로 가기가 칸 확인으로 돌아와 다시 넣지 않게 바꿔 끼운다
-        const state: ArrivedState | null = result.ok ? null : { arrived: true }
-        await navigate(paths.myPost(result.postingId), { state, replace: true })
-      }}
-    />
+    <>
+      <title>{docTitle("공고 확인")}</title>
+      <PostCheckForm
+        narrow
+        draft={draft}
+        backTo={paths.myPostNew()}
+        backLabel="공고 넣기"
+        submitLabel="내 공고에 넣기"
+        optionalNote="비워 두어도 넣을 수 있습니다."
+        unknownNote={`"모름"으로 넣으면 내 공고에 "확인 필요"로 보입니다.`}
+        onSubmit={async (upload) => {
+          const result = await addMyPosting(upload)
+          // 이미 내 공고에 있으면 그 공고로 가서 알린다(지원 상태와 메모는 그대로다). 뒤로 가기가 칸 확인으로 돌아와 다시 넣지 않게 바꿔 끼운다
+          const state: ArrivedState | null = result.ok ? null : { arrived: true }
+          await navigate(paths.myPost(result.postingId), { state, replace: true })
+        }}
+      />
+    </>
   )
 }

@@ -17,7 +17,7 @@ import { Panel, PanelNote } from "@/shared/components/panel"
 import { ExternalLinkIcon } from "@/shared/icons"
 import { formatDateWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { getMyPosting, saveMemo } from "../api"
 import { DdayBadge } from "../components/my-bits"
@@ -49,6 +49,7 @@ export function MyPostPage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
+      <title>{docTitle(posting.title, "내 공고")}</title>
       <BackLink to={paths.myPosts()}>내 공고</BackLink>
       {arrived && (
         <Notice title="이미 내 공고에 있는 공고입니다">
