@@ -6,7 +6,6 @@ import { sentence } from "@/shared/lib/korean"
 import { chunkCount } from "./card-text"
 import type { CardDetail, CardInput, CardsData, CardSource, CardTag, ExtractionJob, KeywordSuggestion } from "./types"
 
-
 /** 내 경험카드 목록과 태그. 거르기는 화면에서 한다(카드 수가 적어서). */
 export async function getCards(): Promise<CardsData> {
   if (mockServer) return { cards: db.listCards(), tags: db.listCardTags() }
@@ -58,9 +57,43 @@ interface SourceResponse {
   parts: number
   /** 이 자료에서 뽑아 남아 있는 카드 수. 아직 뽑지 않았으면 null */
   cardCount: number | null
+  /** 가장 최근 추출 작업. 없으면 null */
+  latestJob: { id: string; status: JobResponse["status"] } | null
 }
 
-const toSource = (s: SourceResponse): CardSource => ({ id: s.id, name: s.name ?? "붙여넣은 글", createdAt: s.createdAt, chars: s.chars, cardCount: s.cardCount })
+const toSource = (s: SourceResponse): CardSource => ({
+  id: s.id,
+  name: s.name ?? "붙여넣은 글",
+  createdAt: s.createdAt,
+  chars: s.chars,
+  cardCount: s.cardCount,
+  runningJobId: s.latestJob && (s.latestJob.status === "queued" || s.latestJob.status === "running") ? s.latestJob.id : null,
+})
+
+/** 서버의 추출 작업(경험카드 문서 4.6). 조각을 parts라 부르고 상태는 소문자다(문서 6절 3번). */
+interface JobResponse {
+  id: string
+  sourceId: string
+  status: "queued" | "running" | "done" | "failed"
+  doneParts: number
+  totalParts: number
+  cardsSoFar: number
+  newCards: number
+  skippedSameAs: string[]
+  error: string | null
+}
+
+const toJob = (j: JobResponse): ExtractionJob => ({
+  id: j.id,
+  sourceId: j.sourceId,
+  status: j.status === "done" ? "DONE" : j.status === "failed" ? "FAILED" : "RUNNING",
+  doneChunks: j.doneParts,
+  totalChunks: j.totalParts,
+  cardsSoFar: j.cardsSoFar,
+  newCards: j.newCards,
+  skippedSameAs: j.skippedSameAs,
+  error: j.error,
+})
 
 /** 올린 자료(새 것이 앞). */
 export async function getSources(): Promise<CardSource[]> {
@@ -101,15 +134,32 @@ export async function deleteSource(id: string): Promise<void> {
   await request("DELETE", apiPath`/api/card-sources/${id}`)
 }
 
-/** 카드 뽑기를 시작한다. 서버가 뒤에서 돌리고, 화면은 getExtractionJob으로 몇 초마다 묻는다. 서버에 아직 없으면 null. */
-export async function startExtraction(source: CardSource): Promise<ExtractionJob | null> {
-  if (mockServer) return db.startExtraction(source.id, chunkCount(source.chars))
-  // shortcut: 서버에 추출 시작·작업 상태 API가 아직 없다(경험카드 문서 4.2), 생기면 POST /api/card-sources/{id}/extract와 GET /api/card-extractions/{jobId}로 바꾼다
-  return null
+/** 뽑기 시작 결과: 작업, 또는 시작 버튼 아래에 알릴 이유(이번 달 LLM 한도). */
+export type StartExtractionResult = { ok: true; job: ExtractionJob } | { ok: false; message: string }
+
+/**
+ * 카드 뽑기를 시작한다(POST /api/card-sources/{id}/extract, 202). 서버가 뒤에서 돌리고, 화면은 getExtractionJob으로 몇 초마다 묻는다.
+ * 그 자료가 이미 뽑는 중이면 그 작업이, 마지막 작업이 실패했으면 마친 조각 다음부터 잇는 작업이 온다. 이번 달 LLM 한도에 닿았으면 429.
+ */
+export async function startExtraction(source: CardSource): Promise<StartExtractionResult> {
+  if (mockServer) return { ok: true, job: db.startExtraction(source.id, chunkCount(source.chars)) }
+  try {
+    return { ok: true, job: toJob(await request<JobResponse>("POST", apiPath`/api/card-sources/${source.id}/extract`)) }
+  } catch (error) {
+    if (isApiError(error, "LLM_LIMIT_REACHED")) return { ok: false, message: error.message }
+    throw error
+  }
 }
 
-export async function getExtractionJob(jobId: string): Promise<ExtractionJob> {
-  return db.getExtractionJob(jobId)
+/** 뽑기 작업 상태(GET /api/card-extractions/{jobId}). 자료를 지워 작업이 없으면(404 JOB_NOT_FOUND) null. */
+export async function getExtractionJob(jobId: string): Promise<ExtractionJob | null> {
+  if (mockServer) return db.getExtractionJob(jobId)
+  try {
+    return toJob(await request<JobResponse>("GET", apiPath`/api/card-extractions/${jobId}`))
+  } catch (error) {
+    if (isApiError(error, "JOB_NOT_FOUND")) return null
+    throw error
+  }
 }
 
 /** 태그 입력 후보: 다른 표기를 쳐도 대표 표기를 준다(k8s → Kubernetes). 많아야 10개. */

@@ -22,9 +22,9 @@ const card = (base: Base, more: Partial<CardDetail> = {}): CardDetail => ({
 /** 올린 자료(새 것이 앞). */
 export function createExampleSources(): CardSource[] {
   return [
-    { id: "1", name: "예시_포트폴리오.pdf", createdAt: "2026-11-12", chars: 12480, cardCount: 2 },
-    { id: "2", name: "예시_이력서.docx", createdAt: "2026-11-10", chars: 3210, cardCount: 2 },
-    { id: "3", name: "붙여넣은 글", createdAt: "2026-11-08", chars: 1840, cardCount: 1 },
+    { id: "1", name: "예시_포트폴리오.pdf", createdAt: "2026-11-12", chars: 12480, cardCount: 2, runningJobId: null },
+    { id: "2", name: "예시_이력서.docx", createdAt: "2026-11-10", chars: 3210, cardCount: 2, runningJobId: null },
+    { id: "3", name: "붙여넣은 글", createdAt: "2026-11-08", chars: 1840, cardCount: 1, runningJobId: null },
   ]
 }
 
