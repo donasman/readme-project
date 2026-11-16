@@ -104,7 +104,7 @@ git switch -c feat/frontend-something  # 작업 브랜치
 - 아직 가짜 서버만 부르는 것: 메일 확인함, 메일 자동화 설정, 홈의 "메일에서 온 변경". `npm run dev:server` 에서도 이 자리는 예시 데이터를 보인다. 카드 추출은 서버에 없어 `npm run dev:server` 에서 "카드 뽑기 시작"을 누르면 준비 중이라고 알린다. 메일 자동화도 서버에 없다. 화면이 바라는데 서버에 없는 칸은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
 - 서버에 있는데 아직 쓰지 않는 것: 2026-11-16에 서버에 새로 생긴 것(카드 뽑기, 프로필, 메일 자동화, 내 공고 빼기 등). 할 일과 기다리는 시안은 `docs/리드미_남은작업.md` 프런트엔드에 있다.
 - 동작이 없는 자리: 헤더의 정보공유(화면이 없다), 설정의 구글 연결(서버에 없다). 원문 주소가 없는 공고는 원문 보기·열기를 감춘다. 이런 자리와 나중에 고칠 것은 코드에 `shortcut:` 으로 적혀 있다.
-- 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 브라우저로 누르는 테스트는 `npm run test:e2e`(Playwright). 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 87개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
+- 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 브라우저로 누르는 테스트는 `npm run test:e2e`(Playwright). 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 88개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
 - `src/index.css`: Arc 변수(`src/components/arc/foundation.css`) 위에 리드미 값(색 A)을 덮고, shadcn/ui 색 이름을 Arc 변수에 연결한다.
 - 부품: shadcn/ui 는 `src/components/ui`(button, input, textarea, dialog, dropdown-menu), dsui 는 `src/components/arc`(segmented-control, app-header 와 함께 들어온 기반). 헤더는 `src/app/layouts/group-header.tsx`(그룹 화면)와 `main-header.tsx`(그룹 밖 화면)를 따로 만들어 쓴다. 정한 값은 `reverse-engineering/리드미_디자인_적용_계획.md` 의 "적용 결과"에 있다.
 

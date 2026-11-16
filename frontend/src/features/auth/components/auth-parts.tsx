@@ -3,6 +3,7 @@ import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { GOOGLE_BIRTH_GENDER_NOTICE } from "@/domain/session/consent"
 import { Heading } from "@/shared/components/heading"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { IconNote } from "@/shared/components/notice"
@@ -108,7 +109,7 @@ export function StatusIcon({ tone = "accent", children }: { tone?: "accent" | "m
   )
 }
 
-/** "또는" 줄과 구글로 계속하기. */
+/** "또는" 줄과 구글로 계속하기. 구글에서 생년월일·성별을 받는다는 안내를 함께 둔다(로그인 문서 7절 29번). */
 export function OrGoogle() {
   return (
     <div className="flex flex-col gap-4">
@@ -121,6 +122,7 @@ export function OrGoogle() {
         <GoogleMark />
         <span>구글로 계속하기</span>
       </Button>
+      <p className="text-label-sm text-text-secondary">{GOOGLE_BIRTH_GENDER_NOTICE}</p>
     </div>
   )
 }
