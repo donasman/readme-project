@@ -3,7 +3,6 @@ import { Link, useMatches } from "react-router"
 import { useViewer } from "@/domain/session/use-viewer"
 import { Avatar } from "@/shared/components/avatar"
 import { LogoMark } from "@/shared/components/logo-mark"
-import { PlaceholderLink } from "@/shared/components/placeholder-link"
 import { navPill } from "@/shared/components/nav-pill"
 import { mainNavOf, type MainNav } from "@/shared/lib/main-nav"
 import { paths } from "@/shared/lib/paths"
@@ -37,10 +36,12 @@ export function MainHeader() {
               </Link>
             </li>
             <li>
-              {/* shortcut: 정보공유는 화면이 없어 눌러도 아무 일이 없다, 시안이 나오면 Link로 바꾼다 */}
-              <PlaceholderLink aria-current={current === "info" ? "page" : undefined} className={navPill(current === "info")}>
+              {/* shortcut: 정보공유는 아직 화면이 없어 누를 수 없게 흐리고 "준비 중"을 붙인다, 시안이 나오면 Link로 바꾼다.
+                  휴대폰은 머리 줄 폭이 빠듯해 "준비 중"은 화면 읽기에만 들린다 */}
+              <span className="inline-flex min-h-control-sm items-center gap-1.5 rounded-full px-4 text-sm font-bold whitespace-nowrap text-text-secondary opacity-60">
                 정보공유
-              </PlaceholderLink>
+                <span className="rounded-full bg-surface-muted px-1.5 text-[11px] leading-[18px] font-medium max-sm:sr-only">준비 중</span>
+              </span>
             </li>
             <li>
               <Link to={paths.cards()} aria-current={current === "cards" ? "page" : undefined} className={navPill(current === "cards")}>
