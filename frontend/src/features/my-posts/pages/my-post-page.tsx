@@ -162,7 +162,9 @@ export function MyPostPage() {
               </h2>
               <p className="text-sm text-text-secondary">공고의 요건·키워드와 카드의 태그가 겹치는 순서입니다.</p>
             </div>
-            {posting.matches.length > 0 ? (
+            {!posting.analyzed ? (
+              <p className="text-sm text-text-secondary">아직 공고 분석이 없어 맞는 카드를 셀 수 없습니다.</p>
+            ) : posting.matches.length > 0 ? (
               <ul className="flex flex-col">
                 {posting.matches.map((m, i) => (
                   <li key={m.cardId} className={joinClasses("border-t py-3", i > 0 ? "border-border-subtle" : "border-transparent")}>

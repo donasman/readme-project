@@ -34,8 +34,7 @@ export interface PostingGroupState extends PostingGroup {
   disclosure: Disclosure
 }
 
-// shortcut: 맞추기 규칙이 없어 가짜 서버가 태그 겹침으로 흉내 낸다, 매칭이 설계되면 맞춘다(화면 API 대응 3.3의 13번)
-/** 맞는 카드: 카드 제목과 겹치는 태그·키워드. */
+/** 맞는 카드(공고 문서 4.8): 카드 제목과, 공고의 요건 낱말·키워드 가운데 카드 태그에 있는 것. 가짜 서버는 태그 겹침으로 흉내 낸다. */
 export interface CardMatch {
   cardId: string
   title: string
@@ -50,8 +49,10 @@ export interface MyPostingDetail extends MyPosting {
   keywords: string[]
   /** 나만 보는 메모. 없으면 "" */
   memo: string
+  /** 공고 분석이 있는가. 없으면 서버가 맞는 카드를 세지 않아 matches와 unmatched가 비어 있다 */
+  analyzed: boolean
   matches: CardMatch[]
-  /** 카드로 답하지 못한 요건 */
+  /** 카드로 답하지 못한 필수·우대 요건 */
   unmatched: string[]
   groupStates: PostingGroupState[]
 }
