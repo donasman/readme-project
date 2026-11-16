@@ -2,7 +2,7 @@
 // shortcut: 메일 자동화는 설계에 없어 가짜 서버를 부른다, 설계가 생기면 함수 안만 그 API로 바꾼다(화면 API 대응 3.4의 16번)
 import type { MeResponse } from "@/domain/session/types"
 import * as db from "@/mocks/account-db"
-import { isApiError, mockServer, request } from "@/shared/lib/api"
+import { isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
 
 import type { AccountInfo, MailSettings, WithdrawConfirm, WithdrawInfo } from "./types"
 
@@ -11,6 +11,18 @@ export async function getAccount(): Promise<AccountInfo> {
   if (mockServer) return db.getAccount()
   const { name, email, hasPassword, google } = await request<MeResponse>("GET", "/api/me")
   return { name, email, emailVerified: true, hasPassword, google }
+}
+
+/**
+ * 로그인한 채로 구글 계정을 잇는다(로그인 문서 4.1, 7절 22~25번). 시작 API가 이 세션에 연결할 사람을 적고, 페이지를 서버의 구글 로그인
+ * 주소로 옮긴다(fetch가 아니다). 구글을 거쳐 내 정보로 ?google=linked|in-use|has-google|error를 들고 돌아온다.
+ * 시작 API를 건너뛰고 바로 옮기면 연결이 아니라 구글 로그인이 된다.
+ */
+export async function startGoogleLink(): Promise<void> {
+  // shortcut: 가짜 서버에는 구글이 없어 연결한 것으로 돌아온다, 가짜 서버를 지우면 이 줄도 지운다
+  if (mockServer) return window.location.assign("/settings/account?google=linked")
+  await request("POST", "/api/me/google-link")
+  window.location.assign(`${SERVER_ORIGIN}/oauth2/authorization/google`)
 }
 
 /** 표시 이름을 바꾼다(그룹 멤버에게 보이는 이름). 서버는 앞뒤 공백을 지우고 1~50자를 받는다. */
