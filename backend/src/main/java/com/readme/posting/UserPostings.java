@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +24,13 @@ public class UserPostings {
 
 	private final Clock clock;
 
-	UserPostings(UserPostingRepository repository, Postings postings, Clock clock) {
+	private final ApplicationEventPublisher events;
+
+	UserPostings(UserPostingRepository repository, Postings postings, Clock clock, ApplicationEventPublisher events) {
 		this.repository = repository;
 		this.postings = postings;
 		this.clock = clock;
+		this.events = events;
 	}
 
 	/**
@@ -69,12 +73,17 @@ public class UserPostings {
 	}
 
 	/**
-	 * 내 공고에서 뺀다. 지원 상태, 메모, 전형 일정도 함께 지워진다. 공고 본체는 남긴다.
-	 * 메일로 넣은 공고를 되돌릴 때 부른다(메일 설계 M12). 없으면 아무 일도 하지 않는다.
+	 * 내 공고에서 뺀다(공고 설계 4.2, 2026-11-16 사용자 결정). 지원 상태, 메모, 전형 일정도 함께 지워지고, 내 그룹들에서 켜 둔
+	 * 그 공고의 관심도 끈다({@link MyPostingRemoved} 를 grouppost 가 받는다). 공고 본체, 그룹 공고, 댓글은 남긴다.
+	 * 내 공고 빼기와 메일로 넣은 공고 되돌리기(메일 설계 M12)가 부른다. 내 공고에 없었으면 false.
 	 */
 	@Transactional
-	public void remove(long userId, long postingId) {
-		this.repository.deleteRow(userId, postingId);
+	public boolean remove(long userId, long postingId) {
+		if (this.repository.deleteRow(userId, postingId) == 0) {
+			return false;
+		}
+		this.events.publishEvent(new MyPostingRemoved(userId, postingId));
+		return true;
 	}
 
 	/**
