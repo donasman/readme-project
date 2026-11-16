@@ -30,7 +30,7 @@ export async function homeLoader() {
 const UPCOMING = 5
 const WEEK = 7
 
-/** 홈(시안 8차 "홈"): 오늘, 숫자 넷, 다가오는 마감, 확인 필요, 그룹 소식. */
+/** 홈(시안 8차 "홈", 11차에서 숫자 셋): 오늘, 숫자 셋, 다가오는 마감, 확인 필요, 그룹 소식. */
 export function HomePage() {
   const { today, postings, unverifiedCards, mailChanges, news } = useLoaderData<typeof homeLoader>()
   const open = sortPostings(postings, today).filter((p) => !isClosed(p.deadline, today))
