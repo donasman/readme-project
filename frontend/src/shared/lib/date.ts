@@ -59,3 +59,6 @@ export function formatCommentTime(createdAt: string, now: number = Date.now()): 
 
 /** 한국의 오늘("YYYY-MM-DD"). 서버가 오늘을 주지 않는 화면(내 그룹)의 D-day를 센다. 서버도 한국 날짜로 센다(구조 문서 5.1). */
 export const seoulToday = (now = new Date()): string => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(now)
+
+/** 서버의 시각(+09:00이 붙은 ISO 8601)을 "YYYY-MM-DD HH:mm"으로. 앞부분이 이미 한국 날짜와 시각이라 잘라 쓴다. */
+export const formatKstMinute = (iso: string): string => `${iso.slice(0, 10)} ${iso.slice(11, 16)}`

@@ -4,7 +4,7 @@
 // 내 공고 조회 API는 아직 설계에 없다(화면 API 대응 3.3의 10번). 이 폴더는 shared와 타입만 불러온다.
 import type { PostUpload } from "@/domain/posting/types"
 import type { GroupPostDetail } from "@/features/group-posts/types"
-import type { AddPostingResult, CardMatch, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup } from "@/features/my-posts/types"
+import type { AddPostingResult, CardMatch, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup, Schedule } from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
@@ -128,6 +128,20 @@ export function updateMyState(id: string, state: MyState): MyPosting {
   if (!ok) throw new Error("INVALID_INPUT: 단계와 결과는 지원함일 때만 함께 넣는다")
   Object.assign(e, { decision: state.decision, stage: state.stage, result: state.result })
   return toPosting(e)
+}
+
+// 전형 일정: 예시 공사 필기 하나. 메일을 반영하면 더해진다(mail-db.ts)
+let schedules: Schedule[] | null = null
+const scheduleList = () => (schedules ??= [{ postingId: "p-pub1", company: "예시 공사", title: "전산직 7급 공채", stage: "test", date: "2026-11-21", time: "10:00" }])
+
+/** 내 전형 일정, 날짜순(GET /api/me/schedules). */
+export function listSchedules(): Schedule[] {
+  return structuredClone(scheduleList()).sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""))
+}
+
+/** 메일에서 반영한 다음 전형 일정을 넣는다. 같은 공고·단계가 있으면 바꾼다. */
+export function addSchedule(schedule: Schedule): void {
+  schedules = [...scheduleList().filter((s) => !(s.postingId === schedule.postingId && s.stage === schedule.stage)), structuredClone(schedule)]
 }
 
 /** 나만 보는 메모 저장. */

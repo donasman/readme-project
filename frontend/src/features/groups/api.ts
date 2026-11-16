@@ -3,7 +3,7 @@ import { getMyGroups } from "@/domain/group/api"
 import type { Group } from "@/domain/group/types"
 import * as db from "@/mocks/db"
 import { apiPath, mockServer, request } from "@/shared/lib/api"
-import { seoulToday } from "@/shared/lib/date"
+import { formatKstMinute, seoulToday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
 import { firstChar } from "@/shared/lib/utils"
 
@@ -37,7 +37,7 @@ export async function createInvite(groupId: string): Promise<CreatedInvite> {
 export async function getInvites(groupId: string): Promise<LiveInvite[]> {
   if (mockServer) return db.liveInvites(groupId)
   const invites = await request<LiveInvite[]>("GET", apiPath`/api/groups/${groupId}/invites`)
-  return invites.map((i) => ({ ...i, createdAt: `${i.createdAt.slice(0, 10)} ${i.createdAt.slice(11, 16)}`, expiresAt: i.expiresAt.slice(0, 10) }))
+  return invites.map((i) => ({ ...i, createdAt: formatKstMinute(i.createdAt), expiresAt: i.expiresAt.slice(0, 10) }))
 }
 
 /** 초대 링크를 취소한다. 만든 사람과 그룹장만 한다(화면이 그 사람에게만 버튼을 보인다. 서버는 403). 이미 취소한 링크도 성공이다. */

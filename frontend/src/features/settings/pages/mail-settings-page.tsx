@@ -38,7 +38,8 @@ export function MailSettingsPage() {
   async function add(event: FormEvent) {
     event.preventDefault()
     if (!EMAIL.test(email.trim())) return setError("메일 주소를 넣어 주세요. 예: name@example.com")
-    await addSender(email)
+    const result = await addSender(email)
+    if (!result.ok) return setError(result.message)
     setEmail("")
     await revalidator.revalidate()
   }
@@ -53,41 +54,48 @@ export function MailSettingsPage() {
           </h2>
           <p className="text-sm text-text-secondary">채용 메일을 이 주소로 보내면 내 공고와 지원 상태에 반영할 것을 읽어 냅니다.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="ma-in" className="sr-only">
-            수신 주소
-          </label>
-          <Input id="ma-in" readOnly value={inboundAddress} onFocus={(e) => e.target.select()} className="w-auto min-w-0 flex-[1_1_260px] text-sm md:text-sm" />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={async () => setCopied(await copyText(inboundAddress))}
-          >
-            {copied ? <CheckIcon data-icon="inline-start" aria-hidden="true" /> : <CopyIcon data-icon="inline-start" aria-hidden="true" />}
-            {copied ? "복사함" : "복사"}
-          </Button>
-        </div>
-        <p className="text-label-sm text-text-secondary">
-          {renewed
-            ? "새 주소를 만들었습니다. 메일 서비스의 전달 설정에 있는 주소도 바꿔 주세요."
-            : "남이 추측할 수 없게 만든 주소입니다. 다른 사람에게 알려 주지 마세요. 새어 나갔다면 새로 만드세요."}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="self-start"
-          onClick={async () => {
-            // 두 번째 새 주소도 다시 알리도록 먼저 비운다
-            setRenewed(false)
-            await renewInboundAddress()
-            setRenewed(true)
-            setCopied(false)
-            await revalidator.revalidate()
-          }}
-        >
-          주소 새로 만들기
-        </Button>
+        {inboundAddress ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="ma-in" className="sr-only">
+                수신 주소
+              </label>
+              <Input id="ma-in" readOnly value={inboundAddress} onFocus={(e) => e.target.select()} className="w-auto min-w-0 flex-[1_1_260px] text-sm md:text-sm" />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={async () => setCopied(await copyText(inboundAddress))}
+              >
+                {copied ? <CheckIcon data-icon="inline-start" aria-hidden="true" /> : <CopyIcon data-icon="inline-start" aria-hidden="true" />}
+                {copied ? "복사함" : "복사"}
+              </Button>
+            </div>
+            <p className="text-label-sm text-text-secondary">
+              {renewed
+                ? "새 주소를 만들었습니다. 메일 서비스의 전달 설정에 있는 주소도 바꿔 주세요."
+                : "남이 추측할 수 없게 만든 주소입니다. 다른 사람에게 알려 주지 마세요. 새어 나갔다면 새로 만드세요."}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={async () => {
+                // 두 번째 새 주소도 다시 알리도록 먼저 비운다
+                setRenewed(false)
+                await renewInboundAddress()
+                setRenewed(true)
+                setCopied(false)
+                await revalidator.revalidate()
+              }}
+            >
+              주소 새로 만들기
+            </Button>
+          </>
+        ) : (
+          // 수신 도메인 설정이 없는 서버(메일 설계 4.2). 운영에서는 수신 전용 도메인을 산 뒤에 생긴다
+          <p className="text-sm text-text-secondary">이 서버에는 아직 메일을 받는 도메인이 없어 수신 주소를 만들 수 없습니다.</p>
+        )}
         <p role="status" className="sr-only">
           {copied ? "수신 주소를 복사했습니다." : renewed ? "새 주소를 만들었습니다." : ""}
         </p>
