@@ -48,6 +48,11 @@ const SCENARIOS = [
   // 창(7차)
   { name: "dialog-deadline", path: "/groups/be/posts", width: 1280, steps: [["press", "날짜 넣기"]] },
   { name: "dialog-takedown", path: "/groups/be/posts/be5", width: 1280, steps: [["press", "그룹에서 내리기"]] },
+  // 공고 고치기(10차). be5는 마감을 모르는 내 공고, mes1은 가짜 서버가 남과 함께 쓰는 공고로 본다
+  { name: "dialog-post-edit", path: "/groups/be/posts/be5", width: 1280, steps: [["press", "공고 고치기"]] },
+  { name: "dialog-post-edit-date", path: "/groups/be/posts/be5", width: 1280, steps: [["press", "공고 고치기"], ["press", "날짜"], ["press", "저장"]] },
+  { name: "dialog-post-edit-shared", path: "/groups/mes/posts/mes1", width: 1280, steps: [["press", "공고 고치기"], ["press", "저장"]] },
+  { name: "post-edited", path: "/groups/be/posts/be5", width: 1280, steps: [["press", "공고 고치기"], ["press", "날짜"], ["fill", "#pe-due", "2026-11-30"], ["press", "저장"]] },
   { name: "dialog-comment-edit", path: BE1, width: 1280, steps: [["press", "수정"]] },
   { name: "dialog-comment-delete", path: BE1, width: 1280, steps: [["press", "삭제"]] },
   { name: "dialog-disclosure", path: BE1, width: 1280, steps: [["press", "공개 범위 바꾸기"]] },

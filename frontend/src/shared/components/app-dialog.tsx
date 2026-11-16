@@ -1,5 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog"
-import type { ReactNode } from "react"
+import type { ReactNode, Ref } from "react"
 
 import { Button } from "@/components/ui/button"
 import { joinClasses } from "@/shared/lib/utils"
@@ -61,7 +61,11 @@ export function AppDialog({ open, onOpenChange, title, titleId, subtitle, childr
   )
 }
 
-/** 창의 취소 버튼: 창을 닫기만 한다. */
-export function DialogCancel({ children = "취소" }: { children?: ReactNode }) {
-  return <Dialog.Close render={<Button type="button" variant="outline" />}>{children}</Dialog.Close>
+/** 창의 취소 버튼: 창을 닫기만 한다. ref는 누른 버튼이 사라지고 이 버튼만 남을 때 초점을 옮기는 데 쓴다. */
+export function DialogCancel({ children = "취소", ref }: { children?: ReactNode; ref?: Ref<HTMLButtonElement> }) {
+  return (
+    <Dialog.Close ref={ref} render={<Button type="button" variant="outline" />}>
+      {children}
+    </Dialog.Close>
+  )
 }
