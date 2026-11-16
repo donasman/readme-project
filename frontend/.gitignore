@@ -25,3 +25,7 @@ dist-ssr
 
 # 화면 회귀 검사 결과(scripts/regress.mjs)
 .regress
+
+# Playwright 결과(npm run test:e2e)
+/test-results/
+/playwright-report/

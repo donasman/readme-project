@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { resolve } from "node:path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
@@ -11,4 +12,6 @@ export default defineConfig({
       "@": resolve(import.meta.dirname, "./src"),
     },
   },
+  // e2e/는 Playwright 테스트다(npm run test:e2e)
+  test: { dir: "src" },
 })
