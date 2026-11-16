@@ -71,12 +71,6 @@ export async function verifyEmail(token: string | null): Promise<"done" | "expir
   return sendToken("/api/auth/verify-email", { token })
 }
 
-/** 재설정 메일을 보낸다. 계정이 있는지, 메일 제한에 걸렸는지는 알려 주지 않는다. */
-export async function requestPasswordReset(email: string): Promise<void> {
-  if (mockServer) return db.requestPasswordReset(email)
-  await request("POST", "/api/auth/password-reset/request", { email })
-}
-
 /** 재설정 링크를 아직 쓸 수 있는지. 링크를 쓰지는 않는다. */
 export async function checkResetToken(token: string | null): Promise<boolean> {
   if (mockServer) return db.checkResetToken(token)

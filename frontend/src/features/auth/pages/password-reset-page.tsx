@@ -2,9 +2,9 @@ import type { FormEvent } from "react"
 import { Link, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { requestPasswordReset } from "@/domain/session/api"
 import { paths } from "@/shared/lib/paths"
 
-import { requestPasswordReset } from "../api"
 import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthText } from "../components/auth-parts"
 
 /** 비밀번호 재설정 · 요청(5차 "비밀번호 재설정"). 보내면 메일을 확인하라는 화면으로 간다. */

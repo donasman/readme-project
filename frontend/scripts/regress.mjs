@@ -106,6 +106,13 @@ const SCENARIOS = [
   // 설정(9차)
   { name: "account", path: "/settings/account", width: 1280 },
   { name: "account-no-google", path: "/settings/account?mock=no-google", width: 1280 },
+  // 비밀번호 바꾸기(10차). 창의 버튼은 내 정보의 버튼과 글자가 같아 선택자로 누른다. 가짜 서버의 지금 비밀번호는 readme1234다
+  { name: "dialog-password", path: "/settings/account", width: 1280, steps: [["press", "비밀번호 바꾸기"]] },
+  { name: "dialog-password-wrong", path: "/settings/account", width: 1280, steps: [["press", "비밀번호 바꾸기"], ["fill", "#pw-current", "nope1234"], ["fill", "#pw-new", "readme5678"], ["click", "[role=dialog] button[type=submit]"]] },
+  { name: "dialog-password-short", path: "/settings/account", width: 1280, steps: [["press", "비밀번호 바꾸기"], ["fill", "#pw-current", "readme1234"], ["fill", "#pw-new", "short"], ["click", "[role=dialog] button[type=submit]"]] },
+  { name: "account-password-changed", path: "/settings/account", width: 1280, steps: [["press", "비밀번호 바꾸기"], ["fill", "#pw-current", "readme1234"], ["fill", "#pw-new", "readme5678"], ["click", "[role=dialog] button[type=submit]"]] },
+  { name: "dialog-password-create", path: "/settings/account?mock=no-password", width: 1280, steps: [["press", "비밀번호 만들기"]] },
+  { name: "dialog-password-sent", path: "/settings/account?mock=no-password", width: 1280, steps: [["press", "비밀번호 만들기"], ["press", "재설정 메일 받기"]] },
   { name: "mail-settings", path: "/settings/mail", width: 1280 },
   { name: "withdraw", path: "/settings/withdraw", width: 1280 },
   { name: "settings-mobile", path: "/settings/account", width: 390, scale: 2 },

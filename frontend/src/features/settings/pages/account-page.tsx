@@ -1,16 +1,18 @@
 import { useState, type FormEvent, type ReactNode } from "react"
-import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router"
+import { useLoaderData, useNavigate, useRevalidator } from "react-router"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { NAME_MAX_LENGTH } from "@/domain/session/types"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { sectionTitle } from "@/shared/components/heading"
+import { IconNote } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { paths } from "@/shared/lib/paths"
 
 import { getAccount, logout, renameMe } from "../api"
+import { PasswordDialog } from "../components/password-dialog"
 
 export function accountLoader() {
   return getAccount()
@@ -36,6 +38,9 @@ export function AccountPage() {
   const revalidator = useRevalidator()
   const [name, setName] = useState(account.name)
   const [note, setNote] = useState<{ kind: "error" | "saved"; text: string } | null>(null)
+  // 비밀번호 창. 열 때마다 key를 바꿔 처음 단계로 연다
+  const [passwordDialog, setPasswordDialog] = useState({ open: false, key: 0 })
+  const [passwordChanged, setPasswordChanged] = useState(false)
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -91,11 +96,34 @@ export function AccountPage() {
         <h2 id="ac-login" className="mb-4 text-lg font-bold">
           로그인 방법
         </h2>
-        <Row label="비밀번호" value={<span className="text-sm text-text-secondary">{account.hasPassword ? "설정되어 있습니다" : "설정되어 있지 않습니다"}</span>}>
-          <Link to={paths.passwordReset()} className={buttonVariants({ variant: "outline", size: "sm" })}>
-            비밀번호 바꾸기
-          </Link>
+        <Row
+          label="비밀번호"
+          value={
+            <>
+              <span className="text-sm text-text-secondary">{account.hasPassword ? "설정되어 있습니다" : "설정되어 있지 않습니다"}</span>
+              {passwordChanged && (
+                <div className="mt-1">
+                  <IconNote tone="success">비밀번호를 바꿨습니다. 다른 기기는 로그아웃되었습니다.</IconNote>
+                </div>
+              )}
+            </>
+          }
+        >
+          <Button type="button" variant="outline" size="sm" onClick={() => setPasswordDialog((d) => ({ open: true, key: d.key + 1 }))}>
+            {account.hasPassword ? "비밀번호 바꾸기" : "비밀번호 만들기"}
+          </Button>
         </Row>
+        <PasswordDialog
+          key={passwordDialog.key}
+          open={passwordDialog.open}
+          onClose={() => setPasswordDialog((d) => ({ ...d, open: false }))}
+          email={account.email}
+          hasPassword={account.hasPassword}
+          onChanged={() => {
+            setPasswordDialog((d) => ({ ...d, open: false }))
+            setPasswordChanged(true)
+          }}
+        />
         {account.google ? (
           <Row label="구글" value={<span className="text-sm text-text-secondary">{account.google.email ?? "구글"} 계정이 연결되어 있습니다</span>}>
             <Pill tone="accent">연결됨</Pill>

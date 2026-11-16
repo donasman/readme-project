@@ -19,6 +19,22 @@ export async function renameMe(name: string): Promise<void> {
   await request("PUT", "/api/me", { name })
 }
 
+/**
+ * 로그인한 채로 비밀번호를 바꾼다(PUT /api/me/password, 로그인 문서 4.1). 이 기기는 로그인된 채로 있고 다른 기기는 모두 로그아웃된다.
+ * 지금 비밀번호가 틀리면(400 WRONG_PASSWORD) "wrong", 비밀번호가 없는 계정이면(409 NO_PASSWORD) "none".
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<"done" | "wrong" | "none"> {
+  if (mockServer) return db.changePassword(currentPassword)
+  try {
+    await request("PUT", "/api/me/password", { currentPassword, newPassword })
+    return "done"
+  } catch (error) {
+    if (isApiError(error, "WRONG_PASSWORD")) return "wrong"
+    if (isApiError(error, "NO_PASSWORD")) return "none"
+    throw error
+  }
+}
+
 /** 로그아웃(POST /api/auth/logout). 로그인하지 않았어도 성공이다. */
 export async function logout(): Promise<void> {
   if (mockServer) return db.logout()
