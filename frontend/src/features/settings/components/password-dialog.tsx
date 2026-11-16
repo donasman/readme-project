@@ -4,7 +4,7 @@ import { Link } from "react-router"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { requestPasswordReset } from "@/domain/session/api"
-import { PASSWORD_TOO_LONG, passwordTooLong } from "@/domain/session/password"
+import { PASSWORD_TOO_LONG, passwordTooLong, TOO_MANY_TRIES } from "@/domain/session/password"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { MailIcon } from "@/shared/icons"
@@ -52,7 +52,7 @@ export function PasswordDialog({ open, onClose, email, hasPassword, onChanged }:
       if (result === "done") return onChanged()
       // 다른 곳에서 비밀번호가 없어진 계정이면 만들기로 넘어간다
       if (result === "none") return setStep("create")
-      setErrors({ current: "지금 비밀번호가 맞지 않습니다." })
+      setErrors({ current: result === "throttled" ? TOO_MANY_TRIES : "지금 비밀번호가 맞지 않습니다." })
     } finally {
       setBusy(false)
     }
