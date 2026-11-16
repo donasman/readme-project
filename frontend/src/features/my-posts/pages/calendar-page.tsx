@@ -11,7 +11,7 @@ import { Pill } from "@/shared/components/pill"
 import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/icons"
 import { formatDday, formatMonthDayWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { getMyPostings } from "../api"
 import { addMonths, formatMonth, isMonth, monthCells, monthEvents, monthOf } from "../calendar"
@@ -36,6 +36,7 @@ export function CalendarPage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
+      <title>{docTitle("달력")}</title>
       <MySpaceNav current="calendar" />
       <div className={pageHead}>
         <div className="flex flex-col gap-2">

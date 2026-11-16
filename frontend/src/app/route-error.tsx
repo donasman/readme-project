@@ -7,7 +7,7 @@ import { ApiError } from "@/shared/lib/api"
 import { NotFoundError } from "@/shared/lib/errors"
 import { sentence } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 /** 주소가 없거나 그룹·공고를 찾지 못했을 때(서버의 404 포함), 그 밖의 오류일 때 보이는 화면. 로그인이 풀렸으면(서버의 401) 로그인 화면으로 보낸다. */
 export function RouteError({ notFound = false }: { notFound?: boolean }) {
@@ -26,6 +26,7 @@ export function RouteError({ notFound = false }: { notFound?: boolean }) {
 
   return (
     <Page className="items-start gap-4 pt-16">
+      <title>{docTitle(missing ? "찾을 수 없습니다" : "문제가 생겼습니다")}</title>
       <Heading level={1} size="text-3xl">
         {missing ? "찾을 수 없습니다" : "문제가 생겼습니다"}
       </Heading>

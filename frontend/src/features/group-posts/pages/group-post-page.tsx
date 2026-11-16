@@ -10,7 +10,7 @@ import { BackLink } from "@/shared/components/back-link"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { addComment, deleteComment, editPost, getGroupPost, takeDownPost, updateComment } from "../api"
 import { Comments } from "../components/comments"
@@ -50,6 +50,7 @@ export function GroupPostPage() {
 
   return (
     <Page className="gap-4 pt-6">
+      <title>{docTitle(post.title, group.name)}</title>
       <BackLink to={listPath}>공고 목록</BackLink>
 
       <div className={columns}>

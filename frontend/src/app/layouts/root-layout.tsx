@@ -20,6 +20,10 @@ export function RootLayout() {
   return (
     <>
       <RootFrame>
+        {/* 키보드로 처음 Tab을 누르면 보인다. 헤더를 건너 본문(id="main")으로 간다 */}
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-control focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:shadow-floating">
+          본문으로 건너뛰기
+        </a>
         <Outlet />
         <ActionErrorAlert />
       </RootFrame>

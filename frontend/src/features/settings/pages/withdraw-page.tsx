@@ -12,6 +12,7 @@ import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { getAccount, getWithdrawInfo, withdraw } from "../api"
 
@@ -51,6 +52,7 @@ export function WithdrawPage() {
 
   return (
     <>
+      <title>{docTitle("탈퇴", "설정")}</title>
       <Panel aria-labelledby="wd-what" className="flex flex-col gap-5 p-6">
         <div className="flex flex-col gap-1">
           <h2 id="wd-what" className={sectionTitle}>

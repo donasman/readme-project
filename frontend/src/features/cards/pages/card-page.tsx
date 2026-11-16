@@ -9,7 +9,7 @@ import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/p
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, FileTextIcon, LockIcon, PencilIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { joinClasses } from "@/shared/lib/utils"
+import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getCard } from "../api"
 import { orgAndRole, STAR_PARTS } from "../card-rules"
@@ -29,6 +29,7 @@ export function CardPage() {
 
   return (
     <CardsSubpage>
+      <title>{docTitle(card.title, "경험카드")}</title>
       <div className="flex flex-col gap-6">
         <div className={pageHead}>
           <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-2.5">

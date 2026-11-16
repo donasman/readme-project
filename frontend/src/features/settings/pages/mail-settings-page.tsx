@@ -10,6 +10,7 @@ import { Panel } from "@/shared/components/panel"
 import { CheckIcon, CopyIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { addSender, getMailSettings, removeSender, renewInboundAddress } from "../api"
 
@@ -44,6 +45,7 @@ export function MailSettingsPage() {
 
   return (
     <>
+      <title>{docTitle("메일 자동화", "설정")}</title>
       <Panel aria-labelledby="ma-addr" className="flex flex-col gap-4 p-6">
         <div className="flex flex-col gap-1">
           <h2 id="ma-addr" className={sectionTitle}>

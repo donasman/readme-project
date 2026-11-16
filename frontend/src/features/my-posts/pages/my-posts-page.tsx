@@ -14,6 +14,7 @@ import { ToggleButton } from "@/shared/components/toggle-button"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { useSearchText } from "@/shared/lib/router"
+import { docTitle } from "@/shared/lib/utils"
 
 import { getMyPostings } from "../api"
 import { MyStatusPill } from "../components/my-bits"
@@ -40,6 +41,7 @@ export function MyPostsPage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
+      <title>{docTitle("내 공고")}</title>
       <MySpaceNav current="posts" />
       <div className={pageHead}>
         <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-2">

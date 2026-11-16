@@ -12,7 +12,7 @@ import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
 import { FILE_TOO_LARGE } from "@/shared/lib/api"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
-import { cn, joinClasses, matchesAccept } from "@/shared/lib/utils"
+import { cn, docTitle, joinClasses, matchesAccept } from "@/shared/lib/utils"
 
 import { deleteSource, getExtractionJob, getSources, startExtraction, uploadSource } from "../api"
 import { formatChars } from "../card-text"
@@ -73,6 +73,7 @@ export function CardSourcesPage() {
 
   return (
     <CardsSubpage>
+      <title>{docTitle("자료로 카드 만들기", "경험카드")}</title>
       <div className="flex flex-col gap-2">
         <h1 className={subpageTitle}>자료로 카드 만들기</h1>
         <p className="text-text-secondary">이력서나 포트폴리오를 올리면 경험을 카드로 뽑습니다. 뽑은 카드는 하나씩 확인한 뒤에 씁니다.</p>

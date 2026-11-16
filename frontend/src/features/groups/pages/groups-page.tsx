@@ -12,6 +12,7 @@ import { Panel } from "@/shared/components/panel"
 import { PlusIcon, UsersIcon } from "@/shared/icons"
 import { formatDday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
+import { docTitle } from "@/shared/lib/utils"
 
 import { getGroupList } from "../api"
 import { CreateGroupDialog } from "../components/create-group-dialog"
@@ -48,6 +49,7 @@ export function GroupsPage() {
 
   return (
     <Page narrow className="gap-8 pt-10">
+      <title>{docTitle("내 그룹")}</title>
       <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-2">
           <Heading level={1} size="text-3xl">

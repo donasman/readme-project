@@ -18,7 +18,7 @@ import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
 import { subjectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
-import { firstChar, joinClasses } from "@/shared/lib/utils"
+import { docTitle, firstChar, joinClasses } from "@/shared/lib/utils"
 
 import { createInvite, getInvites, leaveGroup, revokeInvite } from "../api"
 import type { CreatedInvite, LiveInvite } from "../types"
@@ -89,6 +89,7 @@ export function GroupMembersPage() {
 
   return (
     <Page className="gap-6 pt-10">
+      <title>{docTitle("멤버", group.name)}</title>
       <div className={pageHead}>
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-sm text-text-secondary">
