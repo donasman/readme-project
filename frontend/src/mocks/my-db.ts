@@ -75,7 +75,7 @@ export function getMyPosting(id: string): MyPostingDetail {
   const extra = DETAILS[id] ?? {}
   const cards = listCards()
   const keywords = extra.keywords ?? body?.keywords ?? e.own?.keywords ?? []
-  // 맞는 카드: 예시 공고는 시안 값, 그 밖에는 공고 키워드와 카드 태그가 겹치는 카드(맞추기 규칙은 아직 없다)
+  // 맞는 카드: 예시 공고는 시안 값, 그 밖에는 공고 키워드와 카드 태그가 겹치는 카드(서버의 CardMatching을 흉내 낸다. 분석은 늘 있는 것으로 본다)
   const matches: CardMatch[] = extra.matches
     ? extra.matches.flatMap(([cardId, overlap]) => {
         const card = cards.find((c) => c.id === cardId)
@@ -92,6 +92,7 @@ export function getMyPosting(id: string): MyPostingDetail {
     sections: structuredClone(extra.sections ?? body?.sections ?? e.own?.sections ?? []),
     keywords: [...keywords],
     memo: e.memo,
+    analyzed: true,
     matches,
     unmatched: [...(extra.unmatched ?? [])],
     groupStates: found.map(({ group, post }) => ({

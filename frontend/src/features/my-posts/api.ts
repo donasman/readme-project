@@ -12,15 +12,16 @@ export async function getMyPostings(): Promise<{ today: string; postings: MyPost
   return request("GET", "/api/me/postings")
 }
 
-/** 서버의 상세: 메모가 없으면 null이고, 맞는 카드는 아직 없다(공고 문서 8절 15번, 17번). */
-type MyPostingDetailResponse = Omit<MyPostingDetail, "memo" | "matches" | "unmatched"> & { memo: string | null }
+/** 서버의 상세: 메모가 없으면 null이다. 공고 분석(analysis)이 없으면 맞는 카드도 비어 온다(공고 문서 4.7, 4.8). */
+type MyPostingDetailResponse = Omit<MyPostingDetail, "memo" | "analyzed"> & { memo: string | null; analysis: unknown }
 
 /** 내 공고 상세. 내 공고에 없으면 404 POSTING_NOT_FOUND(오류 화면이 "찾을 수 없습니다"를 보인다). */
 export async function getMyPosting(id: string): Promise<{ today: string; posting: MyPostingDetail }> {
   if (mockServer) return { today: db.getHome().today, posting: db.getMyPosting(id) }
   const { today, posting } = await request<{ today: string; posting: MyPostingDetailResponse }>("GET", apiPath`/api/me/postings/${id}`)
-  // shortcut: 서버가 공고와 카드를 아직 맞추지 않아 맞는 카드가 비어 있다, 맞추기가 생기면 응답의 값을 쓴다(화면 API 대응 3.3의 13번)
-  return { today, posting: { ...posting, memo: posting.memo ?? "", matches: [], unmatched: [] } }
+  // shortcut: 공고 분석(analysis)은 어디에 보일지 정하지 않아 화면에 쓰지 않는다, 정하면 타입에 싣는다(공고 문서 8절 30번)
+  const { analysis, memo, ...rest } = posting
+  return { today, posting: { ...rest, memo: memo ?? "", analyzed: analysis !== null } }
 }
 
 /**
