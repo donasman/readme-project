@@ -1,7 +1,6 @@
 import { Link, useMatches, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
-import { groupColor } from "@/domain/group/color"
 import { GroupMark } from "@/domain/group/group-mark"
 import { sectionOf } from "@/domain/group/sections"
 import { useGroup } from "@/domain/group/use-group"
@@ -19,7 +18,7 @@ const tab = (on: boolean) =>
   )
 
 /**
- * 그룹 머리 영역(11차 시안): 그룹 표시와 이름, 멤버, 초대 링크 만들기, 공고·멤버 탭. 바탕에 그룹 색을 6% 깐다(회색 글 4.5:1 이상).
+ * 그룹 머리 영역(11차 시안): 그룹 표시와 이름, 멤버, 초대 링크 만들기, 공고·멤버 탭. 바탕은 옅은 회색(surface-muted)이다.
  * 그룹의 모든 화면 위에 둔다. 화면의 제목(h1)은 각 화면에 있어서(공고 상세는 공고명) 그룹 이름은 제목으로 두지 않는다.
  * 초대 링크는 만든 뒤 멤버 화면으로 들고 간다(그룹을 만든 뒤와 같은 길). 지금 탭은 라우트의 handle.section으로 정한다.
  */
@@ -42,9 +41,7 @@ export function GroupBand() {
   return (
     <section
       aria-label={`${group.name} 그룹`}
-      className="border-b border-border-subtle"
-      // oklch로 섞으면 흰 바탕의 색상각(0°)으로 끌려 분홍빛이 돈다. 대비를 잰 방식과 같은 srgb로 섞는다
-      style={{ backgroundColor: `color-mix(in srgb, ${groupColor(group.id)} 6%, var(--background))` }}
+      className="border-b border-border-subtle bg-surface-muted"
     >
       <div className="mx-auto flex max-w-[1240px] flex-col gap-3 px-4 pt-5">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">

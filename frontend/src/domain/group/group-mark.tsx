@@ -1,7 +1,5 @@
 import { joinClasses } from "@/shared/lib/utils"
 
-import { groupColor } from "./color"
-
 const SIZES = {
   24: "size-6 rounded-[7px] text-[11px]",
   28: "size-7 rounded-[8px] text-xs",
@@ -11,15 +9,14 @@ const SIZES = {
 } as const
 
 /**
- * 그룹 표시(11차 시안): 그룹 색 둥근 네모에 표시 글자. 사람(Avatar, 동그라미)과 모양으로 나눈다.
- * 그룹 색은 두 테마 모두 짙어서 글자는 늘 흰색이다. 꾸밈이라 읽지 않는다(그룹 이름은 옆 글자가 알린다).
+ * 그룹 표시(11차 시안): 강조색 둥근 네모에 표시 글자. 사람(Avatar, 동그라미)과 모양으로 나눈다.
+ * 색은 모든 그룹이 같은 강조색이다(그룹마다 색을 나누지 않기로 했다, 2026-11-17). 꾸밈이라 읽지 않는다(그룹 이름은 옆 글자가 알린다).
  */
 export function GroupMark({ group, size = 32, className }: { group: { id: string; mark: string }; size?: keyof typeof SIZES; className?: string }) {
   return (
     <span
       aria-hidden="true"
-      style={{ backgroundColor: groupColor(group.id) }}
-      className={joinClasses("grid flex-none place-items-center font-bold text-white", SIZES[size], className)}
+      className={joinClasses("grid flex-none place-items-center bg-primary font-bold text-primary-foreground", SIZES[size], className)}
     >
       {group.mark}
     </span>
