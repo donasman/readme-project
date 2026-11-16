@@ -17,6 +17,11 @@
     --highlight: #f7ee53;
     --highlight-strong: #dccf3a;
     --highlight-foreground: #252729;
+    /* 회색 글과 경고색: Arc 값은 옅은 회색 바탕(surface-muted)에서 4.3:1이라 글자 대비 기준(4.5:1)에 못 미친다.
+       조금 진하게 해 흰 바탕 5.0:1, 옅은 회색 바탕 4.6:1 이상으로 맞춘다. 다크는 Arc 값이 이미 6:1을 넘어 그대로 둔다. */
+    --text-secondary: oklch(54% .023 251);
+    --text-muted: oklch(54% .023 251);
+    --warning: oklch(55% .18 75);
     /* shadcn 모서리 기준. radius-lg = 18px(Arc 컨트롤), radius-xl ≈ 25px(Arc 패널 26px) */
     --radius: var(--radius-control);
 }
