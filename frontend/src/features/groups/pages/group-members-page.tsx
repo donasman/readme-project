@@ -24,7 +24,7 @@ import { getInvites, leaveGroup, revokeInvite } from "../api"
 import type { CreatedInvite, LiveInvite } from "../types"
 import { RoleChip } from "../components/role-chip"
 
-/** 그룹을 막 만들고 왔을 때 넘기는 값: 만들면서 만든 초대 링크. */
+/** 멤버 화면에 들고 오는 초대 링크: 그룹을 막 만들고 왔을 때, 그룹 머리 영역에서 초대 링크를 만들었을 때. */
 export interface MembersPageState {
   invite?: CreatedInvite
 }
