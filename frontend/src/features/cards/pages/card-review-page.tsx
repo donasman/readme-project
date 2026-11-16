@@ -165,8 +165,9 @@ export function CardReviewPage() {
               자료 원문
             </h2>
             {card.sourceExcerpt ? (
-              <div className="flex flex-col gap-3 rounded-panel bg-surface-muted p-5 text-sm">
-                <p className="text-xs font-bold text-text-secondary">{card.sourceName} · 이 카드를 뽑은 부분</p>
+              // 조각은 5,000자까지라 높이를 정해 안에서 민다. 키보드로도 밀 수 있게 초점을 받는다
+              <div role="region" tabIndex={0} aria-labelledby="review-source" className="flex max-h-[560px] flex-col gap-3 overflow-y-auto rounded-panel bg-surface-muted p-5 text-sm">
+                <p className="text-xs font-bold text-text-secondary">{card.sourceName ?? "붙여넣은 글"} · 이 카드를 뽑은 부분</p>
                 {markUsedNumbers(card.sourceExcerpt, usedText).map((parts, i) => (
                   <p key={i}>
                     {parts.map((part, j) =>
@@ -182,7 +183,7 @@ export function CardReviewPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-text-secondary">자료가 지워져 원문을 볼 수 없습니다.</p>
+              <p className="text-sm text-text-secondary">이 카드가 나온 원문이 없습니다. 직접 만든 카드이거나 자료를 지운 카드입니다.</p>
             )}
             <p className="text-label-sm text-text-secondary">굵은 숫자는 카드에 쓰인 숫자입니다. 확인하면 결과에만 있는 숫자가 근거 숫자로 옮겨집니다.</p>
           </aside>

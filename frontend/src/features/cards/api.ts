@@ -6,8 +6,6 @@ import { sentence } from "@/shared/lib/korean"
 import { chunkCount } from "./card-text"
 import type { CardDetail, CardInput, CardsData, CardSource, CardTag, ExtractionJob, KeywordSuggestion } from "./types"
 
-// shortcut: 서버가 카드를 뽑은 자료 원문(sourceExcerpt)을 싣지 않아 비워 둔다, 정해지면 응답의 값을 쓴다(화면 API 대응 3.5의 21번)
-const withExcerpt = (card: Omit<CardDetail, "sourceExcerpt">): CardDetail => ({ ...card, sourceExcerpt: null })
 
 /** 내 경험카드 목록과 태그. 거르기는 화면에서 한다(카드 수가 적어서). */
 export async function getCards(): Promise<CardsData> {
@@ -19,31 +17,31 @@ export async function getCards(): Promise<CardsData> {
 /** 카드 상세. 없거나 남의 카드면 404 CARD_NOT_FOUND(오류 화면이 "찾을 수 없습니다"를 보인다). */
 export async function getCard(id: string): Promise<CardDetail> {
   if (mockServer) return db.getCard(id)
-  return withExcerpt(await request("GET", apiPath`/api/cards/${id}`))
+  return request<CardDetail>("GET", apiPath`/api/cards/${id}`)
 }
 
 /** 확인을 기다리는 카드(카드 확인 화면이 한 장씩 보여 준다). */
 export async function getUnverifiedCards(): Promise<CardDetail[]> {
   if (mockServer) return db.listUnverifiedCards()
-  return (await request<Omit<CardDetail, "sourceExcerpt">[]>("GET", "/api/cards?verified=false")).map(withExcerpt)
+  return request<CardDetail[]>("GET", "/api/cards?verified=false")
 }
 
 /** 카드를 직접 만든다. 직접 만든 카드도 확인 전이다. 서버는 태그를 대표 표기로 바꿔 저장하고 검사 결과를 매긴다. */
 export async function createCard(input: CardInput): Promise<CardDetail> {
   if (mockServer) return db.createCard(input)
-  return withExcerpt(await request("POST", "/api/cards", input))
+  return request<CardDetail>("POST", "/api/cards", input)
 }
 
 /** 카드를 고친다. 서버는 태그를 대표 표기로 바꿔 저장하고 검사 결과를 다시 매긴다. */
 export async function updateCard(id: string, input: CardInput): Promise<CardDetail> {
   if (mockServer) return db.updateCard(id, input)
-  return withExcerpt(await request("PUT", apiPath`/api/cards/${id}`, input))
+  return request<CardDetail>("PUT", apiPath`/api/cards/${id}`, input)
 }
 
 /** 카드를 확인한다. STAR에만 있는 숫자가 근거 숫자로 옮겨진다. */
 export async function verifyCard(id: string): Promise<CardDetail> {
   if (mockServer) return db.verifyCard(id)
-  return withExcerpt(await request("POST", apiPath`/api/cards/${id}/verify`))
+  return request<CardDetail>("POST", apiPath`/api/cards/${id}/verify`)
 }
 
 export async function deleteCard(id: string): Promise<void> {

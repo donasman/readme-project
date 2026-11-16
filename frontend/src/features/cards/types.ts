@@ -57,8 +57,7 @@ export interface CardDetail extends ExperienceCard {
   sourceId: string | null
   /** 카드를 뽑은 자료의 파일 이름. 직접 만든 카드, 자료를 지운 카드, 붙여넣은 글이면 null */
   sourceName: string | null
-  // shortcut: 원문을 주는 API와 조각 위치 칸이 없다, 정해지면 맞춘다(화면 API 대응 3.5의 21번)
-  /** 이 카드를 뽑은 자료 원문 부분. 문단은 줄바꿈으로 나눈다 */
+  /** 카드가 나온 자료 조각(5,000자까지). 문단은 줄바꿈으로 나눈다. 직접 만든 카드, 자료를 지운 카드, 추출 전에 만든 카드는 null */
   sourceExcerpt: string | null
   extractionNotes: string[]
   issues: CardIssue[]
