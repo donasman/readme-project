@@ -58,10 +58,11 @@ interface SourceResponse {
   createdAt: string
   chars: number
   parts: number
+  /** 이 자료에서 뽑아 남아 있는 카드 수. 아직 뽑지 않았으면 null */
+  cardCount: number | null
 }
 
-// shortcut: 서버에 자료별 카드 수가 없어 비워 둔다(경험카드 문서 6절 2번), 카드 추출을 만들 때 정한다
-const toSource = (s: SourceResponse): CardSource => ({ id: s.id, name: s.name ?? "붙여넣은 글", createdAt: s.createdAt, chars: s.chars, cardCount: null })
+const toSource = (s: SourceResponse): CardSource => ({ id: s.id, name: s.name ?? "붙여넣은 글", createdAt: s.createdAt, chars: s.chars, cardCount: s.cardCount })
 
 /** 올린 자료(새 것이 앞). */
 export async function getSources(): Promise<CardSource[]> {
