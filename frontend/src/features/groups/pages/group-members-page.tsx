@@ -10,21 +10,21 @@ import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Avatar } from "@/shared/components/avatar"
-import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
+import { sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
-import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
+import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel, PanelRow } from "@/shared/components/panel"
-import { CheckIcon, CopyIcon, LinkIcon } from "@/shared/icons"
+import { CheckIcon, CopyIcon } from "@/shared/icons"
 import { copyText } from "@/shared/lib/clipboard"
 import { subjectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { docTitle, firstChar, joinClasses } from "@/shared/lib/utils"
 
-import { createInvite, getInvites, leaveGroup, revokeInvite } from "../api"
+import { getInvites, leaveGroup, revokeInvite } from "../api"
 import type { CreatedInvite, LiveInvite } from "../types"
 import { RoleChip } from "../components/role-chip"
 
-/** 그룹을 막 만들고 왔을 때 넘기는 값: 만들면서 만든 초대 링크. */
+/** 멤버 화면에 들고 오는 초대 링크: 그룹을 막 만들고 왔을 때, 그룹 머리 영역에서 초대 링크를 만들었을 때. */
 export interface MembersPageState {
   invite?: CreatedInvite
 }
@@ -42,8 +42,15 @@ export function GroupMembersPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const revalidator = useRevalidator()
-  // 그룹을 만들고 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(새로 고침과 뒤로 가기에 남으면 취소한 주소가 다시 보인다)
-  const [invite, setInvite] = useState(() => (location.state as MembersPageState | null)?.invite ?? null)
+  // 그룹을 만들고 왔을 때와 그룹 머리 영역에서 초대 링크를 만들었을 때 들고 온 링크. 이 화면에 있을 때 또 만들어 와도
+  // 새 링크를 잡도록 도착(location.key)마다 본다. 기록의 상태는 지운다(새로 고침과 뒤로 가기에 남으면 취소한 주소가 다시 보인다)
+  const arrived = (location.state as MembersPageState | null)?.invite
+  const [invite, setInvite] = useState(arrived ?? null)
+  const [arrivalKey, setArrivalKey] = useState(location.key)
+  if (arrived && location.key !== arrivalKey) {
+    setArrivalKey(location.key)
+    setInvite(arrived)
+  }
   useEffect(() => {
     if (location.state) void navigate(".", { replace: true, state: null })
   }, [location.state, navigate])
@@ -59,11 +66,6 @@ export function GroupMembersPage() {
     setDisclosure(next)
     await setMyDisclosure(group.id, next)
     // 그룹의 값(공고 상세의 "내 공개 범위는 …")도 새로 읽는다
-    void revalidator.revalidate()
-  }
-
-  async function makeInvite() {
-    setInvite(await createInvite(group.id))
     void revalidator.revalidate()
   }
 
@@ -88,22 +90,10 @@ export function GroupMembersPage() {
   }
 
   return (
-    <Page className="gap-6 pt-10">
+    <Page className="gap-6 pt-6">
       <title>{docTitle("멤버", group.name)}</title>
-      <div className={pageHead}>
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-sm text-text-secondary">
-            {group.name} · 멤버 {group.members.length}명
-          </p>
-          <Heading level={1} size="text-[clamp(2.5rem,10cqw,var(--text-5xl))]">
-            멤버
-          </Heading>
-        </div>
-        <Button type="button" className="flex-none" onClick={() => void makeInvite()}>
-          <LinkIcon data-icon="inline-start" aria-hidden="true" />
-          초대 링크 만들기
-        </Button>
-      </div>
+      {/* 그룹 이름, 탭, 초대 링크 만들기는 위의 그룹 머리 영역에 있다. 제목은 화면 읽기에만 둔다 */}
+      <h1 className="sr-only">멤버</h1>
 
       <div className={columns}>
         <section aria-label="멤버 목록" className={joinClasses(mainColumn, "gap-3")}>

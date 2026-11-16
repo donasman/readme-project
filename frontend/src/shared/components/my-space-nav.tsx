@@ -9,14 +9,14 @@ import { navPill } from "./nav-pill"
 export type MySpace = "home" | "posts" | "board" | "calendar" | "mail"
 
 const ITEMS: { key: MySpace; label: string; to: string }[] = [
-  { key: "home", label: "홈", to: paths.home() },
+  { key: "home", label: "오늘", to: paths.home() },
   { key: "posts", label: "내 공고", to: paths.myPosts() },
   { key: "board", label: "지원 현황", to: paths.board() },
   { key: "calendar", label: "달력", to: paths.calendar() },
   { key: "mail", label: "메일 확인함", to: paths.mail() },
 ]
 
-/** 홈, 내 공고, 지원 현황, 달력, 메일 확인함. 좁으면 옆으로 민다. */
+/** 오늘(홈), 내 공고, 지원 현황, 달력, 메일 확인함. 위쪽 헤더의 "홈"과 겹치지 않게 첫 칸은 "오늘"이다. 좁으면 옆으로 민다. */
 export function MySpaceNav({ current }: { current: MySpace }) {
   return (
     <nav aria-label="내 공간" className="-mx-2 -mt-2 flex gap-1 overflow-x-auto px-2 [scrollbar-width:none]">
