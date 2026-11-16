@@ -76,6 +76,22 @@ class MyPostingQueries {
 	}
 
 	/** 상세. 내 공고에 없는 공고면 비어 있다. */
+	/** 내 전형 일정 전부. 날짜, 시각(없으면 그날의 끝), 회사명 순이다. */
+	List<ScheduleResponse> schedules(long userId) {
+		return this.jdbc.sql("""
+				select s.posting_id, p.company, p.title, s.stage, s.on_date, to_char(s.at_time, 'HH24:MI') as at_time
+				  from user_posting_schedules s
+				  join postings p on p.id = s.posting_id
+				 where s.user_id = :userId
+				 order by s.on_date, s.at_time nulls last, p.company, s.posting_id
+				""")
+			.param("userId", userId)
+			.query((rs, rowNum) -> new ScheduleResponse(rs.getLong("posting_id"), rs.getString("company"),
+					rs.getString("title"), ApplicationStatus.Stage.valueOf(rs.getString("stage")),
+					rs.getObject("on_date", LocalDate.class), rs.getString("at_time")))
+			.list();
+	}
+
 	Optional<MyPostingDetailResponse> detail(long userId, long postingId) {
 		Map<Long, List<GroupState>> groups = groupStates(GROUPS + " and up.posting_id = :postingId" + GROUPS_ORDER,
 				userId, postingId);
