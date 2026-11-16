@@ -166,7 +166,7 @@ export function CardReviewPage() {
             </h2>
             {card.sourceExcerpt ? (
               // 조각은 5,000자까지라 높이를 정해 안에서 민다. 키보드로도 밀 수 있게 초점을 받는다
-              <div tabIndex={0} aria-labelledby="review-source" className="flex max-h-[560px] flex-col gap-3 overflow-y-auto rounded-panel bg-surface-muted p-5 text-sm">
+              <div role="region" tabIndex={0} aria-labelledby="review-source" className="flex max-h-[560px] flex-col gap-3 overflow-y-auto rounded-panel bg-surface-muted p-5 text-sm">
                 <p className="text-xs font-bold text-text-secondary">{card.sourceName ?? "붙여넣은 글"} · 이 카드를 뽑은 부분</p>
                 {markUsedNumbers(card.sourceExcerpt, usedText).map((parts, i) => (
                   <p key={i}>
