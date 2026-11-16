@@ -25,16 +25,11 @@ export function DdayBadge({ text, soon }: { text: string; soon: boolean }) {
   )
 }
 
-/** 큰 숫자 한 칸(28px). dl 안에 둔다. highlight는 확인할 것이 남은 칸. */
-export function BigStat({ label, value, highlight = false }: { label: string; value: number; highlight?: boolean }) {
+/** 큰 숫자 한 칸(28px). dl 안에 둔다. */
+export function BigStat({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      className={joinClasses(
-        "flex flex-col gap-1 rounded-control border px-5 py-4",
-        highlight ? "border-transparent bg-highlight-subtle" : "border-border bg-surface"
-      )}
-    >
-      <dt className={joinClasses("text-label-sm", highlight ? "text-foreground" : "text-text-secondary")}>{label}</dt>
+    <div className="flex flex-col justify-between gap-1 rounded-control border border-border bg-surface px-5 py-4">
+      <dt className="text-label-sm text-text-secondary">{label}</dt>
       <dd className="text-[28px] leading-[1.1] font-bold tracking-[-0.02em]">{value}</dd>
     </div>
   )

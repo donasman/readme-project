@@ -18,7 +18,7 @@ import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { getHome } from "../api"
 import { BigStat, DdayBadge, MyStatusPill } from "../components/my-bits"
-import { dueText, sortPostings } from "../status"
+import { boardCounts, dueText, sortPostings } from "../status"
 
 /** 그룹이 없으면 홈 대신 내 그룹(빈 상태)으로 보낸다(시안 7차의 제안). */
 export async function homeLoader() {
@@ -30,12 +30,13 @@ export async function homeLoader() {
 const UPCOMING = 5
 const WEEK = 7
 
-/** 홈(시안 8차 "홈"): 오늘, 숫자 넷, 다가오는 마감, 확인 필요, 그룹 소식. */
+/** 홈(시안 8차 "홈", 11차에서 숫자 셋): 오늘, 숫자 셋, 다가오는 마감, 확인 필요, 그룹 소식. */
 export function HomePage() {
   const { today, postings, unverifiedCards, mailChanges, news } = useLoaderData<typeof homeLoader>()
   const open = sortPostings(postings, today).filter((p) => !isClosed(p.deadline, today))
   const thisWeek = open.filter((p) => p.deadline.kind === "date" && daysBetween(today, p.deadline.date) <= WEEK).length
   const unknown = open.filter((p) => p.deadline.kind === "unknown")
+  const counts = boardCounts(postings)
 
   // 확인 필요: 확인을 기다리는 카드, 마감일을 못 읽은 공고, 메일에서 온 변경
   const todos: { key: string; content: ReactNode; to: string; state?: FillDeadlineState }[] = [
@@ -64,10 +65,10 @@ export function HomePage() {
         </Heading>
       </div>
 
-      <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-3">
-        <BigStat label={`${WEEK}일 안 마감`} value={thisWeek} />
-        <BigStat label="확인 필요" value={todos.length} highlight={todos.length > 0} />
-        <BigStat label="지원한 공고" value={postings.filter((p) => p.decision === "applied").length} />
+      {/* 7일 안 마감은 제목이, 확인 필요는 옆의 상자가 이미 말해서 넣지 않는다(11차 시안). 진행 중은 지원 현황과 같은 셈이다 */}
+      <dl className="grid grid-cols-3 gap-2 sm:gap-3">
+        <BigStat label="지원한 공고" value={counts.applied} />
+        <BigStat label="전형 진행 중" value={counts.active} />
         <BigStat label="아직 정하지 않은 공고" value={postings.filter((p) => p.decision === "undecided").length} />
       </dl>
 

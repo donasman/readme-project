@@ -2,6 +2,7 @@
 import { isClosed } from "@/domain/posting/deadline"
 import { daysBetween } from "@/shared/lib/date"
 
+import { dueText } from "./status"
 import type { MyPosting } from "./types"
 
 /** 날짜의 달("2026-11-13" → "2026-11"). */
@@ -30,6 +31,12 @@ export interface DeadlineEvent {
   date: string
   /** 마감일이 오늘보다 앞 */
   closed: boolean
+  /** 남은 날("D-2", "D-day"). 지났으면 "마감" */
+  due: string
+  /** 3일 안에 마감한다(홈의 D-day 배지와 같은 기준) */
+  soon: boolean
+  /** 지원함으로 정한 공고 */
+  applied: boolean
 }
 
 export interface DayCell {
@@ -44,11 +51,11 @@ export interface DayCell {
 /** 그달에 마감하는 내 공고(마감일 순). 상시와 마감일 모름은 놓이지 않는다. */
 export function monthEvents(month: string, postings: MyPosting[], today: string): DeadlineEvent[] {
   return postings
-    .flatMap((p) =>
-      p.deadline.kind === "date" && monthOf(p.deadline.date) === month
-        ? [{ postingId: p.id, company: p.company, title: p.title, date: p.deadline.date, closed: isClosed(p.deadline, today) }]
-        : []
-    )
+    .flatMap((p) => {
+      if (p.deadline.kind !== "date" || monthOf(p.deadline.date) !== month) return []
+      const { main, soon } = dueText(p, today)
+      return [{ postingId: p.id, company: p.company, title: p.title, date: p.deadline.date, closed: isClosed(p.deadline, today), due: main, soon, applied: p.decision === "applied" }]
+    })
     .sort((a, b) => a.date.localeCompare(b.date) || a.company.localeCompare(b.company))
 }
 
