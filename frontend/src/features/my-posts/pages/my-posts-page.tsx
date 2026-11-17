@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import { Link, useLoaderData, useLocation, useNavigate } from "react-router"
+import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
@@ -16,7 +15,7 @@ import { ToggleButton } from "@/shared/components/toggle-button"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { objectParticle } from "@/shared/lib/korean"
-import { useSearchText } from "@/shared/lib/router"
+import { useArrivalState, useSearchText } from "@/shared/lib/router"
 import { docTitle } from "@/shared/lib/utils"
 
 import { getMyPostings } from "../api"
@@ -41,13 +40,8 @@ export function MyPostsPage() {
   const [filters, setFilters] = useMyFilters()
   const [query, setQuery] = useSearchText(filters.query)
   const { rows, open, closed } = filterPostings(postings, filters, today)
-  // 상세에서 뺀 뒤 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(새로 고침과 뒤로 가기에 알림이 다시 뜨지 않게)
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [removed] = useState(() => (location.state as RemovedState | null)?.removed ?? null)
-  useEffect(() => {
-    if (removed) void navigate(".", { replace: true, state: null })
-  }, [removed, navigate])
+  // 상세에서 뺀 뒤 왔을 때의 알림
+  const removed = useArrivalState<RemovedState>()?.removed ?? null
 
   return (
     <Page narrow className="gap-6 pt-10">

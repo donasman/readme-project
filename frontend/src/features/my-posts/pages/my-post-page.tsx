@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react"
-import { Link, useLoaderData, useLocation, useNavigate, type LoaderFunctionArgs } from "react-router"
+import { useRef, useState } from "react"
+import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -19,6 +19,7 @@ import { Panel, PanelNote } from "@/shared/components/panel"
 import { ExternalLinkIcon } from "@/shared/icons"
 import { formatDateWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
+import { useArrivalState } from "@/shared/lib/router"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { getMyPosting, getSchedules, removeMyPosting, saveMemo } from "../api"
@@ -39,13 +40,9 @@ const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-b
 /** 공고 상세(시안 8차, 내 공고. 공고 내용의 요약은 12차): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
   const { today, posting, scheduleCount } = useLoaderData<typeof myPostLoader>()
-  const location = useLocation()
   const navigate = useNavigate()
-  // 내 공고 넣기에서 이미 있는 공고로 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(브라우저가 새로 고침과 뒤로 가기에도 남겨 알림이 다시 뜬다)
-  const [arrived] = useState(() => (location.state as ArrivedState | null)?.arrived ?? false)
-  useEffect(() => {
-    if (arrived) void navigate(".", { replace: true, state: null })
-  }, [arrived, navigate])
+  // 내 공고 넣기에서 이미 있는 공고로 왔을 때
+  const arrived = useArrivalState<ArrivedState>()?.arrived ?? false
   const due = dueText(posting, today)
   const name = `${posting.company} · ${posting.title}`
   // 빼기 창: 열 때 저장한 메모로 지워질 것을 센다(창이 닫히는 동안에도 글이 남게 값은 두고 open만 끈다)
