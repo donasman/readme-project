@@ -86,8 +86,8 @@ const SCENARIOS = [
   { name: "landing", path: "/welcome", width: 1280 },
   { name: "landing-mobile", path: "/welcome", width: 390, scale: 2 },
   { name: "login", path: "/login", width: 1280 },
+  // 회원가입은 이름, 이메일, 비밀번호만 받는다(2026-11-17)
   { name: "signup", path: "/signup", width: 1280 },
-  // 생년월일을 넣고 수집·이용 동의 없이 가입을 누르면 동의 칸 아래에 알린다(로그인 문서 7절 27번)
   { name: "password-reset", path: "/password-reset", width: 1280 },
   { name: "verify-expired", path: "/verify-email", width: 1280 },
   // 경험카드(1·6차)

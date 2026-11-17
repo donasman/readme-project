@@ -9,7 +9,7 @@ readme/
 ├─ docs/               설계 초안, 배포 계획, 조사 정리, 화면 디자인(design)
 ├─ reverse-engineering/ devs7ud.io 디자인 분석, 디자인 적용 계획
 ├─ deploy/             서버에 올릴 때 쓰는 파일 초안(Caddy, systemd)
-├─ .github/workflows/  CI: backend·frontend 빌드 확인(main·dev 푸시, PR)
+├─ .github/workflows/  CI: backend 빌드·테스트, frontend 린트·테스트·빌드와 브라우저 테스트(e2e). 그 폴더가 바뀐 main·dev 푸시와 PR에서 돈다
 └─ compose.yaml        개발용 PostgreSQL 16 + 메일 수신기(Mailpit)
 ```
 
@@ -41,9 +41,9 @@ npm run dev:server   # 서버를 부른다. 서버 없이 가짜 서버로만 �
 
 잘 떴는지 보는 법:
 
-- `http://localhost:8080/actuator/health` 가 `{"status":"UP"}` 을 돌려준다. 서버가 뜰 때 Flyway 가 테이블 21개를 만들므로, 서버가 떴다면 DB 연결과 테이블 생성까지 된 것이다.
+- `http://localhost:8080/actuator/health` 가 `{"status":"UP"}` 을 돌려준다. 서버가 뜰 때 Flyway 가 테이블 30개를 만들므로, 서버가 떴다면 DB 연결과 테이블 생성까지 된 것이다.
 - 서버는 dev 프로필로 뜨고, 빈 DB 에 개발용 사용자와 예시 그룹·공고를 넣는다. 예시 사용자는 개발용 비밀번호로 로그인한다: `POST /api/auth/login` 에 `{ "email": "daon@example.com", "password": "readme1234" }`(`docs/리드미_백엔드_구조.md` 6.2).
-- `http://localhost:5173` 은 로그인하지 않았으면 랜딩(`/welcome`)을 보인다. 예시 사용자로 로그인하면 홈(`/`)이 열린다. `npm run dev:server` 에서는 카드 추출과 메일(확인함, 자동화)을 빼고 모두 서버를 부른다(아래 "지금 들어 있는 것"의 frontend). `npm run dev` 는 서버 없이 가짜 서버만 부르고, 예시 사용자로 로그인한 채 시작한다.
+- `http://localhost:5173` 은 로그인하지 않았으면 랜딩(`/welcome`)을 보인다. 예시 사용자로 로그인하면 홈(`/`)이 열린다. `npm run dev:server` 에서는 모든 화면이 서버를 부른다(아래 "지금 들어 있는 것"의 frontend). `npm run dev` 는 서버 없이 가짜 서버만 부르고, 예시 사용자로 로그인한 채 시작한다.
 - 보낸 메일(가입 확인, 비밀번호 재설정)은 `http://localhost:8025` 에서 본다.
 
 ## 빌드와 테스트
@@ -80,33 +80,33 @@ git switch -c feat/frontend-something  # 작업 브랜치
 - 설정: 세션 쿠키 로그인의 바탕(Spring Session JDBC), CORS, CSRF, 로그인 전 요청에 401, `/actuator/health`. 로그인 전 요청은 세션에 저장하지 않는다(세션 행이 생기지 않는다).
 - 오류 응답: 모든 오류가 `{ code, message }` 다(`common/error`). 공통 코드는 `docs/리드미_백엔드_구조.md` 5.2, 기능 코드는 각 설계 문서.
 - 시간: 한국 날짜의 기준 `Clock`(`common/config/TimeConfig`, `Asia/Seoul`).
-- DB: `V1__init.sql`(계정·경험카드 테이블 10개), `V2__spring_session.sql`(세션 테이블 2개), `V3__groups.sql`(그룹·그룹 공고 테이블 9개), `V4__user_posting_memo.sql`(내 공고의 메모 칸). 스키마는 `readme`.
+- DB: 테이블은 `V1__init.sql`(계정·경험카드 10개), `V2__spring_session.sql`(세션 2개), `V3__groups.sql`(그룹·그룹 공고 9개), `V6__profiles.sql`(기본 프로필 5개), `V10__inbound_mail.sql`(메일 자동화·전형 일정 4개)이 만든다. 나머지(V4, V5, V7~V9, V11, V12)는 칸을 더하거나 뺀다. V11이 성별과 가입 동의를 뺐다(2026-11-17). 스키마는 `readme`.
 - 프로필: `dev`(기본, compose.yaml 의 DB `localhost:5433`, 메일 수신기, 예시 데이터), `prod`(환경 변수, `backend/.env.example`).
 - API(2026-11-15): 이메일·비밀번호 로그인 8개, 내 계정 5개, 구글 로그인 주소 2개(`docs/리드미_설계_로그인.md`), 그룹 9개(`docs/리드미_설계_그룹.md`), 그룹 공고 11개, 내 공고 5개, 공고 읽어 오기 1개(`docs/리드미_설계_공고.md`), 경험카드 8개, 자료 3개(`docs/리드미_설계_경험카드.md`). 목록은 `docs/리드미_백엔드_구조.md` 9절. 가입·이메일 인증·로그인·로그아웃·비밀번호 재설정, 이름·비밀번호 바꾸기, 탈퇴(그룹장 넘기기), 그룹 목록·만들기·공개 범위·나가기·초대 링크·초대 미리 보기·초대 목록·취소·수락, 그룹 공고 목록·상세·올리기·고치기·내리기·날짜 넣기·관심·댓글, 홈의 그룹 소식, 내 공고 목록·상세·넣기(그룹 없이)·상태·메모, 경험카드 목록·상세·만들기·고치기·지우기·확인·태그, 자료 올리기·목록·지우기, 공고 링크·본문·파일 읽어 오기와 키워드. 그룹 공고 올리기와 내 공고 넣기는 키워드와 공고 내용 묶음도 받는다. 같은 공고는 jobfit 공고키로 알아본다(`posting/PostingKeys`). 키워드는 키워드 사전으로 찾는다(`keyword/KeywordDictionary`).
 - 로그인: 이메일·비밀번호 로그인(2026-11-14)과 구글 로그인(2026-11-15)이 있다. 구글 로그인은 구글 클라이언트 값을 넣어야 켜진다(`docs/리드미_설계_로그인.md` 6.1). 로그인 실패와 메일 보내기에 횟수 제한이 있다. dev 프로필의 임시 로그인은 걷어냈다.
-- 패키지(`docs/리드미_백엔드_구조.md` 3절): `auth`(계정, 로그인, 세션, `/api/me`), `group`, `posting`, `grouppost`, `postingread`(공고 읽어 오기), `card`, `extraction`(자료 올리기와 공고 파일의 글 읽기. PDF·HWP는 따로 띄운 자바 프로세스에서 읽는다), `keyword`, `profile`(기본 프로필, 2026-11-16), `dev`(예시 데이터), `common`, `llm`(Claude 호출 한 곳, 사용액 기록, 사용자마다 한 달 한도. 공식 Java SDK. 2026-11-16. 아직 부르는 기능은 없다).
+- 패키지(`docs/리드미_백엔드_구조.md` 3절): `auth`(계정, 로그인, 세션, `/api/me`), `group`, `posting`, `grouppost`, `postingread`(공고 읽어 오기), `card`, `extraction`(자료 올리기와 공고 파일의 글 읽기. PDF·HWP는 따로 띄운 자바 프로세스에서 읽는다), `keyword`, `profile`(기본 프로필, 2026-11-16), `dev`(예시 데이터), `common`, `inboundmail`(메일 자동화: 받은 메일, 확인함, 설정), `llm`(Claude 호출 한 곳, 사용액 기록, 사용자마다 한 달 한도. 공식 Java SDK. 2026-11-16. 카드 뽑기, 공고 읽어 오기 보완, 공고 분석, 메일 분류가 부른다).
 - 테스트: `@IntegrationTest`(서버 전체 + Testcontainers PostgreSQL, 테스트끼리 나눠 씀, 시계는 2026-11-13 00:30 서울에 고정, 메일은 `TestMailbox` 에 모음). 로그인·가입·재설정, 권한·공개 범위·상태 글자·날짜 규칙, 세션, 오류 응답.
-- 자원: `resources/dictionary`(키워드 사전 4개), `resources/prompts/exp-extract.md`(jobfit 원본 그대로. 옮길 때 첫 줄의 jobfit 안내와 변수 표기를 고친다).
+- 자원: `resources/dictionary`(키워드 사전 4개), `resources/prompts`(LLM 지시문 4개: 카드·프로필 뽑기 `exp-extract.md`, 공고 읽어 오기 보완 `posting-fields.md`, 공고 분석 `posting-analysis.md`, 메일 분류 `mail-classify.md`).
 
-**frontend** (2026-11-15)
+**frontend** (2026-11-17)
 
 - 화면: 시안이 나온 25개와 창 7개가 모두 있다(`docs/리드미_화면_API_대응.md` 1절). 주소는 `src/shared/lib/paths.ts` 에 모여 있다.
   - 로그인 전: 랜딩 `/welcome`, 로그인 `/login`, 회원가입 `/signup`·`/signup/sent`, 이메일 인증 `/verify-email`, 비밀번호 재설정 `/password-reset`·`/password-reset/sent`·`/password-reset/new`, 초대 `/invite/:token`
   - 홈·지원 관리: 홈 `/`, 내 공고 `/my-posts`·`/my-posts/:postingId`, 내 공고 넣기와 칸 확인 `/my-posts/new`·`/my-posts/new/check`, 지원 현황 `/board`, 달력 `/calendar`, 메일 확인함 `/mail`
   - 그룹: 내 그룹 `/groups`, 그룹 공고 목록·상세 `/groups/:groupId/posts`·`…/posts/:postId`, 공고 올리기와 칸 확인 `…/posts/new`·`…/posts/new/check`, 멤버·초대 관리 `…/members`
   - 경험카드: 목록 `/cards`, 직접 만들기 `/cards/new`, 상세·편집 `/cards/:cardId`·`/cards/:cardId/edit`, 자료로 카드 만들기 `/cards/sources`, 카드 확인 `/cards/review`
-  - 설정: 내 정보 `/settings/account`, 메일 자동화 `/settings/mail`, 탈퇴 `/settings/withdraw`
+  - 설정: 내 정보 `/settings/account`, 기본 프로필 `/settings/profile`, 메일 자동화 `/settings/mail`, 탈퇴 `/settings/withdraw`
   - `/` 는 홈이다. 로그인하지 않았으면 랜딩으로, 그룹이 없으면 내 그룹으로 보낸다. 다른 화면은 로그인하지 않았으면 로그인 화면으로 보낸다. `/dev/components` 는 부품 확인용이고 개발 서버에서만 열린다.
-- 화면의 기준: 그룹 공고 두 화면은 `docs/design/`(디자인 원본과 캡처), 나머지는 캔버스 "리드미 시안 3종"의 1~10차 시안이다(10차는 시안이 없던 넷: 내 공고 넣기, 공고 고치기, 초대 목록·취소, 비밀번호 바꾸기). 화면마다 어느 차수인지는 `docs/리드미_화면_API_대응.md` 1절에 있다.
-- 구조: `src/app`(라우터, 틀, 헤더), `src/features/<기능>`(`auth`, `cards`, `group-posts`, `groups`, `mail`, `my-posts`, `settings`), `src/domain`(`session`, `group`, `posting`), `src/shared`(공용 부품과 `lib`), `src/mocks`(가짜 서버). 규칙은 `frontend/CLAUDE.md`, 근거는 `docs/리드미_프런트_구조_계획.md`.
+- 화면의 기준: 캔버스 "리드미 시안 3종"의 1~12차 시안이다(10차는 시안이 없던 넷: 내 공고 넣기, 공고 고치기, 초대 목록·취소, 비밀번호 바꾸기). 그룹 공고 두 화면은 `docs/design/`(디자인 원본과 캡처)에서 시작했고 헤더와 그룹 머리 영역은 11차를 따른다. 경험카드와 랜딩은 코드를 먼저 만들고 시안을 맞췄다(2026-11-17). 화면마다 어느 차수인지는 `docs/리드미_화면_API_대응.md` 1절에 있다.
+- 구조: `src/app`(라우터, 틀, 헤더), `src/features/<기능>`(`auth`, `cards`, `group-posts`, `groups`, `mail`, `my-posts`, `settings`), `src/domain`(`session`, `group`, `posting`, `profile`), `src/shared`(공용 부품과 `lib`), `src/mocks`(가짜 서버). 규칙은 `frontend/CLAUDE.md`, 근거는 `docs/리드미_프런트_구조_계획.md`.
 - 데이터: 각 층의 `api.ts` 가 데이터를 읽고 고치는 한 곳이다. 서버는 `src/shared/lib/api.ts` 의 `request` 로 부른다(쿠키 포함, CSRF 헤더, 오류는 `ApiError`). `npm run dev` 는 모두 가짜 서버(`src/mocks`, 예시 데이터를 메모리에 둔다)를 부르고, `npm run dev:server` 와 빌드는 아래의 서버를 부른다. 서버 주소는 `VITE_API_ORIGIN`(없으면 `http://localhost:8080`)이고 개발 프록시는 두지 않았다.
 - 서버를 부르는 것: 로그인 쪽 화면 모두(로그인, 회원가입, 이메일 인증, 비밀번호 재설정, 구글 로그인 시작), 보는 사람(`GET /api/me`), 초대, 그룹과 멤버·초대 관리(쓸 수 있는 링크 목록·취소 포함), 그룹 공고(읽어 오기의 링크·본문·파일·키워드, 올리기의 키워드·묶음, 목록의 원문 주소, 관심, 댓글, 마감일, 고치기, 내리기 포함), 홈, 내 공고(그룹 없이 넣기 포함), 지원 현황, 달력, 경험카드(목록, 직접 만들기, 상세·편집, 확인, 지우기, 태그 제안), 자료(올리기, 목록, 지우기), 내 정보, 이름 바꾸기, 비밀번호 바꾸기(비밀번호가 없는 계정은 재설정 메일), 로그아웃, 탈퇴.
-- 아직 가짜 서버만 부르는 것: 메일 확인함, 메일 자동화 설정, 홈의 "메일에서 온 변경". `npm run dev:server` 에서도 이 자리는 예시 데이터를 보인다. 카드 추출은 서버에 없어 `npm run dev:server` 에서 "카드 뽑기 시작"을 누르면 준비 중이라고 알린다. 메일 자동화도 서버에 없다. 화면이 바라는데 서버에 없는 칸은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
-- 서버에 있는데 아직 쓰지 않는 것: 2026-11-16에 서버에 새로 생긴 것(카드 뽑기, 프로필, 메일 자동화, 내 공고 빼기 등). 할 일과 기다리는 시안은 `docs/리드미_남은작업.md` 프런트엔드에 있다.
-- 동작이 없는 자리: 헤더의 정보공유(화면이 없다), 설정의 구글 연결(서버에 없다). 원문 주소가 없는 공고는 원문 보기·열기를 감춘다. 이런 자리와 나중에 고칠 것은 코드에 `shortcut:` 으로 적혀 있다.
-- 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 브라우저로 누르는 테스트는 `npm run test:e2e`(Playwright). 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 97개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
+- 가짜 서버만 부르는 화면은 없다. 메일 확인함, 메일 자동화 설정, 홈의 "메일에서 온 변경", 카드 뽑기도 2026-11-17에 서버에 붙였다. 화면이 바라는데 서버에 없는 칸은 `docs/리드미_화면_API_대응.md` 1절과 3절에 있다.
+- 2026-11-16에 서버에 새로 생긴 것(카드 뽑기, 기본 프로필, 메일 자동화, 내 공고 빼기 등)은 2026-11-17까지 모두 화면에 붙였다. 서버나 시안을 기다리는 것은 `docs/리드미_남은작업.md` 프런트엔드에 있다.
+- 동작이 없는 자리: 헤더의 정보공유(화면이 없어 "준비 중"을 붙였다). 원문 주소가 없는 공고는 원문 보기·열기를 감춘다. 이런 자리와 나중에 고칠 것은 코드에 `shortcut:` 으로 적혀 있다.
+- 검사: `npm run typecheck`, `npm run lint`, `npm test`(Vitest), `npm run build`. 브라우저로 누르는 테스트는 `npm run test:e2e`(Playwright). 모양이 바뀌면 안 되는 변경은 화면 회귀 검사(`npm run regress`, 장면 100개)로 본다. 방법은 `frontend/CLAUDE.md` 에 있다.
 - `src/index.css`: Arc 변수(`src/components/arc/foundation.css`) 위에 리드미 값(색 A)을 덮고, shadcn/ui 색 이름을 Arc 변수에 연결한다.
-- 부품: shadcn/ui 는 `src/components/ui`(button, input, textarea, dialog, dropdown-menu), dsui 는 `src/components/arc`(segmented-control, app-header 와 함께 들어온 기반). 헤더는 `src/app/layouts/group-header.tsx`(그룹 화면)와 `main-header.tsx`(그룹 밖 화면)를 따로 만들어 쓴다. 정한 값은 `reverse-engineering/리드미_디자인_적용_계획.md` 의 "적용 결과"에 있다.
+- 부품: shadcn/ui 는 `src/components/ui`(button, input, textarea, dialog, dropdown-menu), dsui 는 `src/components/arc`(segmented-control, app-header 와 함께 들어온 기반). 헤더는 모든 화면이 `src/app/layouts/app-header.tsx` 하나를 쓰고, 그룹 화면은 그 아래 `group-band.tsx`(그룹 머리 영역)를 더한다. 정한 값은 `reverse-engineering/리드미_디자인_적용_계획.md` 의 "적용 결과"에 있다.
 
 ## 확인한 것과 못 한 것 (2026-11-12. 뒤에 다시 본 것은 그 날짜를 적었다)
 
@@ -123,7 +123,7 @@ git switch -c feat/frontend-something  # 작업 브랜치
 남은 일 전체는 `docs/리드미_남은작업.md`에 담당(백엔드, 프런트엔드, 운영)과 순서로 나눠 두었다(2026-11-15).
 
 1. 서버: 2026-11-16에 남은 작업의 백엔드 2~7단계를 모두 만들었다(LLM 바탕, 기본 프로필, 가입 값, 카드·프로필 뽑기, 스캔본·사진 옮겨 적기, 공고 읽어 오기의 LLM 보완, 공고 분석, 맞는 카드, 로그인한 채로 구글 연결). 같은 날 메일 자동화의 서버(9단계)도 만들었다(`docs/리드미_설계_메일.md`). 실제 메일로는 수신 전용 도메인을 산 뒤 그 문서 6절의 순서로 확인한다. 10단계는 보류했다(2026-11-16). 서버에 생겼는데 화면이 아직 붙지 않은 것은 `docs/리드미_남은작업.md`의 프런트엔드에 있다.
-2. 화면: 시안이 나온 25개를 모두 프런트에 옮겼다(`docs/리드미_화면_API_대응.md` 1절). 2026-11-15에 서버에 API가 있는 화면을 모두 서버에 붙였다(`npm run dev:server`, 띄우는 법은 `frontend/CLAUDE.md`). 남은 것은 서버에 새로 생긴 카드 추출·프로필·맞는 카드·메일 자동화 등을 붙이는 것이다(`docs/리드미_남은작업.md` 프런트엔드). 10차 시안의 넷(내 공고 넣기, 비밀번호 바꾸기, 초대 목록·취소, 공고 고치기)도 붙였다(2026-11-15~16).
+2. 화면: 시안이 나온 25개를 모두 프런트에 옮겼다(`docs/리드미_화면_API_대응.md` 1절). 2026-11-15에 서버에 API가 있는 화면을 모두 서버에 붙였다(`npm run dev:server`, 띄우는 법은 `frontend/CLAUDE.md`). 서버에 새로 생긴 카드 추출·프로필·맞는 카드·메일 자동화도 2026-11-17에 붙였다(`docs/리드미_남은작업.md` 프런트엔드). 10차 시안의 넷(내 공고 넣기, 비밀번호 바꾸기, 초대 목록·취소, 공고 고치기)도 붙였다(2026-11-15~16).
 3. (2026-11-17 했다) 구글 로그인을 켰다. Google Cloud 에서 OAuth 클라이언트를 만들어 `backend/application-local.yml`에 넣는다(`docs/리드미_설계_로그인.md` 6.1). 기본 범위만 요청한다. 다른 PC에서는 같은 순서로 넣는다.
 4. (2026-11-17 했다) Claude API 키를 넣었다. Console(platform.claude.com)에서 개발용 작업공간의 키를 만들어 `backend/application-local.yml`의 `app.llm.api-key`에 넣는다. 키가 없으면 서버는 뜨고 LLM을 쓰는 기능만 503이다(`docs/리드미_설계_경험카드.md` 4.5).
 
@@ -148,4 +148,4 @@ git switch -c feat/frontend-something  # 작업 브랜치
 - `reverse-engineering/리드미_디자인_적용_계획.md` shadcn/ui 와 dsui 설치 순서, 적용 결과 (2026-11-13 사본)
 - `reverse-engineering/리드미_리서치_디자인_devs7udio.md` devs7ud.io 디자인 분석 (2026-11-12 사본)
 
-`docs/design/` 은 사본이 아니라 이 폴더가 원본이다. 그룹 공고 목록·상세의 디자인 원본과 캡처가 있다. 나머지 화면의 시안은 캔버스에만 있다(주소는 `docs/리드미_화면_API_대응.md` 머리에 있다).
+`docs/design/` 은 사본이 아니라 이 폴더가 원본이다. 그룹 공고 목록·상세의 디자인 원본과 캡처, 10차 화면 넷의 원본이 있다. 나머지 화면의 시안은 캔버스에만 있다(주소는 `docs/리드미_화면_API_대응.md` 머리에 있다).
