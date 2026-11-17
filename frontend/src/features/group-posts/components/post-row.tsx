@@ -42,7 +42,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFi
         {post.deadline.kind === "unknown" ? (
           <>
             <span className="text-label-sm font-bold text-warning">마감일 확인 필요</span>
-            <Button variant="outline" size="xs" className="mt-0.5 h-7 self-start px-3" onClick={onFillDeadline}>
+            <Button variant="outline" size="xs" className="mt-0.5 h-7 self-start px-3 max-sm:h-control-md" onClick={onFillDeadline}>
               날짜 넣기
             </Button>
           </>

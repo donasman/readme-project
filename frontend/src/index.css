@@ -26,6 +26,14 @@
     --radius: var(--radius-control);
 }
 
+/* 휴대폰(640px 아래)에서는 작은 컨트롤(36px)도 누르기 권장 크기 44px로 올린다(2026-11-17 사용자 결정).
+   작은 버튼, 메뉴·필터 칩, 탭(SegmentedControl), 드롭다운, 링크 버튼이 이 값을 쓴다. */
+@media (width < 40rem) {
+    :root {
+        --control-height-sm: var(--control-height-md);
+    }
+}
+
 :root.dark {
     --accent: #c8d8fa;
     --accent-foreground: #0e1526;
@@ -110,7 +118,7 @@
     --shadow-raised: var(--shadow-raised);
     --shadow-floating: var(--shadow-floating);
     --shadow-highlight-resting: var(--shadow-highlight-resting);
-    /* 컨트롤 높이: h-control-sm(36) · h-control-md(44) · h-control-lg(50) */
+    /* 컨트롤 높이: h-control-sm(36, 휴대폰은 44) · h-control-md(44) · h-control-lg(50) */
     --spacing-control-sm: var(--control-height-sm);
     --spacing-control-md: var(--control-height-md);
     --spacing-control-lg: var(--control-height-lg);

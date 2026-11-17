@@ -27,7 +27,7 @@ interface CommentsProps {
 }
 
 const action =
-  "min-h-7 cursor-pointer rounded-full px-2 text-label-sm font-semibold text-text-secondary hover:bg-surface-muted hover:text-foreground"
+  "min-h-7 max-sm:min-h-control-md cursor-pointer rounded-full px-2 text-label-sm font-semibold text-text-secondary hover:bg-surface-muted hover:text-foreground"
 
 /** 댓글: "그룹 × 공고"에 달리고 이 그룹에만 보인다. 글자와 링크만 받는다. */
 export function Comments({ comments, viewer, isLeader, notice, onAdd, onEdit, onDelete }: CommentsProps) {

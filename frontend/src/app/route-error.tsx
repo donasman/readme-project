@@ -34,7 +34,7 @@ export function RouteError({ notFound = false }: { notFound?: boolean }) {
         {missing ? "찾을 수 없습니다" : "문제가 생겼습니다"}
       </Heading>
       <p className="text-sm text-text-secondary">{message}</p>
-      <Link to={paths.home()} className={joinClasses(textLink, "text-sm underline-offset-4")}>
+      <Link to={paths.home()} className={joinClasses(textLink, "text-sm underline-offset-4 max-sm:inline-flex max-sm:min-h-control-md max-sm:items-center")}>
         첫 화면으로
       </Link>
     </Page>
