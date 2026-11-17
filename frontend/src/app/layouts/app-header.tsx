@@ -44,7 +44,7 @@ export function AppHeader() {
   return (
     <header className="border-b border-border-subtle bg-surface">
       <div className="mx-auto flex min-h-18 max-w-[1240px] items-center gap-3 px-4 md:gap-5">
-        <Link to={paths.home()} aria-label="리드미 홈" className="inline-flex flex-none items-center gap-2 text-base font-bold text-foreground">
+        <Link to={paths.home()} aria-label="리드미 홈" className="inline-flex min-h-control-md flex-none items-center gap-2 text-base font-bold text-foreground">
           <LogoMark size={26} />
           <span className="hidden sm:inline">리드미</span>
         </Link>

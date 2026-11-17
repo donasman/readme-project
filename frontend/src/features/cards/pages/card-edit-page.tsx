@@ -202,13 +202,13 @@ export function CardEditPage() {
               </h2>
               <ul className="flex flex-wrap gap-1.5">
                 {tags.map((tag) => (
-                  <li key={tag} className="inline-flex h-8 items-center gap-0.5 rounded-full bg-surface-muted pr-1 pl-3 text-label-sm font-medium">
+                  <li key={tag} className="inline-flex h-8 items-center gap-0.5 rounded-full bg-surface-muted pr-1 pl-3 text-label-sm font-medium max-sm:h-control-md max-sm:pr-0">
                     <span>{tag}</span>
                     <button
                       type="button"
                       aria-label={`${tag} 태그 지우기`}
                       onClick={() => setTags((ts) => ts.filter((t) => t !== tag))}
-                      className="inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-text-secondary"
+                      className="inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-text-secondary max-sm:size-control-md"
                     >
                       <XIcon aria-hidden="true" className="size-3.5" />
                     </button>
