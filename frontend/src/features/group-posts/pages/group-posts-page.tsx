@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Link, useLoaderData, useLocation, useNavigate, useRevalidator, type LoaderFunctionArgs } from "react-router"
+import { Link, useLoaderData, useLocation, useRevalidator, type LoaderFunctionArgs } from "react-router"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,7 @@ import { Page } from "@/shared/components/page"
 import { SurfaceCard } from "@/shared/components/surface-card"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
-import { useSearchText } from "@/shared/lib/router"
+import { clearRouterState, useSearchText } from "@/shared/lib/router"
 import { docTitle } from "@/shared/lib/utils"
 
 import { getGroupPosts, setDeadline } from "../api"
@@ -37,14 +37,13 @@ export function GroupPostsPage() {
   const interest = useInterest(group.id)
   const revalidator = useRevalidator()
   const location = useLocation()
-  const navigate = useNavigate()
   // 홈의 "마감일을 못 읽었습니다"로 오면 그 공고의 마감일 넣기 창을 바로 연다
   const [fillFor, setFillFor] = useState<GroupPost | null>(
     () => posts.find((p) => p.id === (location.state as FillDeadlineState | null)?.fillDeadline && p.deadline.kind === "unknown") ?? null
   )
   const closeFill = () => {
     setFillFor(null)
-    if (location.state) navigate(location.pathname + location.search, { replace: true, state: null, preventScrollReset: true })
+    if (location.state) clearRouterState()
   }
 
   const others = group.members.filter((m) => m.id !== viewer.id)

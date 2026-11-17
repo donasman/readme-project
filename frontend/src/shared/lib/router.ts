@@ -41,8 +41,15 @@ export function useArrivalState<T>(): T | null {
   const location = useLocation()
   const [state] = useState(() => (location.state as T | null) ?? null)
   useEffect(() => {
-    // navigate(".")로 지우면 화면의 loader가 한 번 더 돈다. 라우터가 기록에 둔 칸(usr)만 비운다
-    if (state) window.history.replaceState({ ...window.history.state, usr: null }, "")
+    if (state) clearRouterState()
   }, [state])
   return state
+}
+
+/**
+ * navigate로 넘긴 state를 브라우저 기록에서 지운다. 새로 고침이나 뒤로 가기에서 같은 알림·창이 다시 뜨지 않게 한다.
+ * 같은 주소로 navigate(…, { state: null })를 부르면 화면의 loader가 한 번 더 돌아서, 라우터가 기록에 둔 칸(usr)만 비운다.
+ */
+export function clearRouterState() {
+  window.history.replaceState({ ...window.history.state, usr: null }, "")
 }
