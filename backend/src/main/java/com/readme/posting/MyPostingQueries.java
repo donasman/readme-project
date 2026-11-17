@@ -103,7 +103,8 @@ class MyPostingQueries {
 			.map((posting) -> {
 				Details details = details(userId, postingId);
 				return MyPostingDetailResponse.of(posting, details, keywords(postingId),
-						CardMatching.match(details.analysis(), myCards(userId), profileFacts(userId),
+						CardMatching.match(details.analysis(), myCards(userId),
+								(details.analysis() != null) ? profileFacts(userId) : CardMatching.ProfileFacts.EMPTY,
 								KeywordDictionary.standard()),
 						groups.getOrDefault(postingId, List.of()));
 			});

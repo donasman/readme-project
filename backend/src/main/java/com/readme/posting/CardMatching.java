@@ -21,9 +21,10 @@ import com.readme.keyword.KeywordDictionary;
  * 그 요건을 맞춘다. 카드 태그에는 포함 관계를 더한다(Spring Boot → Spring → Java).</li>
  * <li>카드 순위: 맞춘 필수 요건 3점, 우대 요건 2점, 공고 키워드 1점. 점수는 보이지 않는다(화면·API 대응 3절 13번).</li>
  * <li>직무 이름(백엔드 등)은 거의 모든 공고·카드에 있어 낱말로 치지 않는다.</li>
- * <li>요건마다 결과를 낸다(공고 설계 4.8, 화면·API 대응 3.3의 26번): 카드가 맞추면 matched, 카드는 없지만 프로필의 자격증·어학·전공이
- * 글에 있으면 profile, 낱말이 있는데 둘 다 없으면 unmatched, 낱말이 없으면 unknown. 프로필은 넣지 않아도 되는 값이라 있을 때만 맞춘
- * 것으로 보고, 프로필에 없다고 unmatched 로 바꾸지 않는다(자격증 요건은 키워드 사전에 없어 프로필에 없으면 unknown 으로 남는다).</li>
+ * <li>요건마다 결과를 낸다(공고 설계 4.8, 화면·API 대응 3.3의 26번): 카드가 맞추면 matched, 낱말이 있는데 맞춘 카드가 없으면
+ * unmatched, 낱말이 없어 카드로 판단할 수 없는데 프로필의 자격증·어학·전공이 글에 있으면 profile, 그 밖에는 unknown. 낱말이 있는 요건은
+ * 프로필이 가리지 않게 카드로만 정하고, 글에 있는 프로필 값은 profileItems 로 함께 싣는다("정보처리기사 및 Kubernetes 운영"). 프로필은
+ * 넣지 않아도 되는 값이라 있을 때만 맞춘 것으로 보고, 없다고 unmatched 로 바꾸지 않는다.</li>
  * </ul>
  * 옮기지 않은 것: 전체 점수(_score, 보이지 않는다), 문항별 카드 배정(assign, 쓰는 화면이 없다. 자소서 초안 때 옮긴다).
  */
@@ -62,7 +63,7 @@ final class CardMatching {
 	 * @param kind         must(필수) 또는 nice(우대)
 	 * @param status       matched, profile, unmatched, unknown(클래스 설명)
 	 * @param cardIds      맞춘 내 카드. 모두 matches 에도 있다. matched 일 때만 있다
-	 * @param profileItems 요건 글에 있는 내 프로필 값(예: 정보처리기사). profile 일 때만 있다
+	 * @param profileItems 요건 글에 있는 내 프로필 값(예: 정보처리기사). profile 이나 unmatched 일 때 있을 수 있다
 	 */
 	record RequirementResult(String kind, String text, String status, List<Long> cardIds, List<String> profileItems) {
 	}
@@ -141,11 +142,8 @@ final class CardMatching {
 			return new RequirementResult(requirement.kind(), requirement.text(), "matched", requirement.cards(), List.of());
 		}
 		List<String> items = profileItems(requirement.text(), profile);
-		if (!items.isEmpty()) {
-			return new RequirementResult(requirement.kind(), requirement.text(), "profile", List.of(), items);
-		}
-		return new RequirementResult(requirement.kind(), requirement.text(),
-				requirement.terms().isEmpty() ? "unknown" : "unmatched", List.of(), List.of());
+		String status = !requirement.terms().isEmpty() ? "unmatched" : items.isEmpty() ? "unknown" : "profile";
+		return new RequirementResult(requirement.kind(), requirement.text(), status, List.of(), items);
 	}
 
 	/**

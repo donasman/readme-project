@@ -155,6 +155,19 @@ class CardMatchingTests {
 	}
 
 	@Test
+	void profileDoesNotHideAGapCardsCanJudge() {
+		PostingAnalysis analysis = analysis(List.of("정보처리기사 및 Kubernetes 운영 경험"), List.of(), List.of());
+		ProfileFacts profile = new ProfileFacts(List.of("정보처리기사"), List.of(), List.of());
+
+		Result result = CardMatching.match(analysis, CARDS, profile, KD);
+
+		assertThat(result.requirements()).singleElement()
+			.extracting(RequirementResult::status, RequirementResult::profileItems)
+			.containsExactly("unmatched", List.of("정보처리기사"));
+		assertThat(result.unmatched()).containsExactly("정보처리기사 및 Kubernetes 운영 경험");
+	}
+
+	@Test
 	void profileValuesNeedWordBoundariesAndTwoLetters() {
 		ProfileFacts profile = new ProfileFacts(List.of("C"), List.of("OPIc"), List.of("수"));
 
