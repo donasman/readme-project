@@ -11,6 +11,7 @@ const SCREENS = [
   ["/board", "지원 현황", "지원 현황 · 리드미"],
   ["/cards", "경험카드", "경험카드 · 리드미"],
   ["/settings/account", "로그인 방법", "내 정보 · 설정 · 리드미"],
+  ["/settings/profile", "인적사항", "기본 프로필 · 설정 · 리드미"],
 ]
 
 for (const [path, heading, title] of SCREENS) {

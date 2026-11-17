@@ -1,6 +1,8 @@
-// 설정 화면이 서버와 주고받는 곳. 내 정보, 표시 이름, 로그아웃, 탈퇴는 로그인 문서 4절, 메일 자동화는 메일 설계 4.2다.
+// 설정 화면이 서버와 주고받는 곳. 내 정보, 표시 이름, 로그아웃, 탈퇴는 로그인 문서 4절, 기본 프로필은 프로필 설계 5절, 메일 자동화는 메일 설계 4.2다.
+import type { Profile, ProfileInput } from "@/domain/profile/types"
 import type { MeResponse } from "@/domain/session/types"
 import * as db from "@/mocks/account-db"
+import * as profileDb from "@/mocks/profile-db"
 import { isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
 
 import type { AccountInfo, MailSettings, WithdrawConfirm, WithdrawInfo } from "./types"
@@ -108,6 +110,20 @@ export async function withdraw(confirm: WithdrawConfirm): Promise<"done" | "wron
   } catch (error) {
     if (isApiError(error, "WRONG_PASSWORD", "WRONG_EMAIL")) return "wrong"
     if (isApiError(error, "TOO_MANY_ATTEMPTS")) return "throttled"
+    throw error
+  }
+}
+
+/** 기본 프로필 저장 결과. 서버가 막은 값(400 INVALID_INPUT)이면 그 글이다. 화면이 먼저 같은 규칙을 보므로 드물다. */
+export type SaveProfileResult = { ok: true; profile: Profile } | { ok: false; message: string }
+
+/** 기본 프로필 전체를 저장한다(PUT /api/me/profile). 서버는 자격증 이름을 대표 표기로 바꾸고 연차를 다시 센 프로필을 돌려준다. */
+export async function saveProfile(input: ProfileInput): Promise<SaveProfileResult> {
+  if (mockServer) return { ok: true, profile: profileDb.saveProfile(input) }
+  try {
+    return { ok: true, profile: await request<Profile>("PUT", "/api/me/profile", input) }
+  } catch (error) {
+    if (isApiError(error, "INVALID_INPUT")) return { ok: false, message: error.message }
     throw error
   }
 }
