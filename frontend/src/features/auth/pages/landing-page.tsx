@@ -136,8 +136,8 @@ function AppShot() {
         src={`/welcome/app-${theme}.jpg`}
         width={2560}
         height={1600}
-        // 다크 캡처는 다크 테마일 때만 보이니 그때만 받는다
-        loading={theme === "dark" ? "lazy" : undefined}
+        // 숨긴 쪽(테마가 다른 캡처)은 받지 않게 한다. 보이는 쪽은 첫 화면에 걸쳐 바로 받는다
+        loading="lazy"
         alt="리드미의 그룹 공고 목록 화면. 마감이 가까운 순서로 공고가 놓이고, 공고마다 관심 있는 멤버와 지원 여부, 내 상태, 댓글 수가 보인다."
         className="block h-auto w-full"
       />
