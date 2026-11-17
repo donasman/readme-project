@@ -1,8 +1,5 @@
 package com.readme.auth;
 
-import java.time.Clock;
-import java.time.LocalDate;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -34,20 +31,16 @@ class AuthController {
 
 	private final LoginSession loginSession;
 
-	private final Clock clock;
-
-	AuthController(AccountService service, AccountQueries queries, LoginSession loginSession, Clock clock) {
+	AuthController(AccountService service, AccountQueries queries, LoginSession loginSession) {
 		this.service = service;
 		this.queries = queries;
 		this.loginSession = loginSession;
-		this.clock = clock;
 	}
 
 	@PostMapping("/api/auth/signup")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	void signup(@Valid @RequestBody SignupRequest request) {
-		this.service.signup(request.name(), request.email(), request.password(),
-				request.extras(LocalDate.now(this.clock)));
+		this.service.signup(request.name(), request.email(), request.password());
 	}
 
 	@PostMapping("/api/auth/verify-email")

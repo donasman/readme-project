@@ -68,7 +68,7 @@ class CardExtractionTests {
 		long source = this.fixtures.cardSource(me, "FILE", "이력서.pdf", RESUME);
 		this.claude.willAnswer(new ExtractionAnswer(List.of(card("주문 조회 API 개선 프로젝트", "p95 응답 시간 1.8초 → 0.4초"),
 				card("결제 알림 배치 개선", "처리 시간 70% 단축")),
-				new ProfileAnswer("김다온", "1999-03-01", "FEMALE", List.of(), List.of(new Certificate("컴활", "2022-08")),
+				new ProfileAnswer("김다온", "1999-03-01", List.of(), List.of(new Certificate("컴활", "2022-08")),
 						List.of(), List.of(new Career("가나다", "2024-03", "", "백엔드")))));
 
 		MvcTestResult started = extract(me, source);
@@ -93,7 +93,7 @@ class CardExtractionTests {
 		assertThat(this.mvc.get().uri("/api/me/profile").with(loginAs(me))).hasStatusOk()
 			.bodyJson()
 			.isLenientlyEqualTo("""
-					{ "name": "김다온", "birthDate": "1999-03-01", "gender": "female",
+					{ "name": "김다온", "birthDate": "1999-03-01",
 					  "certificates": [{ "name": "컴퓨터활용능력", "acquired": "2022-08" }],
 					  "careers": [{ "company": "가나다", "start": "2024-03", "end": null, "role": "백엔드" }] }
 					""");

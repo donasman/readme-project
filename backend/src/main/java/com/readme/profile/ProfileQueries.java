@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Locale;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
@@ -27,17 +26,16 @@ class ProfileQueries {
 		this.clock = clock;
 	}
 
-	private record Basics(String name, LocalDate birthDate, String gender) {
+	private record Basics(String name, LocalDate birthDate) {
 	}
 
 	/** 내 프로필. 저장한 적이 없으면 빈 프로필이다. */
 	ProfileResponse find(long userId) {
-		Basics basics = this.jdbc.sql("select name, birth_date, gender from profiles where user_id = :userId")
+		Basics basics = this.jdbc.sql("select name, birth_date from profiles where user_id = :userId")
 			.param("userId", userId)
-			.query((rs, rowNum) -> new Basics(rs.getString("name"), rs.getObject("birth_date", LocalDate.class),
-					rs.getString("gender")))
+			.query((rs, rowNum) -> new Basics(rs.getString("name"), rs.getObject("birth_date", LocalDate.class)))
 			.optional()
-			.orElse(new Basics(null, null, null));
+			.orElse(new Basics(null, null));
 		List<EducationResponse> educations = this.jdbc
 			.sql("select school, major, graduation, gpa, gpa_scale from profile_educations where user_id = :userId order by seq")
 			.param("userId", userId)
@@ -63,9 +61,8 @@ class ProfileQueries {
 		int careerMonths = CareerMonths.count(careers.stream()
 			.map((c) -> new Span(YearMonth.parse(c.start()), (c.end() != null) ? YearMonth.parse(c.end()) : null))
 			.toList(), YearMonth.now(this.clock));
-		return new ProfileResponse(basics.name(), basics.birthDate(),
-				(basics.gender() != null) ? basics.gender().toLowerCase(Locale.ROOT) : null, educations, certificates,
-				languages, careers, careerMonths, careerMonths / 12);
+		return new ProfileResponse(basics.name(), basics.birthDate(), educations, certificates, languages, careers,
+				careerMonths, careerMonths / 12);
 	}
 
 }

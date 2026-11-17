@@ -36,7 +36,7 @@ class ProfileFillTests {
 	void fillsAnEmptyProfile() {
 		long me = this.fixtures.user("다온");
 
-		this.profiles.fillBlanks(me, new ProfileDraft(" 김다온 ", LocalDate.of(1999, 3, 1), "FEMALE",
+		this.profiles.fillBlanks(me, new ProfileDraft(" 김다온 ", LocalDate.of(1999, 3, 1),
 				List.of(new EducationDraft("한국대학교", "컴퓨터공학", "2024-02", new BigDecimal("3.8"), new BigDecimal("4.5"))),
 				List.of(new CertificateDraft("컴활", "2022-08")), List.of(new LanguageDraft("TOEIC", "900", "2025-01")),
 				List.of(new CareerDraft("가나다", "2024-03", null, "백엔드 개발"))));
@@ -44,7 +44,6 @@ class ProfileFillTests {
 		ProfileResponse profile = this.queries.find(me);
 		assertThat(profile.name()).isEqualTo("김다온");
 		assertThat(profile.birthDate()).isEqualTo(LocalDate.of(1999, 3, 1));
-		assertThat(profile.gender()).isEqualTo("female");
 		assertThat(profile.educations()).containsExactly(
 				new EducationResponse("한국대학교", "컴퓨터공학", "2024-02", new BigDecimal("3.80"), new BigDecimal("4.50")));
 		assertThat(profile.certificates()).containsExactly(new CertificateResponse("컴퓨터활용능력", "2022-08"));
@@ -54,16 +53,15 @@ class ProfileFillTests {
 	@Test
 	void neverOverwritesWhatIsThere() {
 		long me = this.fixtures.user("다온");
-		this.profiles.fillBlanks(me, new ProfileDraft("김다온", null, null, List.of(), List.of(new CertificateDraft("SQLD", null)),
+		this.profiles.fillBlanks(me, new ProfileDraft("김다온", null, List.of(), List.of(new CertificateDraft("SQLD", null)),
 				List.of(), List.of()));
 
-		this.profiles.fillBlanks(me, new ProfileDraft("다른 이름", LocalDate.of(1999, 3, 1), "MALE", List.of(),
+		this.profiles.fillBlanks(me, new ProfileDraft("다른 이름", LocalDate.of(1999, 3, 1), List.of(),
 				List.of(new CertificateDraft("ADsP", null)), List.of(new LanguageDraft("OPIc", "IH", null)), List.of()));
 
 		ProfileResponse profile = this.queries.find(me);
 		assertThat(profile.name()).isEqualTo("김다온");
 		assertThat(profile.birthDate()).isEqualTo(LocalDate.of(1999, 3, 1));
-		assertThat(profile.gender()).isEqualTo("male");
 		assertThat(profile.certificates()).extracting(CertificateResponse::name).containsExactly("SQLD");
 		assertThat(profile.languages()).hasSize(1);
 	}
@@ -72,7 +70,7 @@ class ProfileFillTests {
 	void dropsValuesThatDoNotFit() {
 		long me = this.fixtures.user("다온");
 
-		this.profiles.fillBlanks(me, new ProfileDraft("   ", LocalDate.of(2026, 11, 14), "OTHER",
+		this.profiles.fillBlanks(me, new ProfileDraft("   ", LocalDate.of(2026, 11, 14),
 				List.of(new EducationDraft("한국대학교", null, "2024년 2월", new BigDecimal("4.6"), new BigDecimal("4.5")),
 						new EducationDraft(" ", "전공만", null, null, null)),
 				List.of(new CertificateDraft("가".repeat(150), "2022")), List.of(new LanguageDraft("TOEIC", "", null)),
@@ -81,7 +79,6 @@ class ProfileFillTests {
 		ProfileResponse profile = this.queries.find(me);
 		assertThat(profile.name()).isNull();
 		assertThat(profile.birthDate()).isNull();
-		assertThat(profile.gender()).isNull();
 		assertThat(profile.educations()).containsExactly(new EducationResponse("한국대학교", null, null, null, null));
 		assertThat(profile.certificates()).containsExactly(new CertificateResponse("가".repeat(100), null));
 		assertThat(profile.languages()).isEmpty();

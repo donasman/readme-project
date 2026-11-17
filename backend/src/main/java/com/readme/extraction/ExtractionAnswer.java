@@ -17,8 +17,7 @@ import com.readme.profile.ProfileDraft.LanguageDraft;
  */
 record ExtractionAnswer(List<ExtractedCard> cards, ProfileAnswer profile) {
 
-	/** @param gender "MALE", "FEMALE", "" */
-	record ProfileAnswer(String name, String birthDate, String gender, List<Education> educations,
+	record ProfileAnswer(String name, String birthDate, List<Education> educations,
 			List<Certificate> certificates, List<Language> languages, List<Career> careers) {
 	}
 
@@ -40,7 +39,7 @@ record ExtractionAnswer(List<ExtractedCard> cards, ProfileAnswer profile) {
 		if (p == null) {
 			return null;
 		}
-		return new ProfileDraft(p.name(), date(p.birthDate()), p.gender(),
+		return new ProfileDraft(p.name(), date(p.birthDate()),
 				orEmpty(p.educations()).stream()
 					.map((e) -> new EducationDraft(e.school(), e.major(), e.graduation(), number(e.gpa()), number(e.gpaScale())))
 					.toList(),

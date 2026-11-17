@@ -30,9 +30,6 @@ class Profile {
 
 	private LocalDate birthDate;
 
-	/** MALE, FEMALE */
-	private String gender;
-
 	private Instant updatedAt;
 
 	@ElementCollection
@@ -62,7 +59,6 @@ class Profile {
 	void replace(ProfileInput input, Instant now) {
 		this.name = input.name();
 		this.birthDate = input.birthDate();
-		this.gender = input.gender();
 		replaceAll(this.educations, input.educations());
 		replaceAll(this.certificates, input.certificates());
 		replaceAll(this.languages, input.languages());
@@ -79,10 +75,6 @@ class Profile {
 		}
 		if (this.birthDate == null && input.birthDate() != null) {
 			this.birthDate = input.birthDate();
-			changed = true;
-		}
-		if (this.gender == null && input.gender() != null) {
-			this.gender = input.gender();
 			changed = true;
 		}
 		changed |= fillIfEmpty(this.educations, input.educations());
@@ -125,8 +117,8 @@ class Profile {
 			@Column(name = "end_month") String endMonth, String role) {
 	}
 
-	/** 다듬은 프로필 값. 빈 칸은 null 이다. gender 는 MALE, FEMALE, null. */
-	record ProfileInput(String name, LocalDate birthDate, String gender, List<Education> educations,
+	/** 다듬은 프로필 값. 빈 칸은 null 이다. */
+	record ProfileInput(String name, LocalDate birthDate, List<Education> educations,
 			List<Certificate> certificates, List<Language> languages, List<Career> careers) {
 	}
 
