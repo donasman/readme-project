@@ -133,7 +133,7 @@ export function CardReviewPage() {
             </div>
             {scene && (
               <p className="text-sm text-text-secondary">
-                같은 경험에서 뽑은 장면 {scene.of}장 가운데 {scene.nth}번째입니다. 장면마다 쓸 문항 유형이 다릅니다.
+                같은 경험에서 뽑은 장면 {scene.of}장 가운데 {scene.nth}번째입니다.
               </p>
             )}
             <p className="font-medium">{card.summary}</p>

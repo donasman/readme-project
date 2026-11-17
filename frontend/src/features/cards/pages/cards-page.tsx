@@ -138,6 +138,7 @@ function ExperienceGroup({ id, experience, children }: { id: string; experience:
         </div>
         <Link to={paths.cardNew(experience)} className={buttonVariants({ variant: "outline", size: "sm", className: "bg-surface" })}>
           <PlusIcon data-icon="inline-start" aria-hidden="true" />
+          <span className="sr-only">{experience}에 </span>
           장면 더하기
         </Link>
       </div>
