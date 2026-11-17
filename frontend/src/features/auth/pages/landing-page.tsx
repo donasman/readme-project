@@ -31,7 +31,10 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
 /** 섹션 제목(28px). */
 const sectionTitle = "font-heading text-[28px] leading-[1.2] font-bold tracking-display"
 
-/** 랜딩(시안 9차): 로그인하지 않은 사람이 처음 보는 화면. 하는 일 셋과 공개 범위 셋을 알린다. */
+/**
+ * 랜딩(시안 9차): 로그인하지 않은 사람이 처음 보는 화면. 앱 화면, 하는 일 셋, 공개 범위 셋을 알린다.
+ * 앱 화면(2026-11-17, 시안보다 코드를 먼저)은 `npm run shots`가 가짜 서버의 그룹 공고 목록을 찍은 것이다. 앱이 바뀌면 다시 찍는다.
+ */
 export function LandingPage() {
   return (
     <>
@@ -60,17 +63,18 @@ export function LandingPage() {
             className="flex flex-col items-start gap-2 font-heading text-[clamp(2.25rem,9cqw,4.5rem)] leading-display font-bold tracking-display"
           >
             <span>취업준비생을 위한</span>
-            <span className="-ml-1.5 rounded-control bg-highlight px-3.5 py-1 text-highlight-foreground">정보공유·스터디</span>
+            <span className="rounded-control bg-highlight px-3.5 py-1 text-highlight-foreground">정보공유·스터디</span>
           </h1>
           <p className="max-w-140 text-lg text-text-secondary">그룹에서 공고를 같이 모으고, 내 경험은 카드로 정리해 공고에 맞춰 봅니다.</p>
           <div className="flex flex-wrap gap-2">
             <Link to={paths.signup()} className={buttonVariants({ size: "lg", className: "px-7" })}>
-              시작하기
+              회원가입
             </Link>
             <Link to={paths.login()} className={buttonVariants({ variant: "outline", size: "lg", className: "px-7" })}>
               로그인
             </Link>
           </div>
+          <AppShot />
         </section>
 
         <section aria-labelledby="ld-what" className="flex flex-col gap-6">
@@ -106,9 +110,14 @@ export function LandingPage() {
         </section>
 
         <section aria-labelledby="ld-start" className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-          <h2 id="ld-start" className={sectionTitle}>
-            초대 링크를 받았다면 그 링크로 들어오세요
-          </h2>
+          <div className="flex min-w-0 flex-[1_1_480px] flex-col gap-2">
+            <h2 id="ld-start" className={sectionTitle}>
+              그룹을 만들거나 초대 링크로 들어오세요
+            </h2>
+            <p className="max-w-160 text-text-secondary">
+              가입한 뒤 그룹을 만들고 초대 링크를 보내면 됩니다. 초대 링크를 받았다면 그 링크로 가입하면 바로 그 그룹에 들어갑니다.
+            </p>
+          </div>
           <Link to={paths.signup()} className={buttonVariants({ size: "lg", className: "px-7" })}>
             회원가입
           </Link>
@@ -117,3 +126,28 @@ export function LandingPage() {
     </>
   )
 }
+
+/** 맨 위의 앱 화면: 그룹 공고 목록 캡처. 휴대폰은 휴대폰 화면을, 다크 테마는 다크 캡처를 보인다 */
+function AppShot() {
+  const shot = (theme: "light" | "dark") => (
+    <picture className={theme === "light" ? "contents dark:hidden" : "hidden dark:contents"}>
+      <source media="(max-width: 639px)" srcSet={`/welcome/app-mobile-${theme}.jpg`} width={780} height={1360} />
+      <img
+        src={`/welcome/app-${theme}.jpg`}
+        width={2560}
+        height={1600}
+        // 숨긴 쪽(테마가 다른 캡처)은 받지 않게 한다. 보이는 쪽은 첫 화면에 걸쳐 바로 받는다
+        loading="lazy"
+        alt="리드미의 그룹 공고 목록 화면. 마감이 가까운 순서로 공고가 놓이고, 공고마다 관심 있는 멤버와 지원 여부, 내 상태, 댓글 수가 보인다."
+        className="block h-auto w-full"
+      />
+    </picture>
+  )
+  return (
+    <div className="mt-6 w-full overflow-hidden rounded-panel border border-border bg-surface shadow-raised">
+      {shot("light")}
+      {shot("dark")}
+    </div>
+  )
+}
+
