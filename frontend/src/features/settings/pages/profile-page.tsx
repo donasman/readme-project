@@ -10,6 +10,7 @@ import SegmentedControl from "@/components/arc/segmented-control/segmented-contr
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getProfile } from "@/domain/profile/api"
+import { formatCareerLength } from "@/domain/profile/format"
 import { PROFILE_LIST_MAX, type Gender } from "@/domain/profile/types"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import {
@@ -261,10 +262,6 @@ export function ProfilePage() {
     }
   }
 
-  const years =
-    saved.careerYears > 0
-      ? `연차 ${saved.careerYears}년 (${saved.careerMonths}개월)`
-      : `연차 ${saved.careerMonths}개월`
   const emptyList = fromSource
     ? "자료에서 읽지 못했습니다. 있으면 직접 넣어 주세요."
     : "아직 없습니다."
@@ -621,7 +618,7 @@ export function ProfilePage() {
             id="pf-career"
             title="경력"
             aside={
-              saved.careers.length > 0 && <Pill tone="accent">{years}</Pill>
+              saved.careers.length > 0 && <Pill tone="accent">{formatCareerLength(saved)}</Pill>
             }
             note={
               <p className="text-label-sm text-text-secondary">

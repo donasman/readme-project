@@ -5,6 +5,7 @@ import { NotFoundError } from "@/shared/lib/errors"
 
 import { createExampleCards, createExampleSources, createExtractionPool, KEYWORD_ALIASES, KEYWORDS } from "./example-cards"
 import { EXAMPLE_TODAY } from "./example-data"
+import { fillBlanks } from "./profile-db"
 
 
 let cardStore: CardDetail[] | null = null
@@ -158,6 +159,16 @@ export function getExtractionJob(jobId: string): ExtractionJob {
     job.cardsSoFar = made.length
     job.status = "DONE"
     if (source) source.cardCount = made.length
+    // 뽑기가 프로필의 빈 칸도 채운다. ?mock=empty-profile로 보면 이름, 학력, 자격증, 경력이 채워진다
+    fillBlanks({
+      name: "김다온",
+      educations: [{ school: "한국대학교", major: "컴퓨터공학", graduation: "2024-02", gpa: 3.8, gpaScale: 4.5 }],
+      certificates: [
+        { name: "정보처리기사", acquired: "2023-11" },
+        { name: "컴퓨터활용능력", acquired: "2022-08" },
+      ],
+      careers: [{ company: "가나다", role: "백엔드 개발", start: "2024-03", end: null }],
+    })
   }
   return copyJob(job)
 }
