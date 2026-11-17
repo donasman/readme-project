@@ -85,6 +85,11 @@ export interface ArrivedState {
   arrived: true
 }
 
+/** 내 공고에서 뺀 뒤 목록으로 넘기는 값: 뺀 공고 이름과 관심이 꺼진 그룹. 목록 위에 알림으로 보인다. */
+export interface RemovedState {
+  removed: { name: string; groups: string[] }
+}
+
 /** 내 전형 일정 하나(GET /api/me/schedules, 메일 설계 4.5). 메일에서 반영하면 생긴다. */
 export interface Schedule {
   postingId: string

@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useLocation, useNavigationType, type ShouldRevalidateFunctionArgs } from "react-router"
+import { useEffect, useState } from "react"
+import { useLocation, useNavigate, useNavigationType, type ShouldRevalidateFunctionArgs } from "react-router"
 
 /**
  * 라우트의 shouldRevalidate를 만든다. keys는 이 라우트의 loader가 쓰는 주소 값(params)이다.
@@ -31,4 +31,18 @@ export function useSearchText(urlText: string): [string, (text: string) => void]
     if (navigationType !== "REPLACE") setText(urlText)
   }
   return [text, setText]
+}
+
+/**
+ * 앞 화면이 navigate의 state로 넘긴 값(도착 알림 등)을 처음 한 번만 읽는다. 기록의 state는 바로 지운다:
+ * 브라우저가 새로 고침과 뒤로 가기에도 state를 남겨 같은 알림이 다시 뜨기 때문이다.
+ */
+export function useArrivalState<T>(): T | null {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [state] = useState(() => (location.state as T | null) ?? null)
+  useEffect(() => {
+    if (state) void navigate(".", { replace: true, state: null })
+  }, [state, navigate])
+  return state
 }

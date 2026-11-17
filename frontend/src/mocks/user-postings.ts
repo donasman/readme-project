@@ -41,6 +41,12 @@ export const entries = () => (store ??= createEntries())
 
 let nextId = 1
 
+/** 내 공고 행을 지운다. 관심과 일정은 부르는 쪽(my-db.ts)이 정리한다. */
+export function removeEntry(id: string): void {
+  const e = rawEntry(id)
+  store = entries().filter((x) => x !== e)
+}
+
 /** 그룹 없이 넣은 공고의 행을 맨 앞에 만든다(서버처럼 넣은 시각의 역순). 지원 상태는 미정으로 시작한다. */
 export function addEntry(snapshot: NonNullable<Entry["snapshot"]>, own: NonNullable<Entry["own"]>): Entry {
   const e: Entry = { id: `p-new${nextId++}`, refs: [], snapshot, memo: "", own, decision: "undecided", stage: null, result: null }

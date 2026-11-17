@@ -108,6 +108,9 @@ const SCENARIOS = [
   { name: "my-posts", path: "/my-posts", width: 1280 },
   { name: "my-posts-mobile", path: "/my-posts", width: 390, scale: 2 },
   { name: "my-post", path: "/my-posts/p-be1", width: 1280 },
+  { name: "dialog-remove-posting", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "내 공고에서 빼기"]] },
+  { name: "dialog-remove-posting-plain", path: "/my-posts/p-be1", width: 1280, steps: [["press", "내 공고에서 빼기"]] },
+  { name: "my-posts-removed", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "내 공고에서 빼기"], ["press", "빼기"]] },
   { name: "my-post-new", path: "/my-posts/new", width: 1280 },
   { name: "my-post-check", path: "/my-posts/new", width: 1280, steps: [["fill", "#pn-url", "https://careers.example.com/jobs/2001"], ["press", "읽어 오기"]] },
   // 예시 공고 be1의 주소를 넣으면 가짜 서버가 이미 내 공고에 있는 공고(p-be1)로 본다

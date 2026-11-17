@@ -64,7 +64,13 @@ export async function getHome(): Promise<HomeData> {
   return { today, postings, news, unverifiedCards: unverified.length, mailChanges }
 }
 
-/** 내 전형 일정 전부, 날짜순(GET /api/me/schedules). 달력이 쓴다. */
+/** 내 공고에서 뺀다(DELETE /api/me/postings/{postingId}). 지원 상태, 메모, 전형 일정이 지워지고 내 그룹들에서 켠 관심이 꺼진다. */
+export async function removeMyPosting(id: string): Promise<void> {
+  if (mockServer) return db.removeMyPosting(id)
+  await request("DELETE", apiPath`/api/me/postings/${id}`)
+}
+
+/** 내 전형 일정 전부, 날짜순(GET /api/me/schedules). 달력과 내 공고 빼기 창이 쓴다. */
 export async function getSchedules(): Promise<Schedule[]> {
   if (mockServer) return db.listSchedules()
   return request("GET", "/api/me/schedules")
