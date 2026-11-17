@@ -1,5 +1,5 @@
 // 기본 프로필 화면의 입력 상태와 저장 전 검사. 서버(ProfileRequests)와 같은 규칙을 먼저 보아 틀린 칸을 한꺼번에 표시한다.
-import type { Gender, Profile, ProfileInput } from "@/domain/profile/types"
+import type { Profile, ProfileInput } from "@/domain/profile/types"
 
 /** 년월 칸: 연도("2024")와 월("03")을 따로 고른다. 빈 글자는 고르지 않은 것 */
 export interface MonthDraft {
@@ -42,7 +42,6 @@ export interface CareerDraft {
 export interface ProfileDraft {
   name: string
   birthDate: string
-  gender: Gender | ""
   educations: EducationDraft[]
   certificates: CertificateDraft[]
   languages: LanguageDraft[]
@@ -67,7 +66,6 @@ export function toDraft(profile: Profile): ProfileDraft {
   return {
     name: profile.name ?? "",
     birthDate: profile.birthDate ?? "",
-    gender: profile.gender ?? "",
     educations: profile.educations.map((e) => ({
       ...newEducation(),
       school: e.school,
@@ -84,7 +82,7 @@ export function toDraft(profile: Profile): ProfileDraft {
 
 /** 아무것도 없는 프로필(처음 들어온 사람). */
 export const isEmptyProfile = (p: Profile): boolean =>
-  !p.name && !p.birthDate && !p.gender && p.educations.length + p.certificates.length + p.languages.length + p.careers.length === 0
+  !p.name && !p.birthDate && p.educations.length + p.certificates.length + p.languages.length + p.careers.length === 0
 
 /** 입력 id. 화면과 검사가 같은 이름을 쓴다. */
 export const fieldId = (section: "edu" | "cert" | "lang" | "career", key: number, field: string) => `pf-${section}-${key}-${field}`
@@ -163,7 +161,7 @@ export function checkDraft(draft: ProfileDraft, today: string): { input: Profile
 
   if (Object.keys(errors).length > 0) return { input: null, errors }
   return {
-    input: { name: orNull(draft.name), birthDate: draft.birthDate || null, gender: draft.gender || null, educations, certificates, languages, careers },
+    input: { name: orNull(draft.name), birthDate: draft.birthDate || null, educations, certificates, languages, careers },
     errors: null,
   }
 }

@@ -13,7 +13,6 @@ export interface ProfileCheckRow {
   filled: boolean
 }
 
-const GENDER_LABELS = { male: "남", female: "여" }
 const join = (parts: (string | false | null)[], separator = " · ") => parts.filter(Boolean).join(separator) || null
 
 export function profileCheckRows(after: Profile, before: Profile | null): ProfileCheckRow[] {
@@ -27,7 +26,6 @@ export function profileCheckRows(after: Profile, before: Profile | null): Profil
   return [
     row("이름", "name", one(after.name)),
     row("생년월일", "birthDate", one(after.birthDate)),
-    row("성별", "gender", one(after.gender && GENDER_LABELS[after.gender])),
     row(
       "학력",
       "educations",

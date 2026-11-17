@@ -4,7 +4,7 @@ import type { Profile } from "@/domain/profile/types"
 
 import { profileCheckRows } from "./profile-check"
 
-const EMPTY: Profile = { name: null, birthDate: null, gender: null, educations: [], certificates: [], languages: [], careers: [], careerMonths: 0, careerYears: 0 }
+const EMPTY: Profile = { name: null, birthDate: null, educations: [], certificates: [], languages: [], careers: [], careerMonths: 0, careerYears: 0 }
 const AFTER: Profile = {
   ...EMPTY,
   name: "김다온",
@@ -21,7 +21,6 @@ describe("profileCheckRows", () => {
     expect(rows.map((r) => [r.label, r.filled])).toEqual([
       ["이름", false],
       ["생년월일", false],
-      ["성별", false],
       ["학력", true],
       ["자격증", true],
       ["어학", false],

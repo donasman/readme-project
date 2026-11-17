@@ -35,18 +35,11 @@ export function startGoogleLogin(): void {
 
 export type SignupResult = { ok: true } | { ok: false; error: "EMAIL_TAKEN" } | { ok: false; error: "INVALID_INPUT"; message: string }
 
-/** 가입에 보내는 값(로그인 문서 7절 26번). 생년월일·성별과 동의 둘은 선택이다. */
+/** 가입에 보내는 값: 이름, 이메일, 비밀번호(2026-11-17에 생년월일·성별과 동의를 뺐다, 로그인 문서 4.1). */
 export interface SignupInput {
   name: string
   email: string
   password: string
-  /** "YYYY-MM-DD" */
-  birthDate: string | null
-  gender: "male" | "female" | null
-  /** 생년월일·성별 수집·이용 동의. 생년월일이나 성별을 넣으면 있어야 한다(없으면 400) */
-  birthGenderConsent: boolean
-  /** 이벤트·혜택 안내 받기 */
-  eventNoticeConsent: boolean
 }
 
 /** 이메일로 가입한다. 확인 메일은 서버가 보낸다. 인증을 마친 계정이 그 이메일을 쓰면 EMAIL_TAKEN(409). */
@@ -57,7 +50,7 @@ export async function signup(input: SignupInput): Promise<SignupResult> {
     return { ok: true }
   } catch (error) {
     if (isApiError(error, "EMAIL_TAKEN")) return { ok: false, error: "EMAIL_TAKEN" }
-    // 생년월일이 오늘 뒤, 동의 없이 넣은 생년월일·성별 같은 것. 서버의 글을 그대로 보인다(로그인 문서 7절 28번)
+    // 서버가 막은 칸(이메일 꼴 등). 서버의 글을 그대로 보인다
     if (isApiError(error, "INVALID_INPUT")) return { ok: false, error: "INVALID_INPUT", message: error.message }
     throw error
   }

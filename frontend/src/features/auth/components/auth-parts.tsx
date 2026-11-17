@@ -3,7 +3,6 @@ import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { GOOGLE_BIRTH_GENDER_NOTICE } from "@/domain/session/consent"
 import { Heading } from "@/shared/components/heading"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { IconNote } from "@/shared/components/notice"
@@ -125,7 +124,6 @@ export function OrGoogle() {
         <GoogleMark />
         <span>구글로 계속하기</span>
       </Button>
-      <p className="text-label-sm text-text-secondary">{GOOGLE_BIRTH_GENDER_NOTICE}</p>
     </div>
   )
 }

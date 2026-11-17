@@ -8,7 +8,6 @@ const TODAY = "2026-11-17"
 const PROFILE: Profile = {
   name: "김다온",
   birthDate: "1999-03-01",
-  gender: "female",
   educations: [{ school: "한국대학교", major: null, graduation: "2024-02", gpa: 3.8, gpaScale: 4.5 }],
   certificates: [{ name: "컴활", acquired: null }],
   languages: [],
@@ -66,6 +65,6 @@ describe("프로필 비교", () => {
 
   it("이름도 목록도 없으면 빈 프로필이다", () => {
     expect(isEmptyProfile(PROFILE)).toBe(false)
-    expect(isEmptyProfile({ ...PROFILE, name: null, birthDate: null, gender: null, educations: [], certificates: [], careers: [] })).toBe(true)
+    expect(isEmptyProfile({ ...PROFILE, name: null, birthDate: null, educations: [], certificates: [], careers: [] })).toBe(true)
   })
 })
