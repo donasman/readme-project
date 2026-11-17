@@ -9,10 +9,13 @@ import org.junit.jupiter.api.Test;
 import com.readme.keyword.KeywordDictionary;
 import com.readme.posting.CardMatching.CardMatch;
 import com.readme.posting.CardMatching.MatchCard;
+import com.readme.posting.CardMatching.ProfileFacts;
 import com.readme.posting.CardMatching.Requirement;
+import com.readme.posting.CardMatching.RequirementResult;
 import com.readme.posting.CardMatching.Result;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * jobfit tests/test_match.py 에서 옮겼다: test_requirements_score_and_card_ranking(전체 점수 빼고),
@@ -47,7 +50,7 @@ class CardMatchingTests {
 		assertThat(requirements.get("배치 처리 경험").cards()).containsExactly(ETL); // 사전에 없는 카드 태그도 글에 있으면 낱말
 		assertThat(requirements.get("Kotlin·Spring Boot 개발").cards()).containsExactly(API); // Kotlin 은 없지만 Spring Boot
 
-		Result result = CardMatching.match(ANALYSIS, CARDS, KD);
+		Result result = CardMatching.match(ANALYSIS, CARDS, ProfileFacts.EMPTY, KD);
 
 		// api: 필수 2(SQL, Docker)·우대 1·키워드 1(Docker) = 9, etl: 필수 1·우대 1·키워드 1(Python) = 6, doc: 0
 		assertThat(result.matches()).extracting(CardMatch::cardId).containsExactly(API, ETL);
@@ -59,7 +62,7 @@ class CardMatchingTests {
 	@Test
 	void requirementsNoCardCoversAreUnmatched() {
 		Result result = CardMatching.match(analysis(List.of("Go 언어 개발", "성실함"), List.of("Kubernetes 운영"), List.of()),
-				CARDS, KD);
+				CARDS, ProfileFacts.EMPTY, KD);
 
 		assertThat(result.matches()).isEmpty();
 		assertThat(result.unmatched()).containsExactly("Go 언어 개발", "Kubernetes 운영");
@@ -75,7 +78,7 @@ class CardMatchingTests {
 
 		assertThat(requirements.get("JavaScript 또는 TypeScript 코드 작성").cards()).isEmpty(); // Java 태그가 JavaScript 에 걸리지 않는다
 		assertThat(requirements.get("백엔드 개발 경험").terms()).isEmpty(); // 직무 이름은 낱말로 치지 않는다
-		assertThat(CardMatching.match(analysis, cards, KD).matches()).singleElement()
+		assertThat(CardMatching.match(analysis, cards, ProfileFacts.EMPTY, KD).matches()).singleElement()
 			.extracting(CardMatch::overlap)
 			.isEqualTo(List.of("Java")); // 키워드도 직무 이름은 뺀다
 	}
@@ -92,7 +95,7 @@ class CardMatchingTests {
 		assertThat(requirements.get("Java 기반 웹 개발").cards()).containsExactly(1L, 2L);
 		assertThat(requirements.get("SQL 작성").cards()).containsExactly(2L); // MySQL 을 썼으면 SQL 도
 		assertThat(requirements.get("Spring 프레임워크").cards()).containsExactly(2L); // Spring Boot 는 Spring
-		assertThat(CardMatching.match(analysis, cards, KD).matches().get(0).cardId()).isEqualTo(2);
+		assertThat(CardMatching.match(analysis, cards, ProfileFacts.EMPTY, KD).matches().get(0).cardId()).isEqualTo(2);
 	}
 
 	@Test
@@ -114,7 +117,62 @@ class CardMatchingTests {
 
 	@Test
 	void noAnalysisNoMatches() {
-		assertThat(CardMatching.match(null, CARDS, KD)).isEqualTo(Result.EMPTY);
+		assertThat(CardMatching.match(null, CARDS, ProfileFacts.EMPTY, KD)).isEqualTo(Result.EMPTY);
+	}
+
+	@Test
+	void eachRequirementGetsAResult() {
+		PostingAnalysis analysis = analysis(List.of("Python 기반 API 개발", "Kubernetes 운영", "정처기 자격 보유"),
+				List.of("TOEIC 800점 이상", "성실함"), List.of());
+
+		Result result = CardMatching.match(analysis, CARDS, ProfileFacts.EMPTY, KD);
+
+		assertThat(result.requirements()).extracting(RequirementResult::kind, RequirementResult::text,
+				RequirementResult::status, RequirementResult::cardIds)
+			.containsExactly(tuple("must", "Python 기반 API 개발", "matched", List.of(ETL)),
+					tuple("must", "Kubernetes 운영", "unmatched", List.of()),
+					// 자격증은 키워드 사전에 없어 카드로 판단할 수 없다. 프로필을 넣지 않았다고 없는 것으로 보지 않는다
+					tuple("must", "정처기 자격 보유", "unknown", List.of()), tuple("nice", "TOEIC 800점 이상", "unknown", List.of()),
+					tuple("nice", "성실함", "unknown", List.of()));
+		assertThat(result.unmatched()).containsExactly("Kubernetes 운영");
+	}
+
+	@Test
+	void profileAnswersRequirementsCardsCannot() {
+		PostingAnalysis analysis = analysis(List.of("컴활 1급 이상", "컴퓨터공학 또는 관련 전공", "Kubernetes 운영"),
+				List.of("TOEIC 800점 이상", "Python 기반 API 개발"), List.of());
+		ProfileFacts profile = new ProfileFacts(List.of("컴퓨터활용능력"), List.of("TOEIC"), List.of("컴퓨터공학"));
+
+		Result result = CardMatching.match(analysis, CARDS, profile, KD);
+
+		assertThat(result.requirements()).extracting(RequirementResult::text, RequirementResult::status,
+				RequirementResult::profileItems)
+			.containsExactly(tuple("컴활 1급 이상", "profile", List.of("컴퓨터활용능력")), // 다른 표기도 자격증 사전으로 찾는다
+					tuple("컴퓨터공학 또는 관련 전공", "profile", List.of("컴퓨터공학")),
+					tuple("Kubernetes 운영", "unmatched", List.of()), tuple("TOEIC 800점 이상", "profile", List.of("TOEIC")),
+					tuple("Python 기반 API 개발", "matched", List.of())); // 카드가 맞추면 카드가 먼저다
+		assertThat(result.unmatched()).containsExactly("Kubernetes 운영");
+	}
+
+	@Test
+	void profileDoesNotHideAGapCardsCanJudge() {
+		PostingAnalysis analysis = analysis(List.of("정보처리기사 및 Kubernetes 운영 경험"), List.of(), List.of());
+		ProfileFacts profile = new ProfileFacts(List.of("정보처리기사"), List.of(), List.of());
+
+		Result result = CardMatching.match(analysis, CARDS, profile, KD);
+
+		assertThat(result.requirements()).singleElement()
+			.extracting(RequirementResult::status, RequirementResult::profileItems)
+			.containsExactly("unmatched", List.of("정보처리기사"));
+		assertThat(result.unmatched()).containsExactly("정보처리기사 및 Kubernetes 운영 경험");
+	}
+
+	@Test
+	void profileValuesNeedWordBoundariesAndTwoLetters() {
+		ProfileFacts profile = new ProfileFacts(List.of("C"), List.of("OPIc"), List.of("수"));
+
+		assertThat(CardMatching.profileItems("OPIc IH 이상", profile)).containsExactly("OPIc");
+		assertThat(CardMatching.profileItems("C 언어, OPIcs, 수 계산", profile)).isEmpty(); // 한 글자 값과 낱말 안의 글자는 보지 않는다
 	}
 
 	private static Map<String, Requirement> requirements(PostingAnalysis analysis, List<MatchCard> cards) {
