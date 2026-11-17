@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "regress": "node scripts/regress.mjs",
     "repeats": "node scripts/repeats.mjs",
+    "shots": "node scripts/shots.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc -b",
     "preview": "vite preview"

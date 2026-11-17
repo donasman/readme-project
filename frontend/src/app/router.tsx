@@ -23,6 +23,11 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         path: "/dev/components",
         lazy: async () => ({ Component: (await import("@/app/dev/components-page")).DevComponentsPage }),
       },
+      {
+        // 링크 미리보기 이미지의 원본(npm run shots가 찍는다)
+        path: "/dev/og",
+        lazy: async () => ({ Component: (await import("@/app/dev/og-page")).DevOgPage }),
+      },
     ]
   : []
 
