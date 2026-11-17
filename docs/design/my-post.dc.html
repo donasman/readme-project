@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공고 상세</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="readme-frame.css">
+<link rel="stylesheet" href="readme-tabs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="rm-root pal-a" data-theme="{{theme}}" style="position: relative; min-height: 100vh; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: 16px; line-height: 1.4; letter-spacing: -0.01em; word-break: keep-all; text-wrap: pretty">
+<header style="background: var(--background)">
+<div style="display: flex; flex-wrap: wrap; min-height: 72px; box-sizing: border-box; align-items: center; gap: 8px 20px; padding: 8px 24px; border-bottom: 1px solid var(--border-subtle); background: var(--surface)">
+<a href="Dashboard.dc.html" aria-label="리드미 홈" style="display: inline-flex; flex: none; align-items: center; gap: 8px; color: var(--foreground); font-size: 16px; font-weight: 700; line-height: 1.4; text-decoration: none"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="10" style="fill: var(--accent)"></rect><rect x="8" y="7.5" width="12" height="3" rx="1.5" style="fill: var(--accent-foreground)"></rect><rect x="5" y="13" width="22" height="7" rx="2.5" style="fill: var(--highlight)"></rect><rect x="8" y="15" width="16" height="3" rx="1.5" style="fill: var(--highlight-foreground)"></rect><rect x="8" y="22.5" width="9" height="3" rx="1.5" style="fill: var(--accent-foreground)"></rect></svg><span>리드미</span></a>
+<nav aria-label="주요 메뉴" style="min-width: 0">
+<ul style="display: flex; flex-wrap: wrap; margin: 0; padding: 0; align-items: center; gap: 4px; list-style: none">
+<li><a href="Groups.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">스터디</a></li>
+<li><a href="#" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">정보공유</a></li>
+<li><a href="Main.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">경험카드</a></li>
+</ul>
+</nav>
+<div style="display: flex; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: 8px">
+<a href="Account.dc.html" aria-label="내 계정" style="display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); border-radius: 50%; background: var(--surface-sunken); color: var(--foreground); font-size: 13px; font-weight: 700; text-decoration: none">다</a>
+</div>
+</div>
+</header>
+<main style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px 64px; display: flex; flex-direction: column; gap: 32px; gap: 24px">
+<a href="MyPosts.dc.html" style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; min-height: 44px; color: var(--text-secondary); font-size: 14px; font-weight: 700; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg><span>내 공고</span></a>
+<sc-if value="{{arrived}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; border-radius: var(--radius-control); background: var(--highlight-subtle); font-size: 14px">
+<strong style="font-weight: 700">이미 내 공고에 있는 공고입니다</strong>
+<span>넣으려던 공고가 이미 있어 이 공고로 왔습니다. 지원 상태와 메모는 그대로입니다.</span>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">예시 공사</p>
+<h1 style="margin: 0; font-family: var(--font-display); font-size: 36px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">전산직 7급 공채</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 14px">
+<span style="display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 52px; height: 28px; box-sizing: border-box; padding: 0 10px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 13px; font-weight: 700; white-space: nowrap">D-5</span>
+<span>2026-11-18 (수) 마감</span>
+<span style="color: var(--text-secondary)">지원하는 곳: 기관 채용 홈페이지</span>
+<a href="#" style="font-weight: 700; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: -12px 0"><span>원문 보기</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 24px; flex: 999 1 560px; min-width: 0">
+
+<section aria-labelledby="mp-state" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="mp-state" style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-secondary)">내 상태</h2>
+<p style="margin: 0; font-size: 18px; font-weight: 700">지원함 · 필기 단계</p>
+</div>
+<a href="Board.dc.html" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-weight: 700; white-space: nowrap; text-decoration: none">상태 바꾸기</a>
+</div>
+</section>
+
+<section aria-labelledby="mp-body" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting); gap: 20px">
+<h2 id="mp-body" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">공고 내용</h2>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-secondary)">{{s.label}}</h3>
+<ul style="display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none">
+<sc-for list="{{s.items}}" as="it" hint-placeholder-count="2">
+<li style="display: flex; align-items: flex-start; gap: 10px"><span aria-hidden="true" style="flex: none; width: 6px; height: 6px; margin-top: 9px; border-radius: 50%; background: var(--border-strong)"></span><span>{{it.text}}</span></li>
+</sc-for>
+</ul>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-secondary)">키워드</h3>
+<ul style="display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none">
+<sc-for list="{{keywords}}" as="k" hint-placeholder-count="4">
+<li style="padding: 4px 10px; border-radius: var(--radius-pill); background: var(--surface-muted); font-size: 12px; font-weight: 500">{{k.text}}</li>
+</sc-for>
+</ul>
+</div>
+</section>
+
+<section aria-labelledby="mp-memo" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="mp-memo" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">나만 보는 메모</h2>
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">그룹에는 보이지 않습니다.</p>
+</div>
+<label for="mp-memo-text" class="rm-sr">메모</label>
+<textarea id="mp-memo-text" rows="3" defaultValue="필기는 NCS와 전산 전공. 작년 기출 범위 다시 보기." style="width: 100%; min-height: 96px; box-sizing: border-box; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; line-height: 1.4; letter-spacing: inherit; resize: vertical"></textarea>
+</section>
+
+</div>
+
+<aside style="display: flex; flex-direction: column; gap: 24px; flex: 1 1 320px; min-width: 0">
+
+<section aria-labelledby="mp-match" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="mp-match" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">맞는 카드</h2>
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">공고의 요건·키워드와 카드의 태그가 겹치는 순서입니다.</p>
+</div>
+<ul style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="3">
+<li style="padding: 12px 0; border-top: 1px solid {{c.line}}">
+<a href="Card.dc.html" style="display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--foreground); text-decoration: none; gap: 6px">
+<span style="font-size: 14px; font-weight: 700">{{c.title}}</span>
+<span style="font-size: 13px; color: var(--text-secondary)">겹치는 것: {{c.hit}}</span>
+</a>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary); padding-top: 12px; border-top: 1px solid var(--border-subtle)">카드로 답하지 못한 요건: 네트워크 운영 경험</p>
+</section>
+
+<section aria-labelledby="mp-groups" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<h2 id="mp-groups" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">이 공고가 있는 그룹</h2>
+<a href="GroupPost.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 52px; color: var(--foreground); text-decoration: none"><span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--accent-foreground); font-size: 15px; font-weight: 700; width: 32px; height: 32px; font-size: 13px">공</span><span style="display: flex; flex-direction: column; gap: 4px; gap: 0; min-width: 0"><span style="font-size: 14px; font-weight: 700">공기업 전산직</span><span style="font-size: 13px; color: var(--text-secondary)">관심 켬 · 댓글 4 · 공개 범위: 단계·결과까지</span></span></a>
+</section>
+
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"arrived":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":1300}}'>
+class Component extends DCLogic {
+renderVals() {
+var props = this.props || {};
+var st = this.state || {};
+var self = this;
+var theme = props.dark ? 'dark' : 'light';
+function items(list) { return list.map(function (t) { return { text: t }; }); }
+var sections = [
+{ label: '주요 업무', items: items(['기관 업무 시스템 운영과 유지보수', '정보보안 점검과 전산 자원 관리']) },
+{ label: '필수 요건', items: items(['정보처리기사 또는 같은 수준의 자격', 'Java 기반 웹 시스템 개발 경험']) },
+{ label: '우대 사항', items: items(['네트워크 운영 경험', 'SQL 튜닝 경험']) }
+];
+var keywords = items(['Java', 'Spring', 'SQL', '정보보안', '네트워크']);
+var cards = [
+['주문 조회 API 응답 시간 개선', 'Java, SQL'],
+['로그인 기능 직접 구현', 'Java, Spring, 정보보안'],
+['배치 작업 재실행 구조 만들기', 'SQL']
+].map(function (c, i) { return { title: c[0], hit: c[1], line: i === 0 ? 'transparent' : 'var(--border-subtle)' }; });
+return { theme: theme, arrived: !!props.arrived, sections: sections, keywords: keywords, cards: cards };
+}
+}
+</script>
+</body>
+</html>

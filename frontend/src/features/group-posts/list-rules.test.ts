@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { Member } from "@/domain/group/types"
 
-import { buildPostList, DEFAULT_FILTERS, matchesFilters, toRow, type ListFilters } from "./list-rules"
+import { buildPostList, DEFAULT_FILTERS, knownMember, matchesFilters, toRow, type ListFilters } from "./list-rules"
 import type { Deadline, GroupPost } from "./types"
 
 const TODAY = "2026-11-13"
@@ -27,6 +27,7 @@ function post(over: Partial<GroupPost> & { due?: string } = {}): GroupPost {
     interests: [],
     me: { interested: false, status: null },
     commentCount: 0,
+    sourceUrl: null,
     ...rest,
   }
 }
@@ -35,14 +36,18 @@ const filters = (over: Partial<ListFilters> = {}): ListFilters => ({ ...DEFAULT_
 const ids = (list: ReturnType<typeof buildPostList>) => list.sections.map((s) => [s.title, s.rows.map((r) => r.post.company)])
 
 describe("toRow", () => {
-  it("관심을 켰거나 지원 상태가 있으면 나를 관심 멤버 맨 앞에 둔다", () => {
+  it("관심을 켰으면 나를 관심 멤버 맨 앞에 둔다", () => {
     const interests = [{ member: NARAE, applied: true }]
     expect(toRow(post({ interests, me: { interested: true, status: null } }), TODAY).fans).toEqual([
       { kind: "me" },
       { kind: "member", member: NARAE, applied: true },
     ])
-    expect(toRow(post({ me: { interested: false, status: "필기 단계" } }), TODAY).meOn).toBe(true)
     expect(toRow(post({ interests }), TODAY).fans).toEqual([{ kind: "member", member: NARAE, applied: true }])
+  })
+  it("관심을 끈 공고는 지원 상태가 있어도 나를 넣지 않는다(다른 멤버가 보는 것과 같다, 공고 문서 4.5)", () => {
+    const row = toRow(post({ me: { interested: false, status: "필기 단계" } }), TODAY)
+    expect(row.meOn).toBe(false)
+    expect(row.fans).toEqual([])
   })
 })
 
@@ -110,5 +115,14 @@ describe("buildPostList", () => {
       post({ company: "없음" }),
     ]
     expect(ids(buildPostList(list, filters({ sort: "fans" }), TODAY))).toEqual([["", ["두 명(나 포함)", "한 명", "없음"]]])
+  })
+})
+
+describe("knownMember", () => {
+  const members: Member[] = [{ id: "garam", name: "가람" }]
+  it("나와 지금 멤버만 거르고, 나간 멤버나 틀린 값은 전체로 본다", () => {
+    expect(knownMember("garam", members)).toBe("garam")
+    expect(knownMember("me", members)).toBe("me")
+    expect(knownMember("xyz", members)).toBe("")
   })
 })

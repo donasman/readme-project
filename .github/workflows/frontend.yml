@@ -1,0 +1,50 @@
+name: frontend
+
+# frontend 폴더가 바뀔 때만 돈다: main·dev 에 올라온 커밋과 PR. 린트, 테스트, 빌드와 브라우저 테스트(e2e)를 한다.
+# 브라우저 테스트는 따로 된 일(job)이라 빌드와 함께 돈다. 크로미움을 받느라 1분쯤 더 걸린다(2026-11-17 사용자 결정).
+# 배포는 Cloudflare Pages 가 저장소를 직접 읽어서 한다(루트 폴더 frontend, 빌드 명령 npm run build, 결과 폴더 dist).
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # Playwright가 쓰는 크로미움과 그 시스템 라이브러리. 설정은 playwright.config.ts(가짜 서버를 5175에 띄운다)
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

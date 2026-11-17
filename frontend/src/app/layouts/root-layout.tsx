@@ -1,6 +1,8 @@
 import type { ReactNode } from "react"
 import { Outlet, ScrollRestoration } from "react-router"
 
+import { ActionErrorAlert } from "@/app/action-error"
+
 /**
  * 모든 화면의 뿌리 틀. 디자인 화면의 뿌리와 같은 글자 규칙을 건다: 본문 줄 간격과 자간, 한글 낱말 단위 줄바꿈,
  * 끝줄 고르기. @container는 화면 제목 크기(cqw)의 기준이다.
@@ -18,7 +20,12 @@ export function RootLayout() {
   return (
     <>
       <RootFrame>
+        {/* 키보드로 처음 Tab을 누르면 보인다. 헤더를 건너 본문(id="main")으로 간다 */}
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-control focus:bg-surface focus:px-4 focus:py-2 focus:font-bold focus:shadow-floating">
+          본문으로 건너뛰기
+        </a>
         <Outlet />
+        <ActionErrorAlert />
       </RootFrame>
       <ScrollRestoration />
     </>

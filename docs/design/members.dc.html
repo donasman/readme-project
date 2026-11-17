@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>멤버·초대 관리</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="readme-frame.css">
+<link rel="stylesheet" href="readme-tabs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="rm-root pal-a" data-theme="{{theme}}" style="position: relative; min-height: 100vh; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: 16px; line-height: 1.4; letter-spacing: -0.01em; word-break: keep-all; text-wrap: pretty">
+<header style="position: relative; z-index: 20">
+<div class="rm-bar" style="display: flex; min-height: 72px; box-sizing: border-box; align-items: center; gap: 12px; margin: 12px 16px 0; padding: 8px 16px 8px 24px; border: 1px solid var(--float-edge, var(--surface)); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-floating)">
+<a href="Groups.dc.html" aria-label="리드미 홈" style="display: inline-flex; flex: none; align-items: center; min-height: var(--control-height-md); color: var(--foreground); font-size: 16px; font-weight: 700; line-height: 1.4; text-decoration: none">리드미</a>
+<button type="button" aria-haspopup="true" aria-expanded="false" style="display: inline-flex; flex: none; align-items: center; gap: 8px; height: var(--control-height-md); padding: 0 12px 0 6px; border: 0; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--foreground); font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: inherit; cursor: pointer"><span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-foreground); font-size: 13px; font-weight: 700">백</span><span style="overflow: hidden; max-width: 160px; text-overflow: ellipsis; white-space: nowrap">백엔드 스터디</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<nav class="rm-nav" aria-label="그룹 메뉴" style="min-width: 0; margin-left: 8px">
+<ul style="display: flex; margin: 0; padding: 0; align-items: center; gap: 4px; list-style: none">
+<li><a href="GroupPosts.dc.html" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; color: var(--text-secondary)">공고</a></li>
+<li><a href="Members.dc.html" aria-current="page" style="display: inline-flex; min-height: var(--control-height-sm); align-items: center; padding: 0 16px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; text-decoration: none; background: var(--accent-subtle); color: var(--accent-strong)">멤버</a></li>
+</ul>
+</nav>
+<div style="display: flex; min-width: 0; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: 8px">
+<a href="Account.dc.html" aria-label="내 계정" style="display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); border-radius: 50%; background: var(--surface-sunken); color: var(--foreground); font-size: 13px; font-weight: 700; text-decoration: none">다</a>
+<button class="rm-menu" type="button" aria-label="메뉴" style="flex: none; align-items: center; justify-content: center; width: var(--control-height-sm); height: var(--control-height-sm); padding: 0; border: 1px solid var(--outline-border); border-radius: var(--radius-pill); background: var(--outline-fill); color: var(--foreground); cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button>
+</div>
+</div>
+</header>
+<main style="max-width: 1240px; margin: 0 auto; box-sizing: border-box; padding: 40px 16px 64px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">백엔드 스터디 · 멤버 5명</p>
+<h1 style="margin: 0; font-family: var(--font-display); font-size: clamp(2.5rem, 10cqw, 4.5rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.03em">멤버</h1>
+</div>
+<button type="button" onClick="{{makeLink}}" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid transparent; background: var(--accent); color: var(--accent-foreground); font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer; padding: 0 20px 0 16px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg><span>초대 링크 만들기</span></button>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px">
+<section aria-label="멤버 목록" style="display: flex; flex-direction: column; gap: 24px; flex: 999 1 560px; min-width: 0; gap: 12px">
+<ul style="display: flex; flex-direction: column; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting); list-style: none">
+<sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+<li style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 16px 20px; border-top: 1px solid {{m.line}}">
+<span aria-hidden="true" style="display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-sunken); font-size: 14px; font-weight: 700">{{m.initial}}</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; flex: 1 1 160px; min-width: 0">
+<span style="font-weight: 700">{{m.name}}</span>
+<sc-if value="{{m.me}}"><span style="display: inline-flex; flex: none; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--highlight); color: var(--highlight-foreground); font-size: 12px; font-weight: 700; white-space: nowrap">나</span></sc-if>
+<sc-if value="{{m.leader}}"><span style="display: inline-flex; flex: none; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: var(--accent-strong); font-size: 12px; font-weight: 700; white-space: nowrap">그룹장</span></sc-if>
+</div>
+<span style="font-size: 13px; color: var(--text-secondary); white-space: nowrap">{{m.joined}} 들어옴</span>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">멤버 누구나 공고를 올리고 초대 링크를 만들 수 있습니다. 그룹에서 공고를 내리는 것은 올린 사람과 그룹장만 합니다.</p>
+</section>
+
+<aside style="display: flex; flex-direction: column; gap: 24px; flex: 1 1 320px; min-width: 0">
+
+<section aria-labelledby="mb-disc" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="mb-disc" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">내 공개 범위</h2>
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">이 그룹 멤버에게 내 지원 상태를 어디까지 보일지 정합니다.</p>
+</div>
+<div role="radiogroup" aria-labelledby="mb-disc" style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{discs}}" as="d" hint-placeholder-count="3">
+<label style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius-control); cursor: pointer; border: 1px solid {{d.border}}; background: {{d.fill}}">
+<input type="radio" name="disclosure" checked="{{d.on}}" onChange="{{d.pick}}" style="flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent)">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 14px; font-weight: 700">{{d.label}}</span>
+<span style="font-size: 13px; color: var(--text-secondary)">{{d.desc}}</span>
+</span>
+</label>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">관심을 켠 공고에만 적용됩니다. 그룹마다 따로 정합니다.</p>
+</section>
+
+<section aria-labelledby="mb-invite" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<h2 id="mb-invite" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">초대 링크</h2>
+<sc-if value="{{noLink}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">지금 쓸 수 있는 링크가 없습니다. 링크를 만들어 들어올 사람에게 보내세요.</p>
+</sc-if>
+<sc-if value="{{hasLink}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px">
+<label for="mb-link" class="rm-sr">초대 링크</label>
+<input id="mb-link" type="text" readOnly="{{yes}}" defaultValue="https://readme.example/invite/Xk3f9QmT2a" style="height: var(--control-height-md); width: 100%; min-width: 0; box-sizing: border-box; padding: 4px 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--input-fill); color: var(--foreground); font-family: inherit; font-size: 16px; letter-spacing: inherit; font-size: 14px">
+<button type="button" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer; padding: 0 16px 0 12px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg><span>복사</span></button>
+</div>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">2026-11-20까지 쓸 수 있습니다(7일). 링크를 가진 사람은 누구나 들어올 수 있습니다. 주소는 지금만 보이니 복사해 두세요.</p>
+</div>
+</sc-if>
+<sc-if value="{{hasLinks}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-secondary)">쓸 수 있는 링크 {{linkCount}}개</h3>
+<ul style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none">
+<sc-for list="{{links}}" as="l" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-subtle)">
+<div style="display: flex; flex: 1 1 0; flex-direction: column; gap: 2px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px">
+<span style="font-size: 14px; font-weight: 700">{{l.by}}</span>
+<sc-if value="{{l.me}}"><span style="display: inline-flex; flex: none; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--highlight); color: var(--highlight-foreground); font-size: 12px; font-weight: 700; white-space: nowrap">나</span></sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 13px; color: var(--text-secondary)">
+<span style="white-space: nowrap">{{l.made}} 만듦</span>
+<span style="white-space: nowrap">{{l.until}}까지</span>
+</div>
+</div>
+<sc-if value="{{l.canCancel}}">
+<a href="InviteCancel.dc.html" aria-label="{{l.cancelLabel}}" style="display: inline-flex; flex: none; align-items: center; justify-content: center; height: var(--control-height-md); box-sizing: border-box; padding: 0 16px; border-radius: var(--radius-pill); font-size: 13px; border: 1px solid var(--outline-border); background: var(--outline-fill); color: var(--foreground); font-weight: 700; white-space: nowrap; text-decoration: none">취소</a>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 0; font-size: 13px; color: var(--text-secondary)">{{cancelRule}} 링크 주소는 만든 직후에만 보여 목록에는 나오지 않습니다.</p>
+</div>
+</sc-if>
+</section>
+
+<section aria-labelledby="mb-leave" style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-resting)">
+<h2 id="mb-leave" style="margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4">그룹 나가기</h2>
+<sc-if value="{{canLeave}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">나가면 이 그룹에서 켠 관심이 지워집니다. 내 공고 목록과 내가 쓴 댓글은 남습니다.</p>
+<button type="button" style="display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: var(--control-height-md); box-sizing: border-box; padding: 0 20px; border-radius: var(--radius-pill); font-size: 14px; border: 1px solid transparent; background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--foreground); font-family: inherit; font-weight: 700; letter-spacing: inherit; white-space: nowrap; cursor: pointer; align-self: flex-start">그룹 나가기</button>
+</sc-if>
+<sc-if value="{{isLeader}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 14px; color: var(--text-secondary)">그룹장은 나갈 수 없습니다.</p>
+</sc-if>
+</section>
+
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"invite":{"editor":"boolean","default":false},"asLeader":{"editor":"boolean","default":false},"links":{"editor":"enum","options":["none","some"],"default":"none"},"$preview":{"width":1280,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+var props = this.props || {};
+var st = this.state || {};
+var self = this;
+var theme = props.dark ? 'dark' : 'light';
+var asLeader = !!props.asLeader;
+var linked = st.linked === undefined ? !!props.invite : !!st.linked;
+var members = [['가람', '2026-09-01'], ['나래', '2026-09-03'], ['다온', '2026-09-10'], ['라온', '2026-10-02'], ['마루', '2026-10-20']].map(function (m, i) {
+var me = m[0] === '다온';
+return { name: m[0], initial: m[0].charAt(0), joined: m[1], me: me, leader: asLeader ? me : m[0] === '가람', line: i === 0 ? 'transparent' : 'var(--border-subtle)' };
+});
+
+var seed = props.links === 'some' ? [['가람', false, '2026-11-12 21:05', '2026-11-19'], ['다온', true, '2026-11-10 09:40', '2026-11-17'], ['탈퇴한 멤버', false, '2026-11-08 18:12', '2026-11-15']] : [];
+if (linked) seed = [['다온', true, '2026-11-13 14:20', '2026-11-20']].concat(seed);
+var links = seed.map(function (l) {
+return { by: l[0], me: l[1], made: l[2], until: l[3], canCancel: asLeader || l[1], cancelLabel: l[2] + '에 만든 링크 취소' };
+});
+
+var disc = st.disc || 'APPLIED';
+var discs = [
+['INTEREST', '관심만', '관심을 켠 것만 보입니다.'],
+['APPLIED', '지원 여부까지', '관심과 지원함이 보입니다. 처음 값입니다.'],
+['PROGRESS', '단계·결과까지', '서류·필기·면접 단계와 합격·불합격까지 보입니다.']
+].map(function (d) {
+var on = d[0] === disc;
+return { label: d[1], desc: d[2], on: on, border: on ? 'var(--accent)' : 'var(--border)', fill: on ? 'var(--accent-subtle)' : 'transparent', pick: function () { self.setState({ disc: d[0] }); } };
+});
+
+return {
+theme: theme,
+yes: true,
+members: members,
+discs: discs,
+noLink: links.length === 0,
+hasLinks: links.length > 0,
+links: links,
+linkCount: links.length,
+cancelRule: asLeader ? '그룹장은 모든 링크를 취소할 수 있습니다.' : '내가 만든 링크만 취소할 수 있습니다. 그룹장은 모든 링크를 취소합니다.',
+hasLink: linked,
+makeLink: function () { self.setState({ linked: true }); },
+canLeave: !asLeader,
+isLeader: asLeader
+};
+}
+}
+</script>
+</body>
+</html>

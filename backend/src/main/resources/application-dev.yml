@@ -1,7 +1,13 @@
 # 내 PC 에서 띄울 때. DB 와 메일 수신기는 저장소 맨 위의 compose.yaml 로 띄운다(docker compose up -d).
 spring:
+  config:
+    # 내 PC 에서만 쓰는 값(구글 클라이언트, Claude API 키 등)을 backend/application-local.yml 에 두면 읽는다.
+    # 이 파일은 git 에 올라가지 않는다. test 프로필만 켜는 테스트는 읽지 않아 내 PC 의 값이 그 결과를 바꾸지 않는다.
+    # test 와 dev 를 함께 켜는 dev/DevProfileTests 는 읽는다.
+    # 구글 로그인을 켜는 예시는 docs/리드미_설계_로그인.md 6.1.
+    import: optional:file:./application-local.yml
   datasource:
-    url: jdbc:postgresql://localhost:5432/readme?currentSchema=readme
+    url: jdbc:postgresql://localhost:5433/readme?currentSchema=readme   # compose.yaml 이 5433 으로 연다
     username: readme
     password: readme
   mail:
@@ -11,3 +17,7 @@ spring:
 app:
   frontend-origin: http://localhost:5173
   csrf-cookie-domain:        # 개발에서는 비워 둔다
+  mail-from: 리드미 <no-reply@readme.local>
+  inbound-mail:
+    domain: inbound.readme.local     # 내 PC 에는 메일이 오지 않는다. 받는 API 는 이 비밀 값으로 서명해 직접 부른다(메일 설계 6절)
+    secret: dev-inbound-secret

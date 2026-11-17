@@ -1,17 +1,36 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { describe, expect, it } from "vitest"
 
-import { daysBetween, formatCommentTime, formatMonthDay, formatMonthDayWeekday } from "./date"
+import { addDays, daysBetween, formatCommentTime, formatDateWeekday, formatDday, formatLongDate, formatMonthDay, formatMonthDayWeekday, seoulToday } from "./date"
 import { NotFoundError } from "./errors"
-import { objectParticle, subjectParticle } from "./korean"
+import { objectParticle, sentence, subjectParticle } from "./korean"
 import { paths } from "./paths"
 import { revalidateOnParams } from "./router"
+import { firstChar, isHttpUrl, matchesAccept } from "./utils"
 
 describe("date", () => {
   it("daysBetween: 달과 해를 넘어도 날 수", () => {
     expect(daysBetween("2026-10-30", "2026-11-02")).toBe(3)
     expect(daysBetween("2026-12-31", "2027-01-01")).toBe(1)
     expect(daysBetween("2026-11-13", "2026-11-10")).toBe(-3)
+  })
+  it("seoulToday: UTC로는 전날이어도 한국 날짜", () => {
+    expect(seoulToday(new Date("2026-11-12T15:30:00Z"))).toBe("2026-11-13")
+    expect(seoulToday(new Date("2026-12-31T14:59:59Z"))).toBe("2026-12-31")
+  })
+  it("addDays: 달과 해를 넘긴다", () => {
+    expect(addDays("2026-11-13", 7)).toBe("2026-11-20")
+    expect(addDays("2026-12-28", 7)).toBe("2027-01-04")
+  })
+  it("D-day: 남은 날, 당일은 D-Day", () => {
+    expect(formatDday("2026-11-13", "2026-11-16")).toBe("D-3")
+    expect(formatDday("2026-11-13", "2026-11-13")).toBe("D-Day")
+  })
+  it("날짜와 요일", () => {
+    expect(formatDateWeekday("2026-11-18")).toBe("2026-11-18 (수)")
+  })
+  it("긴 날짜: 연월일과 요일", () => {
+    expect(formatLongDate("2026-11-13")).toBe("2026년 11월 13일 금요일")
   })
   it("월.일과 요일", () => {
     expect(formatMonthDay("2026-03-05")).toBe("03.05")
@@ -78,5 +97,39 @@ describe("revalidateOnParams", () => {
     expect(group(args("/groups/be/posts?q=a", "/groups/be/posts?q=a"))).toBe(true)
     expect(group(args("/groups/be/posts?q=a", "/groups/be/posts?q=a", { defaultShouldRevalidate: false }))).toBe(false)
     expect(group(args("/groups/be/posts", "/groups/be/posts/be1", { formMethod: "POST" }))).toBe(true)
+  })
+})
+
+describe("isHttpUrl", () => {
+  it("http·https 주소만 받는다", () => {
+    expect(isHttpUrl("https://careers.example.com/jobs/7")).toBe(true)
+    expect(isHttpUrl("careers.example.com/jobs/7")).toBe(false)
+    expect(isHttpUrl("javascript:alert(1)")).toBe(false)
+  })
+})
+
+describe("matchesAccept", () => {
+  it("accept의 확장자로 끝나는 파일만 받는다", () => {
+    expect(matchesAccept("공고.PDF", ".pdf,.docx")).toBe(true)
+    expect(matchesAccept("photo.png", ".pdf,.docx")).toBe(false)
+    expect(matchesAccept("report.pdf.exe", ".pdf,.docx")).toBe(false)
+  })
+})
+
+describe("firstChar", () => {
+  it("이모지와 조합형 한글도 한 글자로 자른다", () => {
+    expect(firstChar("다온")).toBe("다")
+    expect(firstChar("🐳 스터디")).toBe("🐳")
+    expect(firstChar("👨‍👩‍👧 가족")).toBe("👨‍👩‍👧")
+    expect(firstChar("다온".normalize("NFD"))).toBe("다".normalize("NFD"))
+    expect(firstChar("")).toBe("")
+  })
+})
+
+describe("sentence", () => {
+  it("마침표가 없을 때만 붙인다", () => {
+    expect(sentence("그룹을 찾을 수 없습니다")).toBe("그룹을 찾을 수 없습니다.")
+    expect(sentence("다시 해 주세요.")).toBe("다시 해 주세요.")
+    expect(sentence("정말요?")).toBe("정말요?")
   })
 })

@@ -5,6 +5,9 @@ Thumbs.db
 .vscode/
 *.iml
 
+# Claude Code 플러그인(oh-my-claudecode)의 작업 상태. 어느 폴더에서든 생긴다
+.omc/
+
 # 비밀 값
 .env
 .env.*

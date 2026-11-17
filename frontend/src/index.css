@@ -17,8 +17,21 @@
     --highlight: #f7ee53;
     --highlight-strong: #dccf3a;
     --highlight-foreground: #252729;
+    /* 회색 글과 경고색: Arc 값은 옅은 회색 바탕(surface-muted)에서 4.3:1이라 글자 대비 기준(4.5:1)에 못 미친다.
+       조금 진하게 해 흰 바탕 5.0:1, 옅은 회색 바탕 4.6:1 이상으로 맞춘다. 다크는 Arc 값이 이미 6:1을 넘어 그대로 둔다. */
+    --text-secondary: oklch(54% .023 251);
+    --text-muted: oklch(54% .023 251);
+    --warning: oklch(55% .18 75);
     /* shadcn 모서리 기준. radius-lg = 18px(Arc 컨트롤), radius-xl ≈ 25px(Arc 패널 26px) */
     --radius: var(--radius-control);
+}
+
+/* 휴대폰(640px 아래)에서는 작은 컨트롤(36px)도 누르기 권장 크기 44px로 올린다(2026-11-17 사용자 결정).
+   작은 버튼, 메뉴·필터 칩, 탭(SegmentedControl), 드롭다운, 링크 버튼이 이 값을 쓴다. */
+@media (width < 40rem) {
+    :root {
+        --control-height-sm: var(--control-height-md);
+    }
 }
 
 :root.dark {
@@ -93,8 +106,11 @@
     --color-highlight: var(--highlight);
     --color-highlight-strong: var(--highlight-strong);
     --color-highlight-foreground: var(--highlight-foreground);
+    --color-highlight-subtle: var(--highlight-subtle);
     --color-warning: var(--warning);
     --color-danger: var(--danger);
+    --color-success: var(--success);
+    --color-control-track: var(--control-track);
     --radius-control: var(--radius-control);
     --radius-panel: var(--radius-panel);
     --radius-surface: var(--radius-surface);
@@ -102,7 +118,7 @@
     --shadow-raised: var(--shadow-raised);
     --shadow-floating: var(--shadow-floating);
     --shadow-highlight-resting: var(--shadow-highlight-resting);
-    /* 컨트롤 높이: h-control-sm(36) · h-control-md(44) · h-control-lg(50) */
+    /* 컨트롤 높이: h-control-sm(36, 휴대폰은 44) · h-control-md(44) · h-control-lg(50) */
     --spacing-control-sm: var(--control-height-sm);
     --spacing-control-md: var(--control-height-md);
     --spacing-control-lg: var(--control-height-lg);

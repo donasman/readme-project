@@ -1,13 +1,16 @@
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
+import { memberName } from "@/domain/group/member"
 import type { Viewer } from "@/domain/session/types"
+import { Pill } from "@/shared/components/pill"
 import { CheckIcon, MessageSquareIcon } from "@/shared/icons"
 import { formatMonthDay } from "@/shared/lib/date"
 
-import { deadlineText } from "../deadline"
+import { deadlineText } from "@/domain/posting/deadline"
 import type { PostRow as Row } from "../list-rules"
-import { MeChip, MemberChip, NewBadge, StatusPill } from "./chips"
+import type { ListReturnState } from "../types"
+import { MemberChip, NewBadge, StatusPill } from "./chips"
 
 /** 칸 6개: 마감, 공고, 관심 멤버, 내 상태, 댓글, 올린 사람. 768px 미만에서는 카드가 된다. */
 export const POST_GRID = "md:grid-cols-[104px_minmax(0,1.15fr)_minmax(0,1fr)_128px_56px_132px]"
@@ -18,13 +21,16 @@ interface PostRowProps {
   viewer: Viewer
   detailPath: string
   onToggleInterest: (interested: boolean) => void
+  /** 마감을 못 읽은 공고의 "날짜 넣기" */
+  onFillDeadline: () => void
 }
 
 /**
  * 목록 한 줄. 넓으면 칸 6개, 768px 미만이면 카드(회사명과 D-day / 관심 멤버와 댓글 수 / 내 상태)이고
  * 올린 사람은 상세에서 보여 준다(docs/design/readme-tabs.css 의 rm-row 규칙).
  */
-export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: PostRowProps) {
+export function PostRow({ row, today, viewer, detailPath, onToggleInterest, onFillDeadline }: PostRowProps) {
+  const back: ListReturnState = { listSearch: useLocation().search }
   const { post } = row
   const due = deadlineText(post.deadline, today)
 
@@ -36,8 +42,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: Po
         {post.deadline.kind === "unknown" ? (
           <>
             <span className="text-label-sm font-bold text-warning">마감일 확인 필요</span>
-            {/* 날짜 넣기: 아직 동작 없음 */}
-            <Button variant="outline" size="xs" className="mt-0.5 h-7 self-start px-3">
+            <Button variant="outline" size="xs" className="mt-0.5 h-7 self-start px-3 max-sm:h-control-md" onClick={onFillDeadline}>
               날짜 넣기
             </Button>
           </>
@@ -51,6 +56,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: Po
 
       <Link
         to={detailPath}
+        state={back}
         className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5 text-foreground md:col-start-2"
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -63,7 +69,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: Po
       <div className="col-start-1 row-start-2 flex min-w-0 flex-wrap items-center gap-1 md:col-start-3 md:row-start-1">
         {row.fans.map((fan) =>
           fan.kind === "me" ? (
-            <MeChip key="me" />
+            <Pill key="me" tone="highlight">나</Pill>
           ) : (
             <MemberChip key={fan.member.id} name={fan.member.name} applied={fan.applied} />
           )
@@ -88,6 +94,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: Po
 
       <Link
         to={`${detailPath}#comments`}
+        state={back}
         aria-label={`댓글 ${post.commentCount}개`}
         className="col-start-2 row-start-2 inline-flex min-h-control-sm items-center gap-1 justify-self-end text-sm text-text-secondary md:col-start-5 md:row-start-1 md:justify-self-auto"
       >
@@ -96,7 +103,7 @@ export function PostRow({ row, today, viewer, detailPath, onToggleInterest }: Po
       </Link>
 
       <div className="hidden min-w-0 text-label-sm text-text-secondary md:col-start-6 md:row-start-1 md:block">
-        {post.postedBy.id === viewer.id ? "나" : post.postedBy.name} · {formatMonthDay(post.postedAt)}
+        {post.postedBy?.id === viewer.id ? "나" : memberName(post.postedBy)} · {formatMonthDay(post.postedAt)}
       </div>
     </li>
   )

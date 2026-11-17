@@ -71,8 +71,8 @@ function unit(name, root, bans, apiBans = []) {
   return configs
 }
 
-/** 도메인 사이의 순서. 앞의 도메인은 뒤의 도메인을 불러오지 않는다(group → session 한 방향). */
-const DOMAIN_ORDER = ['session', 'group']
+/** 도메인 사이의 순서. 앞의 도메인은 뒤의 도메인을 불러오지 않는다(group → session → posting → profile 한 방향). */
+const DOMAIN_ORDER = ['profile', 'posting', 'session', 'group']
 
 export const layerRules = [
   ...unit('shared', 'src/shared/', [BAN.sharedUp]),

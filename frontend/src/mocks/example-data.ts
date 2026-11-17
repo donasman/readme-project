@@ -1,7 +1,8 @@
 // 백엔드 연결 전 예시 데이터. docs/design/group-posts.dc.html 의 groups()와 group-post.dc.html 의 값을 그대로 옮겼다.
 // 이름, 회사, 공고, 댓글은 모두 지어낸 예시다. 보는 사람은 "다온"이고 디자인처럼 오늘은 2026-11-13이다.
 // 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
-import type { Disclosure, Member } from "@/domain/group/types"
+import type { Disclosure, GroupMember, Member } from "@/domain/group/types"
+import type { PostDraft } from "@/domain/posting/types"
 import type { Comment, Deadline, GroupPostDetail } from "@/features/group-posts/types"
 
 export const EXAMPLE_TODAY = "2026-11-13"
@@ -24,7 +25,7 @@ export const VIEWER = member("다온")
 
 // 디자인의 표기: due는 마감일, "always"(상시), "unknown"(못 읽음). by "나"는 보는 사람.
 // fans는 [이름, 지원함 표시] (지원함은 공개 범위가 "지원 여부까지" 이상인 멤버만 붙는다).
-// me는 "on" / "off" / 내 지원 상태 값.
+// me는 이 그룹에서 켠 관심("on" / "off")이다. 4차 시안의 "내 상태" 값은 쓰지 않고, 지원 상태는 8차 값(user-postings.ts)을 읽는다.
 interface RawPost {
   id: string
   company: string
@@ -33,7 +34,7 @@ interface RawPost {
   by: Name | "나"
   at: string
   fans: [Name, 0 | 1][]
-  me: string
+  me: "on" | "off"
   comments: number
 }
 interface RawGroup {
@@ -53,11 +54,11 @@ const RAW: RawGroup[] = [
     posts: [
       { id: "be1", company: "예시 커머스", title: "백엔드 개발자 신입", due: "2026-11-16", by: "가람", at: "2026-11-05", fans: [["가람", 1], ["나래", 1], ["라온", 0]], me: "on", comments: 3 },
       { id: "be2", company: "예시 핀테크", title: "서버 개발 인턴", due: "2026-11-20", by: "나래", at: "2026-11-11", fans: [["가람", 1], ["나래", 0], ["마루", 0]], me: "off", comments: 1 },
-      { id: "be3", company: "예시 물류", title: "백엔드 주니어", due: "2026-11-25", by: "라온", at: "2026-11-08", fans: [["라온", 0]], me: "지원함", comments: 0 },
+      { id: "be3", company: "예시 물류", title: "백엔드 주니어", due: "2026-11-25", by: "라온", at: "2026-11-08", fans: [["라온", 0]], me: "on", comments: 0 },
       { id: "be4", company: "예시 게임", title: "플랫폼 서버 신입", due: "2026-12-03", by: "마루", at: "2026-11-12", fans: [["마루", 0]], me: "off", comments: 0 },
       { id: "be5", company: "예시 에듀테크", title: "백엔드 엔지니어", due: "unknown", by: "나", at: "2026-11-13", fans: [], me: "off", comments: 0 },
       { id: "be6", company: "예시 SaaS", title: "서버 개발자", due: "always", by: "가람", at: "2026-11-02", fans: [["가람", 0]], me: "off", comments: 2 },
-      { id: "be7", company: "예시 모빌리티", title: "백엔드 신입 공채", due: "2026-11-10", by: "나래", at: "2026-10-28", fans: [["가람", 1], ["나래", 1]], me: "필기 단계", comments: 5 },
+      { id: "be7", company: "예시 모빌리티", title: "백엔드 신입 공채", due: "2026-11-10", by: "나래", at: "2026-10-28", fans: [["가람", 1], ["나래", 1]], me: "on", comments: 5 },
       { id: "be8", company: "예시 보안", title: "주니어 서버 개발", due: "2026-11-06", by: "가람", at: "2026-10-25", fans: [["가람", 0]], me: "off", comments: 0 },
     ],
   },
@@ -72,7 +73,7 @@ const RAW: RawGroup[] = [
   {
     id: "mes", name: "MES 준비반", mark: "M", members: ["자람", "차오름"], leader: "다온", myDisclosure: "applied",
     posts: [
-      { id: "mes1", company: "예시 제조", title: "MES 개발 신입", due: "2026-11-15", by: "나", at: "2026-11-03", fans: [["자람", 1], ["차오름", 0]], me: "지원함", comments: 2 },
+      { id: "mes1", company: "예시 제조", title: "MES 개발 신입", due: "2026-11-15", by: "나", at: "2026-11-03", fans: [["자람", 1], ["차오름", 0]], me: "on", comments: 2 },
       { id: "mes2", company: "예시 자동화", title: "스마트팩토리 SW", due: "2026-11-27", by: "자람", at: "2026-11-10", fans: [["자람", 0]], me: "on", comments: 0 },
     ],
   },
@@ -85,7 +86,10 @@ const BE1_COMMENTS: Comment[] = [
   { id: "be1-c2", author: member("나래"), createdAt: kst("2026-11-09"), body: [{ text: "작년 지원 후기를 찾았어요. " }, { text: "후기 글 보기", href: "#" }] },
   { id: "be1-c3", author: VIEWER, createdAt: kst("2026-11-12"), body: [{ text: "포트폴리오 링크 칸이 필수라서 미리 정리해 두면 좋겠어요." }] },
 ]
-const DETAILS: Record<string, Partial<GroupPostDetail>> = {
+/** 가짜 서버가 담아 두는 그룹 공고. 공고 분석은 읽을 때 공고 내용에서 만든다(db.ts의 exampleAnalysis). */
+export type StoredPost = Omit<GroupPostDetail, "analysis">
+
+const DETAILS: Record<string, Partial<StoredPost>> = {
   be1: {
     deadlineName: "서류 접수 마감",
     applyAt: "회사 채용 홈페이지",
@@ -98,6 +102,14 @@ const DETAILS: Record<string, Partial<GroupPostDetail>> = {
     comments: BE1_COMMENTS,
   },
 }
+/** 멤버가 들어온 날. 백엔드 스터디는 시안 7차 "멤버"의 값이고, 나머지 그룹은 지어냈다. */
+const JOINED: Record<string, Partial<Record<Name, string>>> = {
+  be: { 가람: "2026-09-01", 나래: "2026-09-03", 다온: "2026-09-10", 라온: "2026-10-02", 마루: "2026-10-20" },
+  pub: { 나래: "2026-08-20", 바다: "2026-08-22", 다온: "2026-09-05", 사랑: "2026-09-15" },
+  mes: { 다온: "2026-10-01", 자람: "2026-10-03", 차오름: "2026-10-08" },
+}
+const joined = (groupId: string, name: Name): GroupMember => ({ ...member(name), joinedAt: JOINED[groupId]?.[name] ?? EXAMPLE_TODAY })
+
 /** 상세에서만 보이는 지원 단계("단계·결과까지"를 연 멤버만). */
 const PROGRESS: Record<string, Partial<Record<Name, string>>> = { be1: { 나래: "면접 단계" } }
 
@@ -111,10 +123,10 @@ export interface ExampleGroup {
   id: string
   name: string
   mark: string
-  members: Member[]
+  members: GroupMember[]
   leaderId: string
   myDisclosure: Disclosure
-  posts: GroupPostDetail[]
+  posts: StoredPost[]
 }
 
 /** 예시 데이터를 새로 만든다. db.ts가 처음 한 번 불러 메모리에 두고 고친다. */
@@ -123,7 +135,7 @@ export function createExampleGroups(): ExampleGroup[] {
     id: g.id,
     name: g.name,
     mark: g.mark,
-    members: [VIEWER, ...g.members.map(member)],
+    members: [joined(g.id, "다온"), ...g.members.map((name) => joined(g.id, name))],
     leaderId: people[g.leader],
     myDisclosure: g.myDisclosure,
     posts: g.posts.map((p) => ({
@@ -139,15 +151,56 @@ export function createExampleGroups(): ExampleGroup[] {
         applied: applied === 1,
         ...(PROGRESS[p.id]?.[name] ? { progress: PROGRESS[p.id][name] } : {}),
       })),
-      me: { interested: p.me !== "off", status: p.me === "on" || p.me === "off" ? null : p.me },
+      // 내 지원 상태는 내 공고 행(user-postings.ts)에서 읽는다. 여기에는 이 그룹에서 켠 관심만 둔다
+      me: { interested: p.me === "on", status: null },
       commentCount: p.comments,
       deadlineName: null,
       applyAt: null,
-      sourceUrl: null,
+      // 시안처럼 예시 공고에는 모두 원문 주소가 있다. 주소 없는 공고(본문 붙여넣기)는 화면이 "원문 보기"를 감춘다
+      sourceUrl: `https://careers.example.com/jobs/${p.id}`,
       sections: [],
       keywords: [],
       comments: [],
       ...DETAILS[p.id],
     })),
   }))
+}
+
+/** 링크로 읽어 온 공고의 예시(시안 7차 "칸 확인"의 값). 마감은 "채용 시 마감"이라 읽지 못한 것으로 둔다. */
+export function createExampleDraft(sourceUrl: string): PostDraft {
+  return {
+    company: "예시 에듀테크",
+    title: "백엔드 엔지니어",
+    deadline: { kind: "unknown" },
+    sourceUrl,
+    applyAt: "회사 채용 페이지",
+    sections: [
+      { title: "주요 업무", items: ["학습 기록 API 개발과 운영", "배치 작업 개선"], from: "주요 업무" },
+      { title: "필수 요건", items: ["Java, Spring Boot 사용 경험", "RDBMS 설계 경험"], from: "자격 요건" },
+      { title: "우대 사항", items: ["JPA, MySQL 성능 개선 경험", "교육 서비스에 대한 관심"], from: "우대 사항" },
+    ],
+    keywords: ["Java", "Spring Boot", "JPA", "MySQL"],
+    evidence: { company: `페이지 제목 "[예시 에듀테크] 백엔드 엔지니어 채용"`, title: "페이지 제목" },
+    unread: ["deadline"],
+    source: {
+      title: "[예시 에듀테크] 백엔드 엔지니어 채용",
+      text: [
+        "주요 업무",
+        "학습 기록 API 개발과 운영, 배치 작업 개선",
+        "",
+        "자격 요건",
+        "Java, Spring Boot 사용 경험. RDBMS 설계 경험",
+        "",
+        "우대 사항",
+        "JPA, MySQL 성능 개선 경험. 교육 서비스에 대한 관심",
+        "",
+        "접수: 채용 시 마감",
+      ].join("\n"),
+    },
+  }
+}
+
+/** 공고의 원문 주소. 같은 주소를 다시 읽으면 "이미 이 그룹에 있는 공고"가 된다(시안 7차 "이미 있는 공고"). */
+export const EXAMPLE_POST_URLS: Record<string, string> = {
+  "https://careers.example.com/jobs/1001": "be1",
 }

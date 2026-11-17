@@ -29,6 +29,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	// 자료 읽기(extraction). DOCX·PPTX·HWPX 는 JDK 의 zip 과 XML 로 읽어 라이브러리가 없다.
+	implementation 'org.apache.pdfbox:pdfbox:3.0.8'   // PDF 의 글자 층
+	implementation 'kr.dogfoot:hwplib:1.1.11'         // 옛 한글 파일(HWP). 쓰는 POI 를 안에 품고 있어 따로 끌어오지 않는다
+	implementation 'org.jsoup:jsoup:1.24.1'   // 공고 HTML 읽기(jobfit 의 BeautifulSoup 대신)
+	// Claude 호출(llm). Spring AI 는 쓰지 않는다(정리 문서 4절). SDK 의 Jackson 2 는 Boot 가 정한 판으로 올라간다(서버의 Jackson 3 과 따로 돈다)
+	implementation 'com.anthropic:anthropic-java:3.8.0'
 	runtimeOnly 'org.postgresql:postgresql'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'

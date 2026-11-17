@@ -8,10 +8,15 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:server": "vite --mode server",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "regress": "node scripts/regress.mjs",
+    "repeats": "node scripts/repeats.mjs",
+    "shots": "node scripts/shots.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc -b",
     "preview": "vite preview"
@@ -36,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",

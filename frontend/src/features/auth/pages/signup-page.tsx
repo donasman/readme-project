@@ -1,0 +1,121 @@
+import { useState, type FormEvent } from "react"
+import { Link, useNavigate } from "react-router"
+
+import { Button } from "@/components/ui/button"
+import { NAME_MAX_LENGTH } from "@/domain/session/types"
+import { IconNote } from "@/shared/components/notice"
+import { paths } from "@/shared/lib/paths"
+
+import { signup } from "../api"
+import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, authInlineLink, AuthText, OrGoogle } from "../components/auth-parts"
+import { PASSWORD_TOO_LONG, passwordTooLong } from "@/domain/session/password"
+
+/**
+ * 회원가입(5차 "회원가입"). 이름, 이메일, 비밀번호만 받는다(2026-11-17, 생년월일은 기본 프로필에서 선택으로 넣는다).
+ * 가입하면 확인 메일을 보냈다는 화면으로 간다. 이미 있는 이메일이면 그 자리에서 알려 준다.
+ */
+export function SignupPage() {
+  const navigate = useNavigate()
+  const [taken, setTaken] = useState(false)
+  const [nameEmpty, setNameEmpty] = useState(false)
+  const [tooLong, setTooLong] = useState(false)
+  const [invalid, setInvalid] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const name = String(form.get("name") ?? "").trim()
+    const email = String(form.get("email") ?? "").trim()
+    const password = String(form.get("password") ?? "")
+    // required는 공백만 넣은 이름을 통과시킨다
+    if (!name) return setNameEmpty(true)
+    if (passwordTooLong(password)) return setTooLong(true)
+    setInvalid(null)
+    setSaving(true)
+    try {
+      const result = await signup({ name, email, password })
+      if (result.ok) navigate(paths.signupSent(), { state: { email } })
+      else if (result.error === "EMAIL_TAKEN") setTaken(true)
+      else setInvalid(result.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <AuthFrame>
+      <AuthHeading title="회원가입">
+        <AuthText>이메일로 가입하면 확인 메일을 보냅니다.</AuthText>
+      </AuthHeading>
+
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <AuthField
+          id="signup-name"
+          name="name"
+          label="표시 이름"
+          autoComplete="nickname"
+          placeholder="다온"
+          hint="그룹 멤버에게 보이는 이름입니다."
+          maxLength={NAME_MAX_LENGTH}
+          required
+          onChange={() => setNameEmpty(false)}
+          error={nameEmpty && "표시 이름을 넣어 주세요."}
+        />
+        <AuthField
+          id="signup-email"
+          name="email"
+          label="이메일"
+          type="email"
+          autoComplete="email"
+          placeholder="name@example.com"
+          required
+          onChange={() => setTaken(false)}
+          error={
+            taken && (
+              <>
+                이미 가입된 이메일입니다.{" "}
+                <Link to={paths.login()} className={authInlineLink}>
+                  로그인
+                </Link>
+                하거나{" "}
+                <Link to={paths.passwordReset()} className={authInlineLink}>
+                  비밀번호를 재설정
+                </Link>
+                하세요.
+              </>
+            )
+          }
+        />
+        <AuthField
+          id="signup-password"
+          name="password"
+          label="비밀번호"
+          type="password"
+          autoComplete="new-password"
+          hint="8자 이상"
+          minLength={8}
+          required
+          onChange={() => setTooLong(false)}
+          error={tooLong && PASSWORD_TOO_LONG}
+        />
+        {invalid && (
+          <div role="alert">
+            <IconNote tone="danger">{invalid}</IconNote>
+          </div>
+        )}
+        <Button type="submit" className="mt-1 w-full" disabled={saving}>
+          가입하기
+        </Button>
+      </form>
+
+      <OrGoogle />
+
+      <AuthFooter prompt="이미 계정이 있나요?">
+        <Link to={paths.login()} className={authFooterLink}>
+          로그인
+        </Link>
+      </AuthFooter>
+    </AuthFrame>
+  )
+}

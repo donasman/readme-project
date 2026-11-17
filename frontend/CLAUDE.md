@@ -3,6 +3,8 @@
 이 폴더(`frontend/`)의 코드를 만들거나 고칠 때 따른다. 근거와 옮기는 순서는 `../docs/리드미_프런트_구조_계획.md`에 있다.
 
 - 계획 문서 9절 중 정한 것(2026-11-13): 이름은 계획 그대로, 가짜 서버는 `mocks/`로 분리, 글자 규칙은 뿌리 틀로 올림, `/dev/components`는 개발 때만 등록. ESLint 경계 규칙은 넣는다(`eslint.layers.js`), 테스트는 Vitest로 넣는다. 이름이 바뀌면 이 파일도 같이 고친다.
+- "쓰기 전에", "고르는 순서", "미뤄 둔 것 표시", "줄이지 않는 것"은 ponytail 플러그인의 방식(일을 다 끝내는 가장 작은 변경)을 이 구조에 맞춘 것이다(2026-11-14). 플러그인이 없어도 이 파일을 따른다.
+- 우선순위: ponytail 규칙과 이 파일이 다르면 이 파일을 따른다. 예: ponytail은 시키지 않은 추상화를 만들지 말라고 하지만, 같은 모양이 3곳에서 나오면 공용 부품으로 뽑는다("올리고 뽑는 기준").
 
 ## 층
 
@@ -14,17 +16,44 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 
 - `app/`: 라우터, 틀(헤더), 오류 화면, 시작 설정. 기능은 `features/<기능>/index.ts`로만 불러온다.
 - `features/<기능>/`: 화면 단위 묶음. 다른 기능과 `app/`을 불러오지 않는다. 기능 안에서는 상대 경로로 불러온다.
-- `domain/<이름>/`: 두 기능 이상이 쓰는 개념(`session`, `group`). `features/`와 `app/`을 불러오지 않는다.
+- `domain/<이름>/`: 두 기능 이상이 쓰는 개념(`session`, `group`, `posting`, `profile`). `features/`와 `app/`을 불러오지 않는다.
 - `shared/`: 도메인을 모르는 코드. `domain/`, `features/`, `app/`을 불러오지 않는다.
 - `components/ui`(shadcn), `components/arc`(dsui): 받아 온 부품이다. 폴더를 옮기지 않는다. `arc`는 고치지 않는다.
-- `mocks/`: 가짜 서버. 각 층의 `api.ts`만 부른다. `mocks/`는 `shared/`와 타입(`import type`)만 불러온다.
+- `mocks/`: 가짜 서버. 각 층의 `api.ts`만 부른다. `npm run dev`에서는 모든 `api.ts`가, 진짜 서버 모드에서는 서버를 아직 붙이지 않은 `api.ts`가 부른다. `mocks/`는 `shared/`와 타입(`import type`)만 불러온다.
 - 다른 층이나 다른 묶음은 `@/` 별칭으로 불러온다. 묶음 밖으로 올라가는 상대 경로(`../../shared/…`)는 쓰지 않는다.
-- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session)도 거기 적는다.
+- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session → posting → profile)도 거기 적는다.
+
+## 쓰기 전에
+
+고치기 전에 이 변경이 닿는 곳을 모두 적는다. 닿는 곳까지가 할 일이고, 시키지 않은 기능은 할 일이 아니다.
+
+- 코드: 바꾸는 함수와 부품을 부르는 곳(grep), 그 기능의 `routes.tsx`, `shared/lib/paths.ts`, `types.ts`와 `api.ts`, `mocks/`, 테스트.
+- 모양: 그리려는 모양이 이미 몇 곳에 있는지 센다. `shared/components/`, `domain/*/`, 그 기능의 `components/`를 보고 클래스 줄을 grep한다. 이 수로 "올리고 뽑는 기준"을 정한다. 화면을 만든 뒤에는 `npm run repeats`(클래스가 모두 같은 줄)와 `npm run repeats -- --loose`(여백·크기 값만 다른 줄)로 세 파일 이상인 줄을 본다. 배치만 같은 줄도 나오므로, 역할과 생김새가 같은지는 사람이 본다.
+- 문서: 새로 2곳이 된 모양은 계획 문서 6절에 더한다. 설계에 없는 API를 가짜 서버로 흉내 내면 `../docs/리드미_화면_API_대응.md` 1절의 목록에 3절 번호를 더한다.
+- 버그: 고치는 함수를 부르는 곳을 모두 찾고, 원인을 공통 코드에서 한 번 고친다. 부르는 쪽 한 곳만 고치지 않는다.
+
+## 고르는 순서
+
+위에서부터 보고, 처음으로 일을 다 하는 것을 쓴다.
+
+1. 꼭 있어야 하나: 시안이나 요청에 없는 옵션, 설정, "나중을 위한" 코드는 만들지 않는다. 뺀 것은 보고에 한 줄로 적는다.
+2. 이미 있는 부품: `shared/components/`(부품마다 위의 주석이 설명이다), `domain/*/`, 그 기능의 `components/`. 있는 부품의 모양을 클래스 줄로 다시 적지 않는다.
+3. 받아 온 부품: `components/ui`(shadcn), `components/arc`(dsui).
+4. 브라우저가 하는 것: `minLength`, `required`, `accept` 같은 속성과 CSS.
+5. 설치된 패키지. 몇 줄을 위해 새 패키지를 더하지 않는다.
+6. 그래도 없으면 새 코드를 가장 적게 쓴다.
+
+- 공용 부품, 감싸는 함수, 설정 값은 "올리고 뽑는 기준"을 채웠을 때만 만든다.
+- 지우는 것이 더하는 것보다 낫다. 부품으로 바꾼 곳에 남은 클래스 줄과 안 쓰게 된 코드는 지운다.
+- 길이가 같으면 끝 경우(빈 값, 0, 마지막 항목, 날짜 경계)에 맞는 쪽을 고른다. 짧아도 풀어 읽어야 하는 한 줄은 짧은 것이 아니다.
+- 주석은 코드로 보이지 않는 이유만 한 줄로 적는다.
 
 ## 새 코드를 둘 자리
 
 - 새 화면: `features/<기능>/pages/`에 만들고 그 기능의 `routes.tsx`에 `lazy`로 등록한다. `app/router.tsx`는 기능의 라우트 묶음을 조립만 한다.
 - 서버와 주고받는 것: 그 층의 `api.ts` 한 곳에 둔다. 응답 모양은 `types.ts`에 둔다. 화면과 훅은 `api.ts`를 거친다.
+  - 서버는 `shared/lib/api.ts`의 `request`로 부른다(쿠키, CSRF 헤더, 오류를 `ApiError`로). 가짜 서버가 있는 함수는 맨 앞에서 `if (mockServer) return db.…`로 고른다.
+  - 칸 아래에 알릴 서버 오류는 `api.ts`가 `isApiError(error, "코드")`로 골라 결과 값으로 돌려주고, 나머지는 던진다. 던진 오류는 loader에서 나면 오류 화면(`app/route-error.tsx`)이, 버튼에서 나면 화면 아래 알림(`app/action-error.tsx`)이 보인다. 버튼의 처리기에서 오류를 삼키지 않는다(`catch`로 막으면 알림이 뜨지 않는다). 서버의 id(숫자)는 `request`가 문자열로 읽는다(이름이 `id`이거나 `Id`로 끝나는 칸, `Ids`로 끝나는 목록).
 - 화면과 무관한 규칙(필터, 정렬, 날짜 계산): 순수 함수 파일에 둔다(`list-rules.ts`, `deadline.ts`처럼). 컴포넌트 안에 두지 않는다.
 - 주소: `shared/lib/paths.ts`의 함수로 만든다. 문자열로 직접 만들지 않는다.
 - 아이콘: `shared/icons.ts`에서만 lucide를 불러온다.
@@ -33,16 +62,42 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 
 ## 올리고 뽑는 기준
 
-- 같은 모양이 3곳에서 나오면 공용 부품으로 뽑는다. 2곳까지는 그대로 둔다.
+- 같은 모양이 3곳에서 나오면 공용 부품으로 뽑는다. 2곳까지는 그대로 둔다. 역할과 생김새가 같으면 여백 같은 값이 조금 달라도 같은 모양으로 센다. 다른 값은 부품이 `className`으로 받는다.
 - 2곳이라 기다리는 모양은 계획 문서 6절에 있다. 세 번째를 만들게 되면 그때 뽑고 6절에서 지운다. 새로 2곳이 된 모양은 6절에 더한다.
 - 뽑은 부품이 갈 자리: 도메인을 모르면 `shared/components/`, 도메인 타입을 받으면 `domain/<이름>/`, 한 기능만 쓰면 그 기능의 `components/`.
-- 공용 부품(`Page`, `SurfaceCard`, `Heading`, `Avatar`, `textLink`)이 있는 모양은 클래스 줄로 다시 적지 않는다.
 - 같은 함수나 계산이 두 번 나오면 바로 하나로 합친다. 모양과 무관한 로직은 기다리지 않는다.
 - 두 번째 기능이 어떤 타입이나 api를 필요로 하면 `domain/`으로 올린다. 기능끼리 불러오게 하지 않는다.
-- 공용 부품을 뽑거나 고칠 때는 값(여백, 색, 모서리)을 바꾸지 않는다. 화면 모양이 달라지면 안 된다.
+- 공용 부품을 뽑거나 고칠 때는 값(여백, 색, 모서리)을 바꾸지 않는다. 화면 모양이 달라지면 안 된다. 화면 회귀 검사(아래 "확인")로 확인한다.
+- 옮기거나 합치는 코드는 접근성 속성, 입력 검사, 오류 처리를 그대로 가져간다.
+
+## 미뤄 둔 것 표시
+
+- 알고 남긴 한계에는 `// shortcut: <한계>, <언제 바꿀지>` 주석을 단다. JSX 안에서는 `{/* shortcut: … */}`로 쓴다.
+- 설계에 없는 API나 화면 때문이면 끝에 화면 API 대응 문서의 번호를 붙인다. 예: `// shortcut: 가짜 서버가 흉내 낸다, 내 공고 조회 API가 생기면 fetch로 바꾼다(화면 API 대응 3.3의 10번)`
+- 남은 일은 이 주석으로 모은다(`grep -rn "shortcut:" src`, 또는 ponytail의 `/ponytail-debt`).
+
+## 줄이지 않는 것
+
+가장 작은 변경이라도 아래는 빼지 않는다.
+
+- 접근성: 버튼과 링크의 이름, 바뀐 결과의 화면 읽기 알림(`role="status"`), 키보드로 닿기, 꾸밈의 `aria-hidden`.
+- 입력 검사와 오류 글: 빈 값, 틀린 꼴, 서버가 돌려준 오류(409 등)를 칸 아래에 알린다.
+- 되돌릴 수 없는 일에 시안이 그린 확인(카드 지우기·댓글 지우기·내리기·나가기의 창 `AppDialog`, 탈퇴의 비밀번호와 확인 표시).
+- 시킨 것과 시안에 그려진 것.
 
 ## 확인
 
 - 커밋 전에 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`를 돌린다.
-- 화면과 무관한 규칙(순수 함수)을 만들거나 고치면 옆에 `*.test.ts`를 두고 Vitest로 확인한다. Vitest는 Node 22.12 이상에서 돈다(이 저장소는 `.nvmrc`의 24).
+- 화면과 무관한 규칙(순수 함수)을 만들거나 고치면 옆에 `*.test.ts`를 두고 Vitest로 확인한다. 버그를 고치면 그 버그에서 실패하는 테스트를 하나 더한다. Vitest는 Node 22.12 이상에서 돈다(이 저장소는 `.nvmrc`의 24).
 - 층 규칙은 lint가 본다. 새 층이나 새 도메인을 만들면 `eslint.layers.js`에 더한다.
+- 진짜 서버로 보기: 저장소 맨 위에서 `docker compose up -d`, `backend`에서 `.\gradlew bootRun`을 띄운 뒤 `npm run dev:server`. 화면은 `http://localhost:5173`으로 연다(서버의 CORS가 이 주소만 받는다). 예시 사용자는 `daon@example.com` / `readme1234`다(구조 문서 6.2). `npm run dev`는 가짜 서버다.
+- 브라우저 테스트: `npm run test:e2e`(Playwright, `e2e/`)가 가짜 서버를 5175에 띄워 화면을 누르고, 주요 화면이 콘솔 오류 없이 열리며 옆으로 넘치지 않는지 본다. 데스크톱(1280)과 휴대폰(Pixel 7) 두 가지로 돈다. 처음 한 번은 `npx playwright install chromium`이 필요하다. 결과는 `playwright-report/`에 남고 git에 올리지 않는다. CI(`.github/workflows/frontend.yml`의 `e2e`)도 돌린다(2026-11-17).
+- 소개 페이지의 앱 화면(`public/welcome/`)과 링크 미리보기 이미지(`public/og.png`)는 캡처다. 그룹 공고 목록의 모양이 바뀌면 개발 서버(`npm run dev`)를 띄운 채 `npm run shots`로 다시 찍는다(`scripts/shots.mjs`). 미리보기 이미지의 원본은 개발 서버의 `/dev/og`다.
+- 화면 회귀 검사: 모양이 바뀌면 안 되는 변경(공용 부품 뽑기, 구조 바꾸기)은 개발 서버(`npm run dev`)를 띄운 채 고치기 전에 `npm run regress -- shoot before`, 고친 뒤 `npm run regress -- shoot after`를 돌리고 `npm run regress -- compare before after`가 "all scenarios pixel-identical"이어야 한다. 장면(모든 화면과 창, 버튼 오류 알림, 100개)은 `scripts/regress.mjs`에 있고, 새 화면이나 창을 만들면 장면을 더한다. 결과는 `.regress/`에 남고 git에 올리지 않는다.
+- 병합 전 리뷰: 코드를 바꾼 작업 브랜치는 dev에 넣기 전에 ponytail의 `/ponytail-review`로 그 브랜치를 본다. "Must fix"가 없어야 넣는다. "Should fix"는 고치거나 보고에 적는다. 주석이나 문서만 바꾼 브랜치는 하지 않는다.
+- 묶음 점검: 시안 한 차수(또는 화면 묶음)를 끝내면 `/ponytail-audit`을 한 번 돌린다. 나온 것은 고칠 것(작업 브랜치), 2곳 모양(계획 문서 6절), 미뤄 둘 것(`shortcut:` 표시)으로 나눈다.
+- ponytail 플러그인이 없는 세션에서는 같은 순서(맞는가, 안전한가, 테스트가 있는가, 군더더기가 없는가)로 직접 본다.
+
+## 보고
+
+- 끝에 한두 줄로 적는다: 건너뛴 것, 확인하지 못한 것, 사용자가 알아야 할 위험. 계획이나 시안과 달라진 것도 여기서 알린다.

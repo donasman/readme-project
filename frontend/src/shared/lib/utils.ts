@@ -7,3 +7,36 @@ export { cn } from "cn"
 export function joinClasses(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ")
 }
+
+/** 브라우저 탭 제목: 좁은 것부터 넓은 것 순서로 받아 "공고 · 백엔드 스터디 · 리드미"처럼 잇는다. */
+export function docTitle(...parts: string[]): string {
+  return [...parts, "리드미"].join(" · ")
+}
+
+/** http·https 주소인가. 다른 사람이 누를 링크로 보여 줄 값(원문 링크 등)을 받을 때 쓴다. */
+export function isHttpUrl(value: string): boolean {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 파일 이름이 input의 accept(".pdf,.docx" 같은 확장자 목록)에 맞는가.
+ * accept는 고르기 창만 거르므로, 끌어 놓은 파일과 "모든 파일"로 고른 파일은 이것으로 본다.
+ */
+export function matchesAccept(fileName: string, accept: string): boolean {
+  const name = fileName.toLowerCase()
+  return accept.split(",").some((ext) => name.endsWith(ext.trim().toLowerCase()))
+}
+
+// Intl.Segmenter가 없는 옛 브라우저(Firefox 125 전)에서도 이 모듈을 읽다 앱 전체가 멈추지 않게 있을 때만 만든다
+const graphemes = typeof Intl.Segmenter === "function" ? new Intl.Segmenter() : null
+
+/** 첫 글자 하나(이름·그룹 이름의 동그라미). 이모지와 조합형 한글도 반쪽으로 자르지 않는다. */
+export function firstChar(text: string): string {
+  if (!graphemes) return Array.from(text)[0] ?? ""
+  for (const { segment } of graphemes.segment(text)) return segment
+  return ""
+}

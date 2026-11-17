@@ -4,10 +4,7 @@ spring:
     name: readme
   profiles:
     default: dev   # SPRING_PROFILES_ACTIVE 를 주지 않으면 dev 로 뜬다. 운영 서버는 prod 를 준다.
-  config:
-    # 내 PC 에서만 쓰는 값(구글 클라이언트 비밀, Claude API 키 등)을 backend/application-local.yml 에 두면 읽는다.
-    # 이 파일은 git 에 올라가지 않는다.
-    import: optional:file:./application-local.yml
+  # 내 PC 에서만 쓰는 값(backend/application-local.yml)은 dev 프로필만 읽는다(application-dev.yml).
 
   datasource:
     hikari:
@@ -31,8 +28,19 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 20MB    # 이력서·포트폴리오 파일
-      max-request-size: 20MB
+      max-file-size: 20MB    # 이력서·포트폴리오와 공고 파일(extraction 의 SourceInput.MAX_BYTES 와 같다)
+      max-request-size: 21MB # 20MB 파일에 multipart 의 머리말이 붙어도 받는다
+      # 파일을 컨트롤러의 인자를 만들 때 읽는다. 20MB 를 넘으면 그 컨트롤러가 오류(SOURCE_TOO_LARGE, FILE_TOO_LARGE)를 낸다.
+      resolve-lazily: true
+
+  jackson:
+    factory:
+      constraints:
+        read:
+          # JSON 본문은 4MB(4 × 1024 × 1024 바이트)까지만 읽는다. 넘으면 413 REQUEST_TOO_LARGE.
+          # Tomcat 의 크기 제한은 폼·multipart 에만 걸리고, JSON 은 Jackson 이 끝까지 읽기 때문이다.
+          # 가장 큰 요청인 붙여 넣은 글(100만 자, 한글이면 UTF-8 로 약 3MB)이 들어가는 크기다.
+          max-document-length: 4194304
 
 server:
   port: 8080
@@ -41,7 +49,10 @@ server:
       cookie:
         http-only: true
         same-site: lax
-        max-age: 14d
+        # 쿠키는 로그인할 때 한 번만 내려온다. 위의 session.timeout 과 같게 두면 매일 써도 로그인하고 그만큼 지나면
+        # 브라우저가 쿠키를 지운다. 그래서 길게 두고, 로그인이 끝나는 때는 session.timeout(마지막 사용 후)이 정한다.
+        # 365일은 매일 써도 다시 로그인하게 되는 상한이다(아직 정하지 않은 값. 예시로 넣었다).
+        max-age: 365d
 
 management:
   endpoints:
@@ -51,3 +62,21 @@ management:
   health:
     mail:
       enabled: false         # 메일 서버가 꺼져 있어도 서버 상태를 DOWN 으로 보지 않는다
+
+app:
+  # 메일 자동화(docs/리드미_설계_메일.md). 수신 도메인과 Worker 와 함께 쓰는 서명 비밀 값.
+  # 비어 있으면 수신 주소가 없고(domain), 받는 API 가 모두 401 이다(secret). 운영은 INBOUND_MAIL_DOMAIN, INBOUND_MAIL_SECRET.
+  inbound-mail:
+    domain:
+    secret:
+  # Claude 호출(llm 패키지, 경험카드 설계 4.5). API 키(app.llm.api-key)는 개발은 backend/application-local.yml,
+  # 운영은 ANTHROPIC_API_KEY(application-prod.yml). 테스트는 키 없이 가짜 호출(FakeClaudeApi)을 쓴다.
+  llm:
+    model: claude-opus-5-5     # 모든 기능이 쓰는 모델(정리 문서 7절 "사용할 모델")
+    monthly-limit-usd: 2       # 사용자마다 한 달(서울 기준 달력 월) 사용액 상한(정리 문서 7절 "무료 한도")
+    # 백만 토큰당 달러(platform.claude.com 가격 문서, 2026-11-16 확인). 사용액은 저장할 때 이 표로 낸다.
+    # claude-opus-5 와 claude-opus-4-8 은 서버 쪽 fallback 이 넘겨줄 수 있는 모델이다. 표에 없는 모델은 가장 비싼 단가로 센다.
+    prices:
+      "[claude-opus-5-5]": { input: 4, output: 20, cache-write-5m: 5, cache-write-1h: 8, cache-read: 0.20 }
+      "[claude-opus-5]": { input: 5, output: 25, cache-write-5m: 6.25, cache-write-1h: 10, cache-read: 0.50 }
+      "[claude-opus-4-8]": { input: 5, output: 25, cache-write-5m: 6.25, cache-write-1h: 10, cache-read: 0.50 }

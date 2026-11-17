@@ -1,0 +1,119 @@
+# 리드미 서버 작업 규칙
+
+이 폴더(`backend/`)의 코드를 만들거나 고칠 때 따른다. 브랜치와 커밋 규칙은 루트의 `CLAUDE.md`에 있다.
+
+## 설계 문서
+
+- 서버의 지금 구조(패키지, 모든 API에 걸리는 규칙, 공통 오류 코드, 로그인과 세션, 임시 로그인, 만든 API)는 `../docs/리드미_백엔드_구조.md`에 있다. 이 파일은 지켜야 할 규칙만 둔다.
+- 테이블과 API 의 근거는 기능별 설계 문서다: `../docs/리드미_설계_로그인.md`, `리드미_설계_경험카드.md`, `리드미_설계_그룹.md`, `리드미_설계_공고.md`, `리드미_설계_프로필.md`, `리드미_설계_메일.md`. 모두 초안이다. 옛 `리드미_설계_로그인_경험카드.md`, `리드미_설계_그룹_공고.md`는 옛 절이 간 곳만 남은 표다. 코드 주석이 옛 절을 가리키면 그 표로 찾는다.
+- 초안의 가정(각 문서 2절, L·C·G·P 번호)대로 만든다. 가정과 다르게 만들어야 하면 만들기 전에 묻는다.
+- 설계와 다르게 만든 것, 초안의 빈칸을 채운 것은 그 기능의 설계 문서 4절("만들면서 정한 것")에 적는다. 응답 모양이 프런트 타입과 달라지면 그 문서의 "프런트와 맞출 것"에 적는다.
+- API 를 만들면 구조 문서 9절의 표를 고친다. 패키지나 `common`이 바뀌면 구조 문서 3~5절을 고친다.
+- 새 기능의 설계는 `../docs/리드미_설계_<기능>.md`로 따로 둔다.
+- 화면이 무엇을 보여 주고 어느 API 를 쓰는지는 `../docs/리드미_화면_API_대응.md`에 있다(시안을 글로 옮긴 것이다). 시안이 요구하는데 설계에 없는 것(그 문서 3절)은 임의로 정하지 않는다. 걸리면 선택지를 내고 묻는다.
+
+## 띄우기와 확인
+
+- JDK 21 이 필요하다. Gradle 이 PC 에 깔린 JDK 21 을 찾아 쓰므로 `JAVA_HOME`이 다른 버전이어도 된다.
+- 개발 DB 와 메일 수신기: 저장소 맨 위에서 `docker compose up -d`. PostgreSQL 은 `localhost:5433`이다. 보낸 메일은 `http://localhost:8025`.
+- 서버: `.\gradlew bootRun` → `http://localhost:8080/actuator/health`가 `UP`.
+- 커밋 전에 `.\gradlew build`를 돌린다. 테스트가 Testcontainers 를 쓰므로 Docker 가 켜져 있어야 한다.
+- Spring Boot 는 4.1.2 다. 스타터 이름을 3.x 의 기억으로 바꾸지 않는다(예: 4.x 는 `spring-boot-starter-webmvc`, 테스트는 `spring-boot-starter-<이름>-test`). 이름이 의심스러우면 Gradle 캐시의 jar 나 공식 문서로 확인한다.
+
+## 패키지
+
+`com.readme.<기능>`으로 나눈다. 패키지, 테이블의 주인, 다른 기능이 부르는 것은 구조 문서 3절에 있다.
+
+- 기능 패키지 안은 더 나누지 않는다. `…Controller`, `…Service`, `…Repository`, 엔티티, 요청·응답 record 를 한 폴더에 둔다.
+- 클래스는 package-private 이 기본이다. 다른 기능이 써야 하는 것만 `public`으로 연다.
+- `common`: 설정(`config`), 오류 응답(`error`), 링크 토큰(`token`). 기능 패키지를 불러오지 않는다.
+- 테이블마다 주인 패키지가 있다. 그 테이블에 쓰는 코드(insert, update, delete)는 주인 패키지에만 둔다(구조 문서 3절). 다른 기능의 데이터를 바꿔야 하면 그 기능의 `public` 서비스를 부른다.
+- `auth`에서 시작한 일이 다른 기능의 테이블을 바꿔야 하면 `auth`가 이벤트를 내고 그 테이블의 주인 패키지가 같은 트랜잭션에서 받는다(예: 탈퇴의 `AccountDeleting`, 구조 문서 3절). 다른 기능이 이미 `auth`를 불러와서, `auth`가 그 기능을 부르면 패키지가 서로를 부른다.
+- 쓰기(행을 만들고 고치고 지우기, 그러려고 엔티티를 읽는 것까지)는 JPA 엔티티와 Spring Data 리포지토리로 한다.
+  같은 요청을 두 번 보내도 결과가 같아야 하는 쓰기(관심 켜기·끄기 같은 PUT)는 리포지토리에 native `insert … on conflict do nothing`·`delete`를 둔다. 바로 실행되므로 같은 트랜잭션의 뒤 조회가 바뀐 값을 본다.
+  두 사람이 같이 눌러도 한 번만 되어야 하는 쓰기(공고 올리기, 다시 올리기, 날짜 넣기)도 같은 방식으로, 조건이 붙은 native insert·update 로 하고 바뀐 행 수를 본다. PostgreSQL 은 유일 제약 위반이 난 트랜잭션을 더 쓰지 못하게 하므로 "넣어 보고 실패하면 찾기"로 짜지 않는다.
+- 응답을 만드는 조회는 `JdbcClient`로 SQL 을 쓴다. 목록·상세처럼 여러 테이블을 묶는 조회는 테이블을 넘나들어도 된다(각 설계 문서 3.3 에서 확인한 SQL 을 옮긴다).
+- JPA 엔티티로 바꾼 값(dirty checking)은 커밋 전까지 `JdbcClient` 조회에 보이지 않는다. 그래서 응답은 서비스의 트랜잭션이 끝난 뒤 컨트롤러가 읽는다. 서비스는 바꾼 행의 id 만 돌려준다.
+- 리포지토리는 파일 하나에 하나씩 둔다. 다른 클래스 안에 넣은 리포지토리는 Spring Data 가 찾지 않는다.
+- `char(n)` 칸(`token_hash`)은 엔티티에서 `@JdbcTypeCode(SqlTypes.CHAR) @Column(length = n)`으로 받는다. 그냥 `String`이면 Hibernate 가 varchar 로 보고 `ddl-auto: validate`에서 서버가 뜨지 않는다.
+
+## API
+
+- 주소는 `/api` 아래, 본문은 JSON 이다. 메서드는 GET, POST, PUT, DELETE 만 쓴다(CORS 가 이 넷만 받는다).
+- 로그인은 서버 세션 쿠키다. JWT 를 넣지 않는다. CSRF 를 끄지 않는다.
+- 로그인 없이 여는 주소(`SecurityConfig`의 `permitAll`)를 더할 때는 먼저 묻는다.
+- 요청·응답은 record 로 만든다. 응답 모양은 프런트의 `types.ts`(`frontend/src/features/<기능>/`, `frontend/src/domain/<이름>/`)와 맞춘다.
+- id 는 숫자(`Long`)다.
+- 입력은 `@Valid`와 제약(`@NotBlank`, `@Size` 등)으로 검사한다. 길이 제한은 테이블 칸의 길이와 같게 한다.
+
+## 로그인한 사람
+
+- 컨트롤러는 `@CurrentUser LoginUser user`로 지금 로그인한 사람을 받는다(`auth/CurrentUser`). 로그인 방식을 모른다.
+- 로그인은 어느 방식이든 사람을 확인한 뒤 `auth/LoginSession.start(userId, request, response)`를 부른다. 세션 id 를 바꾸고, CSRF 토큰을 새로 만들고, 로그인 정보를 세션(spring_session)에 저장한다.
+- 그룹 안의 것을 다루는 API 는 먼저 `group/GroupAccess.requireMember`로 멤버인지 본다. 멤버가 아니면 그룹이 없을 때와 같은 404 `GROUP_NOT_FOUND`다.
+
+## 예시 데이터 (dev 프로필)
+
+- dev 프로필은 빈 DB에 예시 사용자와 그룹·공고를 넣는다. 예시 사용자는 개발용 비밀번호 `readme1234`로 실제 로그인을 한다(구조 문서 6.2).
+- 예시 데이터와 개발용으로만 쓰는 것은 `dev` 패키지에만 두고 `@Profile("dev & !prod")`를 붙인다. 비밀번호 없이 들어가는 길(임시 로그인)은 다시 만들지 않는다.
+
+## 응답에 싣는 값
+
+- 남에게 보이면 안 되는 값(공개 범위 밖의 지원 상태 등)은 서버가 잘라서 보낸다. 프런트가 숨기기를 기대하고 보내지 않는다.
+- DB 에는 영문 대문자 값(`APPLIED`, `INTERVIEW_1`)을 둔다. 화면이 쓰는 값(`applied`, `"1차 면접 단계"`)으로는 서버가 응답을 만들 때 바꾼다.
+
+## 오류
+
+- 응답은 언제나 `{ "code": "...", "message": "..." }`다. 컨트롤러 쪽은 `common/error/GlobalExceptionHandler`가, 보안 필터가 막은 요청(401, CSRF 403)은 `SecurityConfig`가 이 꼴로 쓴다.
+- 정해진 오류는 `throw new ApiException(GroupErrorCode.GROUP_NOT_FOUND)`처럼 던진다.
+- 기능의 오류 코드는 그 기능 패키지에 `ErrorCode`를 구현한 enum 으로 둔다(예: `group/GroupErrorCode`). 상수 이름이 `code`가 된다. 기능에 속하지 않는 것만 `CommonErrorCode`에 둔다.
+- 코드를 새로 만들면 HTTP 상태와 함께 그 기능의 설계 문서 오류 코드 표에 적는다. 프런트가 처리해야 한다. 공통 코드는 구조 문서 5.2에 있다.
+- 메시지는 화면에 그대로 보일 수 있으므로 사용자에게 하는 말로 쓴다. 예외의 내부 내용을 응답에 싣지 않는다.
+
+## 날짜와 시각
+
+- 한국 날짜(오늘, 마감됨, `postedAt`)는 `Clock` 빈(`common/config/TimeConfig`, `Asia/Seoul`)을 주입받아 `LocalDate.now(clock)`으로 구한다. 시계 없이 `LocalDate.now()`를 부르지 않는다.
+- DB 의 `timestamptz`는 `Instant`로 받는다. 응답에서 날짜는 `"YYYY-MM-DD"`, 시각은 `+09:00`을 붙인 ISO 8601 이다(구조 문서 5.1).
+
+## DB
+
+- 스키마는 Flyway 로만 바꾼다(`src/main/resources/db/migration/V{번호}__{이름}.sql`). 새 파일은 V1 처럼 `set search_path to readme;`로 시작한다.
+- `dev`에 들어간 마이그레이션은 운영 전이라도 고치지 않는다. 바꿀 것은 다음 번호의 새 파일로 더한다(2026-11-15). 여러 작업 브랜치가 동시에 마이그레이션을 더하면 `dev`에 들어가는 순서대로 번호를 매긴다.
+- `V…` 마이그레이션은 운영에도 적용된다. 개발용 사용자나 예시 데이터를 넣지 않는다.
+- JPA 는 `ddl-auto: validate`다. 엔티티가 테이블과 다르면 서버가 뜨지 않는다.
+- 토큰(가입 확인, 비밀번호 재설정, 초대)은 SHA-256 해시로만 보관한다. 원문은 메일이나 링크에만 있다.
+- Supabase 전용 기능(Auth, Storage, RLS)에 기대지 않는다. 다른 PostgreSQL 로도 옮길 수 있어야 한다.
+- 연결 풀 크기 5(`spring.datasource.hikari.maximum-pool-size`)는 Supabase 무료 구간에 맞춘 값이다. 늘리려면 먼저 묻는다.
+
+## 설정과 비밀 값
+
+- 내 PC 에서만 쓰는 값(구글 클라이언트 비밀, Claude API 키 등)은 `backend/application-local.yml`에 둔다. git 에 올라가지 않는다. dev 프로필만 읽는다. test 프로필만 켜는 테스트는 읽지 않지만, test 와 dev 를 함께 켜는 `dev/DevProfileTests`는 읽는다(내 PC 에 구글 값이 있으면 그 테스트에서는 구글 로그인이 켜진다).
+- 운영 값은 환경 변수로 받는다. 환경 변수를 더하면 `backend/.env.example`과 `application-prod.yml`에 같이 적는다.
+
+## jobfit 에서 옮기기
+
+- pytest 테스트를 JUnit 으로 먼저 옮기고, 그 테스트가 통과할 때까지 구현한다.
+- CLI, 엑셀 입출력, 로컬 파일로 하는 상태 관리는 옮기지 않는다.
+- Python 표준 라이브러리(`urllib.parse` 등)에 기대는 부분은 pytest 만으로는 차이를 놓친다. jobfit 의 원본 파일을 `python -I`로 직접 돌려 까다로운 입력의 값을 뽑고, 그 값도 JUnit 에 넣는다(예: `posting/PostingKeysTests`).
+- 옮긴 것은 구조 문서 10절에 적는다.
+
+## 테스트
+
+- 어디까지 둘지(2026-11-15): API마다 통합 테스트로 성공, 남의 것이나 멤버가 아닌 사람(404), 입력 검사(400), 기능 오류 코드마다 하나를 둔다. 규칙만 있는 코드는 경계값까지 본다. jobfit 에서 옮긴 것은 위의 "jobfit 에서 옮기기"대로다. 커버리지 숫자는 목표로 두지 않는다.
+- DB 가 필요한 테스트는 PostgreSQL(Testcontainers)로 돌린다. H2 로 바꾸지 않는다.
+- 규칙만 있는 코드(상태 글자, 공개 범위 자르기, 댓글 링크 나누기, 공고키, 카드 검사)는 Spring 없이 JUnit 으로 테스트한다.
+- API 와 DB 를 거치는 테스트는 `@IntegrationTest`를 붙이고 주입받은 `MockMvcTester`로 요청한다. 이 표시를 붙인 테스트는 서버와 DB 를 한 번만 띄워 나눠 쓴다. 테스트 클래스에 설정(`@ActiveProfiles`, `@Import`, `@MockitoBean`, `@TestPropertySource`)을 더하면 그 클래스만 따로 띄우게 되니 꼭 필요할 때만 더한다.
+- `@IntegrationTest`의 프로필은 `test`다(`src/test/resources/application-test.yml`). dev 의 설정과 예시 데이터는 없다.
+- 메일은 보내지 않고 `TestMailbox`에 모인다. 주입받아 받는 주소로 골라 읽고, 링크의 토큰은 `lastTokenTo`로 꺼낸다.
+- 시계는 2026-11-13 00:30(서울)에 멈춰 있다(`FixedClockConfiguration`의 `NOW`, `TODAY`). UTC 로는 11-12 라서 날짜를 UTC 로 구하는 실수가 테스트에 걸린다. 테스트 데이터의 날짜도 이 둘을 기준으로 잡는다.
+- 테스트끼리 DB 를 나눠 쓰므로 각 테스트가 자기 데이터를 만들고(`Fixtures`), 다른 테스트가 만든 데이터에 기대지 않는다. DB 전체에서 유일한 값(이메일, 공고키)은 테스트마다 다르게 만든다.
+- `Fixtures`가 넣는 순서용 시각(들어온 때, 관심을 켠 때)은 멈춘 시계의 `NOW`보다 앞이다. 테스트 안에서 API 로 만든 것은 `NOW`라 늘 뒤에 온다.
+- 로그인한 요청은 `TestRequests.loginAs(userId)`로 만든다. 세션을 실제로 만들고 읽는 것은 실제 로그인을 부르는 `auth/LoginTests`가 본다. 실제 로그인을 할 사람은 `Fixtures.passwordUser`로 만든다.
+- 세션 쿠키의 속성(수명, `HttpOnly`, `SameSite`)은 `@IntegrationTest`(가짜 서버)에서 `application.yml`을 따르지 않는다. Boot 가 WAR 배포로 보기 때문이다. 쿠키 속성은 내장 서버로 띄우는 `dev/DevProfileTests`에서 확인한다.
+- 바꾸는 요청에는 `TestRequests.xsrf()`를 붙인다. spring-security-test 의 `csrf()`는 쓰지 않는다. 처음 부를 때 CSRF 토큰 저장소를 세션 방식으로 바꿔 끼워, 같은 서버를 쓰는 뒤의 테스트까지 달라진다.
+
+## 아직 정하지 않은 것
+
+여기 있는 것은 임의로 정하지 않는다. 걸리면 선택지를 내고 묻는다. 정해지면 위의 절로 옮긴다.
+
+- 지금은 없다. 마이그레이션과 테스트 범위는 2026-11-15에 정해 "DB"와 "테스트"로 옮겼다.

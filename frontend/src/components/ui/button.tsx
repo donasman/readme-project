@@ -2,7 +2,7 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
-const buttonVariants = cva(
+const buttonStyles = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-(length:--label-md) font-(--label-weight) whitespace-nowrap transition-[color,background-color,border-color,box-shadow,opacity,translate] outline-none select-none active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -19,6 +19,9 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         // 리드미: 하이라이트색은 "내 것"(관심 중, 내 관심만 켜짐)에만 쓴다.
         highlight: "bg-highlight text-highlight-foreground hover:bg-highlight/80",
+        // 리드미: 되돌리기 어려운 일(지우기, 내리기, 나가기). 옅은 위험색 바탕에 글자는 그대로 둔다.
+        danger:
+          "bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] text-foreground hover:bg-[color-mix(in_oklab,var(--danger)_16%,transparent)]",
       },
       size: {
         // Heights, side padding and label size follow the dsui pill button:
@@ -48,14 +51,18 @@ function Button({
   variant = "default",
   size = "default",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonStyles>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonStyles({ variant, size, className }))}
       {...props}
     />
   )
 }
+
+// 링크에도 쓰는 버튼 클래스. cva는 겹치는 클래스(테두리 버튼의 border-transparent와 border-border 등)를
+// 남겨 CSS 순서로 이기는 쪽이 정해지므로, 버튼과 같게 tailwind-merge(cn)로 합쳐 뒤의 것을 남긴다
+const buttonVariants = (props?: Parameters<typeof buttonStyles>[0]) => cn(buttonStyles(props))
 
 export { Button, buttonVariants }

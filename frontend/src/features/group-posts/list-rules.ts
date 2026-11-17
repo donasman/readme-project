@@ -3,8 +3,7 @@
 import type { Member } from "@/domain/group/types"
 import { daysBetween } from "@/shared/lib/date"
 
-import { daysLeft, isClosed, isNewPost } from "./deadline"
-import { isInterestedOrApplied } from "./my-state"
+import { daysLeft, isClosed, isNewPost } from "@/domain/posting/deadline"
 import type { GroupPost } from "./types"
 
 export type Tab = "open" | "closed"
@@ -35,7 +34,7 @@ export interface PostRow {
   closed: boolean
   kind: "date" | "always" | "unknown"
   isNew: boolean
-  /** 내가 관심을 켰거나 내 지원 상태가 있으면 true */
+  /** 내가 관심을 켰으면 true. 지원 상태가 있어도 관심을 끄면 false다 */
   meOn: boolean
   fans: FanChip[]
 }
@@ -53,7 +52,8 @@ export interface PostList {
 }
 
 export function toRow(post: GroupPost, today: string): PostRow {
-  const meOn = isInterestedOrApplied(post.me)
+  // 관심을 켠 공고만 나를 넣는다. 지원 상태가 있어도 관심을 끄면 빠진다(다른 멤버가 보는 것과 같다, 공고 문서 4.5)
+  const meOn = post.me.interested
   const fans: FanChip[] = post.interests.map((i) => ({ kind: "member", member: i.member, applied: i.applied }))
   if (meOn) fans.unshift({ kind: "me" })
   return {
@@ -111,4 +111,9 @@ export function buildPostList(posts: GroupPost[], filters: ListFilters, today: s
     counts: { open: open.length, closed: closed.length },
     sections: sections.filter((s) => s.rows.length > 0),
   }
+}
+
+/** 주소의 멤버가 나("me")나 지금 멤버가 아니면(나간 멤버, 손으로 고친 주소) 전체로 본다. 고른 멤버가 없어 끌 수 없기 때문이다. */
+export function knownMember(member: string, members: Member[]): string {
+  return member === "me" || members.some((m) => m.id === member) ? member : ""
 }
