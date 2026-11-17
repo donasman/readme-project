@@ -38,12 +38,16 @@ export function WithdrawPage() {
     `그룹 ${info.groups}곳의 멤버 자격과 켜 둔 관심`,
   ]
 
+  // 두 번 누르면 두 번째 요청이 탈퇴한 세션으로 가 401을 받고 로그인 화면으로 간다
+  const [submitting, setSubmitting] = useState(false)
+
   async function submit(event: FormEvent) {
     event.preventDefault()
     const next = { password: (hasPassword ? password : password.trim()) ? undefined : `${what}${objectParticle(what)} 넣어 주세요.`, agreed: agreed ? undefined : "확인 표시를 해 주세요." }
     setErrors(next)
     if (next.password || next.agreed) return
-    const result = await withdraw(hasPassword ? { password } : { email: password.trim() })
+    setSubmitting(true)
+    const result = await withdraw(hasPassword ? { password } : { email: password.trim() }).finally(() => setSubmitting(false))
     if (result === "throttled") return setErrors({ password: TOO_MANY_TRIES })
     if (result === "wrong") return setErrors({ password: hasPassword ? "비밀번호가 맞지 않습니다." : "계정의 이메일과 맞지 않습니다." })
     // 로그인한 화면들(세션 라우트) 밖으로 나간다. 안에 머물면 보는 사람을 다시 읽지 않는다
@@ -130,7 +134,7 @@ export function WithdrawPage() {
             {errors.agreed && <FieldError id="wd-agree">{errors.agreed}</FieldError>}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" variant="danger">
+            <Button type="submit" variant="danger" disabled={submitting}>
               탈퇴하기
             </Button>
             <Link to={paths.account()} className={buttonVariants({ variant: "outline" })}>

@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
 
-import { Button } from "@/components/ui/button"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
+import { BusyButton } from "@/shared/components/busy-button"
 import { IconNote } from "@/shared/components/notice"
 
 import type { Removal } from "../removal"
@@ -33,7 +33,6 @@ export function RemoveDialog({
   removal,
   onConfirm,
 }: RemoveDialogProps) {
-  const [busy, setBusy] = useState(false)
   const groups = removal.groups.join(", ")
   return (
     <AppDialog
@@ -44,21 +43,9 @@ export function RemoveDialog({
       actions={
         <>
           <DialogCancel />
-          <Button
-            type="button"
-            variant="danger"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true)
-              try {
-                await onConfirm()
-              } finally {
-                setBusy(false)
-              }
-            }}
-          >
+          <BusyButton type="button" variant="danger" onClick={onConfirm}>
             빼기
-          </Button>
+          </BusyButton>
         </>
       }
     >

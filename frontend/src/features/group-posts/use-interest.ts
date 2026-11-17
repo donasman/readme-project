@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useRevalidator } from "react-router"
 
 import { setInterest } from "./api"
@@ -11,14 +11,19 @@ import type { GroupPost } from "./types"
 export function useInterest(groupId: string) {
   const revalidator = useRevalidator()
   const [pending, setPending] = useState<Record<string, boolean>>({})
+  // 저장 중인 공고. 두 번 누르면 바뀐 버튼을 다시 눌러 켜기 다음 끄기가 나가고, 서버는 끌 때 내 공고에서 빼지 않아 공고만 남는다
+  const saving = useRef(new Set<string>())
 
   const toggle = useCallback(
     async (postId: string, interested: boolean) => {
+      if (saving.current.has(postId)) return
+      saving.current.add(postId)
       setPending((p) => ({ ...p, [postId]: interested }))
       try {
         await setInterest(groupId, postId, interested)
         await revalidator.revalidate()
       } finally {
+        saving.current.delete(postId)
         setPending((p) => {
           const next = { ...p }
           delete next[postId]

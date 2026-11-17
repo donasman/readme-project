@@ -83,11 +83,17 @@ export function CardReviewPage() {
   const where = orgAndRole(card)
   const usedText = [card.star.situation, card.star.task, card.star.action, card.star.result, ...card.facts].join(" ")
 
+  // 확인과 겹치면 뒤에 오는 고치기가 확인이 옮긴 근거 숫자를 예전 목록으로 덮어서, 끝날 때까지 다른 버튼과 함께 막는다
   async function dropSentence() {
     if (!card) return
     const { title, period, org, role, summary, tags, usableFor, star, facts } = card
-    const updated = await updateCard(card.id, { title, period, org, role, summary, tags, usableFor, facts, star: { ...star, result: dropFlaggedSentences(star.result) } })
-    setEdited((e) => ({ ...e, [card.id]: updated }))
+    setBusy(true)
+    try {
+      const updated = await updateCard(card.id, { title, period, org, role, summary, tags, usableFor, facts, star: { ...star, result: dropFlaggedSentences(star.result) } })
+      setEdited((e) => ({ ...e, [card.id]: updated }))
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -143,7 +149,7 @@ export function CardReviewPage() {
                     <strong className="font-bold">{flagged.join(", ")}</strong>는 자료 원문에 없는 숫자입니다. 맞는 숫자면 고쳐 적고, 아니면 지워 주세요.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => void dropSentence()}>
+                    <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void dropSentence()}>
                       이 문장 지우기
                     </Button>
                     <Link to={paths.cardEdit(card.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
