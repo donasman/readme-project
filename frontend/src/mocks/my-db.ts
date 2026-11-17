@@ -8,8 +8,8 @@ import type { AddPostingResult, CardMatch, GroupNews, HomeData, MyPosting, MyPos
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
-import { exampleAnalysis, findPost, listGroups, today } from "./db"
-import { addEntry, entries, rawEntry, type Entry } from "./user-postings"
+import { exampleAnalysis, findPost, listGroups, setInterest, today } from "./db"
+import { addEntry, entries, rawEntry, removeEntry, type Entry } from "./user-postings"
 
 /** 상세에만 보이는 값. 예시 공사(시안 8차 "공고 상세")의 공고 내용과 맞는 카드를 옮겼다. 그 밖의 공고는 그룹 공고의 내용을 쓴다. */
 const DETAILS: Record<string, Partial<Pick<MyPostingDetail, "applyAt" | "sections" | "keywords" | "unmatched">> & { matches?: [string, string[]][] }> = {
@@ -145,6 +145,14 @@ export function listSchedules(): Schedule[] {
 /** 메일에서 반영한 다음 전형 일정을 넣는다. 같은 공고·단계가 있으면 바꾼다. */
 export function addSchedule(schedule: Schedule): void {
   schedules = [...scheduleList().filter((s) => !(s.postingId === schedule.postingId && s.stage === schedule.stage)), structuredClone(schedule)]
+}
+
+/** 내 공고에서 빼기(DELETE /api/me/postings/{postingId}): 행과 전형 일정을 지우고 그 공고가 있는 그룹들의 관심을 끈다. */
+export function removeMyPosting(id: string): void {
+  const e = rawEntry(id)
+  for (const [groupId, postId] of e.refs) setInterest(groupId, postId, false)
+  schedules = scheduleList().filter((s) => s.postingId !== e.id)
+  removeEntry(e.id)
 }
 
 /** 나만 보는 메모 저장. */

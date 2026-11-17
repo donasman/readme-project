@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Link, useLoaderData, useLocation, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import { CONTENT_VIEWS, formatQuestionLimit, summarySections, type ContentView } from "@/domain/posting/analysis"
@@ -21,20 +21,24 @@ import { formatDateWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
-import { getMyPosting, saveMemo } from "../api"
+import { getMyPosting, getSchedules, removeMyPosting, saveMemo } from "../api"
 import { DdayBadge } from "../components/my-bits"
+import { RemoveDialog } from "../components/remove-dialog"
+import { removalOf, type Removal } from "../removal"
 import { dueText } from "../status"
-import type { ArrivedState } from "../types"
+import type { ArrivedState, RemovedState } from "../types"
 
-export function myPostLoader({ params }: LoaderFunctionArgs) {
-  return getMyPosting(params.postingId ?? "")
+export async function myPostLoader({ params }: LoaderFunctionArgs) {
+  // 전형 일정 수는 빼기 창이 알린다(상세 응답에 없다)
+  const [detail, schedules] = await Promise.all([getMyPosting(params.postingId ?? ""), getSchedules()])
+  return { ...detail, scheduleCount: schedules.filter((s) => s.postingId === detail.posting.id).length }
 }
 
 const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-bold whitespace-nowrap text-primary"
 
 /** 공고 상세(시안 8차, 내 공고. 공고 내용의 요약은 12차): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
-  const { today, posting } = useLoaderData<typeof myPostLoader>()
+  const { today, posting, scheduleCount } = useLoaderData<typeof myPostLoader>()
   const location = useLocation()
   const navigate = useNavigate()
   // 내 공고 넣기에서 이미 있는 공고로 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(브라우저가 새로 고침과 뒤로 가기에도 남겨 알림이 다시 뜬다)
@@ -43,6 +47,10 @@ export function MyPostPage() {
     if (arrived) void navigate(".", { replace: true, state: null })
   }, [arrived, navigate])
   const due = dueText(posting, today)
+  const name = `${posting.company} · ${posting.title}`
+  // 빼기 창: 열 때 저장한 메모로 지워질 것을 센다(창이 닫히는 동안에도 글이 남게 값은 두고 open만 끈다)
+  const [removing, setRemoving] = useState(false)
+  const [removal, setRemoval] = useState<Removal | null>(null)
   // 공고 내용: 분석이 있으면 요약(12차 시안 안 A)이 먼저고, 원문으로 바꿔 본다
   const [view, setView] = useState<ContentView>("summary")
   const summary = view === "summary" ? posting.analysis : null
@@ -231,7 +239,38 @@ export function MyPostPage() {
               <p className="text-sm text-text-secondary">이 공고가 있는 내 그룹이 없습니다.</p>
             )}
           </Panel>
+
+          <Panel aria-labelledby="mp-remove" className="flex flex-col gap-3 p-6">
+            <h2 id="mp-remove" className={sectionTitle}>
+              내 공고에서 빼기
+            </h2>
+            <p className="text-sm text-text-secondary">지원 상태, 메모, 전형 일정이 지워지고 그룹에서 켠 관심이 꺼집니다. 공고와 댓글은 그룹에 남습니다.</p>
+            <Button
+              type="button"
+              variant="danger"
+              className="self-start"
+              onClick={() => {
+                setRemoval(removalOf(posting, lastSaved.current, scheduleCount))
+                setRemoving(true)
+              }}
+            >
+              내 공고에서 빼기
+            </Button>
+          </Panel>
         </aside>
+        {removal && (
+          <RemoveDialog
+            open={removing}
+          onClose={() => setRemoving(false)}
+          name={name}
+          removal={removal}
+          onConfirm={async () => {
+            await removeMyPosting(posting.id)
+            const removed: RemovedState = { removed: { name, groups: posting.groupStates.filter((g) => g.interested).map((g) => g.name) } }
+            void navigate(paths.myPosts(), { state: removed })
+          }}
+        />
+        )}
       </div>
     </Page>
   )

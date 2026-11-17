@@ -1,4 +1,5 @@
-import { Link, useLoaderData } from "react-router"
+import { useEffect, useState } from "react"
+import { Link, useLoaderData, useLocation, useNavigate } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { PostingLink } from "@/domain/posting/posting-link"
 import { DECISION_LABELS } from "@/domain/posting/my-state"
 import { Heading } from "@/shared/components/heading"
+import { Notice } from "@/shared/components/notice"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
@@ -13,13 +15,14 @@ import { Panel } from "@/shared/components/panel"
 import { ToggleButton } from "@/shared/components/toggle-button"
 import { PlusIcon, SearchIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { objectParticle } from "@/shared/lib/korean"
 import { useSearchText } from "@/shared/lib/router"
 import { docTitle } from "@/shared/lib/utils"
 
 import { getMyPostings } from "../api"
 import { MyStatusPill } from "../components/my-bits"
 import { dueText, filterPostings, type MyFilters } from "../status"
-import type { Decision } from "../types"
+import type { Decision, RemovedState } from "../types"
 import { useMyFilters } from "../use-my-filters"
 
 export function myPostsLoader() {
@@ -38,6 +41,13 @@ export function MyPostsPage() {
   const [filters, setFilters] = useMyFilters()
   const [query, setQuery] = useSearchText(filters.query)
   const { rows, open, closed } = filterPostings(postings, filters, today)
+  // 상세에서 뺀 뒤 왔을 때. 처음 값만 잡고 기록의 상태는 지운다(새로 고침과 뒤로 가기에 알림이 다시 뜨지 않게)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [removed] = useState(() => (location.state as RemovedState | null)?.removed ?? null)
+  useEffect(() => {
+    if (removed) void navigate(".", { replace: true, state: null })
+  }, [removed, navigate])
 
   return (
     <Page narrow className="gap-6 pt-10">
@@ -74,6 +84,15 @@ export function MyPostsPage() {
           </Link>
         </div>
       </div>
+
+      {removed && (
+        <Notice title={`${removed.name}${objectParticle(removed.name)} 내 공고에서 뺐습니다`}>
+          <span>
+            지원 상태와 메모, 전형 일정을 지웠
+            {removed.groups.length > 0 ? `고 ${removed.groups.join(", ")} 그룹의 관심을 껐습니다. 다시 보려면 그룹 공고에서 관심을 켜세요.` : "습니다."}
+          </span>
+        </Notice>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <SegmentedControl
