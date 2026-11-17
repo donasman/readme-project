@@ -103,9 +103,23 @@ class MyPostingQueries {
 			.map((posting) -> {
 				Details details = details(userId, postingId);
 				return MyPostingDetailResponse.of(posting, details, keywords(postingId),
-						CardMatching.match(details.analysis(), myCards(userId), KeywordDictionary.standard()),
+						CardMatching.match(details.analysis(), myCards(userId), profileFacts(userId),
+								KeywordDictionary.standard()),
 						groups.getOrDefault(postingId, List.of()));
 			});
+	}
+
+	/** 요건과 맞춰 볼 내 프로필 값(profile 패키지의 테이블을 읽기만 한다). 프로필을 넣지 않았으면 모두 빈 목록이다. */
+	private CardMatching.ProfileFacts profileFacts(long userId) {
+		return new CardMatching.ProfileFacts(
+				column("select name from profile_certificates where user_id = :userId order by seq", userId),
+				column("select test from profile_languages where user_id = :userId order by seq", userId),
+				column("select major from profile_educations where user_id = :userId and major is not null order by seq",
+						userId));
+	}
+
+	private List<String> column(String sql, long userId) {
+		return this.jdbc.sql(sql).param("userId", userId).query(String.class).list();
 	}
 
 	/** 내 카드와 태그(card 패키지의 테이블을 읽기만 한다). 먼저 만든 카드가 앞이다. */

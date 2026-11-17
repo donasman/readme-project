@@ -54,6 +54,41 @@ class MyPostingMatchTests {
 					""".formatted(api));
 	}
 
+	@Test
+	void detailGivesEachRequirementAResultUsingMyProfile() {
+		long me = this.fixtures.user("다온");
+		long posting = this.fixtures.posting("예시공사", "전산직", "UNKNOWN", null);
+		this.fixtures.status(me, posting, "UNDECIDED", null, null);
+		this.jdbc.sql("update postings set analysis = cast(:analysis as jsonb) where id = :id")
+			.param("id", posting)
+			.param("analysis", """
+					{ "must": ["Java 웹 개발", "정보처리기사 자격", "Kubernetes 운영"], "nice": ["OPIc IM 이상"],
+					  "duties": [], "keywords": [], "questions": [] }
+					""")
+			.update();
+		long java = card(me, "주문 API 개선", "Java");
+		assertThat(this.mvc.put()
+			.uri("/api/me/profile")
+			.with(loginAs(me))
+			.with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("""
+					{ "certificates": [ { "name": "정보처리기사" } ] }
+					""")).hasStatusOk();
+
+		assertThat(this.mvc.get().uri("/api/me/postings/{id}", posting).with(loginAs(me))).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "posting": {
+					    "unmatched": ["Kubernetes 운영"],
+					    "requirements": [
+					      { "kind": "must", "text": "Java 웹 개발", "status": "matched", "cardIds": [%d], "profileItems": [] },
+					      { "kind": "must", "text": "정보처리기사 자격", "status": "profile", "cardIds": [], "profileItems": ["정보처리기사"] },
+					      { "kind": "must", "text": "Kubernetes 운영", "status": "unmatched", "cardIds": [], "profileItems": [] },
+					      { "kind": "nice", "text": "OPIc IM 이상", "status": "unknown", "cardIds": [], "profileItems": [] } ] } }
+					""".formatted(java));
+	}
+
 	private long card(long userId, String title, String... tags) {
 		String json = "{ \"title\": \"%s\", \"tags\": [%s] }".formatted(title,
 				String.join(", ", java.util.Arrays.stream(tags).map((t) -> "\"" + t + "\"").toList()));
