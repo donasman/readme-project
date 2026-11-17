@@ -26,7 +26,8 @@ const [mode, a, b] = process.argv.slice(2)
 const BE1 = "/groups/be/posts/be1"
 const NEW = "/groups/be/posts/new"
 // 장면: path를 열고 steps를 차례로 한다. ["press", 글자] 그 글자나 aria-label의 버튼·링크를 누른다,
-// ["click", CSS 선택자] 그 요소 가운데를 마우스로 누른다(메뉴처럼 포인터 이벤트가 필요한 것), ["fill", 선택자, 값].
+// ["click", CSS 선택자] 그 요소 가운데를 마우스로 누른다(메뉴처럼 포인터 이벤트가 필요한 것), ["fill", 선택자, 값],
+// ["wait", 글자] 그 글자가 화면에 나올 때까지(15초까지) 기다린다(카드 뽑기처럼 시간이 걸리는 것).
 const SCENARIOS = [
   // 그룹 공고(4차)
   { name: "list-desktop", path: "/groups/be/posts", width: 1280 },
@@ -98,6 +99,7 @@ const SCENARIOS = [
   { name: "card-new", path: "/cards/new", width: 1280 },
   { name: "card-sources", path: "/cards/sources", width: 1280 },
   { name: "card-sources-mobile", path: "/cards/sources", width: 390, scale: 2 },
+  { name: "card-sources-done", path: "/cards/sources?mock=empty-profile", width: 1280, steps: [["fill", "#src-text", "2025년 3월부터 예시 커머스에서 주문 조회 API 응답 시간을 개선했다."], ["press", "이 글 읽기"], ["press", "카드 뽑기 시작"], ["wait", "프로필 칸 확인"]] },
   { name: "card-review", path: "/cards/review", width: 1280 },
   // 홈·내 공고(8·9차)
   { name: "home", path: "/", width: 1280 },
@@ -191,6 +193,10 @@ async function step(c, [kind, target, value]) {
   } else if (kind === "fill") {
     // React가 값 바뀜을 알도록 원래 setter로 넣고 input 이벤트를 보낸다
     await c.evaluate(`(() => { const el = document.querySelector(${JSON.stringify(target)}); el.focus(); const proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, "value").set.call(el, ${JSON.stringify(value)}); el.dispatchEvent(new Event("input", { bubbles: true })) })()`)
+  } else if (kind === "wait") {
+    let seen = false
+    for (let i = 0; i < 75 && !(seen = await c.evaluate(`document.body.innerText.includes(${JSON.stringify(target)})`)); i++) await sleep(200)
+    if (!seen) throw new Error(`글자가 나오지 않았다: ${target}`)
   }
   await sleep(700)
 }

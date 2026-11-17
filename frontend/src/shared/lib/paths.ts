@@ -18,7 +18,8 @@ export const paths = {
   calendar: () => "/calendar",
   /** 설정: 내 정보, 메일 자동화, 탈퇴 */
   account: () => "/settings/account",
-  profile: () => "/settings/profile",
+  /** 카드 뽑기 결과에서 오면 자료에서 채운 값을 확인하라는 안내를 보인다 */
+  profile: (fromSource = false) => (fromSource ? "/settings/profile?from=source" : "/settings/profile"),
   mailSettings: () => "/settings/mail",
   withdraw: () => "/settings/withdraw",
   mail: () => "/mail",

@@ -51,3 +51,12 @@ export function saveProfile(input: ProfileInput): Profile {
   stored = { ...structuredClone(input), certificates: input.certificates.map((c) => ({ ...c, name: CERTIFICATE_NAMES.get(c.name) ?? c.name })) }
   return getProfile()
 }
+
+/** 카드 뽑기가 읽은 값을 빈 칸에만 넣는다. 목록은 비어 있을 때만 통째로 넣는다(서버의 Profile.fillBlanks). */
+export function fillBlanks(input: Partial<ProfileInput>): void {
+  const p = (stored ??= initial())
+  p.name ??= input.name ?? null
+  p.birthDate ??= input.birthDate ?? null
+  p.gender ??= input.gender ?? null
+  for (const key of ["educations", "certificates", "languages", "careers"] as const) if (p[key].length === 0 && input[key]) Object.assign(p, { [key]: structuredClone(input[key]) })
+}

@@ -3,11 +3,14 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { getProfile } from "@/domain/profile/api"
+import type { Profile } from "@/domain/profile/types"
 import { FieldError, noteId } from "@/shared/components/form-field"
 import { IconNote } from "@/shared/components/notice"
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
+import { Pill } from "@/shared/components/pill"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
 import { FILE_TOO_LARGE } from "@/shared/lib/api"
 import { objectParticle } from "@/shared/lib/korean"
@@ -17,6 +20,7 @@ import { cn, docTitle, joinClasses, matchesAccept } from "@/shared/lib/utils"
 import { deleteSource, getExtractionJob, getSources, startExtraction, uploadSource } from "../api"
 import { formatChars } from "../card-text"
 import { CardsSubpage, ProgressBar, StatBox } from "../components/card-bits"
+import { profileCheckRows } from "../profile-check"
 import type { CardSource, ExtractionJob } from "../types"
 
 export function cardSourcesLoader() {
@@ -29,16 +33,17 @@ const ACCEPT_TEXT = "PDF, DOCX, HWPX, HWP, PPTX, TXT, MD"
 const MAX_BYTES = 20 * 1024 * 1024
 const POLL_MS = 1000
 
+// before: 뽑기를 시작할 때의 프로필. 끝난 뒤의 프로필과 견주어 이번에 채운 칸을 표시한다. 나갔다 와서 이어 보면 null이다
 type Step =
   | { kind: "upload" }
   | { kind: "ready"; source: CardSource; chunks: number }
-  | { kind: "running"; source: CardSource; job: ExtractionJob }
-  | { kind: "done"; job: ExtractionJob }
-  | { kind: "failed"; source: CardSource; job: ExtractionJob }
+  | { kind: "running"; source: CardSource; job: ExtractionJob; before: Profile | null }
+  | { kind: "done"; job: ExtractionJob; before: Profile | null; profile: Profile }
+  | { kind: "failed"; source: CardSource; job: ExtractionJob; before: Profile | null }
 
 /**
  * 자료로 카드 만들기(6차): 올리기 → 읽은 뒤 → 뽑는 중 → 끝남(또는 실패). 뽑는 동안 화면이 1초마다 서버에 묻는다.
- * 실패하면 "이어서 뽑기"가 마친 조각 다음부터 다시 돌린다(경험카드 문서 4.6).
+ * 실패하면 "이어서 뽑기"가 마친 조각 다음부터 다시 돌린다(경험카드 문서 4.6). 끝나면 뽑기가 채운 프로필 칸을 보인다(12차 시안).
  */
 export function CardSourcesPage() {
   const sources = useLoaderData<typeof cardSourcesLoader>()
@@ -52,7 +57,7 @@ export function CardSourcesPage() {
     if (!resumable?.runningJobId) return
     let stale = false
     void getExtractionJob(resumable.runningJobId).then((job) => {
-      if (!stale && job?.status === "RUNNING") setStep((s) => (s.kind === "upload" ? { kind: "running", source: resumable, job } : s))
+      if (!stale && job?.status === "RUNNING") setStep((s) => (s.kind === "upload" ? { kind: "running", source: resumable, job, before: null } : s))
     })
     return () => {
       stale = true
@@ -65,11 +70,12 @@ export function CardSourcesPage() {
     if (runningJobId === null) return
     const timer = setInterval(async () => {
       const job = await getExtractionJob(runningJobId)
+      const profile = job?.status === "DONE" ? await getProfile() : null
       setStep((s) => {
         if (s.kind !== "running") return s
         if (job === null) return { kind: "upload" }
-        if (job.status === "DONE") return { kind: "done", job }
-        if (job.status === "FAILED") return { kind: "failed", source: s.source, job }
+        if (job.status === "DONE" && profile) return { kind: "done", job, before: s.before, profile }
+        if (job.status === "FAILED") return { kind: "failed", source: s.source, job, before: s.before }
         return { ...s, job }
       })
       if (job === null || job.status !== "RUNNING") void revalidator.revalidate()
@@ -87,10 +93,12 @@ export function CardSourcesPage() {
     return null
   }
 
-  async function extract(source: CardSource) {
+  /** 뽑기를 시작한다. 이어서 뽑을 때는 처음 시작할 때의 프로필(before)을 넘겨, 앞서 채운 칸도 이번에 채운 칸으로 본다. */
+  async function extract(source: CardSource, before?: Profile | null) {
     setStartError(null)
+    const snapshot = before === undefined ? await getProfile() : before
     const result = await startExtraction(source)
-    if (result.ok) setStep({ kind: "running", source, job: result.job })
+    if (result.ok) setStep({ kind: "running", source, job: result.job, before: snapshot })
     else setStartError(result.message)
   }
 
@@ -99,7 +107,7 @@ export function CardSourcesPage() {
       <title>{docTitle("자료로 카드 만들기", "경험카드")}</title>
       <div className="flex flex-col gap-2">
         <h1 className={subpageTitle}>자료로 카드 만들기</h1>
-        <p className="text-text-secondary">이력서나 포트폴리오를 올리면 경험을 카드로 뽑습니다. 뽑은 카드는 하나씩 확인한 뒤에 씁니다.</p>
+        <p className="text-text-secondary">이력서나 포트폴리오를 올리면 경험을 카드로 뽑고, 프로필의 빈 칸을 채웁니다. 둘 다 확인한 뒤에 씁니다.</p>
       </div>
 
       <div className={columns}>
@@ -181,7 +189,7 @@ export function CardSourcesPage() {
                 <Button type="button" variant="outline" onClick={() => setStep({ kind: "upload" })}>
                   자료 더 올리기
                 </Button>
-                <Button type="button" className="px-6" onClick={() => void extract(step.source)}>
+                <Button type="button" className="px-6" onClick={() => void extract(step.source, step.before)}>
                   이어서 뽑기
                 </Button>
               </div>
@@ -222,6 +230,53 @@ export function CardSourcesPage() {
                 </Button>
                 <Link to={paths.cardReview()} className={buttonVariants({ className: "px-6" })}>
                   카드 확인하기
+                </Link>
+              </div>
+            </Panel>
+          )}
+          {step.kind === "done" && (
+            <Panel aria-labelledby="src-profile" className="flex flex-col gap-4 p-6">
+              <div className="flex flex-col gap-1">
+                <h2 id="src-profile" className={sectionTitle}>
+                  프로필 칸 확인
+                </h2>
+                <p className="text-sm text-text-secondary">
+                  자료에서 읽은 값은 프로필의 비어 있던 칸에만 넣었습니다. 이미 있던 값은 바꾸지 않았습니다.{" "}
+                  {step.before ? "이번에 채운 칸에 표시했습니다." : "지금 프로필은 아래와 같습니다."}
+                </p>
+              </div>
+              <dl className="flex flex-col">
+                {profileCheckRows(step.profile, step.before).map((row) => (
+                  <div key={row.label} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-border-subtle py-3">
+                    <dt className="w-[72px] flex-none text-[13px] font-bold text-text-secondary">{row.label}</dt>
+                    <dd className="flex min-w-0 flex-[1_1_240px] flex-col gap-2 text-sm">
+                      {row.lines.length === 0 ? (
+                        <span className="inline-flex h-6 items-center self-start rounded-full border-2 border-highlight-strong bg-highlight-subtle px-2.5 text-xs font-bold whitespace-nowrap">
+                          비어 있음
+                        </span>
+                      ) : (
+                        row.lines.map((line, i) => (
+                          <span key={i} className="flex flex-col gap-0.5">
+                            <span>{line.value}</span>
+                            {line.note && <span className="text-[13px] text-text-secondary">{line.note}</span>}
+                          </span>
+                        ))
+                      )}
+                      {row.extra && <span className="text-[13px] text-text-secondary">{row.extra}</span>}
+                    </dd>
+                    {row.filled && (
+                      <Pill tone="accent">
+                        <CheckIcon aria-hidden="true" className="mr-0.5 size-3" />
+                        이번에 채움
+                      </Pill>
+                    )}
+                  </div>
+                ))}
+              </dl>
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                <p className="min-w-0 flex-[1_1_240px] text-[13px] text-text-secondary">노란 칸은 자료에서 읽지 못해 비어 있는 칸입니다. 프로필은 나만 봅니다.</p>
+                <Link to={paths.profile(true)} className={buttonVariants({ variant: "outline" })}>
+                  프로필 확인하기
                 </Link>
               </div>
             </Panel>
