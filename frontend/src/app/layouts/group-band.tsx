@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link, useMatches, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
@@ -33,9 +34,16 @@ export function GroupBand() {
   // 다른 멤버의 얼굴을 먼저, 나는 맨 끝에
   const faces = [...group.members.filter((m) => m.id !== viewer.id), ...group.members.filter((m) => m.id === viewer.id)].slice(0, 5)
 
+  // 두 번 누르면 링크가 둘 생긴다(서버가 누를 때마다 새로 만든다)
+  const [inviting, setInviting] = useState(false)
   async function invite() {
-    const state: MembersPageState = { invite: await createInvite(group.id) }
-    await navigate(paths.groupMembers(group.id), { state })
+    setInviting(true)
+    try {
+      const state: MembersPageState = { invite: await createInvite(group.id) }
+      await navigate(paths.groupMembers(group.id), { state })
+    } finally {
+      setInviting(false)
+    }
   }
 
   return (
@@ -60,7 +68,7 @@ export function GroupBand() {
             ))}
           </div>
           {/* 휴대폰에서는 아이콘만 두어 이름 옆 한 줄에 둔다(이름은 화면 읽기에 그대로 들린다) */}
-          <Button type="button" variant="outline" className="flex-none max-sm:w-11 max-sm:px-0" onClick={() => void invite()}>
+          <Button type="button" variant="outline" className="flex-none max-sm:w-11 max-sm:px-0" disabled={inviting} onClick={() => void invite()}>
             <LinkIcon data-icon="inline-start" aria-hidden="true" className="max-sm:m-0" />
             <span className="max-sm:sr-only">초대 링크 만들기</span>
           </Button>

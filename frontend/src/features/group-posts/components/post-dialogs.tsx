@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { DisclosureOptions } from "@/domain/group/disclosure-options"
 import type { Disclosure, Group } from "@/domain/group/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
+import { BusyButton } from "@/shared/components/busy-button"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { Notice } from "@/shared/components/notice"
@@ -263,9 +264,9 @@ export function TakedownDialog({ target, onClose, onConfirm }: TargetDialogProps
       actions={
         <>
           <DialogCancel />
-          <Button type="button" variant="danger" onClick={() => void onConfirm()}>
+          <BusyButton type="button" variant="danger" onClick={onConfirm}>
             내리기
-          </Button>
+          </BusyButton>
         </>
       }
     >
@@ -343,9 +344,9 @@ export function CommentDeleteDialog({ target, onClose, onConfirm }: TargetDialog
       actions={
         <>
           <DialogCancel />
-          <Button type="button" variant="danger" onClick={() => void onConfirm()}>
+          <BusyButton type="button" variant="danger" onClick={onConfirm}>
             지우기
-          </Button>
+          </BusyButton>
         </>
       }
     >

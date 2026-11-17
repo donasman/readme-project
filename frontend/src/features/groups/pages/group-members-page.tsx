@@ -9,6 +9,7 @@ import type { Disclosure } from "@/domain/group/types"
 import { useGroup } from "@/domain/group/use-group"
 import { useViewer } from "@/domain/session/use-viewer"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
+import { BusyButton } from "@/shared/components/busy-button"
 import { Avatar } from "@/shared/components/avatar"
 import { sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
@@ -197,9 +198,9 @@ export function GroupMembersPage() {
         actions={
           <>
             <DialogCancel />
-            <Button type="button" variant="danger" onClick={() => void leave()}>
+            <BusyButton type="button" variant="danger" onClick={leave}>
               나가기
-            </Button>
+            </BusyButton>
           </>
         }
       >
@@ -215,9 +216,9 @@ export function GroupMembersPage() {
           <>
             {/* 링크 "취소"와 겹치지 않게 닫기로 쓴다(시안 10차) */}
             <DialogCancel>닫기</DialogCancel>
-            <Button type="button" variant="danger" onClick={() => cancelling && void cancelInvite(cancelling)}>
+            <BusyButton type="button" variant="danger" onClick={async () => cancelling && (await cancelInvite(cancelling))}>
               링크 취소
-            </Button>
+            </BusyButton>
           </>
         }
       >

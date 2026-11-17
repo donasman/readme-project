@@ -40,9 +40,13 @@ export function CreateGroupDialog({ open, onOpenChange }: { open: boolean; onOpe
     setSaving(true)
     try {
       const group = await createGroup({ name, mark })
-      const invite = await createInvite(group.id)
-      const state: MembersPageState = { invite }
-      navigate(paths.groupMembers(group.id), { state })
+      // 그룹이 생긴 뒤에는 초대 링크가 실패해도 멤버 화면으로 간다. 창에 남으면 다시 눌러 같은 그룹이 하나 더 생긴다(오류는 화면 아래 알림으로 뜬다)
+      let state: MembersPageState | undefined
+      try {
+        state = { invite: await createInvite(group.id) }
+      } finally {
+        void navigate(paths.groupMembers(group.id), { state })
+      }
     } finally {
       setSaving(false)
     }

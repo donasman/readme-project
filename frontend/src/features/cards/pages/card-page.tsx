@@ -3,6 +3,7 @@ import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
+import { BusyButton } from "@/shared/components/busy-button"
 import { Chip } from "@/shared/components/chip"
 import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, pageHead, sideColumn } from "@/shared/components/page-layout"
@@ -161,16 +162,16 @@ export function CardPage() {
         actions={
           <>
             <DialogCancel />
-            <Button
+            <BusyButton
               type="button"
               variant="danger"
               onClick={async () => {
                 await deleteCard(card.id)
-                navigate(paths.cards())
+                await navigate(paths.cards())
               }}
             >
               지우기
-            </Button>
+            </BusyButton>
           </>
         }
       >

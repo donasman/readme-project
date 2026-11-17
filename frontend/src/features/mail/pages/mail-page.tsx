@@ -4,6 +4,7 @@ import { Link, useLoaderData, useRevalidator } from "react-router"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { STAGE_LABELS, statusLabel } from "@/domain/posting/my-state"
 import { PostingLink } from "@/domain/posting/posting-link"
+import { BusyButton } from "@/shared/components/busy-button"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -81,9 +82,9 @@ export function MailPage() {
                       코드 복사
                     </Button>
                   )}
-                  <Button type="button" variant="outline" onClick={() => void act(() => ignoreMail(f.id), "전달 확인 메일을 확인함에서 뺐습니다.")}>
+                  <BusyButton type="button" variant="outline" onClick={() => act(() => ignoreMail(f.id), "전달 확인 메일을 확인함에서 뺐습니다.")}>
                     확인함에서 빼기
-                  </Button>
+                  </BusyButton>
                 </div>
               </Panel>
             ))}
@@ -142,12 +143,12 @@ export function MailPage() {
                     )}
                     {m.quote && <p className="text-label-sm text-text-secondary">근거: "{m.quote}"</p>}
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => void act(() => ignoreMail(m.id), `${m.company} 메일을 무시했습니다.`)}>
+                      <BusyButton type="button" variant="outline" onClick={() => act(() => ignoreMail(m.id), `${m.company} 메일을 무시했습니다.`)}>
                         무시
-                      </Button>
-                      <Button type="button" className="px-6" onClick={() => void act(() => applyMail(m.id), `${m.company} 메일을 반영했습니다.`)}>
+                      </BusyButton>
+                      <BusyButton type="button" className="px-6" onClick={() => act(() => applyMail(m.id), `${m.company} 메일을 반영했습니다.`)}>
                         반영
-                      </Button>
+                      </BusyButton>
                     </div>
                   </Panel>
                 ))}
@@ -172,9 +173,9 @@ export function MailPage() {
                         {a.company} · {a.title}
                       </span>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => void act(() => revertAdded(a.id), `${a.company} 공고를 내 공고에서 뺐습니다.`)}>
+                    <BusyButton type="button" variant="outline" size="sm" onClick={() => act(() => revertAdded(a.id), `${a.company} 공고를 내 공고에서 뺐습니다.`)}>
                       되돌리기
-                    </Button>
+                    </BusyButton>
                   </li>
                 ))}
               </Panel>
