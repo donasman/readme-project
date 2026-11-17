@@ -38,6 +38,7 @@ export function GroupPostPage() {
   const [takingDown, setTakingDown] = useState<GroupPostDetail | null>(null)
   const [editing, setEditing] = useState<Comment | null>(null)
   const [deleting, setDeleting] = useState<Comment | null>(null)
+  const [commentNotice, setCommentNotice] = useState("")
   const [disclosureFor, setDisclosureFor] = useState<Group | null>(null)
   const interest = useInterest(group.id)
   const post = interest.apply(data.post)
@@ -64,9 +65,12 @@ export function GroupPostPage() {
             comments={post.comments}
             viewer={viewer}
             isLeader={isLeader}
+            notice={commentNotice}
             onAdd={async (text) => {
+              setCommentNotice("")
               await addComment(group.id, post.id, text)
               await revalidator.revalidate()
+              setCommentNotice("댓글을 달았습니다.")
             }}
             onEdit={setEditing}
             onDelete={setDeleting}
@@ -100,18 +104,22 @@ export function GroupPostPage() {
         target={editing}
         onClose={() => setEditing(null)}
         onSave={async (text) => {
+          setCommentNotice("")
           if (editing) await updateComment(group.id, post.id, editing.id, text)
           await revalidator.revalidate()
           setEditing(null)
+          setCommentNotice("댓글을 고쳤습니다.")
         }}
       />
       <CommentDeleteDialog
         target={deleting}
         onClose={() => setDeleting(null)}
         onConfirm={async () => {
+          setCommentNotice("")
           if (deleting) await deleteComment(group.id, post.id, deleting.id)
           await revalidator.revalidate()
           setDeleting(null)
+          setCommentNotice("댓글을 지웠습니다.")
         }}
       />
       <DisclosureDialog

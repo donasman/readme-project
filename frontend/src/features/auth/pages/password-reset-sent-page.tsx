@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router"
 import { buttonVariants } from "@/components/ui/button"
 import { MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { StatusIcon } from "@/shared/components/status-icon"
 
-import { AuthFrame, AuthHeading, AuthStrong, AuthText, StatusIcon } from "../components/auth-parts"
+import { AuthFrame, AuthHeading, AuthStrong, AuthText } from "../components/auth-parts"
 
 /** 비밀번호 재설정 · 메일 보냄. 계정이 있는지 알려 주지 않으므로 "가입된 이메일이라면"이라고 쓴다. */
 export function PasswordResetSentPage() {

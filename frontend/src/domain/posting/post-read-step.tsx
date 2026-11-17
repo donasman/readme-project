@@ -8,7 +8,7 @@ import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/fo
 import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { UploadIcon } from "@/shared/icons"
-import { FILE_TOO_LARGE } from "@/shared/lib/api"
+import { FILE_TOO_LARGE, MAX_FILE_BYTES } from "@/shared/lib/api"
 import { cn, isHttpUrl, matchesAccept } from "@/shared/lib/utils"
 
 import { readPosting } from "./api"
@@ -22,7 +22,6 @@ const VIAS: { value: Via; label: string }[] = [
 ]
 // 서버가 받는 형식과 크기(공고 문서 4.6). 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
-const MAX_BYTES = 20 * 1024 * 1024
 const TEXT_MAX = 50_000
 
 type ReadNotice = Exclude<ReadPostResult, { status: "ok" }>
@@ -214,7 +213,7 @@ function FileDrop({ busy, onRead }: ReadProps) {
     // 읽는 중에 끌어 놓은 파일은 받지 않는다(버튼만 막혀 있어 두 번 읽고 늦게 끝난 쪽이 칸 확인을 덮는다)
     if (!file || busy) return
     if (!matchesAccept(file.name, ACCEPT)) return failFile("PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.")
-    if (file.size > MAX_BYTES) return failFile(FILE_TOO_LARGE)
+    if (file.size > MAX_FILE_BYTES) return failFile(FILE_TOO_LARGE)
     failFile(null)
     void onRead({ kind: "file", file })
   }

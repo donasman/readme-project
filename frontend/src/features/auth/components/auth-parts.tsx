@@ -7,7 +7,7 @@ import { Heading } from "@/shared/components/heading"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { IconNote } from "@/shared/components/notice"
 import { paths } from "@/shared/lib/paths"
-import { cn, docTitle, joinClasses } from "@/shared/lib/utils"
+import { cn, docTitle } from "@/shared/lib/utils"
 
 import { startGoogleLogin } from "../api"
 
@@ -93,21 +93,6 @@ export function AuthField({ id, label, hint, error, className, ...input }: AuthF
         )
       )}
     </div>
-  )
-}
-
-/** 상태 화면 맨 위의 48px 아이콘 칸. accent: 메일 보냄·끝남, muted: 링크 만료. */
-export function StatusIcon({ tone = "accent", children }: { tone?: "accent" | "muted"; children: ReactNode }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={joinClasses(
-        "inline-flex size-12 items-center justify-center rounded-control [&_svg]:size-6",
-        tone === "accent" ? "bg-accent-subtle text-accent-strong" : "bg-surface-muted text-foreground"
-      )}
-    >
-      {children}
-    </span>
   )
 }
 

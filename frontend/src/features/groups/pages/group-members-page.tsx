@@ -11,7 +11,7 @@ import { useViewer } from "@/domain/session/use-viewer"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { BusyButton } from "@/shared/components/busy-button"
 import { Avatar } from "@/shared/components/avatar"
-import { sectionTitle, subLabel } from "@/shared/components/heading"
+import { PanelHead, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel, PanelRow } from "@/shared/components/panel"
@@ -128,12 +128,7 @@ export function GroupMembersPage() {
 
         <aside className={joinClasses(sideColumn(320), "gap-6")}>
           <Panel aria-labelledby="members-disclosure" className="flex flex-col gap-4 p-6">
-            <div className="flex flex-col gap-1">
-              <h2 id="members-disclosure" className={sectionTitle}>
-                내 공개 범위
-              </h2>
-              <p className="text-sm text-text-secondary">이 그룹 멤버에게 내 지원 상태를 어디까지 보일지 정합니다.</p>
-            </div>
+            <PanelHead id="members-disclosure" title="내 공개 범위">이 그룹 멤버에게 내 지원 상태를 어디까지 보일지 정합니다.</PanelHead>
             <DisclosureOptions value={disclosure} onChange={(next) => void changeDisclosure(next)} labelledBy="members-disclosure" />
             <p className="text-label-sm text-text-secondary">관심을 켠 공고에만 적용됩니다. 그룹마다 따로 정합니다.</p>
           </Panel>

@@ -9,7 +9,7 @@ import { Avatar } from "@/shared/components/avatar"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
 import { Dot } from "@/shared/components/dot"
-import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
+import { Heading, PanelHead, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
@@ -131,12 +131,7 @@ export function MyPostPage() {
           </Panel>
 
           <Panel aria-labelledby="mp-memo" className="flex flex-col gap-4 p-6">
-            <div className="flex flex-col gap-1">
-              <h2 id="mp-memo" className={sectionTitle}>
-                나만 보는 메모
-              </h2>
-              <p className="text-sm text-text-secondary">그룹에는 보이지 않습니다.</p>
-            </div>
+            <PanelHead id="mp-memo" title="나만 보는 메모">그룹에는 보이지 않습니다.</PanelHead>
             <label htmlFor="mp-memo-text" className="sr-only">
               메모
             </label>
@@ -229,7 +224,7 @@ export function MyPostPage() {
           removal={removal}
           onConfirm={async () => {
             await removeMyPosting(posting.id)
-            const removed: RemovedState = { removed: { name, groups: posting.groupStates.filter((g) => g.interested).map((g) => g.name) } }
+            const removed: RemovedState = { removed: { name, groups: removal.groups } }
             void navigate(paths.myPosts(), { state: removed })
           }}
         />

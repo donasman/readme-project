@@ -3,11 +3,12 @@ import { Link, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { IconNote } from "@/shared/components/notice"
+import { StatusIcon } from "@/shared/components/status-icon"
 import { MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { resendVerification } from "../api"
-import { AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthStrong, AuthText, StatusIcon } from "../components/auth-parts"
+import { AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthStrong, AuthText } from "../components/auth-parts"
 
 /** 이메일 인증 · 메일 보냄(5차 "이메일 인증"). 가입한 이메일은 앞 화면이 주소 대신 이동 상태로 넘긴다. */
 export function SignupSentPage() {

@@ -7,12 +7,12 @@ import { getProfile } from "@/domain/profile/api"
 import type { Profile } from "@/domain/profile/types"
 import { FieldError, noteId } from "@/shared/components/form-field"
 import { IconNote } from "@/shared/components/notice"
-import { sectionTitle, subpageTitle } from "@/shared/components/heading"
+import { PanelHead, sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
-import { ApiError, FILE_TOO_LARGE } from "@/shared/lib/api"
+import { ApiError, FILE_TOO_LARGE, MAX_FILE_BYTES } from "@/shared/lib/api"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { cn, docTitle, joinClasses, matchesAccept } from "@/shared/lib/utils"
@@ -30,7 +30,6 @@ export function cardSourcesLoader() {
 // 서버가 받는 형식과 크기(경험카드 문서 4.4). 형식은 서버가 내용으로 다시 본다
 const ACCEPT = ".pdf,.docx,.hwpx,.hwp,.pptx,.txt,.md"
 const ACCEPT_TEXT = "PDF, DOCX, HWPX, HWP, PPTX, TXT, MD"
-const MAX_BYTES = 20 * 1024 * 1024
 const POLL_MS = 1000
 
 // before: 뽑기를 시작할 때의 프로필. 끝난 뒤의 프로필과 견주어 이번에 채운 칸을 표시한다. 나갔다 와서 이어 보면 null이다
@@ -245,15 +244,11 @@ export function CardSourcesPage() {
           )}
           {step.kind === "done" && (
             <Panel aria-labelledby="src-profile" className="flex flex-col gap-4 p-6">
-              <div className="flex flex-col gap-1">
-                <h2 id="src-profile" className={sectionTitle}>
-                  프로필 칸 확인
-                </h2>
-                <p className="text-sm text-text-secondary">
-                  자료에서 읽은 값은 프로필의 비어 있던 칸에만 넣었습니다. 이미 있던 값은 바꾸지 않았습니다.{" "}
-                  {step.before ? "이번에 채운 칸에 표시했습니다." : "지금 프로필은 아래와 같습니다."}
-                </p>
-              </div>
+              <PanelHead id="src-profile" title="프로필 칸 확인">
+                자료에서 읽은 값은 프로필의 비어 있던 칸에만 넣었습니다. 이미 있던 값은 바꾸지 않았습니다.{" "}
+                {step.before ? "이번에 채운 칸에 표시했습니다." : "지금 프로필은 아래와 같습니다."}
+                
+              </PanelHead>
               <dl className="flex flex-col">
                 {profileCheckRows(step.profile, step.before).map((row) => (
                   <div key={row.label} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-border-subtle py-3">
@@ -343,7 +338,7 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
     if (!file) return
     if (!matchesAccept(file.name, ACCEPT)) return failFile(`${ACCEPT_TEXT} 파일만 올릴 수 있습니다.`)
     // 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다(경험카드 문서 6절 7번)
-    if (file.size > MAX_BYTES) return failFile(FILE_TOO_LARGE)
+    if (file.size > MAX_FILE_BYTES) return failFile(FILE_TOO_LARGE)
     failFile(await onRead({ file }))
   }
 

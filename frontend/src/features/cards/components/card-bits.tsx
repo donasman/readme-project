@@ -58,8 +58,8 @@ export function FactList({ facts }: { facts: string[] }) {
   if (facts.length === 0) return <p className="text-sm text-text-secondary">아직 없습니다.</p>
   return (
     <ul className="flex flex-col gap-2">
-      {facts.map((fact) => (
-        <li key={fact} className="flex items-start gap-2.5">
+      {facts.map((fact, i) => (
+        <li key={i} className="flex items-start gap-2.5">
           <Dot tone="accent" className="mt-[9px]" />
           <span>{fact}</span>
         </li>

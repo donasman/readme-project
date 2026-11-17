@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { DISCLOSURE_DESCRIPTIONS, DISCLOSURE_LABELS, DISCLOSURES } from "@/domain/group/disclosure"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { Panel } from "@/shared/components/panel"
+import { StatusIcon } from "@/shared/components/status-icon"
 import { CalendarIcon, FileTextIcon, UsersIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { docTitle } from "@/shared/lib/utils"
@@ -79,9 +80,7 @@ export function LandingPage() {
           <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-5">
             {FEATURES.map((f) => (
               <Panel as="li" key={f.title} className="flex flex-col gap-3 px-6 py-7">
-                <span aria-hidden="true" className="inline-flex size-12 items-center justify-center rounded-control bg-accent-subtle text-accent-strong">
-                  {f.icon}
-                </span>
+                <StatusIcon>{f.icon}</StatusIcon>
                 <h3 className="text-lg font-bold">{f.title}</h3>
                 <p className="text-text-secondary">{f.body}</p>
               </Panel>

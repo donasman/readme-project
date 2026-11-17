@@ -7,6 +7,7 @@ import { requestPasswordReset } from "@/domain/session/api"
 import { PASSWORD_TOO_LONG, passwordTooLong, TOO_MANY_TRIES } from "@/domain/session/password"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
+import { StatusIcon } from "@/shared/components/status-icon"
 import { MailIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
@@ -77,9 +78,9 @@ export function PasswordDialog({ open, onClose, email, hasPassword, onChanged }:
         onOpenChange={close}
         title="메일을 확인해 주세요"
         icon={
-          <span aria-hidden="true" className="inline-flex size-12 items-center justify-center self-start rounded-control bg-accent-subtle text-accent-strong [&_svg]:size-6">
+          <StatusIcon className="self-start">
             <MailIcon />
-          </span>
+          </StatusIcon>
         }
         actions={<DialogCancel>닫기</DialogCancel>}
       >

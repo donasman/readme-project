@@ -8,15 +8,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
-import { sectionTitle, subpageTitle } from "@/shared/components/heading"
+import { PanelHead, sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { objectParticle } from "@/shared/lib/korean"
-import { isHttpUrl, joinClasses } from "@/shared/lib/utils"
+import { joinClasses } from "@/shared/lib/utils"
 
 import { sourceParagraphs } from "./post-source"
+import { postCheckErrors, toPostUpload } from "./post-upload"
 import type { Deadline, DraftField, PostDraft, PostUpload } from "./types"
 
 type DueMode = Deadline["kind"]
@@ -73,27 +74,13 @@ export function PostCheckForm({ draft, backTo, backLabel, submitLabel, optionalN
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    const next: Partial<Record<DraftField, string>> = {}
-    if (!company.trim()) next.company = "회사명을 넣어 주세요."
-    if (!title.trim()) next.title = "공고명을 넣어 주세요."
-    if (dueMode === "date" && !dueDate) next.deadline = "마감일을 넣거나 상시, 모름을 고르세요."
-    if (sourceUrl.trim() && !isHttpUrl(sourceUrl.trim())) next.sourceUrl = "https:// 로 시작하는 주소를 넣거나 비워 두세요."
+    const values = { company, title, dueMode, dueDate, sourceUrl, applyAt, sections, keywords: draft.keywords }
+    const next = postCheckErrors(values)
     setErrors(next)
     if (Object.keys(next).length) return
     setSaving(true)
     try {
-      const deadline: Deadline = dueMode === "date" ? { kind: "date", date: dueDate } : { kind: dueMode }
-      await onSubmit({
-        company: company.trim(),
-        title: title.trim(),
-        deadline,
-        sourceUrl: sourceUrl.trim() || null,
-        applyAt: applyAt.trim() || null,
-        sections: sections
-          .map((s) => ({ title: s.title, items: s.text.split("\n").map((l) => l.trim()).filter(Boolean) }))
-          .filter((s) => s.items.length > 0),
-        keywords: draft.keywords,
-      })
+      await onSubmit(toPostUpload(values))
     } finally {
       setSaving(false)
     }
@@ -183,12 +170,7 @@ export function PostCheckForm({ draft, backTo, backLabel, submitLabel, optionalN
           </Panel>
 
           <Panel aria-labelledby="pc-more" className="flex flex-col gap-4 p-6">
-            <div className="flex flex-col gap-1">
-              <h2 id="pc-more" className={sectionTitle}>
-                더 있으면 좋은 칸
-              </h2>
-              <p className="text-sm text-text-secondary">{optionalNote}</p>
-            </div>
+            <PanelHead id="pc-more" title="더 있으면 좋은 칸">{optionalNote}</PanelHead>
             <Field id="pc-at" label="지원하는 곳" evidence={draft.evidence.applyAt}>
               <Input id="pc-at" value={applyAt} maxLength={MAX_LENGTH.applyAt} onChange={(e) => setApplyAt(e.target.value)} className="md:text-base" />
             </Field>

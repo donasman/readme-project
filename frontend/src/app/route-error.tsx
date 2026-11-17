@@ -3,7 +3,7 @@ import { Link, Navigate, isRouteErrorResponse, useRouteError } from "react-route
 import { Heading } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { textLink } from "@/shared/components/text-link"
-import { ApiError } from "@/shared/lib/api"
+import { ApiError, errorMessage } from "@/shared/lib/api"
 import { NotFoundError } from "@/shared/lib/errors"
 import { sentence } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
@@ -22,7 +22,10 @@ export function RouteError({ notFound = false }: { notFound?: boolean }) {
     ? error instanceof NotFoundError || error instanceof ApiError
       ? sentence(error.message)
       : "주소에 맞는 화면이 없습니다."
-    : "화면을 그리다 문제가 생겼습니다. 다시 시도해 주세요."
+    : error instanceof ApiError
+      ? // 서버가 꺼졌거나(연결 안내) 서버 오류(다시 해 보라는 글). 버튼에서 난 오류의 알림(action-error.tsx)과 같은 글이다
+        errorMessage(error)
+      : "화면을 그리다 문제가 생겼습니다. 다시 시도해 주세요."
 
   return (
     <Page className="items-start gap-4 pt-16">

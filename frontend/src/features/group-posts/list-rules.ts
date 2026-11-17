@@ -34,7 +34,7 @@ export interface PostRow {
   closed: boolean
   kind: "date" | "always" | "unknown"
   isNew: boolean
-  /** 내가 관심을 켰거나 내 지원 상태가 있으면 true */
+  /** 내가 관심을 켰으면 true. 지원 상태가 있어도 관심을 끄면 false다 */
   meOn: boolean
   fans: FanChip[]
 }

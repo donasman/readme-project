@@ -4,9 +4,10 @@ import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react
 import { Button, buttonVariants } from "@/components/ui/button"
 import { CheckIcon, ClockIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
+import { StatusIcon } from "@/shared/components/status-icon"
 
 import { resendVerification, verifyEmail } from "../api"
-import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthText, StatusIcon } from "../components/auth-parts"
+import { AuthField, AuthFooter, AuthFrame, authFooterLink, AuthHeading, AuthText } from "../components/auth-parts"
 
 /** 메일의 가입 확인 링크(/verify-email?token=…)를 연 순간 서버에 확인한다. */
 export async function verifyEmailLoader({ request }: LoaderFunctionArgs) {

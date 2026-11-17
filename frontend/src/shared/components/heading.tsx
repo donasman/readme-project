@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react"
+import type { HTMLAttributes, ReactNode } from "react"
 
 import { joinClasses } from "@/shared/lib/utils"
 
@@ -23,5 +23,17 @@ export function Heading({ level = 2, size = "text-xl", className, ...props }: He
   const Tag = `h${level}` as "h1" | "h2" | "h3"
   return (
     <Tag className={joinClasses("font-heading leading-display font-bold tracking-display", size, className)} {...props} />
+  )
+}
+
+/** 패널 머리: 제목(h2, 18px 굵게)과 그 아래 회색 설명. id는 패널의 aria-labelledby가 가리킨다. */
+export function PanelHead({ id, title, children }: { id: string; title: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <h2 id={id} className={sectionTitle}>
+        {title}
+      </h2>
+      <p className="text-sm text-text-secondary">{children}</p>
+    </div>
   )
 }
