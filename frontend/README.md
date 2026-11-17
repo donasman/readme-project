@@ -1,21 +1,5 @@
-# React + TypeScript + Vite + shadcn/ui
+# 리드미 프런트
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+작업 규칙은 `CLAUDE.md`에, 띄우는 법과 검사는 저장소 맨 위 `README.md`에 있다.
 
-## Adding components
-
-To add components to your app, run the following command:
-
-```bash
-npx shadcn@latest add button
-```
-
-This will place the ui components in the `src/components` directory.
-
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button"
-```
+shadcn 부품은 `npx shadcn@latest add <이름>`으로 받고 `src/components/ui`에 놓인다(`components.json`).

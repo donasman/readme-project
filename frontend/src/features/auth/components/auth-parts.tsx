@@ -96,7 +96,7 @@ export function AuthField({ id, label, hint, error, className, ...input }: AuthF
   )
 }
 
-/** "또는" 줄과 구글로 계속하기. 구글에서 생년월일·성별을 받는다는 안내를 함께 둔다(로그인 문서 7절 29번). */
+/** "또는" 줄과 구글로 계속하기. 구글에는 기본 범위(openid, email, profile)만 요청하므로 따로 안내하지 않는다. */
 export function OrGoogle() {
   return (
     <div className="flex flex-col gap-4">
