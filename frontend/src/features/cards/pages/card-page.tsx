@@ -3,6 +3,7 @@ import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
+import { ArrowLink } from "@/shared/components/arrow-link"
 import { BusyButton } from "@/shared/components/busy-button"
 import { Chip } from "@/shared/components/chip"
 import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
@@ -13,7 +14,7 @@ import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getCard } from "../api"
-import { orgAndRole, STAR_PARTS } from "../card-rules"
+import { isOptionalPart, orgAndRole, STORY_PARTS } from "../card-rules"
 import { CardStatusBadge, CardsSubpage, FactList, FlaggedText } from "../components/card-bits"
 
 export function cardLoader({ params }: LoaderFunctionArgs) {
@@ -23,6 +24,8 @@ export function cardLoader({ params }: LoaderFunctionArgs) {
 /** 카드 상세(6차 "카드 상세"). 확인할 것(검사 결과, 추출 메모)은 옆 칸에 모은다. */
 export function CardPage() {
   const card = useLoaderData<typeof cardLoader>()
+  // 어려움과 배운 점은 선택이라 비었으면 보이지 않는다
+  const story = STORY_PARTS.filter(([key]) => card.star[key] || !isOptionalPart(key))
   const notes = card.issues.length + card.extractionNotes.length
   const where = orgAndRole(card)
   const navigate = useNavigate()
@@ -38,6 +41,7 @@ export function CardPage() {
               <CardStatusBadge verified={card.verified} />
               {card.period && <span className="text-label-sm whitespace-nowrap text-text-secondary">{card.period}</span>}
             </div>
+            {card.experience && <p className="text-sm font-bold text-text-secondary">{card.experience}</p>}
             <h1 className={subpageTitle}>{card.title}</h1>
             {where && <p className="text-text-secondary">{where}</p>}
           </div>
@@ -70,9 +74,9 @@ export function CardPage() {
 
             <Panel aria-labelledby="card-star" className="flex flex-col gap-5 p-6">
               <h2 id="card-star" className={sectionTitle}>
-                STAR
+                이야기
               </h2>
-              {STAR_PARTS.map(([key, label], i) => (
+              {story.map(([key, label], i) => (
                 <div key={key} className={i === 0 ? "flex flex-col gap-1.5" : "flex flex-col gap-1.5 border-t border-border-subtle pt-5"}>
                   <h3 className={subLabel}>{label}</h3>
                   {card.star[key] ? (
@@ -123,6 +127,15 @@ export function CardPage() {
               <h2 id="card-info" className="sr-only">
                 카드 정보
               </h2>
+              {card.experience && (
+                <div className="flex flex-col gap-2">
+                  <h3 className={subLabel}>경험</h3>
+                  <p className="text-sm">{card.experience}</p>
+                  <ArrowLink to={paths.cardNew(card.experience)} className="min-h-control-sm self-start">
+                    이 경험에 장면 더하기
+                  </ArrowLink>
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 <h3 className={subLabel}>태그</h3>
                 <ul className="flex flex-wrap gap-1.5">

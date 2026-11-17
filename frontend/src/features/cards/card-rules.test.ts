@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { countUnverified, DEFAULT_CARD_FILTERS, filterCards, knownTag, orderTags, orgAndRole, startFrom, type CardFilters } from "./card-rules"
+import { countUnverified, DEFAULT_CARD_FILTERS, experienceNames, filterCards, groupByExperience, knownTag, orderTags, orgAndRole, sceneNumber, startFrom, type CardFilters } from "./card-rules"
 import type { ExperienceCard } from "./types"
 
 let seq = 0
@@ -75,5 +75,45 @@ describe("knownTag", () => {
     expect(knownTag("Kotlin", tags)).toBe("")
     expect(knownTag("Redis", tags)).toBe("Redis")
     expect(knownTag("", tags)).toBe("")
+  })
+})
+
+describe("경험별 묶기(경험카드 문서 4.8)", () => {
+  const scenes = () => [
+    card({ title: "느린 쿼리", experience: "주문 조회 API 개선" }),
+    card({ title: "혼자 1" }),
+    card({ title: "혼자 2" }),
+    card({ title: "캐시 설득", experience: " 주문 조회 api 개선 " }),
+    card({ title: "스터디", experience: "알고리즘 스터디" }),
+    card({ title: "혼자 3" }),
+  ]
+
+  it("같은 경험은 처음 나온 자리에 모으고, 경험이 없는 카드는 이어진 것끼리 묶는다", () => {
+    const blocks = groupByExperience(scenes())
+    expect(blocks.map((b) => [b.experience, titles(b.cards)])).toEqual([
+      ["주문 조회 API 개선", ["느린 쿼리", "캐시 설득"]],
+      ["", ["혼자 1", "혼자 2"]],
+      ["알고리즘 스터디", ["스터디"]],
+      ["", ["혼자 3"]],
+    ])
+  })
+
+  it("공백만 있는 경험 이름은 경험이 없는 것이다", () => {
+    expect(groupByExperience([card({ experience: "  " })]).map((b) => b.experience)).toEqual([""])
+    expect(groupByExperience([])).toEqual([])
+  })
+
+  it("이미 쓴 경험 이름은 한 번씩, 처음 쓴 모양으로", () => {
+    expect(experienceNames(scenes())).toEqual(["주문 조회 API 개선", "알고리즘 스터디"])
+  })
+
+  it("확인 중인 카드가 같은 경험의 몇 번째 장면인지", () => {
+    const cards = scenes()
+    expect(sceneNumber(cards, 0)).toEqual({ nth: 1, of: 2 })
+    expect(sceneNumber(cards, 3)).toEqual({ nth: 2, of: 2 })
+    // 그 경험의 카드가 한 장이거나 경험이 없으면 알리지 않는다
+    expect(sceneNumber(cards, 4)).toBeNull()
+    expect(sceneNumber(cards, 1)).toBeNull()
+    expect(sceneNumber(cards, 9)).toBeNull()
   })
 })

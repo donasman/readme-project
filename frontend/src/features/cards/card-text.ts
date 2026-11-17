@@ -1,4 +1,5 @@
 // 카드 글을 다루는 순수 함수: 추출이 남긴 "[확인 필요: …]" 표시, 자료 원문의 숫자, 자료를 나눠 읽는 조각 수.
+import type { Star } from "./types"
 
 /** 추출이 원문에 없는 숫자를 바꿔 넣은 표시. 예: "[확인 필요: 30%]" */
 const FLAG = /\[확인 필요: ([^\]]+)\]/g
@@ -33,6 +34,15 @@ export function dropFlaggedSentences(text: string): string {
     .filter((s) => !new RegExp(FLAG.source).test(s))
     .join(" ")
     .trim()
+}
+
+/** 이야기 여섯 칸에 남은 "확인 필요" 숫자들. 서버는 어느 칸에나 붙인다(경험카드 문서 4.8) */
+export const storyFlaggedValues = (star: Star): string[] => Object.values(star).flatMap(flaggedValues)
+
+/** 이야기 여섯 칸에서 "확인 필요" 표시가 든 문장을 지운다. 표시가 없는 칸은 줄바꿈까지 그대로 둔다 */
+export function dropFlaggedStory(star: Star): Star {
+  const drop = (text: string) => (flaggedValues(text).length ? dropFlaggedSentences(text) : text)
+  return { situation: drop(star.situation), task: drop(star.task), obstacle: drop(star.obstacle), action: drop(star.action), result: drop(star.result), learning: drop(star.learning) }
 }
 
 /** 원문 문단을 나누고, 카드 글(usedText)에 쓰인 숫자를 굵게 표시할 수 있게 나눈다. */

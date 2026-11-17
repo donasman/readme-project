@@ -14,9 +14,9 @@ import { LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn, docTitle, joinClasses } from "@/shared/lib/utils"
 
-import { createCard, getCard, suggestKeywords, updateCard } from "../api"
-import { STAR_PARTS } from "../card-rules"
-import { flaggedValues, SUMMARY_LIMIT } from "../card-text"
+import { createCard, getCard, getCards, suggestKeywords, updateCard } from "../api"
+import { experienceNames, isOptionalPart, STORY_PARTS } from "../card-rules"
+import { storyFlaggedValues, SUMMARY_LIMIT } from "../card-text"
 import { CardsSubpage } from "../components/card-bits"
 import { QUESTION_TYPES, type CardInput, type KeywordSuggestion, type QuestionType } from "../types"
 
@@ -25,12 +25,29 @@ import { QUESTION_TYPES, type CardInput, type KeywordSuggestion, type QuestionTy
 /** 고치기는 그 카드를, 직접 만들기는 빈 카드를 같은 화면에 연다. id가 null이면 새 카드다. */
 type EditTarget = CardInput & { id: string | null }
 
-export function cardEditLoader({ params }: LoaderFunctionArgs): Promise<EditTarget> {
-  return getCard(params.cardId ?? "")
+/** 고칠 카드와 이미 쓴 경험 이름(경험 이름 칸의 고르기 목록). 이름은 목록이 받은 카드에서 만든다(경험카드 문서 4.8) */
+interface EditData {
+  card: EditTarget
+  experiences: string[]
 }
 
-export function cardNewLoader(): EditTarget {
-  return { id: null, experience: "", title: "", period: null, org: null, role: null, summary: "", tags: [], usableFor: [], star: { situation: "", task: "", action: "", result: "", obstacle: "", learning: "" }, facts: [] }
+export async function cardEditLoader({ params }: LoaderFunctionArgs): Promise<EditData> {
+  const [card, { cards }] = await Promise.all([getCard(params.cardId ?? ""), getCards()])
+  return { card, experiences: experienceNames(cards) }
+}
+
+/** 직접 만들기. ?experience= 로 오면("장면 더하기") 그 경험의 새 장면이다 */
+export async function cardNewLoader({ request }: LoaderFunctionArgs): Promise<EditData> {
+  const experience = new URL(request.url).searchParams.get("experience") ?? ""
+  const { cards } = await getCards()
+  const star = { situation: "", task: "", obstacle: "", action: "", result: "", learning: "" }
+  return { card: { id: null, experience, title: "", period: null, org: null, role: null, summary: "", tags: [], usableFor: [], star, facts: [] }, experiences: experienceNames(cards) }
+}
+
+/** 선택 칸의 안내(무엇을 적는 칸인지) */
+const PART_HINTS: Partial<Record<keyof CardInput["star"], string>> = {
+  obstacle: "일을 어렵게 만든 조건: 시간, 운영 중인 서비스, 의견이 다른 사람 …",
+  learning: "이 일로 바뀐 생각이나 일하는 방식",
 }
 
 let factSeq = 0
@@ -38,10 +55,11 @@ const withIds = (facts: string[]) => facts.map((text) => ({ id: ++factSeq, text 
 
 /** 카드 고치기(6차 "카드 편집")와 직접 만들기. 저장하면 서버가 검사 결과를 매기고 그 카드의 상세로 간다. */
 export function CardEditPage() {
-  const card = useLoaderData<typeof cardNewLoader>()
+  const { card, experiences } = useLoaderData<typeof cardNewLoader>()
   // 취소하면 고치던 카드로, 새 카드면 목록으로 돌아간다
   const back = card.id === null ? paths.cards() : paths.card(card.id)
   const navigate = useNavigate()
+  const [experience, setExperience] = useState(card.experience)
   const [title, setTitle] = useState(card.title)
   const [period, setPeriod] = useState(card.period ?? "")
   const [org, setOrg] = useState(card.org ?? "")
@@ -53,7 +71,7 @@ export function CardEditPage() {
   const [types, setTypes] = useState<QuestionType[]>(card.usableFor)
   const [saving, setSaving] = useState(false)
   const [titleEmpty, setTitleEmpty] = useState(false)
-  const flagged = flaggedValues(star.result)
+  const flagged = storyFlaggedValues(star)
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -62,8 +80,7 @@ export function CardEditPage() {
     setSaving(true)
     try {
       const input: CardInput = {
-        // shortcut: 경험 이름과 어려움·배운 점은 화면에 칸이 없어 받은 값을 그대로 보낸다(지우지 않게), 카드 시안이 오면 칸을 둔다(경험카드 문서 4.8)
-        experience: card.experience,
+        experience: experience.trim(),
         title: title.trim(),
         period: period.trim() || null,
         org: org.trim() || null,
@@ -103,6 +120,27 @@ export function CardEditPage() {
               <h2 id="edit-basic" className={sectionTitle}>
                 기본
               </h2>
+              <Field
+                id="edit-experience"
+                label="경험 이름"
+                aside={<span className="text-label-sm text-text-secondary">선택</span>}
+                note={<FieldHint id="edit-experience">같은 프로젝트·업무의 장면 카드는 같은 이름으로 묶입니다. 이미 쓴 이름은 골라 넣을 수 있습니다.</FieldHint>}
+              >
+                <Input
+                  id="edit-experience"
+                  list="edit-experience-names"
+                  maxLength={200}
+                  value={experience}
+                  onChange={(e) => setExperience(e.target.value)}
+                  aria-describedby={noteId("edit-experience")}
+                  className="md:text-base"
+                />
+                <datalist id="edit-experience-names">
+                  {experiences.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
+              </Field>
               <Field id="edit-title" label="제목" note={titleEmpty && <FieldError id="edit-title">제목을 넣어 주세요.</FieldError>}>
                 <Input
                   id="edit-title"
@@ -144,22 +182,32 @@ export function CardEditPage() {
 
             <Panel aria-labelledby="edit-star" className="flex flex-col gap-4 p-6">
               <h2 id="edit-star" className={sectionTitle}>
-                STAR
+                이야기
               </h2>
-              {STAR_PARTS.map(([key, label]) => (
-                <Field key={key} id={`edit-star-${key}`} label={label}>
-                  <Textarea
+              {STORY_PARTS.map(([key, label]) => {
+                const optional = isOptionalPart(key)
+                return (
+                  <Field
+                    key={key}
                     id={`edit-star-${key}`}
-                    rows={3}
-                    maxLength={2000}
-                    value={star[key]}
-                    onChange={(e) => setStar((s) => ({ ...s, [key]: e.target.value }))}
-                    className="min-h-24"
-                  />
-                </Field>
-              ))}
+                    label={label}
+                    aside={optional && <span className="text-label-sm text-text-secondary">선택</span>}
+                    note={optional && <FieldHint id={`edit-star-${key}`}>{PART_HINTS[key]}</FieldHint>}
+                  >
+                    <Textarea
+                      id={`edit-star-${key}`}
+                      rows={3}
+                      maxLength={2000}
+                      value={star[key]}
+                      onChange={(e) => setStar((s) => ({ ...s, [key]: e.target.value }))}
+                      aria-describedby={optional ? noteId(`edit-star-${key}`) : undefined}
+                      className="min-h-24"
+                    />
+                  </Field>
+                )
+              })}
               {flagged.length > 0 && (
-                <IconNote tone="warning">결과의 {flagged.map((v) => `[확인 필요: ${v}]`).join(", ")}를 맞는 숫자로 고치거나 지워 주세요.</IconNote>
+                <IconNote tone="warning">{flagged.map((v) => `[확인 필요: ${v}]`).join(", ")}를 맞는 숫자로 고치거나 지워 주세요.</IconNote>
               )}
             </Panel>
 

@@ -1,10 +1,10 @@
-import { useMemo } from "react"
+import { useMemo, type ReactNode } from "react"
 import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
 import { ArrowLink } from "@/shared/components/arrow-link"
-import { Heading, subLabel } from "@/shared/components/heading"
+import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
 import { ToggleButton } from "@/shared/components/toggle-button"
@@ -13,7 +13,7 @@ import { paths } from "@/shared/lib/paths"
 import { docTitle } from "@/shared/lib/utils"
 
 import { getCards } from "../api"
-import { CARD_STATUS_LABELS, countUnverified, filterCards, knownTag, orderTags, type CardStatus } from "../card-rules"
+import { CARD_STATUS_LABELS, countUnverified, filterCards, groupByExperience, knownTag, orderTags, type CardStatus } from "../card-rules"
 import { CardItem } from "../components/card-item"
 import { useCardFilters } from "../use-card-filters"
 
@@ -30,6 +30,7 @@ export function CardsPage() {
   const tag = knownTag(urlFilters.tag, tags)
   const filters = useMemo(() => ({ ...urlFilters, tag }), [urlFilters, tag])
   const shown = useMemo(() => filterCards(cards, filters), [cards, filters])
+  const blocks = useMemo(() => groupByExperience(shown), [shown])
   const orderedTags = useMemo(() => orderTags(tags), [tags])
   const unverified = countUnverified(cards)
 
@@ -44,7 +45,6 @@ export function CardsPage() {
           <p className="text-text-secondary">문항 유형별로 꺼내 쓸 경험을 카드 한 장씩 정리합니다.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* 직접 만들기는 시안이 없어 카드 고치기 화면을 빈 카드로 연다 */}
           <Link to={paths.cardNew()} className={buttonVariants({ variant: "outline" })}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             직접 만들기
@@ -97,16 +97,52 @@ export function CardsPage() {
       </div>
 
       {shown.length > 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-5">
-          {shown.map((card) => (
-            <CardItem key={card.id} card={card} />
-          ))}
-        </div>
+        // 같은 경험의 장면 카드는 경험 이름 아래에 모은다(경험카드 문서 4.8). 경험이 없는 카드는 그대로 한 장씩이다
+        blocks.map((block, i) =>
+          block.experience ? (
+            <ExperienceGroup key={block.experience} id={`exp-${i}`} experience={block.experience}>
+              {block.cards.map((card) => (
+                <CardItem key={card.id} card={card} level={3} />
+              ))}
+            </ExperienceGroup>
+          ) : (
+            <div key={block.cards[0].id} className={cardGrid}>
+              {block.cards.map((card) => (
+                <CardItem key={card.id} card={card} />
+              ))}
+            </div>
+          )
+        )
       ) : (
         <p className="py-10 text-center text-sm text-text-secondary">
           {cards.length === 0 ? "아직 카드가 없습니다." : "조건에 맞는 카드가 없습니다."}
         </p>
       )}
     </Page>
+  )
+}
+
+const cardGrid = "grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-5"
+
+/** 한 경험의 장면 카드 묶음: 경험 이름, 장면 수, 이 경험에 장면 더하기. 회색 바탕 위에 카드를 놓아 한 묶음으로 보인다 */
+function ExperienceGroup({ id, experience, children }: { id: string; experience: string; children: ReactNode[] }) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-4 rounded-surface bg-surface-muted p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <span className={subLabel}>경험</span>
+          <h2 id={id} className={sectionTitle}>
+            {experience}
+          </h2>
+          <span className="text-sm text-text-secondary">장면 {children.length}장</span>
+        </div>
+        <Link to={paths.cardNew(experience)} className={buttonVariants({ variant: "outline", size: "sm", className: "bg-surface" })}>
+          <PlusIcon data-icon="inline-start" aria-hidden="true" />
+          <span className="sr-only">{experience}에 </span>
+          장면 더하기
+        </Link>
+      </div>
+      <div className={cardGrid}>{children}</div>
+    </section>
   )
 }

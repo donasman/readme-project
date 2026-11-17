@@ -40,7 +40,8 @@ export const paths = {
   invite: (token: string) => `/invite/${seg(token)}`,
   cards: () => "/cards",
   card: (cardId: string) => `/cards/${cardId}`,
-  cardNew: () => "/cards/new",
+  /** 직접 만들기. 경험 이름을 주면 그 경험의 새 장면으로 연다(경험카드 문서 4.8) */
+  cardNew: (experience?: string) => (experience ? `/cards/new?${new URLSearchParams({ experience })}` : "/cards/new"),
   cardEdit: (cardId: string) => `/cards/${cardId}/edit`,
   cardSources: () => "/cards/sources",
   /** 카드 확인. cardId를 주면 그 카드부터 본다 */

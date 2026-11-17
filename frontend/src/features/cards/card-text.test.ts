@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { chunkCount, dropFlaggedSentences, flaggedValues, formatChars, markUsedNumbers, splitFlagged } from "./card-text"
+import { chunkCount, dropFlaggedSentences, dropFlaggedStory, flaggedValues, formatChars, markUsedNumbers, splitFlagged, storyFlaggedValues } from "./card-text"
 
 const RESULT = "p95 응답 시간이 0.4초로 줄었고 주문 1건당 쿼리가 21회에서 1회가 됐다. 관련 문의도 [확인 필요: 30%] 줄었다."
 
@@ -56,5 +56,21 @@ describe("조각과 글자 수", () => {
   })
   it("글자 수를 쉼표로", () => {
     expect(formatChars(12480)).toBe("12,480자")
+  })
+})
+
+describe("이야기 여섯 칸의 확인 필요", () => {
+  const star = { situation: "", task: "하루 3만 건을 옮겼다.", obstacle: "", action: "큐를 나눴다.\n실패는 다시 보냈다. ", result: RESULT, learning: "작업을 쪼개면 [확인 필요: 2배] 빨라진다. 실행 계획부터 본다." }
+
+  it("결과뿐 아니라 배운 점의 표시도 찾는다", () => {
+    expect(storyFlaggedValues(star)).toEqual(["30%", "2배"])
+  })
+
+  it("표시가 든 문장만 칸마다 지우고, 표시가 없는 칸은 줄바꿈과 공백까지 그대로 둔다", () => {
+    expect(dropFlaggedStory(star)).toEqual({
+      ...star,
+      result: "p95 응답 시간이 0.4초로 줄었고 주문 1건당 쿼리가 21회에서 1회가 됐다.",
+      learning: "실행 계획부터 본다.",
+    })
   })
 })
