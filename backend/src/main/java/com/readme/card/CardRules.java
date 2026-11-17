@@ -112,7 +112,7 @@ final class CardRules {
 		}
 		List<String> empty = new ArrayList<>();
 		List<String> parts = card.star().parts();
-		for (int i = 0; i < parts.size(); i++) {
+		for (int i = 0; i < STAR_LABELS.size(); i++) {
 			if (parts.get(i).isBlank()) {
 				empty.add(STAR_LABELS.get(i));
 			}
@@ -201,7 +201,7 @@ final class CardRules {
 	 * <li>태그는 대표 표기로(겹치면 하나), 문항 유형은 6종으로 읽고 아닌 것은 빼고 알린다.</li>
 	 * <li>근거 숫자 가운데 자료 원문에 없는 숫자가 든 것은 빼고 알린다.</li>
 	 * <li>STAR 에만 있는 숫자는 {@link #groundStar} 로 맞춘다.</li>
-	 * <li>칸 길이를 넘는 글은 자른다(제목·기관·역할·요약 200, 기간 50, STAR 한 칸 2,000, 태그 30개·100자, 근거 숫자 50개·500자).</li>
+	 * <li>칸 길이를 넘는 글은 자른다(경험 이름·제목·기관·역할·요약 200, 기간 50, 이야기 한 칸 2,000, 태그 30개·100자, 근거 숫자 50개·500자).</li>
 	 * </ul>
 	 * jobfit 과 다른 점: 숫자를 그 카드가 나온 조각과 대조한다(jobfit 은 자료 전체). 숫자 뽑기가 글 길이에 따라 오래 걸려서다.
 	 */
@@ -233,9 +233,11 @@ final class CardRules {
 		if (!badTypes.isEmpty()) {
 			notes.add("문항 유형이 아니라서 뺐습니다 — " + String.join(", ", badTypes));
 		}
-		ExtractedCard.StarText given = (raw.star() != null) ? raw.star() : new ExtractedCard.StarText("", "", "", "");
+		ExtractedCard.StarText given = (raw.star() != null) ? raw.star()
+				: new ExtractedCard.StarText("", "", "", "", "", "");
 		Star star = new Star(orEmpty(cut(given.situation(), 2000)), orEmpty(cut(given.task(), 2000)),
-				orEmpty(cut(given.action(), 2000)), orEmpty(cut(given.result(), 2000)));
+				orEmpty(cut(given.action(), 2000)), orEmpty(cut(given.result(), 2000)), orEmpty(cut(given.obstacle(), 2000)),
+				orEmpty(cut(given.learning(), 2000)));
 		List<String> facts = new ArrayList<>();
 		for (String fact : strings(raw.facts())) {
 			List<NumToken> numbers = Numbers.extract(fact);
@@ -249,12 +251,13 @@ final class CardRules {
 		facts.addAll(grounding.factsToAdd());
 		notes.addAll(grounding.notes());
 		List<String> keptFacts = facts.stream().map((f) -> cut(f, 500)).filter((f) -> f != null).limit(50).toList();
-		return new Normalized(new CardInput(title, cut(raw.period(), 50), cut(raw.org(), 200), cut(raw.role(), 200),
-				cut(raw.summary(), 200), grounding.star(), List.copyOf(tags), List.copyOf(types), keptFacts), notes);
+		return new Normalized(new CardInput(cut(raw.experience(), 200), title, cut(raw.period(), 50), cut(raw.org(), 200),
+				cut(raw.role(), 200), cut(raw.summary(), 200), grounding.star(), List.copyOf(tags), List.copyOf(types),
+				keptFacts), notes);
 	}
 
 	/**
-	 * STAR 에만 있고 근거 숫자에 없는 숫자를 맞춘다(jobfit 의 ground_star, 사람이 확인하기 전의 길). 초안은 근거 숫자의 숫자만 쓸 수 있다.
+	 * STAR(어려움·배운 점 포함, 설계 4.8)에만 있고 근거 숫자에 없는 숫자를 맞춘다(jobfit 의 ground_star, 사람이 확인하기 전의 길). 초안은 근거 숫자의 숫자만 쓸 수 있다.
 	 * <ul>
 	 * <li>자료 원문에 있는 숫자 → 그 숫자가 든 원문 문장(STAR 문장과 가장 많이 겹치는 것, 길면 숫자 앞뒤만)을 근거 숫자에 더한다.</li>
 	 * <li>원문에 없는 숫자 → STAR 에서 [확인 필요: 숫자] 로 바꾼다(초안이 그 숫자를 쓰지 않게).</li>
@@ -288,7 +291,7 @@ final class CardRules {
 			}
 			parts.set(i, value);
 		}
-		return new Grounding(new Star(parts.get(0), parts.get(1), parts.get(2), parts.get(3)), added, notes);
+		return new Grounding(Star.of(parts), added, notes);
 	}
 
 	private static final Pattern CONFIRM_SPAN = Pattern.compile("\\[확인\\s*필요[^\\]]*\\]", Pattern.UNICODE_CHARACTER_CLASS);

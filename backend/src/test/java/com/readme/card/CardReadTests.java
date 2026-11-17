@@ -41,10 +41,10 @@ class CardReadTests {
 
 		assertThat(this.mvc.get().uri("/api/cards/{id}", id).with(loginAs(me))).hasStatusOk().bodyJson().isStrictlyEqualTo("""
 				{
-				  "id": %d, "title": "배치 재실행 구조", "period": null, "org": null, "role": null,
+				  "id": %d, "experience": "", "title": "배치 재실행 구조", "period": null, "org": null, "role": null,
 				  "tags": ["Spring Batch"], "summary": "실패한 구간만 다시 돌리도록 나눈 경험", "usableFor": ["문제해결"],
 				  "verified": false,
-				  "star": { "situation": "상황", "task": "과제", "action": "행동", "result": "결과" },
+				  "star": { "situation": "상황", "task": "과제", "action": "행동", "result": "결과", "obstacle": "", "learning": "" },
 				  "facts": ["처리 시간 2시간 → 10분"],
 				  "visibility": "PRIVATE", "sourceId": %d, "sourceName": "예시_이력서.docx", "sourceExcerpt": null,
 				  "extractionNotes": ["결과의 30%%는 자료 원문에 없어 [확인 필요: 30%%]로 바꿨습니다."],
@@ -158,6 +158,36 @@ class CardReadTests {
 	}
 
 	/** 요약, STAR, 근거 숫자가 다 있어 태그·문항 유형 말고는 검사에 걸리지 않는 카드. 근거 숫자를 주지 않으면 "처리 시간 2시간 → 10분". */
+	@Test
+	void groupsByExperienceNameAndSearchesTheNewFields() throws Exception {
+		long me = this.fixtures.user("다온");
+		long tuning = episode(me, "주문 조회 API 개선", "느린 쿼리 줄이기", "실행 계획부터 본다");
+		long persuading = episode(me, "  주문 조회 api 개선 ", "캐시 도입을 팀에 설득하기", "");
+		long alone = card(me, "온보딩 문서 정리", List.of("Notion"), List.of("협업"));
+
+		// 경험 이름은 앞뒤 공백과 대소문자를 가리지 않고 한 묶음이다
+		assertThat(ids(me, "experience=주문 조회 API 개선")).containsExactly(persuading, tuning);
+		assertThat(ids(me, "experience=없는 경험")).isEmpty();
+		// 글자 검색은 경험 이름과 배운 점도 본다
+		assertThat(ids(me, "q=실행 계획")).containsExactly(tuning);
+		assertThat(ids(me, "q=주문 조회")).containsExactly(persuading, tuning);
+		// 경험 이름이 없는 카드는 빈 글자다
+		String response = this.mvc.get().uri("/api/cards/{id}", alone).with(loginAs(me)).exchange().getResponse()
+			.getContentAsString();
+		assertThat((String) JsonPath.read(response, "$.experience")).isEmpty();
+		assertThat((String) JsonPath.read(response, "$.star.learning")).isEmpty();
+	}
+
+	private long episode(long userId, String experience, String title, String learning) throws Exception {
+		String body = """
+				{ "experience": "%s", "title": "%s", "tags": ["Java"], "usableFor": ["문제해결"],
+				  "star": { "situation": "상황", "task": "과제", "action": "행동", "result": "결과", "obstacle": "운영 중", "learning": "%s" } }
+				""".formatted(experience, title, learning);
+		String response = this.mvc.post().uri("/api/cards").with(loginAs(userId)).with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON).content(body).exchange().getResponse().getContentAsString();
+		return ((Number) JsonPath.read(response, "$.id")).longValue();
+	}
+
 	private long card(long userId, String title, List<String> tags, List<String> usableFor, String... facts)
 			throws Exception {
 		String body = """

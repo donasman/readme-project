@@ -47,6 +47,14 @@ class CardExtractionQueries {
 	}
 
 	/** 내 카드의 제목. 먼저 만든 것이 앞이다. */
+	/** 프롬프트의 "이미 있는 카드": 경험 이름이 있으면 "경험 — 제목"(설계 4.8). 만든 순서다. */
+	List<String> cardHeadings(long userId) {
+		return this.jdbc.sql("""
+				select case when experience is null then title else experience || ' — ' || title end
+				  from experience_cards where user_id = :userId order by created_at, id
+				""").param("userId", userId).query(String.class).list();
+	}
+
 	List<String> cardTitles(long userId) {
 		return this.jdbc.sql("select title from experience_cards where user_id = :userId order by created_at, id")
 			.param("userId", userId)

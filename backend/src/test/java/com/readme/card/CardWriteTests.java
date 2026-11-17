@@ -70,6 +70,7 @@ class CardWriteTests {
 		assertThat(result).bodyJson().isStrictlyEqualTo("""
 				{
 				  "id": %d,
+				  "experience": "",
 				  "title": "주문 조회 API 응답 시간 개선",
 				  "period": "2025-03 ~ 2025-05",
 				  "org": "예시 커머스 사내 프로젝트",
@@ -82,7 +83,9 @@ class CardWriteTests {
 				    "situation": "p95 응답 시간이 1.8초였다.",
 				    "task": "",
 				    "action": "N+1을 fetch join으로 묶었다.",
-				    "result": "p95 응답 시간이 0.4초로 줄었다. 문의도 30%% 줄었다."
+				    "result": "p95 응답 시간이 0.4초로 줄었다. 문의도 30%% 줄었다.",
+				    "obstacle": "",
+				    "learning": ""
 				  },
 				  "facts": ["p95 응답 시간 1.8초 → 0.4초"],
 				  "visibility": "PRIVATE",

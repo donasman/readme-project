@@ -93,7 +93,7 @@ class ExtractionRunner {
 			int total = work.parts().size();
 			for (int part = work.doneParts() + 1; part <= total; part++) {
 				String text = work.parts().get(part - 1);
-				String question = ExtractionPrompt.question(this.queries.cardTitles(work.userId()),
+				String question = ExtractionPrompt.question(this.queries.cardHeadings(work.userId()),
 						tagHints(work.userId(), text), work.sourceName(), part, total, text);
 				ExtractionAnswer answer = this.llm.ask(work.userId(), LlmFeature.CARD_EXTRACT, ExtractionPrompt.SYSTEM,
 						question, ExtractionAnswer.class);
