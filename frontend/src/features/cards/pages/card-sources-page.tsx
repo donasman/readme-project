@@ -12,7 +12,7 @@ import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
 import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
-import { FILE_TOO_LARGE } from "@/shared/lib/api"
+import { ApiError, FILE_TOO_LARGE } from "@/shared/lib/api"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
 import { cn, docTitle, joinClasses, matchesAccept } from "@/shared/lib/utils"
@@ -69,8 +69,17 @@ export function CardSourcesPage() {
   useEffect(() => {
     if (runningJobId === null) return
     const timer = setInterval(async () => {
-      const job = await getExtractionJob(runningJobId)
-      const profile = job?.status === "DONE" ? await getProfile() : null
+      let job: ExtractionJob | null
+      let profile: Profile | null
+      try {
+        job = await getExtractionJob(runningJobId)
+        profile = job?.status === "DONE" ? await getProfile() : null
+      } catch (error) {
+        // 연결이 잠깐 끊기면 이번만 건너뛰고 다음에 다시 묻는다. 다른 오류는 묻기를 멈추고 한 번만 알린다
+        if (error instanceof ApiError && error.status === 0) return
+        clearInterval(timer)
+        throw error
+      }
       setStep((s) => {
         if (s.kind !== "running") return s
         if (job === null) return { kind: "upload" }

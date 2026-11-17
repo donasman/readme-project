@@ -64,8 +64,15 @@ export function GroupMembersPage() {
   const members = [...group.members].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))
 
   async function changeDisclosure(next: Disclosure) {
+    const before = disclosure
     setDisclosure(next)
-    await setMyDisclosure(group.id, next)
+    try {
+      await setMyDisclosure(group.id, next)
+    } catch (error) {
+      // 서버에는 앞의 범위가 남았다. 화면만 바뀐 채로 두면 멤버에게 보이는 범위를 잘못 알게 된다
+      setDisclosure(before)
+      throw error
+    }
     // 그룹의 값(공고 상세의 "내 공개 범위는 …")도 새로 읽는다
     void revalidator.revalidate()
   }

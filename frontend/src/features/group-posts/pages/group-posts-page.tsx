@@ -140,9 +140,11 @@ export function GroupPostsPage() {
         target={fillFor}
         onClose={closeFill}
         onSave={async (deadline) => {
-          if (fillFor) await setDeadline(group.id, fillFor.id, deadline)
+          const saved = fillFor ? await setDeadline(group.id, fillFor.id, deadline) : true
+          // 먼저 넣은 마감도 목록에 보이게 다시 읽는다. 저장했으면 창을 닫고, 아니면 창이 그 사실을 알린다
           await revalidator.revalidate()
-          closeFill()
+          if (saved) closeFill()
+          return saved
         }}
       />
     </Page>

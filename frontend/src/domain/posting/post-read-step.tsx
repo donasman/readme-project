@@ -1,4 +1,4 @@
-import { useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button } from "@/components/ui/button"
@@ -46,12 +46,20 @@ export function PostReadStep({ groupId, onDraft, duplicateNotice }: PostReadStep
   const [busy, setBusy] = useState(false)
   // 읽지 못한 링크. 본문 붙여넣기의 원문 링크와, 링크 탭으로 돌아왔을 때의 칸에 다시 넣는다
   const [failedUrl, setFailedUrl] = useState("")
+  // 이 화면이 떠 있는가. 읽는 동안 다른 화면으로 가면 응답이 와도 칸 확인으로 넘기지 않는다
+  const live = useRef(true)
+  useEffect(() => {
+    live.current = true
+    return () => {
+      live.current = false
+    }
+  }, [])
 
   async function read(input: PostReadInput) {
     setBusy(true)
     try {
       const result = await readPosting(groupId, input)
-      if (result.status === "ok") return onDraft(result.draft)
+      if (result.status === "ok") return live.current ? onDraft(result.draft) : undefined
       setNotice({ ...result, from: input.kind })
       // 링크나 파일을 읽지 못하면 본문을 붙여넣게 한다
       if (result.status === "failed") {

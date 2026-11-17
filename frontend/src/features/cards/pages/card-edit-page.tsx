@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import { Button } from "@/components/ui/button"
@@ -252,23 +252,26 @@ export function CardEditPage() {
 /** 태그 더하기: 치는 동안 대표 표기 후보를 보여 주고, 누르거나 Enter로 더한다. */
 function TagInput({ onAdd }: { onAdd: (tag: string) => void }) {
   const [text, setText] = useState("")
-  const [suggestions, setSuggestions] = useState<KeywordSuggestion[]>([])
-  const latest = useRef("")
+  // 후보와 그 후보를 물은 글자. 글자가 바뀌면 답이 오기 전까지 후보를 보이지 않는다(Enter가 앞 글자의 후보를 더하지 않게)
+  const [hint, setHint] = useState<{ q: string; list: KeywordSuggestion[] } | null>(null)
 
   useEffect(() => {
-    latest.current = text
     if (!text.trim()) return
+    let stale = false
     void suggestKeywords(text).then((list) => {
-      if (latest.current === text) setSuggestions(list)
+      if (!stale) setHint({ q: text, list })
     })
+    return () => {
+      stale = true
+    }
   }, [text])
 
-  const shown = text.trim() ? suggestions : []
+  const shown = text.trim() && hint?.q === text ? hint.list : []
   const add = (tag: string) => {
     if (!tag.trim()) return
     onAdd(tag.trim())
     setText("")
-    setSuggestions([])
+    setHint(null)
   }
 
   return (

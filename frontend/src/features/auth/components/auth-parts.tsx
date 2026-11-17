@@ -80,9 +80,12 @@ export function AuthField({ id, label, hint, error, className, ...input }: AuthF
         {...input}
       />
       {error ? (
-        <IconNote id={noteId} tone="danger">
-          {error}
-        </IconNote>
+        // 서버가 돌려준 오류(비밀번호 틀림 등)는 누른 버튼에 초점이 남아 alert로 알린다
+        <div role="alert">
+          <IconNote id={noteId} tone="danger">
+            {error}
+          </IconNote>
+        </div>
       ) : (
         hint && (
           <p id={noteId} className="text-label-sm text-text-secondary">

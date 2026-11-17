@@ -12,7 +12,7 @@ export interface Removal {
   inGroups: boolean
 }
 
-/** 지원 상태가 미정이고 메모와 전형 일정이 없으면 erased가 비어 창이 짧은 글만 보인다. memo는 저장한 메모다. */
+/** 지원 상태가 미정이고 메모와 전형 일정이 없으면 erased가 비어 창이 짧은 글만 보인다. memo는 칸에 쓴 메모다. */
 export function removalOf(posting: MyPostingDetail, memo: string, scheduleCount: number): Removal {
   return {
     erased: [

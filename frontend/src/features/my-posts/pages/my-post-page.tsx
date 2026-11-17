@@ -44,7 +44,7 @@ export function MyPostPage() {
   const arrived = useArrivalState<ArrivedState>()?.arrived ?? false
   const due = dueText(posting, today)
   const name = `${posting.company} · ${posting.title}`
-  // 빼기 창: 열 때 저장한 메모로 지워질 것을 센다(창이 닫히는 동안에도 글이 남게 값은 두고 open만 끈다)
+  // 빼기 창: 열 때 칸의 메모로 지워질 것을 센다(누르면 칸의 blur가 저장을 먼저 시작한다). 창이 닫히는 동안에도 글이 남게 값은 두고 open만 끈다
   const [removing, setRemoving] = useState(false)
   const [removal, setRemoval] = useState<Removal | null>(null)
   const [memo, setMemo] = useState(posting.memo)
@@ -213,7 +213,7 @@ export function MyPostPage() {
               variant="danger"
               className="self-start"
               onClick={() => {
-                setRemoval(removalOf(posting, lastSaved.current, scheduleCount))
+                setRemoval(removalOf(posting, memo, scheduleCount))
                 setRemoving(true)
               }}
             >
