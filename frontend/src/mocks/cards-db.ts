@@ -22,8 +22,8 @@ function rawCard(id: string): CardDetail {
   return found
 }
 
-const summaryOf = ({ id, title, period, org, role, tags, summary, usableFor, verified }: CardDetail): ExperienceCard => ({
-  id, title, period, org, role, tags, summary, usableFor, verified,
+const summaryOf = ({ id, experience, title, period, org, role, tags, summary, usableFor, verified }: CardDetail): ExperienceCard => ({
+  id, experience, title, period, org, role, tags, summary, usableFor, verified,
 })
 
 /** 서버의 카드 검사(설계 문서 6절 check_cards의 일부): 요약 60자 초과, 근거 숫자 없음, 결과의 확인 필요 숫자. */

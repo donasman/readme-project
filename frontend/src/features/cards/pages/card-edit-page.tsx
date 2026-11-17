@@ -30,7 +30,7 @@ export function cardEditLoader({ params }: LoaderFunctionArgs): Promise<EditTarg
 }
 
 export function cardNewLoader(): EditTarget {
-  return { id: null, title: "", period: null, org: null, role: null, summary: "", tags: [], usableFor: [], star: { situation: "", task: "", action: "", result: "" }, facts: [] }
+  return { id: null, experience: "", title: "", period: null, org: null, role: null, summary: "", tags: [], usableFor: [], star: { situation: "", task: "", action: "", result: "", obstacle: "", learning: "" }, facts: [] }
 }
 
 let factSeq = 0
@@ -62,6 +62,8 @@ export function CardEditPage() {
     setSaving(true)
     try {
       const input: CardInput = {
+        // shortcut: 경험 이름과 어려움·배운 점은 화면에 칸이 없어 받은 값을 그대로 보낸다(지우지 않게), 카드 시안이 오면 칸을 둔다(경험카드 문서 4.8)
+        experience: card.experience,
         title: title.trim(),
         period: period.trim() || null,
         org: org.trim() || null,

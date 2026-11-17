@@ -86,10 +86,10 @@ export function CardReviewPage() {
   // 확인과 겹치면 뒤에 오는 고치기가 확인이 옮긴 근거 숫자를 예전 목록으로 덮어서, 끝날 때까지 다른 버튼과 함께 막는다
   async function dropSentence() {
     if (!card) return
-    const { title, period, org, role, summary, tags, usableFor, star, facts } = card
+    const { experience, title, period, org, role, summary, tags, usableFor, star, facts } = card
     setBusy(true)
     try {
-      const updated = await updateCard(card.id, { title, period, org, role, summary, tags, usableFor, facts, star: { ...star, result: dropFlaggedSentences(star.result) } })
+      const updated = await updateCard(card.id, { experience, title, period, org, role, summary, tags, usableFor, facts, star: { ...star, result: dropFlaggedSentences(star.result) } })
       setEdited((e) => ({ ...e, [card.id]: updated }))
     } finally {
       setBusy(false)
