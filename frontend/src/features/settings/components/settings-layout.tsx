@@ -20,6 +20,9 @@ export function SettingsLayout() {
           <NavLink to={paths.account()} className={link}>
             내 정보
           </NavLink>
+          <NavLink to={paths.profile()} className={link}>
+            기본 프로필
+          </NavLink>
           <NavLink to={paths.mailSettings()} className={link}>
             메일 자동화
           </NavLink>

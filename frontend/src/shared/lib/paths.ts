@@ -18,6 +18,7 @@ export const paths = {
   calendar: () => "/calendar",
   /** 설정: 내 정보, 메일 자동화, 탈퇴 */
   account: () => "/settings/account",
+  profile: () => "/settings/profile",
   mailSettings: () => "/settings/mail",
   withdraw: () => "/settings/withdraw",
   mail: () => "/mail",
