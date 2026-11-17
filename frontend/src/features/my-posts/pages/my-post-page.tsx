@@ -1,11 +1,9 @@
 import { useRef, useState } from "react"
 import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router"
 
-import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
-import { CONTENT_VIEWS, formatQuestionLimit, summarySections, type ContentView } from "@/domain/posting/analysis"
 import { statusDetail } from "@/domain/posting/my-state"
 import { Avatar } from "@/shared/components/avatar"
 import { BackLink } from "@/shared/components/back-link"
@@ -15,7 +13,7 @@ import { Heading, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
-import { Panel, PanelNote } from "@/shared/components/panel"
+import { Panel } from "@/shared/components/panel"
 import { ExternalLinkIcon } from "@/shared/icons"
 import { formatDateWeekday } from "@/shared/lib/date"
 import { paths } from "@/shared/lib/paths"
@@ -25,6 +23,7 @@ import { docTitle, joinClasses } from "@/shared/lib/utils"
 import { getMyPosting, getSchedules, removeMyPosting, saveMemo } from "../api"
 import { DdayBadge } from "../components/my-bits"
 import { RemoveDialog } from "../components/remove-dialog"
+import { QuestionsPanel, RequirementsPanel } from "../components/requirement-panels"
 import { removalOf, type Removal } from "../removal"
 import { dueText } from "../status"
 import type { ArrivedState, RemovedState } from "../types"
@@ -37,7 +36,7 @@ export async function myPostLoader({ params }: LoaderFunctionArgs) {
 
 const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-bold whitespace-nowrap text-primary"
 
-/** 공고 상세(시안 8차, 내 공고. 공고 내용의 요약은 12차): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
+/** 공고 상세(시안 8차, 내 공고. 요건과 내 카드, 자기소개서 문항, 빼기는 12차): 마감과 지원처, 내 상태, 공고 내용(원문), 메모, 옆 칸에 요건과 내 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
   const { today, posting, scheduleCount } = useLoaderData<typeof myPostLoader>()
   const navigate = useNavigate()
@@ -48,10 +47,6 @@ export function MyPostPage() {
   // 빼기 창: 열 때 저장한 메모로 지워질 것을 센다(창이 닫히는 동안에도 글이 남게 값은 두고 open만 끈다)
   const [removing, setRemoving] = useState(false)
   const [removal, setRemoval] = useState<Removal | null>(null)
-  // 공고 내용: 분석이 있으면 요약(12차 시안 안 A)이 먼저고, 원문으로 바꿔 본다
-  const [view, setView] = useState<ContentView>("summary")
-  const summary = view === "summary" ? posting.analysis : null
-  const shown = summary ? { sections: summarySections(summary), keywords: summary.keywords } : posting
   const [memo, setMemo] = useState(posting.memo)
   // 저장한 값과 비교한다. loader의 posting.memo는 저장해도 다시 읽지 않아 처음 값에 머문다
   const lastSaved = useRef(posting.memo)
@@ -105,13 +100,12 @@ export function MyPostPage() {
               <h2 id="mp-body" className={sectionTitle}>
                 공고 내용
               </h2>
-              {posting.analysis && <SegmentedControl label="보는 방식" value={view} onValueChange={(v) => setView(v as ContentView)} options={CONTENT_VIEWS} />}
             </div>
             {!posting.analysis && (posting.sections.length > 0 || posting.keywords.length > 0) && (
               <p className="rounded-control bg-surface-muted px-4 py-3 text-sm">아직 요약이 없습니다. 공고를 넣은 직후에는 잠시 뒤에 생깁니다. 아래는 원문에서 읽은 내용입니다.</p>
             )}
-            {shown.sections.length === 0 && shown.keywords.length === 0 && <p className="text-sm text-text-secondary">아직 정리된 공고 내용이 없습니다.</p>}
-            {shown.sections.map((s) => (
+            {posting.sections.length === 0 && posting.keywords.length === 0 && <p className="text-sm text-text-secondary">아직 정리된 공고 내용이 없습니다.</p>}
+            {posting.sections.map((s) => (
               <div key={s.title} className="flex flex-col gap-2">
                 <h3 className={subLabel}>{s.title}</h3>
                 <ul className="flex flex-col gap-1.5">
@@ -124,30 +118,16 @@ export function MyPostPage() {
                 </ul>
               </div>
             ))}
-            {shown.keywords.length > 0 && (
+            {posting.keywords.length > 0 && (
               <div className="flex flex-col gap-2">
                 <h3 className={subLabel}>키워드</h3>
                 <ul className="flex flex-wrap gap-1.5">
-                  {shown.keywords.map((k) => (
+                  {posting.keywords.map((k) => (
                     <Chip key={k}>{k}</Chip>
                   ))}
                 </ul>
               </div>
             )}
-            {summary && summary.questions.length > 0 && (
-              <div className="flex flex-col gap-2 border-t border-border-subtle pt-5">
-                <h3 className={subLabel}>자기소개서 문항</h3>
-                <ol className="flex flex-col gap-2.5">
-                  {summary.questions.map((q) => (
-                    <li key={q.text} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <span className="min-w-0 flex-[1_1_260px]">{q.text}</span>
-                      <span className="flex-none text-[13px] font-bold whitespace-nowrap">{formatQuestionLimit(q.limit)}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-            {summary && <p className="text-label-sm text-text-secondary">요약은 AI가 공고 내용을 줄인 것입니다. 지원하기 전에 원문을 확인하세요.</p>}
           </Panel>
 
           <Panel aria-labelledby="mp-memo" className="flex flex-col gap-4 p-6">
@@ -186,33 +166,19 @@ export function MyPostPage() {
         </div>
 
         <aside className={joinClasses(sideColumn(320), "gap-6")}>
-          <Panel aria-labelledby="mp-match" className="flex flex-col gap-4 p-6">
-            <div className="flex flex-col gap-1">
+          {posting.analysis ? (
+            <>
+              <RequirementsPanel requirements={posting.requirements} matches={posting.matches} />
+              {posting.analysis.questions.length > 0 && <QuestionsPanel questions={posting.analysis.questions} />}
+            </>
+          ) : (
+            <Panel aria-labelledby="mp-match" className="flex flex-col gap-4 p-6">
               <h2 id="mp-match" className={sectionTitle}>
                 맞는 카드
               </h2>
-              <p className="text-sm text-text-secondary">공고의 요건·키워드와 카드의 태그가 겹치는 순서입니다.</p>
-            </div>
-            {posting.analysis === null ? (
               <p className="text-sm text-text-secondary">아직 공고 분석이 없어 맞는 카드를 셀 수 없습니다.</p>
-            ) : posting.matches.length > 0 ? (
-              <ul className="flex flex-col">
-                {posting.matches.map((m, i) => (
-                  <li key={m.cardId} className={joinClasses("border-t py-3", i > 0 ? "border-border-subtle" : "border-transparent")}>
-                    <Link to={paths.card(m.cardId)} className="flex min-w-0 flex-col gap-1.5 text-foreground">
-                      <span className="text-sm font-bold">{m.title}</span>
-                      <span className="text-label-sm text-text-secondary">겹치는 것: {m.overlap.join(", ")}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-text-secondary">겹치는 카드가 없습니다.</p>
-            )}
-            {posting.unmatched.length > 0 && (
-              <PanelNote className="pt-3">카드로 답하지 못한 요건: {posting.unmatched.join(", ")}</PanelNote>
-            )}
-          </Panel>
+            </Panel>
+          )}
 
           <Panel aria-labelledby="mp-groups" className="flex flex-col gap-4 p-6">
             <h2 id="mp-groups" className={sectionTitle}>

@@ -58,10 +58,14 @@ export function apiPath(parts: TemplateStringsArray, ...values: string[]): strin
 
 /** 바꾸는 요청에 실을 CSRF 값. 서버가 XSRF-TOKEN 쿠키로 내려 준다. */
 /**
- * 서버의 id는 숫자이고 화면의 id는 문자열이다(구조 문서 5.1). 응답을 읽을 때 이름이 id이거나 Id로 끝나는 숫자 칸(groupId, postId, leaderId …)을
- * 문자열로 바꿔, 각 api.ts가 따로 바꾸지 않게 한다.
+ * 서버의 id는 숫자이고 화면의 id는 문자열이다(구조 문서 5.1). 응답을 읽을 때 이름이 id이거나 Id로 끝나는 숫자 칸(groupId, postId, leaderId …)과
+ * Ids로 끝나는 숫자 목록(cardIds)을 문자열로 바꿔, 각 api.ts가 따로 바꾸지 않게 한다.
  */
-const stringIds = (key: string, value: unknown) => (typeof value === "number" && (key === "id" || key.endsWith("Id")) ? String(value) : value)
+const stringIds = (key: string, value: unknown) => {
+  if (typeof value === "number" && (key === "id" || key.endsWith("Id"))) return String(value)
+  if (Array.isArray(value) && key.endsWith("Ids")) return value.map((v) => (typeof v === "number" ? String(v) : v))
+  return value
+}
 
 /** 응답 본문을 읽는다. 비었으면(204) undefined. */
 async function readBody(response: Response): Promise<unknown> {
