@@ -14,4 +14,9 @@ test("지원한 공고를 빼면 지워질 것을 알리고 목록에서 사라�
   await expect(page).toHaveURL(/\/my-posts$/)
   await expect(page.getByRole("status").filter({ hasText: "예시 공사 · 전산직 7급 공채를 내 공고에서 뺐습니다" })).toBeVisible()
   await expect(page.getByRole("link", { name: /전산직 7급 공채/ })).toHaveCount(0)
+
+  // 알림은 한 번만 뜬다: 새로 고침하면 다시 뜨지 않는다(useArrivalState가 기록의 state를 지운다)
+  await page.reload()
+  await expect(page.getByRole("heading", { name: "내 공고", level: 1 })).toBeVisible()
+  await expect(page.getByRole("status").filter({ hasText: "내 공고에서 뺐습니다" })).toHaveCount(0)
 })

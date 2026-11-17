@@ -21,7 +21,8 @@ export function MySpaceNav({ current }: { current: MySpace }) {
   return (
     <nav aria-label="내 공간" className="-mx-2 -mt-2 flex gap-1 overflow-x-auto px-2 [scrollbar-width:none]">
       {ITEMS.map(({ key, label, to }) => (
-        <Link key={key} to={to} aria-current={key === current ? "page" : undefined} className={joinClasses(navPill(key === current), "flex-none")}>
+        // 휴대폰(390px)에서 다섯 칸이 다 들어가게 칸 좌우 여백을 줄인다. 그보다 좁으면 옆으로 민다
+        <Link key={key} to={to} aria-current={key === current ? "page" : undefined} className={joinClasses(navPill(key === current), "flex-none max-sm:px-2.5")}>
           {label}
         </Link>
       ))}

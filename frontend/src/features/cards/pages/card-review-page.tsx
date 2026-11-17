@@ -7,6 +7,7 @@ import { Chip } from "@/shared/components/chip"
 import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
+import { StatusIcon } from "@/shared/components/status-icon"
 import { CheckIcon, Trash2Icon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
@@ -54,9 +55,9 @@ export function CardReviewPage() {
       <CardsSubpage>
         <title>{docTitle("카드 확인", "경험카드")}</title>
         <div className="flex max-w-[560px] flex-col gap-6">
-          <span aria-hidden="true" className="inline-flex size-12 items-center justify-center rounded-control bg-accent-subtle text-accent-strong">
-            <CheckIcon className="size-6" />
-          </span>
+          <StatusIcon>
+            <CheckIcon />
+          </StatusIcon>
           <div className="flex flex-col gap-2">
             <h1 className={subpageTitle}>{total ? `${total}장을 모두 봤습니다` : "확인할 카드가 없습니다"}</h1>
             <p className="text-text-secondary">확인한 카드는 공고와 맞춰 볼 때 쓰입니다.</p>

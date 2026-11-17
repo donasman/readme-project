@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useLocation, useNavigate, useNavigationType, type ShouldRevalidateFunctionArgs } from "react-router"
+import { useLocation, useNavigationType, type ShouldRevalidateFunctionArgs } from "react-router"
 
 /**
  * 라우트의 shouldRevalidate를 만든다. keys는 이 라우트의 loader가 쓰는 주소 값(params)이다.
@@ -39,10 +39,17 @@ export function useSearchText(urlText: string): [string, (text: string) => void]
  */
 export function useArrivalState<T>(): T | null {
   const location = useLocation()
-  const navigate = useNavigate()
   const [state] = useState(() => (location.state as T | null) ?? null)
   useEffect(() => {
-    if (state) void navigate(".", { replace: true, state: null })
-  }, [state, navigate])
+    if (state) clearRouterState()
+  }, [state])
   return state
+}
+
+/**
+ * navigate로 넘긴 state를 브라우저 기록에서 지운다. 새로 고침이나 뒤로 가기에서 같은 알림·창이 다시 뜨지 않게 한다.
+ * 같은 주소로 navigate(…, { state: null })를 부르면 화면의 loader가 한 번 더 돌아서, 라우터가 기록에 둔 칸(usr)만 비운다.
+ */
+export function clearRouterState() {
+  window.history.replaceState({ ...window.history.state, usr: null }, "")
 }

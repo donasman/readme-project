@@ -23,16 +23,21 @@ export function formatDday(today: string, date: string): string {
   return left === 0 ? "D-Day" : `D-${left}`
 }
 
+/** 요일 한 글자("수"). "YYYY-MM-DD"를 시간대와 무관하게 센다. */
+const weekday = (date: string): string => {
+  const [y, m, d] = date.split("-").map(Number)
+  return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]
+}
+
 /** "2026년 11월 13일 금요일" */
 export function formatLongDate(date: string): string {
   const [y, m, d] = date.split("-").map(Number)
-  return `${y}년 ${m}월 ${d}일 ${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}요일`
+  return `${y}년 ${m}월 ${d}일 ${weekday(date)}요일`
 }
 
 /** "2026-11-18 (수)" */
 export function formatDateWeekday(date: string): string {
-  const [y, m, d] = date.split("-").map(Number)
-  return `${date} (${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]})`
+  return `${date} (${weekday(date)})`
 }
 
 /** "11.05" */
@@ -43,8 +48,7 @@ export function formatMonthDay(date: string): string {
 
 /** "11.16 (월)" */
 export function formatMonthDayWeekday(date: string): string {
-  const [y, m, d] = date.split("-").map(Number)
-  return `${formatMonthDay(date)} (${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]})`
+  return `${formatMonthDay(date)} (${weekday(date)})`
 }
 
 /** 댓글 시각: 1분 안이면 "방금", 아니면 한국 날짜로 "11.05". */

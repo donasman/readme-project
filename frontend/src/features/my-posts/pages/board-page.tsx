@@ -8,7 +8,7 @@ import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
 import { PostingLink } from "@/domain/posting/posting-link"
 import type { Group } from "@/domain/group/types"
 import { DECISION_LABELS, DECISIONS, RESULT_LABELS, RESULTS, STAGE_LABELS, STAGES } from "@/domain/posting/my-state"
-import { Heading, sectionTitle } from "@/shared/components/heading"
+import { Heading, PanelHead } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
@@ -162,14 +162,10 @@ function StateEditor({ posting, groups }: { posting: MyPosting; groups: Group[] 
 
   return (
     <Panel aria-labelledby="board-edit" className="flex flex-col gap-5 p-6">
-      <div className="flex flex-col gap-1">
-        <h2 id="board-edit" className={sectionTitle}>
-          상태 바꾸기
-        </h2>
-        <p className="text-sm text-text-secondary">
-          {posting.company} · {posting.title}
-        </p>
-      </div>
+      <PanelHead id="board-edit" title="상태 바꾸기">
+        {posting.company} · {posting.title}
+        
+      </PanelHead>
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">결정</span>
         <SegmentedControl

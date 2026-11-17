@@ -37,6 +37,9 @@ export function errorMessage(error: unknown): string {
   return "문제가 생겼습니다. 다시 해 주세요."
 }
 
+/** 서버가 받는 파일 크기(자료와 공고 모두 20MB). 화면은 보내기 전에 이 크기로 막는다. */
+export const MAX_FILE_BYTES = 20 * 1024 * 1024
+
 /** 파일이 서버가 받는 크기(20MB)를 넘을 때의 글. 화면은 보내기 전에도 이 글로 막는다. */
 export const FILE_TOO_LARGE = "파일이 너무 큽니다. 20MB까지 올릴 수 있습니다."
 

@@ -7,7 +7,7 @@ import { TOO_MANY_TRIES } from "@/domain/session/password"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import { Dot } from "@/shared/components/dot"
 import { FieldError, FormField, noteId } from "@/shared/components/form-field"
-import { sectionTitle, subLabel } from "@/shared/components/heading"
+import { PanelHead, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { objectParticle } from "@/shared/lib/korean"
@@ -58,12 +58,7 @@ export function WithdrawPage() {
     <>
       <title>{docTitle("탈퇴", "설정")}</title>
       <Panel aria-labelledby="wd-what" className="flex flex-col gap-5 p-6">
-        <div className="flex flex-col gap-1">
-          <h2 id="wd-what" className={sectionTitle}>
-            탈퇴
-          </h2>
-          <p className="text-sm text-text-secondary">탈퇴하면 계정과 내 자료가 지워지고 되돌릴 수 없습니다.</p>
-        </div>
+        <PanelHead id="wd-what" title="탈퇴">탈퇴하면 계정과 내 자료가 지워지고 되돌릴 수 없습니다.</PanelHead>
         <div className="flex flex-col gap-2">
           <h3 className={subLabel}>지워지는 것</h3>
           <ul className="flex flex-col gap-2 text-sm">

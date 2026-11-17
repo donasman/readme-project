@@ -19,6 +19,8 @@ interface CommentsProps {
   viewer: Viewer
   /** 그룹장이면 남의 댓글도 삭제할 수 있다(리서치 문서: 쓴 사람만 수정·삭제, 그룹장은 삭제만) */
   isLeader: boolean
+  /** 댓글을 달거나 고치거나 지운 결과. 화면 읽기에 알린다 */
+  notice: string
   onAdd: (text: string) => Promise<void>
   onEdit: (comment: Comment) => void
   onDelete: (comment: Comment) => void
@@ -28,7 +30,7 @@ const action =
   "min-h-7 cursor-pointer rounded-full px-2 text-label-sm font-semibold text-text-secondary hover:bg-surface-muted hover:text-foreground"
 
 /** 댓글: "그룹 × 공고"에 달리고 이 그룹에만 보인다. 글자와 링크만 받는다. */
-export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }: CommentsProps) {
+export function Comments({ comments, viewer, isLeader, notice, onAdd, onEdit, onDelete }: CommentsProps) {
   const [draft, setDraft] = useState("")
   const [empty, setEmpty] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -126,6 +128,9 @@ export function Comments({ comments, viewer, isLeader, onAdd, onEdit, onDelete }
         <Button type="submit" variant="outline" className="self-end" disabled={saving}>
           댓글 달기
         </Button>
+        <p role="status" className="sr-only">
+          {notice}
+        </p>
       </form>
     </SurfaceCard>
   )

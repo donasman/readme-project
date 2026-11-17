@@ -5,7 +5,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { STAGE_LABELS, statusLabel } from "@/domain/posting/my-state"
 import { PostingLink } from "@/domain/posting/posting-link"
 import { BusyButton } from "@/shared/components/busy-button"
-import { Heading, sectionTitle } from "@/shared/components/heading"
+import { Heading, PanelHead, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
 import { Panel } from "@/shared/components/panel"
@@ -55,12 +55,7 @@ export function MailPage() {
 
       {forwarding.length > 0 && (
         <section aria-labelledby="mail-forward" className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <h2 id="mail-forward" className={sectionTitle}>
-              메일 전달 확인
-            </h2>
-            <p className="text-sm text-text-secondary">Gmail에서 자동 전달을 켤 때 오는 확인 메일입니다. 코드를 Gmail 설정의 전달 확인 칸에 넣으면 전달이 시작됩니다.</p>
-          </div>
+          <PanelHead id="mail-forward" title="메일 전달 확인">Gmail에서 자동 전달을 켤 때 오는 확인 메일입니다. 코드를 Gmail 설정의 전달 확인 칸에 넣으면 전달이 시작됩니다.</PanelHead>
           <ul className="flex flex-col gap-3">
             {forwarding.map((f) => (
               <Panel as="li" key={f.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 p-5">

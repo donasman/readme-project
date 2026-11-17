@@ -2,7 +2,7 @@ import { Link } from "react-router"
 
 import { formatQuestionLimit } from "@/domain/posting/analysis"
 import type { PostingAnalysis } from "@/domain/posting/types"
-import { sectionTitle, subLabel } from "@/shared/components/heading"
+import { PanelHead, sectionTitle, subLabel } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, CircleAlertIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -62,12 +62,7 @@ export function RequirementsPanel({ requirements, matches }: { requirements: Req
   const titles = new Map(matches.map((m) => [m.cardId, m.title]))
   return (
     <Panel aria-labelledby="mp-req" className="flex flex-col gap-4 p-6">
-      <div className="flex flex-col gap-1">
-        <h2 id="mp-req" className={sectionTitle}>
-          요건과 내 카드
-        </h2>
-        <p className="text-sm text-text-secondary">공고 분석이 뽑은 요건마다 내 카드의 태그와 프로필을 맞춰 본 결과입니다.</p>
-      </div>
+      <PanelHead id="mp-req" title="요건과 내 카드">공고 분석이 뽑은 요건마다 내 카드의 태그와 프로필을 맞춰 본 결과입니다.</PanelHead>
       {requirements.length === 0 && <p className="text-sm text-text-secondary">공고 분석이 뽑은 필수·우대 요건이 없습니다.</p>}
       {KINDS.map(({ kind, label }) => {
         const rows = requirements.filter((r) => r.kind === kind)

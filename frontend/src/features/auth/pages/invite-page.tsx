@@ -5,11 +5,12 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { getViewer } from "@/domain/session/api"
 import { rememberReturnTo } from "@/domain/session/return-to"
 import { Avatar } from "@/shared/components/avatar"
+import { StatusIcon } from "@/shared/components/status-icon"
 import { ClockIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { acceptInvite, getInvite } from "../api"
-import { AuthFrame, AuthHeading, AuthText, StatusIcon } from "../components/auth-parts"
+import { AuthFrame, AuthHeading, AuthText } from "../components/auth-parts"
 
 /** 초대 내용과 로그인했는지를 함께 읽는다. 로그인 전이어도 이 화면은 열린다. */
 export async function inviteLoader({ params }: LoaderFunctionArgs) {

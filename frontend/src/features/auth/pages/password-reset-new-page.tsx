@@ -6,8 +6,9 @@ import { CheckIcon, ClockIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 
 import { checkResetToken, resetPassword } from "../api"
-import { AuthField, AuthFrame, AuthHeading, AuthText, StatusIcon } from "../components/auth-parts"
+import { AuthField, AuthFrame, AuthHeading, AuthText } from "../components/auth-parts"
 import { PASSWORD_TOO_LONG, passwordTooLong } from "@/domain/session/password"
+import { StatusIcon } from "@/shared/components/status-icon"
 
 /** 메일의 재설정 링크(/password-reset/new?token=…)를 연 순간 아직 쓸 수 있는지 서버에 묻는다. */
 export async function passwordResetNewLoader({ request }: LoaderFunctionArgs) {
