@@ -50,10 +50,10 @@ export function FieldHint({ id, children }: { id: string; children: ReactNode })
   )
 }
 
-/** 입력 아래 오류(13px 빨강). */
+/** 입력 아래 오류(13px 빨강). 누른 버튼에 초점이 남아도 화면 읽기가 읽게 alert로 둔다. */
 export function FieldError({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <p id={noteId(id)} className="text-label-sm font-medium text-danger">
+    <p id={noteId(id)} role="alert" className="text-label-sm font-medium text-danger">
       {children}
     </p>
   )

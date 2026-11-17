@@ -27,7 +27,7 @@ interface TargetDialogProps<T> {
 const postName = (post: Pick<GroupPost, "company" | "title">) => `${post.company} · ${post.title}`
 
 /** 마감일 넣기: 날짜 하나, 또는 "날짜 없이 상시 채용". 한 번 넣으면 바꿀 수 없다. */
-export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<GroupPost> & { onSave: (deadline: Deadline) => Promise<void> }) {
+export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<GroupPost> & { onSave: (deadline: Deadline) => Promise<boolean> }) {
   return (
     <AppDialog
       open={target !== null}
@@ -48,10 +48,12 @@ export function DeadlineDialog({ target, onClose, onSave }: TargetDialogProps<Gr
   )
 }
 
-function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave: (deadline: Deadline) => Promise<void> }) {
+/** onSave는 다른 멤버가 먼저 마감을 넣었으면(409 DEADLINE_ALREADY_SET) false를 돌려준다. */
+function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave: (deadline: Deadline) => Promise<boolean> }) {
   const [date, setDate] = useState("")
   const [always, setAlways] = useState(false)
   const [missing, setMissing] = useState(false)
+  const [taken, setTaken] = useState(false)
 
   return (
     <form
@@ -60,17 +62,27 @@ function DeadlineForm({ sourceUrl, onSave }: { sourceUrl: string | null; onSave:
       onSubmit={(event) => {
         event.preventDefault()
         if (!always && !date) return setMissing(true)
-        void onSave(always ? { kind: "always" } : { kind: "date", date })
+        void onSave(always ? { kind: "always" } : { kind: "date", date }).then((saved) => setTaken(!saved))
       }}
     >
-      <FormField id="dg-date" label="마감일" note={missing && <FieldError id="dg-date">날짜를 넣거나 상시 채용을 고르세요.</FieldError>}>
+      <FormField
+        id="dg-date"
+        label="마감일"
+        note={
+          missing ? (
+            <FieldError id="dg-date">날짜를 넣거나 상시 채용을 고르세요.</FieldError>
+          ) : (
+            taken && <FieldError id="dg-date">다른 멤버가 먼저 마감을 넣었습니다. 창을 닫으면 넣은 마감이 보입니다.</FieldError>
+          )
+        }
+      >
         <Input
           id="dg-date"
           type="date"
           value={date}
           disabled={always}
-          aria-invalid={missing || undefined}
-          aria-describedby={missing ? noteId("dg-date") : undefined}
+          aria-invalid={missing || taken || undefined}
+          aria-describedby={missing || taken ? noteId("dg-date") : undefined}
           onChange={(e) => {
             setDate(e.target.value)
             setMissing(false)
