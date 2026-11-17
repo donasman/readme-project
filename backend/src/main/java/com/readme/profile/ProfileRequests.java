@@ -3,7 +3,6 @@ package com.readme.profile;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -36,7 +35,7 @@ final class ProfileRequests {
 	private ProfileRequests() {
 	}
 
-	record ProfileRequest(@Size(max = 50) String name, LocalDate birthDate, String gender,
+	record ProfileRequest(@Size(max = 50) String name, LocalDate birthDate,
 			@Size(max = 20) List<@NotNull @Valid EducationRequest> educations,
 			@Size(max = 20) List<@NotNull @Valid CertificateRequest> certificates,
 			@Size(max = 20) List<@NotNull @Valid LanguageRequest> languages,
@@ -51,7 +50,7 @@ final class ProfileRequests {
 				throw invalid("생년월일을 확인해 주세요");
 			}
 			KeywordDictionary certificateNames = KeywordDictionary.certificates();
-			return new ProfileInput(blankToNull(this.name), this.birthDate, parseGender(this.gender),
+			return new ProfileInput(blankToNull(this.name), this.birthDate,
 					orEmpty(this.educations).stream().map(EducationRequest::toEducation).toList(),
 					orEmpty(this.certificates).stream()
 						.map((c) -> new Certificate(certificateNames.normalize(c.name()), blankToNull(c.acquired())))
@@ -97,18 +96,6 @@ final class ProfileRequests {
 			return new Career(this.company.strip(), this.start, endMonth, blankToNull(this.role));
 		}
 
-	}
-
-	/** "male", "female" → MALE, FEMALE. 비어 있으면 null. */
-	private static String parseGender(String value) {
-		if (value == null || value.isBlank()) {
-			return null;
-		}
-		String upper = value.strip().toUpperCase(Locale.ROOT);
-		if (!upper.equals("MALE") && !upper.equals("FEMALE")) {
-			throw invalid("성별은 male, female 중 하나이거나 비워 주세요");
-		}
-		return upper;
 	}
 
 	private static ApiException invalid(String message) {

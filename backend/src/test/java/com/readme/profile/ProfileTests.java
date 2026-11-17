@@ -29,7 +29,7 @@ class ProfileTests {
 		long me = this.fixtures.user("다온");
 
 		assertThat(this.mvc.get().uri("/api/me/profile").with(loginAs(me))).hasStatusOk().bodyJson().isStrictlyEqualTo("""
-				{ "name": null, "birthDate": null, "gender": null, "educations": [], "certificates": [], "languages": [],
+				{ "name": null, "birthDate": null, "educations": [], "certificates": [], "languages": [],
 				  "careers": [], "careerMonths": 0, "careerYears": 0 }
 				""");
 	}
@@ -39,7 +39,7 @@ class ProfileTests {
 		long me = this.fixtures.user("다온");
 
 		assertThat(put(me, """
-				{ "name": " 김다온 ", "birthDate": "1999-03-01", "gender": "female",
+				{ "name": " 김다온 ", "birthDate": "1999-03-01",
 				  "educations": [{ "school": "한국대학교", "major": "컴퓨터공학", "graduation": "2024-02", "gpa": 3.8, "gpaScale": 4.5 }],
 				  "certificates": [{ "name": "컴활", "acquired": "2022-08" }, { "name": "리눅스 마스터", "acquired": "" },
 				                   { "name": "새 자격증" }],
@@ -50,7 +50,7 @@ class ProfileTests {
 			.hasStatusOk()
 			.bodyJson()
 			.isStrictlyEqualTo("""
-					{ "name": "김다온", "birthDate": "1999-03-01", "gender": "female",
+					{ "name": "김다온", "birthDate": "1999-03-01",
 					  "educations": [{ "school": "한국대학교", "major": "컴퓨터공학", "graduation": "2024-02", "gpa": 3.80, "gpaScale": 4.50 }],
 					  "certificates": [{ "name": "컴퓨터활용능력", "acquired": "2022-08" }, { "name": "리눅스마스터", "acquired": null },
 					                   { "name": "새 자격증", "acquired": null }],
@@ -70,13 +70,13 @@ class ProfileTests {
 	void saveReplacesEveryField() {
 		long me = this.fixtures.user("다온");
 		put(me, """
-				{ "name": "김다온", "gender": "male", "certificates": [{ "name": "SQLD" }, { "name": "ADsP" }] }
+				{ "name": "김다온", "certificates": [{ "name": "SQLD" }, { "name": "ADsP" }] }
 				""");
 
 		assertThat(put(me, """
 				{ "certificates": [{ "name": "SQLP" }] }
 				""")).hasStatusOk().bodyJson().isLenientlyEqualTo("""
-				{ "name": null, "gender": null, "certificates": [{ "name": "SQLP", "acquired": null }] }
+				{ "name": null, "certificates": [{ "name": "SQLP", "acquired": null }] }
 				""");
 	}
 
@@ -98,9 +98,6 @@ class ProfileTests {
 	void invalidValuesAre400() {
 		long me = this.fixtures.user("다온");
 
-		assertInvalid(me, """
-				{ "gender": "other" }
-				""", "성별은 male, female 중 하나이거나 비워 주세요");
 		assertInvalid(me, """
 				{ "birthDate": "2026-11-14" }
 				""", "생년월일을 확인해 주세요");

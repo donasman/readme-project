@@ -20,20 +20,13 @@ import com.readme.profile.Profile.ProfileInput;
  * 사용자가 친 값이 아니라서 틀린 값은 오류를 내지 않고 버린다(cleaned).
  *
  * 년월 칸은 "YYYY-MM" 이고, 그 꼴이 아니면 버린다.
- *
- * @param gender "MALE", "FEMALE". 그 밖의 값은 버린다
  */
-public record ProfileDraft(String name, LocalDate birthDate, String gender, List<EducationDraft> educations,
+public record ProfileDraft(String name, LocalDate birthDate, List<EducationDraft> educations,
 		List<CertificateDraft> certificates, List<LanguageDraft> languages, List<CareerDraft> careers) {
 
 	private static final Pattern MONTH = Pattern.compile("[0-9]{4}-(0[1-9]|1[0-2])");
 
 	private static final LocalDate OLDEST_BIRTH_DATE = LocalDate.of(1900, 1, 1);
-
-	/** 이름, 생년월일, 성별만 있는 것(가입 값). */
-	public static ProfileDraft basics(String name, LocalDate birthDate, String gender) {
-		return new ProfileDraft(name, birthDate, gender, List.of(), List.of(), List.of(), List.of());
-	}
 
 	public record EducationDraft(String school, String major, String graduation, BigDecimal gpa, BigDecimal gpaScale) {
 	}
@@ -49,7 +42,7 @@ public record ProfileDraft(String name, LocalDate birthDate, String gender, List
 	}
 
 	/**
-	 * 테이블에 넣을 수 있는 값으로 다듬는다. 꼭 있어야 하는 칸이 빈 줄과 틀린 년월·성별·생년월일은 버리고, 긴 글은 칸 길이로 자른다.
+	 * 테이블에 넣을 수 있는 값으로 다듬는다. 꼭 있어야 하는 칸이 빈 줄과 틀린 년월·생년월일은 버리고, 긴 글은 칸 길이로 자른다.
 	 * 학점이 만점보다 크면 둘 다 버린다. 경력의 끝이 시작보다 앞이면 끝을 버린다(재직 중이 된다). 여러 줄은 20줄까지다.
 	 */
 	ProfileInput cleaned(LocalDate today) {
@@ -57,7 +50,6 @@ public record ProfileDraft(String name, LocalDate birthDate, String gender, List
 		return new ProfileInput(cut(this.name, 50),
 				(this.birthDate != null && !this.birthDate.isAfter(today) && !this.birthDate.isBefore(OLDEST_BIRTH_DATE))
 						? this.birthDate : null,
-				("MALE".equals(this.gender) || "FEMALE".equals(this.gender)) ? this.gender : null,
 				rows(this.educations).filter((e) -> cut(e.school(), 100) != null).map(ProfileDraft::education).limit(20).toList(),
 				rows(this.certificates).filter((c) -> cut(c.name(), 100) != null)
 					.map((c) -> new Certificate(cut(certificateNames.normalize(c.name()), 100), month(c.acquired())))

@@ -3,8 +3,7 @@
  *
  * <p>테이블: profiles, profile_educations, profile_certificates, profile_languages, profile_careers.
  * API: GET·PUT /api/me/profile. 연차는 경력 칸으로 센다(CareerMonths).
- * <p>가입 값(생년월일·성별): auth 가 내는 SignupValues, GoogleValues 를 Profiles 가 받아 넣는다(2026-11-16).
- * <p>뒤에 붙일 것: 자료에서 뽑은 프로필 값으로 빈 칸만 채우기(남은 작업 5단계).
+ * <p>뒤에 붙일 것: 가입 값(생년월일·성별)을 넣기(남은 작업 4단계), 자료에서 뽑은 프로필 값으로 빈 칸만 채우기(5단계).
  * <p>근거: docs/리드미_설계_프로필.md.
  */
 package com.readme.profile;
