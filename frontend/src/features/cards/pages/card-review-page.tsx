@@ -13,20 +13,17 @@ import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
-import { orgAndRole, STAR_PARTS, startFrom } from "../card-rules"
-import { dropFlaggedSentences, flaggedValues, markUsedNumbers } from "../card-text"
+import { groupByExperience, isOptionalPart, orgAndRole, sceneNumber, startFrom, STORY_PARTS } from "../card-rules"
+import { dropFlaggedStory, markUsedNumbers, storyFlaggedValues } from "../card-text"
 import { CardsSubpage, FactList, FlaggedText, ProgressBar, StatBox } from "../components/card-bits"
 import type { CardDetail } from "../types"
 
-/** 확인을 기다리는 카드를 읽는다. ?card=id 가 있으면 그 카드부터 본다. */
+/** 확인을 기다리는 카드를 읽는다. 같은 경험의 장면은 이어서 본다. ?card=id 가 있으면 그 카드부터 본다. */
 export async function cardReviewLoader({ request }: LoaderFunctionArgs) {
-  const cards = await getUnverifiedCards()
+  const cards = groupByExperience(await getUnverifiedCards()).flatMap((block) => block.cards)
   const start = new URL(request.url).searchParams.get("card")
   return { cards: startFrom(cards, start) }
 }
-
-/** 결과는 확인 필요 상자와 함께 따로 그린다. */
-const STAR_BEFORE_RESULT = STAR_PARTS.filter(([key]) => key !== "result")
 
 /** 카드 확인(6차): 뽑은 카드를 원문과 나란히 한 장씩 보고 확인·나중에·버리기를 고른다. */
 export function CardReviewPage() {
@@ -80,9 +77,12 @@ export function CardReviewPage() {
     )
   }
 
-  const flagged = flaggedValues(card.star.result)
+  const flagged = storyFlaggedValues(card.star)
   const where = orgAndRole(card)
-  const usedText = [card.star.situation, card.star.task, card.star.action, card.star.result, ...card.facts].join(" ")
+  const scene = sceneNumber(cards, index)
+  const usedText = [...Object.values(card.star), ...card.facts].join(" ")
+  // 어려움과 배운 점은 선택이라 비었으면 보이지 않는다
+  const story = STORY_PARTS.filter(([key]) => card.star[key] || !isOptionalPart(key))
 
   // 확인과 겹치면 뒤에 오는 고치기가 확인이 옮긴 근거 숫자를 예전 목록으로 덮어서, 끝날 때까지 다른 버튼과 함께 막는다
   async function dropSentence() {
@@ -90,7 +90,7 @@ export function CardReviewPage() {
     const { experience, title, period, org, role, summary, tags, usableFor, star, facts } = card
     setBusy(true)
     try {
-      const updated = await updateCard(card.id, { experience, title, period, org, role, summary, tags, usableFor, facts, star: { ...star, result: dropFlaggedSentences(star.result) } })
+      const updated = await updateCard(card.id, { experience, title, period, org, role, summary, tags, usableFor, facts, star: dropFlaggedStory(star) })
       setEdited((e) => ({ ...e, [card.id]: updated }))
     } finally {
       setBusy(false)
@@ -119,12 +119,23 @@ export function CardReviewPage() {
         <div className={columns}>
           <Panel as="article" aria-labelledby="review-title" className={joinClasses(mainColumn, "gap-5 p-6")}>
             <div className="flex flex-col gap-2">
-              {card.period && <span className="text-label-sm text-text-secondary">{card.period}</span>}
+              {(card.experience || card.period) && (
+                <span className="text-label-sm text-text-secondary">
+                  {card.experience && <strong className="font-bold">{card.experience}</strong>}
+                  {card.experience && card.period && " · "}
+                  {card.period}
+                </span>
+              )}
               <h2 id="review-title" className="text-[22px] leading-[1.3] font-bold tracking-[-0.02em]">
                 {card.title}
               </h2>
               {where && <p className="text-sm text-text-secondary">{where}</p>}
             </div>
+            {scene && (
+              <p className="text-sm text-text-secondary">
+                같은 경험에서 뽑은 장면 {scene.of}장 가운데 {scene.nth}번째입니다. 장면마다 쓸 문항 유형이 다릅니다.
+              </p>
+            )}
             <p className="font-medium">{card.summary}</p>
             <div className="flex flex-wrap items-center gap-1.5">
               {card.tags.map((tag) => (
@@ -135,31 +146,27 @@ export function CardReviewPage() {
               <span className="ml-1.5 text-xs text-text-secondary">{card.usableFor.join(" · ")}</span>
             </div>
 
-            {STAR_BEFORE_RESULT.map(([key, label], i) => (
+            {story.map(([key, label], i) => (
               <div key={key} className={i === 0 ? "flex flex-col gap-1.5 border-t border-border-subtle pt-5" : "flex flex-col gap-1.5"}>
                 <h3 className={subLabel}>{label}</h3>
-                <p>{card.star[key] || <span className="text-sm text-text-secondary">아직 적지 않았습니다.</span>}</p>
+                <p>{card.star[key] ? <FlaggedText text={card.star[key]} /> : <span className="text-sm text-text-secondary">아직 적지 않았습니다.</span>}</p>
               </div>
             ))}
-            <div className="flex flex-col gap-2.5">
-              <h3 className={subLabel}>결과</h3>
-              <p>{card.star.result ? <FlaggedText text={card.star.result} /> : <span className="text-sm text-text-secondary">아직 적지 않았습니다.</span>}</p>
-              {flagged.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-control bg-highlight-subtle p-4">
-                  <p className="min-w-0 flex-[1_1_260px] text-sm">
-                    <strong className="font-bold">{flagged.join(", ")}</strong>는 자료 원문에 없는 숫자입니다. 맞는 숫자면 고쳐 적고, 아니면 지워 주세요.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void dropSentence()}>
-                      이 문장 지우기
-                    </Button>
-                    <Link to={paths.cardEdit(card.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
-                      직접 고치기
-                    </Link>
-                  </div>
+            {flagged.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-control bg-highlight-subtle p-4">
+                <p className="min-w-0 flex-[1_1_260px] text-sm">
+                  <strong className="font-bold">{flagged.join(", ")}</strong>는 자료 원문에 없는 숫자입니다. 맞는 숫자면 고쳐 적고, 아니면 지워 주세요.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void dropSentence()}>
+                    이 문장 지우기
+                  </Button>
+                  <Link to={paths.cardEdit(card.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                    직접 고치기
+                  </Link>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-2 border-t border-border-subtle pt-5">
               <h3 className={subLabel}>근거 숫자</h3>
@@ -192,7 +199,7 @@ export function CardReviewPage() {
             ) : (
               <p className="text-sm text-text-secondary">이 카드가 나온 원문이 없습니다. 직접 만든 카드이거나 자료를 지운 카드입니다.</p>
             )}
-            <p className="text-label-sm text-text-secondary">굵은 숫자는 카드에 쓰인 숫자입니다. 확인하면 결과에만 있는 숫자가 근거 숫자로 옮겨집니다.</p>
+            <p className="text-label-sm text-text-secondary">굵은 숫자는 카드에 쓰인 숫자입니다. 확인하면 이야기에만 있는 숫자가 근거 숫자로 옮겨집니다.</p>
           </aside>
         </div>
 

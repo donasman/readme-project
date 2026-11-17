@@ -5,7 +5,7 @@ import type { CardDetail, CardSource, Star } from "@/features/cards/types"
 
 const EMPTY_STAR: Star = { situation: "", task: "", action: "", result: "", obstacle: "", learning: "" }
 
-// 예시 카드는 경험 이름이 없다(혼자인 카드)
+// 경험 이름은 기본이 빈 글자(혼자인 카드)이고, 같은 경험의 장면 카드는 more로 넘긴다
 type Base = Omit<CardDetail, "experience" | "star" | "facts" | "visibility" | "sourceId" | "sourceName" | "sourceExcerpt" | "extractionNotes" | "issues">
 const card = (base: Base, more: Partial<CardDetail> = {}): CardDetail => ({
   experience: "",
@@ -31,6 +31,8 @@ export function createExampleSources(): CardSource[] {
 }
 
 const PORTFOLIO = { sourceId: "1", sourceName: "예시_포트폴리오.pdf" }
+/** 1번과 7번 카드가 같은 경험의 두 장면이다(경험카드 문서 4.8) */
+const ORDER_API = "주문 조회 API 개선 프로젝트"
 const RESUME = { sourceId: "2", sourceName: "예시_이력서.docx" }
 const PASTED = { sourceId: "3", sourceName: "붙여넣은 글" }
 
@@ -51,19 +53,47 @@ export function createExampleCards(): CardDetail[] {
       },
       {
         ...PORTFOLIO,
+        experience: ORDER_API,
         star: {
           situation: "주문 조회 화면이 느리다는 문의가 이어졌고, 주문 목록 API의 p95 응답 시간이 1.8초였다.",
           task: "화면 구성을 바꾸지 않고 응답 시간을 1초 아래로 줄이는 일을 맡았다.",
           action: "쿼리 로그에서 주문마다 상품을 따로 읽는 N+1을 찾아 fetch join으로 묶었다. 자주 바뀌지 않는 상품 정보는 Redis에 캐시했다.",
           result: "p95 응답 시간이 0.4초로 줄었고 주문 1건당 쿼리가 21회에서 1회가 됐다. 관련 문의도 [확인 필요: 30%] 줄었다.",
-          obstacle: "",
-          learning: "",
+          obstacle: "운영 중인 주문 DB라 쿼리를 바꾸는 동안에도 서비스를 멈출 수 없었다.",
+          learning: "느린 곳을 짐작하지 않고 쿼리 로그와 실행 계획부터 본다.",
         },
         facts: ["p95 응답 시간 1.8초 → 0.4초", "주문 1건당 DB 쿼리 21회 → 1회"],
         sourceExcerpt:
           "주문 목록 조회가 느리다는 문의가 반복됨. p95 1.8초.\n원인: 주문마다 상품 조회(N+1), 주문 1건에 쿼리 21회. fetch join으로 1회로 줄임. 상품 정보 Redis 캐시.\n적용 후 p95 0.4초. 관련 문의 감소.",
         extractionNotes: ["결과의 30%는 자료 원문에 없어 [확인 필요: 30%]로 바꿨습니다."],
         issues: [{ level: "경고", field: "결과", message: "근거 숫자에 없는 숫자가 있습니다: 30%" }],
+      }
+    ),
+    card(
+      {
+        id: "7",
+        title: "캐시 도입을 팀에 설득하기",
+        period: "2025-04 ~ 2025-05",
+        org: "예시 커머스 사내 프로젝트",
+        role: "백엔드 개발 담당(2인 중 1인)",
+        tags: ["Redis"],
+        summary: "낡은 값이 보일 걱정을 만료 시간과 지우기 규칙으로 풀어 캐시를 들인 경험",
+        usableFor: ["협업"],
+        verified: true,
+      },
+      {
+        ...PORTFOLIO,
+        experience: ORDER_API,
+        star: {
+          situation: "상품 정보를 캐시하자고 했더니 가격이 바뀐 뒤에도 옛 값이 보일까 봐 팀이 반대했다.",
+          task: "캐시를 들이되 옛 값이 오래 남지 않게 하는 방법을 팀과 맞추는 일을 맡았다.",
+          action: "상품이 바뀌면 그 캐시를 바로 지우고, 놓쳐도 10분이면 사라지게 만료 시간을 두는 안을 표로 정리해 회의에서 보였다.",
+          result: "팀이 안을 받아들여 캐시를 들였고, 가격이 늦게 바뀐 문의는 없었다.",
+          obstacle: "가격이 틀리게 보이면 바로 손해로 이어져 팀이 캐시를 꺼렸다.",
+          learning: "기술을 권할 때는 걱정하는 상황을 먼저 적고, 그때 무슨 일이 생기는지로 답한다.",
+        },
+        facts: ["상품 캐시 만료 시간 10분"],
+        sourceExcerpt: "상품 정보 캐시 도입 논의. 가격 변경 후 옛 값 노출 우려.\n상품 변경 시 캐시 삭제, 만료 10분. 회의에서 표로 설명.",
       }
     ),
     card(
@@ -152,11 +182,15 @@ export function createExampleCards(): CardDetail[] {
  * 가짜 추출이 새로 올린 자료에서 "뽑는" 카드. 처음 한 번만 목록에 들어가고, 다시 뽑으면 이미 있는 경험으로 건너뛴다.
  * 이미 있는 "로그인 기능 직접 구현"과 같은 경험 하나도 늘 건너뛴다(시안의 "건너뜀 1개").
  */
+/** 뽑기가 한 경험에서 나눠 뽑은 두 장면 */
+const PAYMENT = "결제 서비스 안정화 프로젝트"
+
 export function createExtractionPool(): Omit<CardDetail, "id" | "sourceId" | "sourceName">[] {
   const base = { experience: "", visibility: "PRIVATE" as const, verified: false, extractionNotes: [], issues: [{ level: "경고" as const, field: "근거 숫자", message: "근거 숫자가 없습니다" }] }
   return [
     {
       ...base,
+      experience: PAYMENT,
       title: "결제 알림 재시도 구조 만들기",
       period: "2025-09 ~ 2025-10",
       org: "예시 커머스 사내 프로젝트",
@@ -197,6 +231,7 @@ export function createExtractionPool(): Omit<CardDetail, "id" | "sourceId" | "so
     },
     {
       ...base,
+      experience: PAYMENT,
       title: "서버 모니터링 대시보드 구성",
       period: "2025-11 ~ 2025-12",
       org: "예시 커머스 사내 프로젝트",
