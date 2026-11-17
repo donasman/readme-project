@@ -6,6 +6,8 @@ export type QuestionType = "지원동기" | "직무역량" | "협업" | "문제�
 /** 경험카드 한 장(목록에 보이는 칸). */
 export interface ExperienceCard {
   id: string
+  /** 경험 이름(경험카드 문서 4.8). 같은 이름의 카드가 한 경험의 장면들이다. 없으면 빈 글자 */
+  experience: string
   title: string
   /** 기간. 글자 그대로("2025-03 ~ 2025-05", "2026 ~ 현재") */
   period: string | null
@@ -32,12 +34,14 @@ export interface CardsData {
   tags: CardTag[]
 }
 
-/** STAR 네 칸. 빈 칸은 빈 글자다. */
+/** STAR 네 칸과 어려움·배운 점(경험카드 문서 4.8). 빈 칸은 빈 글자다. 어려움과 배운 점은 선택이다. */
 export interface Star {
   situation: string
   task: string
   action: string
   result: string
+  obstacle: string
+  learning: string
 }
 
 /** 카드 검사 결과 한 줄(설계 문서의 issues): 오류·경고, 어느 칸, 글. */
@@ -64,7 +68,7 @@ export interface CardDetail extends ExperienceCard {
 }
 
 /** 카드를 고칠 때 보내는 칸(PUT /api/cards/{id}). */
-export type CardInput = Pick<CardDetail, "title" | "period" | "org" | "role" | "summary" | "tags" | "usableFor" | "star" | "facts">
+export type CardInput = Pick<CardDetail, "experience" | "title" | "period" | "org" | "role" | "summary" | "tags" | "usableFor" | "star" | "facts">
 
 /** 올린 자료. 파일은 저장하지 않고 읽어 낸 글만 둔다(설계 가정 7). */
 export interface CardSource {

@@ -6,7 +6,7 @@ import type { ExperienceCard } from "./types"
 let seq = 0
 function card(over: Partial<ExperienceCard> = {}): ExperienceCard {
   seq += 1
-  return { id: String(seq), title: `카드${seq}`, period: null, org: null, role: null, tags: [], summary: "", usableFor: ["기타"], verified: true, ...over }
+  return { id: String(seq), experience: "", title: `카드${seq}`, period: null, org: null, role: null, tags: [], summary: "", usableFor: ["기타"], verified: true, ...over }
 }
 const titles = (cards: ExperienceCard[]) => cards.map((c) => c.title)
 const filters = (over: Partial<CardFilters> = {}): CardFilters => ({ ...DEFAULT_CARD_FILTERS, ...over })
