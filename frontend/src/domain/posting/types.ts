@@ -12,6 +12,19 @@ export interface PostSection {
   items: string[]
 }
 
+/** 공고 분석(공고 문서 4.7): AI가 공고 내용을 줄인 것. 공고마다 한 번 돌고, 아직 없거나 돌지 못하면 null로 온다. */
+export interface PostingAnalysis {
+  /** 필수 요건 */
+  must: string[]
+  /** 우대 사항 */
+  nice: string[]
+  /** 주요 업무 */
+  duties: string[]
+  keywords: string[]
+  /** 자기소개서 문항. limit은 공고에 적힌 글자 수, 없으면 null */
+  questions: { text: string; limit: number | null }[]
+}
+
 /** 다른 화면이 그룹 공고 목록으로 보내며 "마감일 넣기" 창을 바로 열게 할 때 넘기는 값(홈의 확인 필요). */
 export interface FillDeadlineState {
   fillDeadline: string

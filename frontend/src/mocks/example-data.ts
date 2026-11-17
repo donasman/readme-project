@@ -86,7 +86,10 @@ const BE1_COMMENTS: Comment[] = [
   { id: "be1-c2", author: member("나래"), createdAt: kst("2026-11-09"), body: [{ text: "작년 지원 후기를 찾았어요. " }, { text: "후기 글 보기", href: "#" }] },
   { id: "be1-c3", author: VIEWER, createdAt: kst("2026-11-12"), body: [{ text: "포트폴리오 링크 칸이 필수라서 미리 정리해 두면 좋겠어요." }] },
 ]
-const DETAILS: Record<string, Partial<GroupPostDetail>> = {
+/** 가짜 서버가 담아 두는 그룹 공고. 공고 분석은 읽을 때 공고 내용에서 만든다(db.ts의 exampleAnalysis). */
+export type StoredPost = Omit<GroupPostDetail, "analysis">
+
+const DETAILS: Record<string, Partial<StoredPost>> = {
   be1: {
     deadlineName: "서류 접수 마감",
     applyAt: "회사 채용 홈페이지",
@@ -123,7 +126,7 @@ export interface ExampleGroup {
   members: GroupMember[]
   leaderId: string
   myDisclosure: Disclosure
-  posts: GroupPostDetail[]
+  posts: StoredPost[]
 }
 
 /** 예시 데이터를 새로 만든다. db.ts가 처음 한 번 불러 메모리에 두고 고친다. */

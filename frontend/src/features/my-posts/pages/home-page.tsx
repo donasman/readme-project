@@ -6,6 +6,7 @@ import { GroupMark } from "@/domain/group/group-mark"
 import { isClosed } from "@/domain/posting/deadline"
 import { PostingLink } from "@/domain/posting/posting-link"
 import type { FillDeadlineState } from "@/domain/posting/types"
+import { ArrowLink } from "@/shared/components/arrow-link"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { MySpaceNav } from "@/shared/components/my-space-nav"
 import { Page } from "@/shared/components/page"
@@ -78,10 +79,7 @@ export function HomePage() {
             <h2 id="home-due" className={sectionTitle}>
               다가오는 마감
             </h2>
-            <Link to={paths.myPosts()} className="inline-flex min-h-control-md items-center gap-1 text-sm font-bold whitespace-nowrap text-primary">
-              <span>내 공고 모두 보기</span>
-              <ArrowRightIcon aria-hidden="true" className="size-4" />
-            </Link>
+            <ArrowLink to={paths.myPosts()}>내 공고 모두 보기</ArrowLink>
           </div>
           {open.length > 0 ? (
             <Panel as="ul" className="flex flex-col">

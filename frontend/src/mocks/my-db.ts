@@ -8,7 +8,7 @@ import type { AddPostingResult, CardMatch, GroupNews, HomeData, MyPosting, MyPos
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
-import { findPost, listGroups, today } from "./db"
+import { exampleAnalysis, findPost, listGroups, today } from "./db"
 import { addEntry, entries, rawEntry, type Entry } from "./user-postings"
 
 /** 상세에만 보이는 값. 예시 공사(시안 8차 "공고 상세")의 공고 내용과 맞는 카드를 옮겼다. 그 밖의 공고는 그룹 공고의 내용을 쓴다. */
@@ -75,7 +75,7 @@ export function getMyPosting(id: string): MyPostingDetail {
   const extra = DETAILS[id] ?? {}
   const cards = listCards()
   const keywords = extra.keywords ?? body?.keywords ?? e.own?.keywords ?? []
-  // 맞는 카드: 예시 공고는 시안 값, 그 밖에는 공고 키워드와 카드 태그가 겹치는 카드(서버의 CardMatching을 흉내 낸다. 분석은 늘 있는 것으로 본다)
+  // 맞는 카드: 예시 공고는 시안 값, 그 밖에는 공고 키워드와 카드 태그가 겹치는 카드(서버의 CardMatching을 흉내 낸다)
   const matches: CardMatch[] = extra.matches
     ? extra.matches.flatMap(([cardId, overlap]) => {
         const card = cards.find((c) => c.id === cardId)
@@ -85,16 +85,19 @@ export function getMyPosting(id: string): MyPostingDetail {
         .map((c) => ({ cardId: c.id, title: c.title, overlap: c.tags.filter((t) => keywords.some((k) => k.toLowerCase() === t.toLowerCase())) }))
         .filter((m) => m.overlap.length > 0)
         .sort((a, b) => b.overlap.length - a.overlap.length)
+  const sections = structuredClone(extra.sections ?? body?.sections ?? e.own?.sections ?? [])
+  // 분석이 없으면 서버는 맞는 카드를 세지 않는다
+  const analysis = exampleAnalysis(sections, keywords)
   return {
     ...posting,
     applyAt: extra.applyAt ?? body?.applyAt ?? e.own?.applyAt ?? null,
     sourceUrl: body?.sourceUrl ?? e.own?.sourceUrl ?? null,
-    sections: structuredClone(extra.sections ?? body?.sections ?? e.own?.sections ?? []),
+    sections,
     keywords: [...keywords],
     memo: e.memo,
-    analyzed: true,
-    matches,
-    unmatched: [...(extra.unmatched ?? [])],
+    analysis,
+    matches: analysis ? matches : [],
+    unmatched: analysis ? [...(extra.unmatched ?? [])] : [],
     groupStates: found.map(({ group, post }) => ({
       ...group,
       interested: post.me.interested,
