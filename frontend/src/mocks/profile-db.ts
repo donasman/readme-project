@@ -6,11 +6,10 @@ import { mockFlag, today } from "./db"
 let stored: ProfileInput | null = null
 
 function initial(): ProfileInput {
-  if (mockFlag("empty-profile")) return { name: null, birthDate: null, gender: null, educations: [], certificates: [], languages: [], careers: [] }
+  if (mockFlag("empty-profile")) return { name: null, birthDate: null, educations: [], certificates: [], languages: [], careers: [] }
   return {
     name: "김다온",
     birthDate: "1999-03-01",
-    gender: "female",
     educations: [{ school: "한국대학교", major: "컴퓨터공학", graduation: "2024-02", gpa: 3.8, gpaScale: 4.5 }],
     certificates: [
       { name: "정보처리기사", acquired: "2023-11" },
@@ -57,6 +56,5 @@ export function fillBlanks(input: Partial<ProfileInput>): void {
   const p = (stored ??= initial())
   p.name ??= input.name ?? null
   p.birthDate ??= input.birthDate ?? null
-  p.gender ??= input.gender ?? null
   for (const key of ["educations", "certificates", "languages", "careers"] as const) if (p[key].length === 0 && input[key]) Object.assign(p, { [key]: structuredClone(input[key]) })
 }

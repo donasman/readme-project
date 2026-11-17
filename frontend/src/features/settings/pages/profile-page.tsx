@@ -6,12 +6,11 @@ import {
 } from "react"
 import { Link, useLoaderData, useSearchParams } from "react-router"
 
-import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getProfile } from "@/domain/profile/api"
 import { formatCareerLength } from "@/domain/profile/format"
-import { PROFILE_LIST_MAX, type Gender } from "@/domain/profile/types"
+import { PROFILE_LIST_MAX } from "@/domain/profile/types"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import {
   FieldError,
@@ -49,11 +48,6 @@ export function profileLoader() {
   return getProfile()
 }
 
-const GENDERS = [
-  { value: "", label: "선택 안 함" },
-  { value: "male", label: "남" },
-  { value: "female", label: "여" },
-]
 
 // 자료에서 읽지 못해 비어 있는 칸(공고 칸 확인의 읽지 못한 칸과 같은 표시)
 const missingInput =
@@ -378,24 +372,6 @@ export function ProfilePage() {
                   )}
                 />
               </FormField>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <span aria-hidden="true" className="text-sm font-medium">
-                성별{" "}
-                <span className="font-normal text-text-secondary">(선택)</span>
-              </span>
-              <SegmentedControl
-                label="성별 (선택)"
-                value={draft.gender}
-                onValueChange={(gender) =>
-                  change("pf-gender", (d) => ({
-                    ...d,
-                    gender: gender as Gender | "",
-                  }))
-                }
-                options={GENDERS}
-                className="self-start"
-              />
             </div>
           </Panel>
 

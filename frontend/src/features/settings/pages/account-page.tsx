@@ -3,7 +3,6 @@ import { useLoaderData, useNavigate, useRevalidator, useSearchParams } from "rea
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { GOOGLE_BIRTH_GENDER_NOTICE } from "@/domain/session/consent"
 import { NAME_MAX_LENGTH } from "@/domain/session/types"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
 import { sectionTitle } from "@/shared/components/heading"
@@ -155,12 +154,7 @@ export function AccountPage() {
         ) : (
           <Row
             label="구글"
-            value={
-              <span className="flex flex-col gap-1">
-                <span className="text-sm text-text-secondary">연결하면 구글로도 로그인할 수 있습니다</span>
-                <span className="text-label-sm text-text-secondary">{GOOGLE_BIRTH_GENDER_NOTICE}</span>
-              </span>
-            }
+            value={<span className="text-sm text-text-secondary">연결하면 구글로도 로그인할 수 있습니다</span>}
           >
             <Button type="button" variant="outline" size="sm" onClick={() => void startGoogleLink()}>
               구글 연결

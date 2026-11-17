@@ -23,7 +23,7 @@ test("뽑기가 채운 프로필 칸을 표시하고 프로필 확인으로 보�
   const check = page.getByRole("region", { name: "프로필 칸 확인" })
   await expect(check).toBeVisible({ timeout: 10_000 })
   await expect(check.getByText("이번에 채움")).toHaveCount(4)
-  await expect(check.getByText("비어 있음")).toHaveCount(3)
+  await expect(check.getByText("비어 있음")).toHaveCount(2)
 
   await check.getByRole("link", { name: "프로필 확인하기" }).click()
   await expect(page.getByRole("status").filter({ hasText: "자료에서 읽은 값을 넣었습니다" })).toBeVisible()

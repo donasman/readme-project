@@ -1,7 +1,5 @@
 // 기본 프로필(GET·PUT /api/me/profile, 프로필 설계 5절). 이력서에 적는 기본 정보로 나만 본다. 년월은 "YYYY-MM"이다.
 
-export type Gender = "male" | "female"
-
 export interface Education {
   school: string
   major: string | null
@@ -34,7 +32,6 @@ export interface Career {
 export interface ProfileInput {
   name: string | null
   birthDate: string | null
-  gender: Gender | null
   educations: Education[]
   certificates: Certificate[]
   languages: Language[]
