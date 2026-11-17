@@ -2,7 +2,7 @@
 // 날짜는 모두 한국 시간 기준 "YYYY-MM-DD"(댓글만 시각까지 ISO 8601).
 // 그룹과 멤버는 domain/group, 보는 사람은 domain/session에 있다.
 import type { Member } from "@/domain/group/types"
-import type { Deadline, PostSection } from "@/domain/posting/types"
+import type { Deadline, PostingAnalysis, PostSection } from "@/domain/posting/types"
 
 export type { Deadline, PostSection }
 
@@ -69,6 +69,8 @@ export interface GroupPostDetail extends GroupPost {
   applyAt: string | null
   sections: PostSection[]
   keywords: string[]
+  /** 공고 분석. 아직 없거나 돌지 못하면 null */
+  analysis: PostingAnalysis | null
   comments: Comment[]
 }
 

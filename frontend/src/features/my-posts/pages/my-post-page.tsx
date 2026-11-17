@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useLoaderData, useLocation, useNavigate, type LoaderFunctionArgs } from "react-router"
 
+import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { DISCLOSURE_LABELS } from "@/domain/group/disclosure"
+import { CONTENT_VIEWS, formatQuestionLimit, summarySections, type ContentView } from "@/domain/posting/analysis"
 import { statusDetail } from "@/domain/posting/my-state"
 import { Avatar } from "@/shared/components/avatar"
 import { BackLink } from "@/shared/components/back-link"
@@ -30,7 +32,7 @@ export function myPostLoader({ params }: LoaderFunctionArgs) {
 
 const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-bold whitespace-nowrap text-primary"
 
-/** 공고 상세(시안 8차, 내 공고): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
+/** 공고 상세(시안 8차, 내 공고. 공고 내용의 요약은 12차): 마감과 지원처, 내 상태, 공고 내용, 메모, 맞는 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
   const { today, posting } = useLoaderData<typeof myPostLoader>()
   const location = useLocation()
@@ -41,6 +43,10 @@ export function MyPostPage() {
     if (arrived) void navigate(".", { replace: true, state: null })
   }, [arrived, navigate])
   const due = dueText(posting, today)
+  // 공고 내용: 분석이 있으면 요약(12차 시안 안 A)이 먼저고, 원문으로 바꿔 본다
+  const [view, setView] = useState<ContentView>("summary")
+  const summary = view === "summary" ? posting.analysis : null
+  const shown = summary ? { sections: summarySections(summary), keywords: summary.keywords } : posting
   const [memo, setMemo] = useState(posting.memo)
   // 저장한 값과 비교한다. loader의 posting.memo는 저장해도 다시 읽지 않아 처음 값에 머문다
   const lastSaved = useRef(posting.memo)
@@ -90,11 +96,17 @@ export function MyPostPage() {
           </Panel>
 
           <Panel aria-labelledby="mp-body" className="flex flex-col gap-5 p-6">
-            <h2 id="mp-body" className={sectionTitle}>
-              공고 내용
-            </h2>
-            {posting.sections.length === 0 && posting.keywords.length === 0 && <p className="text-sm text-text-secondary">아직 정리된 공고 내용이 없습니다.</p>}
-            {posting.sections.map((s) => (
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <h2 id="mp-body" className={sectionTitle}>
+                공고 내용
+              </h2>
+              {posting.analysis && <SegmentedControl label="보는 방식" value={view} onValueChange={(v) => setView(v as ContentView)} options={CONTENT_VIEWS} />}
+            </div>
+            {!posting.analysis && (posting.sections.length > 0 || posting.keywords.length > 0) && (
+              <p className="rounded-control bg-surface-muted px-4 py-3 text-sm">아직 요약이 없습니다. 공고를 넣은 직후에는 잠시 뒤에 생깁니다. 아래는 원문에서 읽은 내용입니다.</p>
+            )}
+            {shown.sections.length === 0 && shown.keywords.length === 0 && <p className="text-sm text-text-secondary">아직 정리된 공고 내용이 없습니다.</p>}
+            {shown.sections.map((s) => (
               <div key={s.title} className="flex flex-col gap-2">
                 <h3 className={subLabel}>{s.title}</h3>
                 <ul className="flex flex-col gap-1.5">
@@ -107,16 +119,30 @@ export function MyPostPage() {
                 </ul>
               </div>
             ))}
-            {posting.keywords.length > 0 && (
+            {shown.keywords.length > 0 && (
               <div className="flex flex-col gap-2">
                 <h3 className={subLabel}>키워드</h3>
                 <ul className="flex flex-wrap gap-1.5">
-                  {posting.keywords.map((k) => (
+                  {shown.keywords.map((k) => (
                     <Chip key={k}>{k}</Chip>
                   ))}
                 </ul>
               </div>
             )}
+            {summary && summary.questions.length > 0 && (
+              <div className="flex flex-col gap-2 border-t border-border-subtle pt-5">
+                <h3 className={subLabel}>자기소개서 문항</h3>
+                <ol className="flex flex-col gap-2.5">
+                  {summary.questions.map((q) => (
+                    <li key={q.text} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <span className="min-w-0 flex-[1_1_260px]">{q.text}</span>
+                      <span className="flex-none text-[13px] font-bold whitespace-nowrap">{formatQuestionLimit(q.limit)}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {summary && <p className="text-label-sm text-text-secondary">요약은 AI가 공고 내용을 줄인 것입니다. 지원하기 전에 원문을 확인하세요.</p>}
           </Panel>
 
           <Panel aria-labelledby="mp-memo" className="flex flex-col gap-4 p-6">
@@ -162,7 +188,7 @@ export function MyPostPage() {
               </h2>
               <p className="text-sm text-text-secondary">공고의 요건·키워드와 카드의 태그가 겹치는 순서입니다.</p>
             </div>
-            {!posting.analyzed ? (
+            {posting.analysis === null ? (
               <p className="text-sm text-text-secondary">아직 공고 분석이 없어 맞는 카드를 셀 수 없습니다.</p>
             ) : posting.matches.length > 0 ? (
               <ul className="flex flex-col">

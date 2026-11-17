@@ -49,7 +49,8 @@ export function addEntry(snapshot: NonNullable<Entry["snapshot"]>, own: NonNulla
 }
 
 export function rawEntry(id: string): Entry {
-  const found = entries().find((e) => e.id === id)
+  // 서버는 공고 본체 id 하나를 쓴다(그룹 공고의 id가 곧 내 공고 id). 가짜 서버는 내 공고 id가 따로라 그룹 공고 id로도 찾는다
+  const found = entries().find((e) => e.id === id || e.refs.some(([, postId]) => postId === id))
   if (!found) throw new NotFoundError("공고")
   return found
 }

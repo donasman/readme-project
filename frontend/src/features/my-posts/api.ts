@@ -13,15 +13,13 @@ export async function getMyPostings(): Promise<{ today: string; postings: MyPost
 }
 
 /** 서버의 상세: 메모가 없으면 null이다. 공고 분석(analysis)이 없으면 맞는 카드도 비어 온다(공고 문서 4.7, 4.8). */
-type MyPostingDetailResponse = Omit<MyPostingDetail, "memo" | "analyzed"> & { memo: string | null; analysis: unknown }
+type MyPostingDetailResponse = Omit<MyPostingDetail, "memo"> & { memo: string | null }
 
 /** 내 공고 상세. 내 공고에 없으면 404 POSTING_NOT_FOUND(오류 화면이 "찾을 수 없습니다"를 보인다). */
 export async function getMyPosting(id: string): Promise<{ today: string; posting: MyPostingDetail }> {
   if (mockServer) return { today: db.getHome().today, posting: db.getMyPosting(id) }
   const { today, posting } = await request<{ today: string; posting: MyPostingDetailResponse }>("GET", apiPath`/api/me/postings/${id}`)
-  // shortcut: 공고 분석(analysis)은 어디에 보일지 정하지 않아 화면에 쓰지 않는다, 정하면 타입에 싣는다(공고 문서 8절 30번)
-  const { analysis, memo, ...rest } = posting
-  return { today, posting: { ...rest, memo: memo ?? "", analyzed: analysis !== null } }
+  return { today, posting: { ...posting, memo: posting.memo ?? "" } }
 }
 
 /**

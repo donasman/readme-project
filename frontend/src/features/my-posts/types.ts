@@ -2,7 +2,7 @@
 // 서버는 상태 글자(status)도 주지만 화면은 domain/posting/my-state.ts의 statusLabel로 그린다(공고 문서 8절 14번).
 import type { Disclosure } from "@/domain/group/types"
 import type { MyState } from "@/domain/posting/my-state"
-import type { Deadline, PostSection } from "@/domain/posting/types"
+import type { Deadline, PostingAnalysis, PostSection } from "@/domain/posting/types"
 
 import type { Stage } from "@/domain/posting/my-state"
 
@@ -51,8 +51,8 @@ export interface MyPostingDetail extends MyPosting {
   keywords: string[]
   /** 나만 보는 메모. 없으면 "" */
   memo: string
-  /** 공고 분석이 있는가. 없으면 서버가 맞는 카드를 세지 않아 matches와 unmatched가 비어 있다 */
-  analyzed: boolean
+  /** 공고 분석. 없으면 서버가 맞는 카드를 세지 않아 matches와 unmatched가 비어 있다 */
+  analysis: PostingAnalysis | null
   matches: CardMatch[]
   /** 카드로 답하지 못한 필수·우대 요건 */
   unmatched: string[]

@@ -29,15 +29,10 @@ describe("getMyPosting", () => {
     posting: { id: 3, company: "예시", title: "백엔드", memo: null, analysis, matches, unmatched, groupStates: [] },
   })
 
-  it("공고 분석이 있으면 서버가 센 맞는 카드와 답하지 못한 요건을 그대로 쓴다", async () => {
-    serve(200, detail({ requirements: [] }, [{ cardId: 5, title: "주문 조회 개선", overlap: ["Java"] }], ["Kotlin"]))
+  it("공고 분석, 서버가 센 맞는 카드, 답하지 못한 요건을 그대로 쓰고 빈 메모는 빈 글로 읽는다", async () => {
+    const analysis = { must: ["Java"], nice: [], duties: ["API 개발"], keywords: ["Java"], questions: [{ text: "지원 동기", limit: 800 }] }
+    serve(200, detail(analysis, [{ cardId: 5, title: "주문 조회 개선", overlap: ["Java"] }], ["Kotlin"]))
     const { posting } = await getMyPosting("3")
-    expect(posting).toMatchObject({ analyzed: true, memo: "", matches: [{ cardId: "5", title: "주문 조회 개선", overlap: ["Java"] }], unmatched: ["Kotlin"] })
-    expect(posting).not.toHaveProperty("analysis")
-  })
-
-  it("공고 분석이 없으면 아직 세지 않은 것으로 본다", async () => {
-    serve(200, detail(null, [], []))
-    expect((await getMyPosting("3")).posting.analyzed).toBe(false)
+    expect(posting).toMatchObject({ analysis, memo: "", matches: [{ cardId: "5", title: "주문 조회 개선", overlap: ["Java"] }], unmatched: ["Kotlin"] })
   })
 })

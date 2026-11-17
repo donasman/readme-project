@@ -7,14 +7,14 @@ import type { Disclosure, Group } from "@/domain/group/types"
 import type { Viewer } from "@/domain/session/types"
 import type { AcceptInviteResult, InviteView } from "@/features/auth/types"
 import type { LiveInvite } from "@/features/groups/types"
-import type { DraftField, DraftSection, PostDraft, PostUpload, ReadPostResult } from "@/domain/posting/types"
+import type { DraftField, DraftSection, PostDraft, PostingAnalysis, PostSection, PostUpload, ReadPostResult } from "@/domain/posting/types"
 import type { Comment, CommentPart, Deadline, EditPostResult, GroupPost, GroupPostDetail, MyState, PostEdit, UploadPostResult } from "@/features/group-posts/types"
 import { addDays, daysBetween } from "@/shared/lib/date"
 import { networkError } from "@/shared/lib/api"
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { KEYWORDS } from "./example-cards"
-import { createExampleDraft, createExampleGroups, EXAMPLE_POST_URLS, EXAMPLE_TODAY, VIEWER, type ExampleGroup } from "./example-data"
+import { createExampleDraft, createExampleGroups, EXAMPLE_POST_URLS, EXAMPLE_TODAY, VIEWER, type ExampleGroup, type StoredPost } from "./example-data"
 import { keepSnapshot, statusOf } from "./user-postings"
 
 /**
@@ -47,7 +47,7 @@ function rawGroup(groupId: string): ExampleGroup {
   return group
 }
 
-function rawPost(groupId: string, postId: string): GroupPostDetail {
+function rawPost(groupId: string, postId: string): StoredPost {
   const post = rawGroup(groupId).posts.find((p) => p.id === postId)
   if (!post) throw new NotFoundError("공고")
   return post
@@ -111,9 +111,9 @@ function toGroup(g: ExampleGroup): Group {
 }
 
 /** 그룹 공고에는 관심만 저장한다. 내 지원 상태 글자는 내 공고 행(user-postings.ts)에서 읽는다(서버의 user_postings). */
-const myState = (p: GroupPostDetail): MyState => ({ interested: p.me.interested, status: statusOf(p.groupId, p.id) })
+const myState = (p: StoredPost): MyState => ({ interested: p.me.interested, status: statusOf(p.groupId, p.id) })
 
-function toSummary(p: GroupPostDetail): GroupPost {
+function toSummary(p: StoredPost): GroupPost {
   const { id, groupId, company, title, deadline, postedBy, postedAt, interests, commentCount, sourceUrl } = p
   return structuredClone({ id, groupId, company, title, deadline, postedBy, postedAt, interests, me: myState(p), commentCount, sourceUrl })
 }
@@ -127,7 +127,24 @@ export const listPosts = (groupId: string): GroupPost[] => rawGroup(groupId).pos
 /** 그룹 공고 상세. 그룹이나 공고가 없으면 NotFoundError. */
 export function findPost(groupId: string, postId: string): GroupPostDetail {
   const post = rawPost(groupId, postId)
-  return { ...structuredClone(post), me: myState(post) }
+  return { ...structuredClone(post), me: myState(post), analysis: exampleAnalysis(post.sections, post.keywords) }
+}
+
+/** 공고 분석 흉내(공고 문서 4.7): 공고 내용 묶음을 그대로 옮기고 시안의 자기소개서 문항을 붙인다. 묶음이 없으면 서버처럼 null이다. */
+export function exampleAnalysis(sections: PostSection[], keywords: string[]): PostingAnalysis | null {
+  if (sections.length === 0) return null
+  const items = (...titles: string[]) => sections.filter((s) => titles.includes(s.title)).flatMap((s) => s.items)
+  return {
+    duties: items("주요 업무"),
+    must: items("필수 요건", "자격 요건"),
+    nice: items("우대 사항"),
+    keywords: [...keywords],
+    questions: [
+      { text: "지원 동기와 입사 후 포부를 기술하시오", limit: 800 },
+      { text: "직무와 관련해 문제를 해결한 경험을 기술하시오", limit: 1000 },
+      { text: "협업 중 갈등을 해결한 경험을 기술하시오", limit: null },
+    ],
+  }
 }
 
 let nextGroupId = 1
@@ -321,7 +338,7 @@ export function editPost(groupId: string, postId: string, edit: PostEdit): EditP
 }
 
 /** 그룹에서 내린 공고. 같은 공고를 다시 올리면 댓글과 관심 그대로 돌아온다(그룹 설계 가정 4). */
-const takenDown = new Map<string, GroupPostDetail[]>()
+const takenDown = new Map<string, StoredPost[]>()
 
 /** 그룹에서 내리기(DELETE …/posts/{postId}). 올린 사람과 그룹장만 한다. */
 export function takeDownPost(groupId: string, postId: string): void {
@@ -419,7 +436,7 @@ export function uploadPost(groupId: string, input: PostUpload): UploadPostResult
     group.posts.unshift(back)
     return { ok: true, postId: back.id }
   }
-  const post: GroupPostDetail = {
+  const post: StoredPost = {
     id: `${groupId}-new${nextPostId++}`,
     groupId,
     company: input.company,

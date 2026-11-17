@@ -3,11 +3,12 @@ import { Link, useLoaderData } from "react-router"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { buttonVariants } from "@/components/ui/button"
+import { ArrowLink } from "@/shared/components/arrow-link"
 import { Heading, subLabel } from "@/shared/components/heading"
 import { Page } from "@/shared/components/page"
 import { pageHead } from "@/shared/components/page-layout"
 import { ToggleButton } from "@/shared/components/toggle-button"
-import { ArrowRightIcon, CircleAlertIcon, FileUpIcon, PlusIcon } from "@/shared/icons"
+import { CircleAlertIcon, FileUpIcon, PlusIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { docTitle } from "@/shared/lib/utils"
 
@@ -67,13 +68,9 @@ export function CardsPage() {
           <p className="min-w-0 flex-[1_1_320px] text-sm">
             확인을 기다리는 카드가 {unverified}장 있습니다. 원문에 없는 숫자는 [확인 필요]로 표시해 두었습니다.
           </p>
-          <Link
-            to={paths.cardReview()}
-            className="inline-flex min-h-control-sm flex-none items-center gap-1 text-sm font-bold whitespace-nowrap text-primary"
-          >
-            <span>카드 확인하기</span>
-            <ArrowRightIcon aria-hidden="true" className="size-4" />
-          </Link>
+          <ArrowLink to={paths.cardReview()} className="min-h-control-sm flex-none">
+            카드 확인하기
+          </ArrowLink>
         </section>
       )}
 
