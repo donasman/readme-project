@@ -33,8 +33,8 @@ class CardExtractionRulesTests {
 
 	@Test
 	void numbersNotInTheSourceAreDroppedAndTypesAndTagsAreNormalized() {
-		ExtractedCard raw = new ExtractedCard("결제 알림 배치 개선", "2024-09 ~ 2024-12", "", "", List.of("스프링 배치", "배치"),
-				"알림 배치를 Spring Batch로 옮김", new StarText("알림이 늦었다", "", "Spring Batch로 옮김", ""),
+		ExtractedCard raw = new ExtractedCard("", "결제 알림 배치 개선", "2024-09 ~ 2024-12", "", "", List.of("스프링 배치", "배치"),
+				"알림 배치를 Spring Batch로 옮김", new StarText("알림이 늦었다", "", "Spring Batch로 옮김", "", "", ""),
 				List.of("하루 3만 건 알림", "처리 시간 70% 단축"), List.of("문제해결", "리더십"));
 
 		Normalized card = CardRules.normalizeExtracted(raw, SourceText.of(RESUME));
@@ -42,16 +42,31 @@ class CardExtractionRulesTests {
 		assertThat(card.card().facts()).containsExactly("하루 3만 건 알림");
 		assertThat(card.card().tags()).containsExactly("Spring Batch", "배치");
 		assertThat(card.card().usableFor()).containsExactly("문제해결");
-		assertThat(card.card().star()).isEqualTo(new Star("알림이 늦었다", "", "Spring Batch로 옮김", ""));
+		assertThat(card.card().star()).isEqualTo(new Star("알림이 늦었다", "", "Spring Batch로 옮김", "", "", ""));
 		assertThat(card.card().org()).isNull();
 		assertThat(card.notes()).containsExactly("문항 유형이 아니라서 뺐습니다 — 리더십",
 				"자료 원문에 없는 숫자가 있어 이 근거 숫자를 뺐습니다 — \"처리 시간 70% 단축\"");
 	}
 
 	@Test
+	void experienceNameAndObstacleAndLearningAreKeptAndGrounded() {
+		ExtractedCard raw = new ExtractedCard("  결제 알림 배치 개선 프로젝트  ", "배치를 Spring Batch로 옮기기", "", "", "", List.of(), "",
+				new StarText("알림이 늦었다", "", "Spring Batch로 옮김", "", "하루 3만 건을 멈추지 않고 옮겨야 했다", "작업을 쪼개면 2배 빨라진다"),
+				List.of(), List.of());
+
+		Normalized card = CardRules.normalizeExtracted(raw, SourceText.of(RESUME));
+
+		assertThat(card.card().experience()).isEqualTo("결제 알림 배치 개선 프로젝트");
+		// 원문에 있는 숫자(3만 건)는 근거 숫자로, 없는 숫자(2배)는 [확인 필요] 로(C8)
+		assertThat(card.card().facts()).containsExactly("하루 3만 건 알림을 Spring Batch로 옮김");
+		assertThat(card.card().star().obstacle()).isEqualTo("하루 3만 건을 멈추지 않고 옮겨야 했다");
+		assertThat(card.card().star().learning()).isEqualTo("작업을 쪼개면 [확인 필요: 2배] 빨라진다");
+	}
+
+	@Test
 	void starNumbersAreGroundedInTheSource() {
-		ExtractedCard raw = new ExtractedCard("결제 알림 배치 개선", "", "", "", List.of(), "",
-				new StarText("", "", "하루 3만 건 알림을 옮김", "처리 시간 70% 단축"), List.of(), List.of());
+		ExtractedCard raw = new ExtractedCard("", "결제 알림 배치 개선", "", "", "", List.of(), "",
+				new StarText("", "", "하루 3만 건 알림을 옮김", "처리 시간 70% 단축", "", ""), List.of(), List.of());
 
 		Normalized card = CardRules.normalizeExtracted(raw, SourceText.of(RESUME));
 
@@ -67,7 +82,7 @@ class CardExtractionRulesTests {
 		String longLine = "회사 소개와 프로젝트 배경 설명이 길게 이어지는 문단입니다 ".repeat(3)
 				+ "그 결과 월 처리량 12만 건을 안정적으로 소화했고 " + "이후 운영 이야기가 계속 이어집니다 ".repeat(3);
 
-		Grounding grounding = CardRules.groundStar(new Star("", "", "", "월 12만 건 처리"), List.of(), SourceText.of(longLine));
+		Grounding grounding = CardRules.groundStar(new Star("", "", "", "월 12만 건 처리", "", ""), List.of(), SourceText.of(longLine));
 
 		assertThat(grounding.factsToAdd()).hasSize(1);
 		String fact = grounding.factsToAdd().get(0);
@@ -77,7 +92,7 @@ class CardExtractionRulesTests {
 
 	@Test
 	void onlyNumbersMissingFromTheSourceAreMarkedNotPartsOfLongerOnes() {
-		Grounding grounding = CardRules.groundStar(new Star("", "", "2023년에 30% 늘리고 3% 줄임", ""), List.of(),
+		Grounding grounding = CardRules.groundStar(new Star("", "", "2023년에 30% 늘리고 3% 줄임", "", "", ""), List.of(),
 				SourceText.of("2023년 30% 늘림"));
 
 		assertThat(grounding.star().action()).isEqualTo("2023년에 30% 늘리고 [확인 필요: 3%] 줄임");
@@ -91,14 +106,14 @@ class CardExtractionRulesTests {
 
 	@Test
 	void cardWithoutATitleIsDropped() {
-		assertThat(CardRules.normalizeExtracted(new ExtractedCard(" ", "", "", "", List.of(), "", null, List.of(), List.of()),
+		assertThat(CardRules.normalizeExtracted(new ExtractedCard("", " ", "", "", "", List.of(), "", null, List.of(), List.of()),
 				SourceText.of(RESUME)))
 			.isNull();
 	}
 
 	@Test
 	void tooLongValuesAreCutToTheColumns() {
-		ExtractedCard raw = new ExtractedCard("가".repeat(250), "2024 ~ ".repeat(20), null, null, null, "요".repeat(300),
+		ExtractedCard raw = new ExtractedCard("", "가".repeat(250), "2024 ~ ".repeat(20), null, null, null, "요".repeat(300),
 				null, null, null);
 
 		Normalized card = CardRules.normalizeExtracted(raw, SourceText.of(""));

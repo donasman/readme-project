@@ -40,7 +40,7 @@ final class ExtractionPrompt {
 	/**
 	 * 조각 하나의 사용자 글.
 	 *
-	 * @param existingTitles 이미 있는 내 카드의 제목
+	 * @param existingTitles 이미 있는 내 카드. 경험 이름이 있으면 "경험 — 제목"이다
 	 * @param tagHints       태그 표기 후보: 자료 조각에 나온 사전 낱말, 그다음 내 카드의 태그
 	 */
 	static String question(List<String> existingTitles, List<String> tagHints, String sourceName, int part, int parts,

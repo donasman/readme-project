@@ -38,6 +38,9 @@ class ExperienceCard {
 
 	private Long userId;
 
+	/** 경험 이름(설계 4.8). 없으면 혼자인 카드 */
+	private String experience;
+
 	private String title;
 
 	/** "2025-03 ~ 2025-06" 글자 그대로 */
@@ -56,6 +59,12 @@ class ExperienceCard {
 	private String action;
 
 	private String result;
+
+	/** 어려움(설계 4.8) */
+	private String obstacle;
+
+	/** 배운 점(설계 4.8) */
+	private String learning;
 
 	private boolean verified;
 
@@ -128,7 +137,7 @@ class ExperienceCard {
 	}
 
 	Star star() {
-		return new Star(this.situation, this.task, this.action, this.result);
+		return new Star(this.situation, this.task, this.action, this.result, this.obstacle, this.learning);
 	}
 
 	List<String> facts() {
@@ -137,6 +146,7 @@ class ExperienceCard {
 
 	/** 모든 칸을 바꾼다. 확인 여부와 자료는 그대로 둔다. */
 	void edit(CardInput card, Instant now) {
+		this.experience = card.experience();
 		this.title = card.title();
 		this.period = card.period();
 		this.org = card.org();
@@ -146,6 +156,8 @@ class ExperienceCard {
 		this.task = emptyToNull(card.star().task());
 		this.action = emptyToNull(card.star().action());
 		this.result = emptyToNull(card.star().result());
+		this.obstacle = emptyToNull(card.star().obstacle());
+		this.learning = emptyToNull(card.star().learning());
 		this.tags.clear();
 		this.tags.addAll(card.tags());
 		this.usableFor.clear();

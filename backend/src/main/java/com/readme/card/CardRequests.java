@@ -26,7 +26,7 @@ final class CardRequests {
 	 * POST /api/cards, PUT /api/cards/{id} 의 본문. 프런트의 CardInput 모양이다. PUT 은 모든 칸을 이 값으로 바꾼다.
 	 * 제목만 꼭 넣는다. 빈 요약·태그·문항 유형은 저장하고 검사(issues)가 오류로 알린다.
 	 */
-	record CardRequest(@NotBlank @Size(max = 200) String title, @Size(max = 50) String period,
+	record CardRequest(@Size(max = 200) String experience, @NotBlank @Size(max = 200) String title, @Size(max = 50) String period,
 			@Size(max = 200) String org, @Size(max = 200) String role, @Size(max = 200) String summary,
 			@Size(max = 30) List<@NotBlank @Size(max = 100) String> tags, List<String> usableFor, @Valid Star star,
 			@Size(max = 50) List<@NotBlank @Size(max = 500) String> facts) {
@@ -49,9 +49,8 @@ final class CardRequests {
 				types.add(type);
 			}
 			Star given = Objects.requireNonNullElse(this.star, Star.EMPTY);
-			Star stripped = new Star(given.situation().strip(), given.task().strip(), given.action().strip(),
-					given.result().strip());
-			return new CardInput(this.title.strip(), blankToNull(this.period), blankToNull(this.org),
+			Star stripped = Star.of(given.parts().stream().map(String::strip).toList());
+			return new CardInput(blankToNull(this.experience), this.title.strip(), blankToNull(this.period), blankToNull(this.org),
 					blankToNull(this.role), blankToNull(this.summary), stripped, List.copyOf(canonicalTags),
 					List.copyOf(types), orEmpty(this.facts).stream().map(String::strip).toList());
 		}
@@ -66,8 +65,12 @@ final class CardRequests {
 
 	}
 
-	/** 다듬은 카드 값. 태그는 대표 표기, 문항 유형은 6종 중 하나이고 겹치지 않는다. 빈 칸은 null, 빈 STAR 칸은 빈 글자다. */
-	record CardInput(String title, String period, String org, String role, String summary, Star star, List<String> tags,
+	/**
+	 * 다듬은 카드 값. 태그는 대표 표기, 문항 유형은 6종 중 하나이고 겹치지 않는다. 빈 칸은 null, 빈 이야기 칸은 빈 글자다.
+	 *
+	 * @param experience 경험 이름(설계 4.8). 같은 이름의 카드가 한 묶음이다. 없으면 null
+	 */
+	record CardInput(String experience, String title, String period, String org, String role, String summary, Star star, List<String> tags,
 			List<String> usableFor, List<String> facts) {
 	}
 

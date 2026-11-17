@@ -43,14 +43,17 @@ class CardController {
 
 	/**
 	 * 내 카드 목록. 상세와 같은 모양이다(카드 확인 화면이 ?verified=false 로 받아 한 장씩 보여 준다).
-	 * 거르기: tag(다른 표기도 받는다), type(문항 유형. 다른 이름도 받는다), verified, jobId(추출 작업), q(제목·내용·태그·근거 숫자에 든 글자).
+	 * 거르기: tag(다른 표기도 받는다), type(문항 유형. 다른 이름도 받는다), verified, jobId(추출 작업), experience(경험 이름, 대소문자 무시),
+	 * q(경험 이름·제목·내용·태그·근거 숫자에 든 글자).
 	 */
 	@GetMapping
 	List<CardResponse> list(@RequestParam(required = false) String tag, @RequestParam(required = false) String type,
 			@RequestParam(required = false) Boolean verified, @RequestParam(required = false) Long jobId,
-			@RequestParam(required = false) String q, @CurrentUser LoginUser user) {
+			@RequestParam(required = false) String experience, @RequestParam(required = false) String q,
+			@CurrentUser LoginUser user) {
 		CardFilter filter = new CardFilter(isBlank(tag) ? null : KeywordDictionary.standard().normalize(tag),
-				isBlank(type) ? null : questionType(type), verified, jobId, isBlank(q) ? null : q.strip());
+				isBlank(type) ? null : questionType(type), verified, jobId, isBlank(experience) ? null : experience.strip(),
+				isBlank(q) ? null : q.strip());
 		return this.queries.list(user.id(), filter);
 	}
 

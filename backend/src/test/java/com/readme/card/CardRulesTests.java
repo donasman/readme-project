@@ -21,7 +21,7 @@ import com.readme.card.CardRules.Content;
 class CardRulesTests {
 
 	private static final Content GOOD = new Content("주문 API 개선", "2025-03 ~ 2025-05", "N+1 제거와 캐시",
-			List.of("Java", "Spring Boot"), List.of("직무역량"), new Star("s", "t", "a", "r"), List.of("p95 1.8초 → 0.4초"));
+			List.of("Java", "Spring Boot"), List.of("직무역량"), new Star("s", "t", "a", "r", "", ""), List.of("p95 1.8초 → 0.4초"));
 
 	// ── test_experiences.py ─────────────────────────────────────────────
 
@@ -99,24 +99,38 @@ class CardRulesTests {
 
 	@Test
 	void emptyStarPartsAndLooseNumbersAreWarnings() {
-		assertThat(starIssues(new Star("", " ", "a", "r"))).containsExactly("STAR에서 비어 있는 칸: 상황, 과제");
-		assertThat(starIssues(new Star("트래픽 2배", "t", "a", "30% 감소")))
+		assertThat(starIssues(new Star("", " ", "a", "r", "", ""))).containsExactly("STAR에서 비어 있는 칸: 상황, 과제");
+		assertThat(starIssues(new Star("트래픽 2배", "t", "a", "30% 감소", "", "")))
 			.containsExactly("STAR에 근거 숫자에 없는 숫자가 있습니다: 2배, 30% — 카드를 확인하면 근거 숫자에 넣습니다");
+	}
+
+	// ── 리드미에서 더한 것: 어려움·배운 점(경험카드 설계 4.8) ─────────────────────────
+
+	@Test
+	void obstacleAndLearningAreCheckedForNumbersButMayBeEmpty() {
+		// 빈 칸 경고는 STAR 넷만 본다. 어려움·배운 점은 선택이다
+		assertThat(starIssues(new Star("s", "t", "a", "r", "", ""))).isEmpty();
+		// 두 칸의 숫자도 근거 숫자와 대조한다(C8)
+		assertThat(starIssues(new Star("s", "t", "a", "r", "운영 중이라 5분 넘게 멈출 수 없었다", "")))
+			.containsExactly("STAR에 근거 숫자에 없는 숫자가 있습니다: 5분 — 카드를 확인하면 근거 숫자에 넣습니다");
+		// 카드를 확인하면 두 칸의 숫자도 근거 숫자로 옮긴다
+		assertThat(CardRules.factsToAdd(new Star("", "", "", "", "", "배포를 3번 되돌리며 실행 계획부터 보게 됐다"), List.of()))
+			.containsExactly("배포를 3번 되돌리며 실행 계획부터 보게 됐다");
 	}
 
 	@Test
 	void looseStarNumbersSameAsJobfit() {
-		assertThat(CardRules.looseStarNumbers(new Star("", "", "", "p95 1.8초에서 0.4초로, 문의 30% 감소"), List.of("p95 1.8초 → 0.4초")))
+		assertThat(CardRules.looseStarNumbers(new Star("", "", "", "p95 1.8초에서 0.4초로, 문의 30% 감소", "", ""), List.of("p95 1.8초 → 0.4초")))
 			.containsExactly("30%");
 		// 같은 표기는 한 번. 표기가 다르면(30 %) 따로 센다
-		assertThat(CardRules.looseStarNumbers(new Star("주문 30% 증가", "", "", "문의 30% 감소, 30 % 감소"), List.of()))
+		assertThat(CardRules.looseStarNumbers(new Star("주문 30% 증가", "", "", "문의 30% 감소, 30 % 감소", "", ""), List.of()))
 			.containsExactly("30%", "30 %");
 		// 버전, 날짜, [확인 필요] 는 숫자가 아니다
-		assertThat(CardRules.looseStarNumbers(new Star("Java 17, Spring Boot 3로 [확인 필요: 40%]", "2025년 3월부터", "", ""),
+		assertThat(CardRules.looseStarNumbers(new Star("Java 17, Spring Boot 3로 [확인 필요: 40%]", "2025년 3월부터", "", "", "", ""),
 				List.of())).isEmpty();
 		// 같은 값의 다른 표기는 근거 숫자에 있는 것이다. 단위가 다르면 다른 값이다
-		assertThat(CardRules.looseStarNumbers(new Star("", "", "4만 3천 건을 처리", "하루 43,000건"), List.of("4만 3천 건"))).isEmpty();
-		assertThat(CardRules.looseStarNumbers(new Star("", "", "", "응답 1.8분"), List.of("1.8초"))).containsExactly("1.8분");
+		assertThat(CardRules.looseStarNumbers(new Star("", "", "4만 3천 건을 처리", "하루 43,000건", "", ""), List.of("4만 3천 건"))).isEmpty();
+		assertThat(CardRules.looseStarNumbers(new Star("", "", "", "응답 1.8분", "", ""), List.of("1.8초"))).containsExactly("1.8분");
 	}
 
 	// ── 리드미에서 더한 것: 사전에 없는 태그 ─────────────────────────────────────
@@ -134,17 +148,17 @@ class CardRulesTests {
 	@Test
 	void verifyMovesEachLooseNumberWithItsSentence() {
 		// 문장마다 하나. 근거 숫자에 있는 숫자(0.4초는 없고 1.8초만 있다)는 옮기지 않는다
-		assertThat(CardRules.factsToAdd(new Star("", "", "", "p95 응답 시간이 0.4초로 줄었다. 관련 문의도 30% 줄었다."), List.of("p95 1.8초")))
+		assertThat(CardRules.factsToAdd(new Star("", "", "", "p95 응답 시간이 0.4초로 줄었다. 관련 문의도 30% 줄었다.", "", ""), List.of("p95 1.8초")))
 			.containsExactly("p95 응답 시간이 0.4초로 줄었다.", "관련 문의도 30% 줄었다.");
 		// 한 번 옮긴 숫자는 다른 칸에서 다시 옮기지 않는다
-		assertThat(CardRules.factsToAdd(new Star("하루 주문 2만 건. 피크에는 3배.", "", "", "2만 건을 1초 안에"), List.of()))
+		assertThat(CardRules.factsToAdd(new Star("하루 주문 2만 건. 피크에는 3배.", "", "", "2만 건을 1초 안에", "", ""), List.of()))
 			.containsExactly("하루 주문 2만 건.", "피크에는 3배.", "2만 건을 1초 안에");
 		// 목록 머리표는 떼고, 근거 숫자에 있는 것은 그대로 둔다
-		assertThat(CardRules.factsToAdd(new Star("", "", "- 캐시 적중률 80% 달성\n- 배포 3회", ""), List.of("배포 3회")))
+		assertThat(CardRules.factsToAdd(new Star("", "", "- 캐시 적중률 80% 달성\n- 배포 3회", "", "", ""), List.of("배포 3회")))
 			.containsExactly("캐시 적중률 80% 달성");
 		// [확인 필요] 와 버전은 옮길 숫자가 아니다
-		assertThat(CardRules.factsToAdd(new Star("", "", "", "[확인 필요: 30%] 감소, Java 17 도입"), List.of())).isEmpty();
-		assertThat(CardRules.factsToAdd(new Star("", "", "", "비용 50만 원 절감! 다음 달 40% 더."), List.of("비용 50만 원")))
+		assertThat(CardRules.factsToAdd(new Star("", "", "", "[확인 필요: 30%] 감소, Java 17 도입", "", ""), List.of())).isEmpty();
+		assertThat(CardRules.factsToAdd(new Star("", "", "", "비용 50만 원 절감! 다음 달 40% 더.", "", ""), List.of("비용 50만 원")))
 			.containsExactly("다음 달 40% 더.");
 	}
 
@@ -152,7 +166,7 @@ class CardRulesTests {
 	void verifyClipsLongSentencesAroundTheNumber() {
 		String sentence = "지난 분기 주문 조회 화면이 느리다는 문의가 이어져 쿼리 로그를 하나씩 따라가 보니 주문마다 상품을 따로 읽는 구조였고 "
 				+ "이를 fetch join 으로 묶어 주문 1건당 쿼리를 21회에서 1회로 줄였으며 화면 구성은 그대로 두었다";
-		assertThat(CardRules.factsToAdd(new Star("", "", sentence, ""), List.of())).containsExactly(
+		assertThat(CardRules.factsToAdd(new Star("", "", sentence, "", "", ""), List.of())).containsExactly(
 				"…로그를 하나씩 따라가 보니 주문마다 상품을 따로 읽는 구조였고 이를 fetch join 으로 묶어 주문 1건당 쿼리를 21회에서 1회로 줄였으며 화면 구성은 그대로 두었다");
 	}
 
@@ -160,7 +174,7 @@ class CardRulesTests {
 	void verifySkipsANumberWhoseSpellingIsLongerThanItsSentence() {
 		// "5"와 단위 "명" 사이에 빈 줄이 400개라 숫자 표기가 문장(122자)보다 길다. jobfit 은 아무것도 넣지 않는다
 		String result = "a".repeat(120) + " 5" + "\n".repeat(400) + "명";
-		assertThat(CardRules.factsToAdd(new Star("", "", "", result), List.of())).isEmpty();
+		assertThat(CardRules.factsToAdd(new Star("", "", "", result, "", ""), List.of())).isEmpty();
 	}
 
 	private static List<String> periodIssues(String period) {

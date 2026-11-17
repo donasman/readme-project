@@ -217,7 +217,7 @@ class CardExtractionTests {
 	}
 
 	private static ExtractedCard card(String title, String fact) {
-		return new ExtractedCard(title, "", "", "", List.of("Java"), title + " 요약", new StarText("", "", "", ""),
+		return new ExtractedCard("", title, "", "", "", List.of("Java"), title + " 요약", new StarText("", "", "", "", "", ""),
 				fact.isEmpty() ? List.of() : List.of(fact), List.of("직무역량"));
 	}
 

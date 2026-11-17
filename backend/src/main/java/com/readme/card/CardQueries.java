@@ -32,7 +32,8 @@ class CardQueries {
 
 	/** 카드 줄. 자료가 파일이면 그 이름이 붙는다(붙여넣은 글은 이름이 없다). */
 	private static final String CARDS = """
-			select c.id, c.title, c.period, c.org, c.role, c.summary, c.situation, c.task, c.action, c.result,
+			select c.id, c.experience, c.title, c.period, c.org, c.role, c.summary, c.situation, c.task, c.action, c.result,
+			       c.obstacle, c.learning,
 			       c.verified, c.visibility, c.source_id, c.source_part, c.extraction_notes::text as extraction_notes,
 			       case when s.kind = 'FILE' then s.file_name end as source_name
 			  from experience_cards c
@@ -97,11 +98,16 @@ class CardQueries {
 			sql.append(" and c.job_id = :jobId");
 			params.put("jobId", filter.jobId());
 		}
+		if (filter.experience() != null) {
+			// 경험 이름은 앞뒤 공백과 대소문자를 가리지 않고 같으면 한 묶음이다(설계 4.8)
+			sql.append(" and lower(btrim(c.experience)) = lower(:experience)");
+			params.put("experience", filter.experience());
+		}
 		if (filter.q() != null) {
 			// 대소문자를 가리지 않는 포함 검색. % 와 _ 를 글자 그대로 보려고 like 대신 strpos 를 쓴다
 			sql.append("""
-					 and (strpos(lower(concat_ws(chr(10), c.title, c.period, c.org, c.role, c.summary,
-					                             c.situation, c.task, c.action, c.result)), lower(:q)) > 0
+					 and (strpos(lower(concat_ws(chr(10), c.experience, c.title, c.period, c.org, c.role, c.summary,
+					                             c.situation, c.task, c.action, c.result, c.obstacle, c.learning)), lower(:q)) > 0
 					      or exists (select 1 from card_tags t where t.card_id = c.id and strpos(lower(t.tag), lower(:q)) > 0)
 					      or exists (select 1 from card_facts f where f.card_id = c.id and strpos(lower(f.body), lower(:q)) > 0))
 					""");
@@ -195,7 +201,8 @@ class CardQueries {
 		String period = rs.getString("period");
 		String summary = rs.getString("summary");
 		Star star = new Star(rs.getString("situation"), rs.getString("task"), rs.getString("action"),
-				rs.getString("result"));
+				rs.getString("result"), rs.getString("obstacle"), rs.getString("learning"));
+		String experience = rs.getString("experience");
 		List<String> tags = children.tags().getOrDefault(id, List.of());
 		List<String> types = children.types().getOrDefault(id, List.of());
 		List<String> facts = children.facts().getOrDefault(id, List.of());
@@ -204,7 +211,8 @@ class CardQueries {
 		Integer part = rs.getObject("source_part", Integer.class);
 		List<String> parts = (sourceId != null) ? children.sourceParts().get(sourceId) : null;
 		String excerpt = (part != null && parts != null && part <= parts.size()) ? parts.get(part - 1) : null;
-		return new CardResponse(id, title, period, rs.getString("org"), rs.getString("role"), tags,
+		return new CardResponse(id, (experience != null) ? experience : "", title, period, rs.getString("org"),
+				rs.getString("role"), tags,
 				(summary != null) ? summary : "", types, rs.getBoolean("verified"), star, facts,
 				rs.getString("visibility"), sourceId, rs.getString("source_name"), excerpt,
 				(notes != null) ? this.jsonMapper.readValue(notes, STRINGS) : List.of(), List.of());
@@ -214,13 +222,13 @@ class CardQueries {
 	private static CardResponse checked(CardResponse card) {
 		List<CardIssue> issues = CardRules.check(new Content(card.title(), card.period(), card.summary(), card.tags(),
 				card.usableFor(), card.star(), card.facts()));
-		return new CardResponse(card.id(), card.title(), card.period(), card.org(), card.role(), card.tags(),
+		return new CardResponse(card.id(), card.experience(), card.title(), card.period(), card.org(), card.role(), card.tags(),
 				card.summary(), card.usableFor(), card.verified(), card.star(), card.facts(), card.visibility(),
 				card.sourceId(), card.sourceName(), card.sourceExcerpt(), card.extractionNotes(), issues);
 	}
 
-	/** 목록의 거르기. 태그는 대표 표기, 문항 유형은 6종 중 하나다. */
-	record CardFilter(String tag, String type, Boolean verified, Long jobId, String q) {
+	/** 목록의 거르기. 태그는 대표 표기, 문항 유형은 6종 중 하나, 경험 이름은 앞뒤 공백을 지운 것이다. */
+	record CardFilter(String tag, String type, Boolean verified, Long jobId, String experience, String q) {
 	}
 
 	private record Children(Map<Long, List<String>> tags, Map<Long, List<String>> types, Map<Long, List<String>> facts,
