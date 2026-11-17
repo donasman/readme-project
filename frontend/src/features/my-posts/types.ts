@@ -36,6 +36,20 @@ export interface PostingGroupState extends PostingGroup {
   disclosure: Disclosure
 }
 
+/**
+ * 요건 하나의 결과(공고 문서 4.8, 12차 시안 안 B): matched(카드 있음), profile(카드로는 판단할 수 없지만 프로필에 있음),
+ * unmatched(카드 없음), unknown(판단 못 함). 프로필은 넣지 않아도 되는 값이라 없다고 unmatched가 되지 않는다.
+ */
+export interface RequirementResult {
+  kind: "must" | "nice"
+  text: string
+  status: "matched" | "profile" | "unmatched" | "unknown"
+  /** 맞춘 내 카드. 모두 matches에 있다 */
+  cardIds: string[]
+  /** 요건 글에 있는 내 프로필 값(자격증, 어학 시험, 전공) */
+  profileItems: string[]
+}
+
 /** 맞는 카드(공고 문서 4.8): 카드 제목과, 공고의 요건 낱말·키워드 가운데 카드 태그에 있는 것. 가짜 서버는 태그 겹침으로 흉내 낸다. */
 export interface CardMatch {
   cardId: string
@@ -56,6 +70,8 @@ export interface MyPostingDetail extends MyPosting {
   matches: CardMatch[]
   /** 카드로 답하지 못한 필수·우대 요건 */
   unmatched: string[]
+  /** 필수·우대 요건마다의 결과(공고 문서 4.8). 분석이 없으면 비어 있다 */
+  requirements: RequirementResult[]
   groupStates: PostingGroupState[]
 }
 

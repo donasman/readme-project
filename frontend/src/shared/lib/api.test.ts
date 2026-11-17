@@ -85,12 +85,12 @@ describe("request", () => {
     expect(calls).toHaveLength(2)
   })
 
-  it("id이거나 Id로 끝나는 숫자 칸은 문자열로 읽는다. 다른 숫자와 null은 그대로다", async () => {
+  it("id이거나 Id로 끝나는 숫자 칸과 Ids로 끝나는 숫자 목록은 문자열로 읽는다. 다른 숫자와 null은 그대로다", async () => {
     serve(
-      { status: 200, body: { id: 1, leaderId: null, members: [{ id: 2 }], openPostCount: 6, me: { postId: 3 } } },
+      { status: 200, body: { id: 1, leaderId: null, members: [{ id: 2 }], openPostCount: 6, me: { postId: 3 }, cardIds: [4, 5] } },
       { status: 409, body: { code: "ALREADY_IN_GROUP", message: "x", postId: 12 } },
     )
-    expect(await request("GET", "/api/groups")).toEqual({ id: "1", leaderId: null, members: [{ id: "2" }], openPostCount: 6, me: { postId: "3" } })
+    expect(await request("GET", "/api/groups")).toEqual({ id: "1", leaderId: null, members: [{ id: "2" }], openPostCount: 6, me: { postId: "3" }, cardIds: ["4", "5"] })
     await expect(request("POST", "/api/x")).rejects.toMatchObject({ body: { postId: "12" } })
   })
 
