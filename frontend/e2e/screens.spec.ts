@@ -37,6 +37,19 @@ for (const [path, heading, title] of SCREENS) {
       .evaluateAll((els) => els.filter((el) => el.getBoundingClientRect().width > 0).map((el) => el.getBoundingClientRect().top))
     expect(Math.max(...tops) - Math.min(...tops), "머리 줄 항목의 높이 차(px)").toBeLessThanOrEqual(12)
 
+    // 휴대폰에서는 버튼이 44px 이상이다(2026-11-17 사용자 결정). 문장(p) 안의 글자 버튼은 뺀다(WCAG 2.5.8의 문장 안 예외)
+    if (testInfo.project.name !== "desktop") {
+      const small = await page.locator("button, [role=tab], [role=radio]").evaluateAll((els) =>
+        els
+          .filter((el) => {
+            const r = el.getBoundingClientRect()
+            return r.width > 0 && r.height < 43.5 && !el.closest("p, .sr-only")
+          })
+          .map((el) => `${(el.getAttribute("aria-label") || el.textContent || "").trim()} ${Math.round(el.getBoundingClientRect().height)}px`)
+      )
+      expect(small, "44px보다 낮은 버튼").toEqual([])
+    }
+
     // 데스크톱에서는 표나 상자 안에서도 옆으로 밀어야 보이는 것이 없다(지원 현황의 "바꾸기"가 잘렸었다)
     if (testInfo.project.name === "desktop") {
       const clipped = await page.evaluate(() =>
