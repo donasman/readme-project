@@ -6,7 +6,7 @@
 |---|---|
 | `Caddyfile` | 서버의 `/etc/caddy/Caddyfile`. HTTPS 를 받아 Spring Boot(8080)로 넘긴다 |
 | `readme-api.service` | 서버의 `/etc/systemd/system/readme-api.service`. Spring Boot 를 서비스로 띄운다 |
-| `cloudflare/inbound-mail-worker.js` | 수신 전용 도메인의 Cloudflare Email Worker. 받은 메일을 서명해 서버의 `POST /api/inbound-mail`로 넘긴다(`docs/리드미_설계_메일.md` 4.1, 6절) |
+| `cloudflare/inbound-mail-worker.js` | 서비스 도메인 최상위(`<토큰>@도메인`)의 Cloudflare Email Worker. 받은 메일을 서명해 서버의 `POST /api/inbound-mail`로 넘긴다(`docs/리드미_설계_메일.md` 4.1, 6절) |
 
 - JAR 는 `backend` 에서 `gradlew bootJar` 로 만들고(`build/libs/readme-backend-<버전>.jar`), 서버의 `/opt/readme/readme-backend.jar` 로 복사한다.
 - 환경 변수 목록은 `backend/.env.example` 에 있다.

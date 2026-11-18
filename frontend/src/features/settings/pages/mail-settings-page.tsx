@@ -88,7 +88,7 @@ export function MailSettingsPage() {
             </Button>
           </>
         ) : (
-          // 수신 도메인 설정이 없는 서버(메일 설계 4.2). 운영에서는 수신 전용 도메인을 산 뒤에 생긴다
+          // 수신 도메인 설정이 없는 서버(메일 설계 4.2). 운영에서는 도메인을 산 뒤에 생긴다
           <p className="text-sm text-text-secondary">이 서버에는 아직 메일을 받는 도메인이 없어 수신 주소를 만들 수 없습니다.</p>
         )}
         <p role="status" className="sr-only">
