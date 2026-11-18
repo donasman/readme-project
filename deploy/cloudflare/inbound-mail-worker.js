@@ -1,4 +1,4 @@
-// 리드미 수신 전용 도메인의 Email Worker(docs/리드미_설계_메일.md 4.1). 아직 실제 메일로 돌려 본 적이 없다(같은 문서 6절).
+// 리드미 서비스 도메인 최상위(<토큰>@도메인)의 Email Worker(docs/리드미_설계_메일.md 4.1). 아직 실제 메일로 돌려 본 적이 없다(같은 문서 6절).
 // Cloudflare Email Routing 의 모든 주소 받기(catch-all) → 이 Worker → 서버 POST /api/inbound-mail.
 // 메일을 풀지 않고 원문을 서명과 함께 넘기기만 한다. 푸는 일은 서버가 한다(무료 Worker 의 CPU 한도).
 //
