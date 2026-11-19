@@ -37,7 +37,7 @@ interface CardPreviewDialogProps {
 
 /**
  * 앞뒤 버튼은 끝 카드에서 꺼져도 초점을 잃지 않게 focusableWhenDisabled로 둔다. 그러면 disabled 속성 대신 aria-disabled가 붙어
- * 공용 Button의 disabled:opacity-50이 듣지 않으므로 같은 흐림을 여기서 준다.
+ * 공용 Button의 disabled:opacity-50이 듣지 않으므로 시안의 흐림(0.35)을 여기서 준다.
  */
 const stepButton = "aria-disabled:pointer-events-none aria-disabled:opacity-35"
 
@@ -76,7 +76,7 @@ export function CardPreviewDialog({ preview, matches, onIndex, onClose }: CardPr
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/45" />
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-4 py-6 max-sm:items-end max-sm:p-0">
           {/* 창은 뿌리 틀 밖(body)에 그려지므로 뿌리 틀의 글자 규칙(root-layout.tsx)을 다시 건다 */}
-          <Dialog.Popup className="pointer-events-auto flex max-h-full w-full max-w-[640px] flex-col overflow-hidden rounded-panel border border-border-subtle bg-surface-raised text-base leading-body tracking-body break-keep text-pretty text-foreground shadow-floating outline-none max-sm:max-h-[92vh] max-sm:max-w-none max-sm:rounded-b-none max-sm:border-b-0">
+          <Dialog.Popup className="pointer-events-auto flex max-h-full w-full max-w-[640px] flex-col overflow-hidden rounded-panel border border-border-subtle bg-surface-raised text-base leading-body tracking-body break-keep text-pretty text-foreground shadow-floating outline-none max-sm:max-h-[92dvh] max-sm:max-w-none max-sm:rounded-b-none max-sm:border-b-0">
             {preview && target && <PreviewBody preview={preview} target={target} matches={matches} loaded={loaded} onIndex={onIndex} />}
           </Dialog.Popup>
         </div>
