@@ -113,6 +113,11 @@ const SCENARIOS = [
   { name: "dialog-remove-posting", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "내 공고에서 빼기"]] },
   { name: "dialog-remove-posting-plain", path: "/my-posts/p-be1", width: 1280, steps: [["press", "내 공고에서 빼기"]] },
   { name: "my-posts-removed", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "내 공고에서 빼기"], ["press", "빼기"]] },
+  // 요건별 카드 줄과 카드 미리 보기 창(최종 시안). p-be1의 첫 요건은 카드 4장이라 "더 보기"가 나온다
+  { name: "my-post-more-cards", path: "/my-posts/p-be1", width: 1280, steps: [["press", "카드 1장 더 보기"]] },
+  { name: "dialog-card-preview", path: "/my-posts/p-be1", width: 1280, steps: [["click", "button[aria-haspopup=dialog]"]] },
+  { name: "dialog-card-preview-next", path: "/my-posts/p-be1", width: 1280, steps: [["click", "button[aria-haspopup=dialog]"], ["press", "다음 카드"]] },
+  { name: "dialog-card-preview-mobile", path: "/my-posts/p-be1", width: 390, scale: 2, steps: [["click", "button[aria-haspopup=dialog]"]] },
   { name: "my-post-new", path: "/my-posts/new", width: 1280 },
   { name: "my-post-check", path: "/my-posts/new", width: 1280, steps: [["fill", "#pn-url", "https://careers.example.com/jobs/2001"], ["press", "읽어 오기"]] },
   // 예시 공고 be1의 주소를 넣으면 가짜 서버가 이미 내 공고에 있는 공고(p-be1)로 본다
@@ -140,6 +145,13 @@ const SCENARIOS = [
   { name: "profile-error", path: "/settings/profile", width: 1280, steps: [["fill", '[aria-label="학력 1"] input[inputmode="decimal"]', "4.8"], ["press", "저장"]] },
   { name: "profile-saved", path: "/settings/profile", width: 1280, steps: [["fill", '[aria-label="자격증 2"] input', "컴활"], ["press", "저장"]] },
   { name: "profile-mobile", path: "/settings/profile", width: 390, scale: 2 },
+  // 학점 계산기(최종 시안). 예시 보기는 서버를 부르지 않고 41과목을 보인다
+  { name: "grades", path: "/settings/grades", width: 1280 },
+  { name: "grades-example", path: "/settings/grades", width: 1280, steps: [["press", "예시 성적증명서로 보기"]] },
+  { name: "grades-example-43", path: "/settings/grades", width: 1280, steps: [["press", "예시 성적증명서로 보기"], ["press", "4.3 만점"]] },
+  { name: "grades-example-category", path: "/settings/grades", width: 1280, steps: [["press", "예시 성적증명서로 보기"], ["press", "이수구분별"], ["press", "글로 복사"]] },
+  { name: "grades-mobile", path: "/settings/grades", width: 390, scale: 2 },
+  { name: "grades-example-mobile", path: "/settings/grades", width: 390, scale: 2, steps: [["press", "예시 성적증명서로 보기"]] },
   { name: "mail-settings", path: "/settings/mail", width: 1280 },
   { name: "withdraw", path: "/settings/withdraw", width: 1280 },
   { name: "settings-mobile", path: "/settings/account", width: 390, scale: 2 },
