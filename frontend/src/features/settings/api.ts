@@ -5,6 +5,7 @@ import * as db from "@/mocks/account-db"
 import * as profileDb from "@/mocks/profile-db"
 import * as transcriptDb from "@/mocks/transcript-db"
 import { ApiError, isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
+import { sentence } from "@/shared/lib/korean"
 
 import { exampleTranscript } from "./grade-example"
 import type { AccountInfo, MailSettings, Transcript, WithdrawConfirm, WithdrawInfo } from "./types"
@@ -133,7 +134,8 @@ export async function saveProfile(input: ProfileInput): Promise<SaveProfileResul
 /** 성적증명서 읽기 결과. 읽지 못했으면 올리기 칸 아래에 보일 글이다. */
 export type ReadTranscriptResult = { ok: true; transcript: Transcript } | { ok: false; message: string }
 
-// 오류마다 보일 글(학점 계산기 문서 4절). 오류 이름은 초안이라 서버의 글 대신 화면이 정한 글을 보인다
+// 오류마다 보일 글(학점 계산기 문서 4절). 오류 이름은 초안이라 서버의 글 대신 화면이 정한 글을 보인다.
+// TRANSCRIPT_TOO_LARGE만 예외다: 파일 크기와 읽은 글의 길이(3만 자) 두 사정을 서버의 글이 가르므로 서버 글을 보이고, 이 글은 본문 없는 413에만 쓴다
 const TRANSCRIPT_ERRORS: Record<string, string> = {
   TRANSCRIPT_TOO_LARGE: "파일이 너무 큽니다. PDF는 10MB, 사진은 5MB, 스캔한 PDF는 20쪽까지 읽을 수 있습니다.",
   TRANSCRIPT_UNSUPPORTED_TYPE: "PDF와 사진(JPG, PNG, GIF, WebP)만 읽을 수 있습니다.",
@@ -151,6 +153,7 @@ export async function readTranscript(file: File): Promise<ReadTranscriptResult> 
   try {
     return { ok: true, transcript: await request<Transcript>("POST", "/api/transcripts/read", body) }
   } catch (error) {
+    if (isApiError(error, "TRANSCRIPT_TOO_LARGE")) return { ok: false, message: sentence(error.message) }
     // 서버 앞(Caddy)이 본문 없이 413으로 끊을 수도 있다(shared/lib/api.ts의 tooLargeMessage)
     if (error instanceof ApiError && error.status === 413) return { ok: false, message: TRANSCRIPT_ERRORS.TRANSCRIPT_TOO_LARGE }
     if (isApiError(error, ...Object.keys(TRANSCRIPT_ERRORS))) return { ok: false, message: TRANSCRIPT_ERRORS[error.code] }
