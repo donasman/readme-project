@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { cardPosition, shownCards, stepCard } from "./requirement-cards"
+import { cardPosition, isOverlapTag, shownCards, stepCard } from "./requirement-cards"
 
 describe("요건 아래 카드 줄", () => {
   it("셋까지 보이고 나머지 수를 센다", () => {
@@ -24,5 +24,10 @@ describe("카드 미리 보기 창", () => {
     expect(stepCard(0, -1, 3)).toBeNull()
     expect(stepCard(2, 1, 3)).toBeNull()
     expect(stepCard(0, 1, 1)).toBeNull()
+  })
+  it("겹친 낱말과 같은 태그만 강조한다(대소문자 무시)", () => {
+    expect(isOverlapTag("Spring Boot", ["Java", "spring boot"])).toBe(true)
+    expect(isOverlapTag("Spring", ["Spring Boot"])).toBe(false)
+    expect(isOverlapTag("Java", [])).toBe(false)
   })
 })

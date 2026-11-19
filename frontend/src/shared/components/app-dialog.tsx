@@ -22,14 +22,10 @@ interface AppDialogProps {
   placement?: "center" | "top"
   /** 제목 위의 그림(보낸 메일 등) */
   icon?: ReactNode
-  /** 제목 바로 위의 작은 줄(카드 미리 보기의 경험 이름 등). 제목과 8px 띄운다 */
-  eyebrow?: ReactNode
-  /** 640px 창(카드 미리 보기처럼 읽을 것이 많은 창). 기본은 440px */
-  wide?: boolean
 }
 
 /** 확인을 받거나 짧게 고치는 창. 본문(children)은 세로로 20px씩 띄워 쌓는다. */
-export function AppDialog({ open, onOpenChange, title, titleId, subtitle, children, actions, placement = "center", icon, eyebrow, wide }: AppDialogProps) {
+export function AppDialog({ open, onOpenChange, title, titleId, subtitle, children, actions, placement = "center", icon }: AppDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -42,20 +38,14 @@ export function AppDialog({ open, onOpenChange, title, titleId, subtitle, childr
           )}
         >
         {/* 창은 뿌리 틀 밖(body)에 그려지므로 뿌리 틀의 글자 규칙(root-layout.tsx)을 다시 건다 */}
-        <Dialog.Popup
-          className={joinClasses(
-            "pointer-events-auto flex max-h-full w-full flex-col gap-5 overflow-y-auto rounded-panel border border-border-subtle bg-surface-raised p-6 text-base leading-body tracking-body break-keep text-pretty text-foreground shadow-floating outline-none",
-            wide ? "max-w-[640px]" : "max-w-[440px]"
-          )}
-        >
+        <Dialog.Popup className="pointer-events-auto flex max-h-full w-full max-w-[440px] flex-col gap-5 overflow-y-auto rounded-panel border border-border-subtle bg-surface-raised p-6 text-base leading-body tracking-body break-keep text-pretty text-foreground shadow-floating outline-none">
           {icon}
-          {subtitle || eyebrow ? (
+          {subtitle ? (
             <div className="flex flex-col gap-2">
-              {eyebrow}
               <Dialog.Title id={titleId} className="text-lg font-bold">
               {title}
             </Dialog.Title>
-              {subtitle && <p className="text-sm text-text-secondary">{subtitle}</p>}
+              <p className="text-sm text-text-secondary">{subtitle}</p>
             </div>
           ) : (
             <Dialog.Title id={titleId} className="text-lg font-bold">

@@ -104,6 +104,8 @@ function RequirementRow({ requirement, matches, onOpen }: RequirementRowProps) {
 export function RequirementsPanel({ requirements, matches }: { requirements: RequirementResult[]; matches: CardMatch[] }) {
   const byId = new Map(matches.map((m) => [m.cardId, m]))
   const [preview, setPreview] = useState<CardPreview | null>(null)
+  // 맞는 카드 목록에서 연 창은 그 카드의 matches[].overlap(공고 전체와 겹친 낱말)을 보인다
+  const allCards = matches.map((m) => ({ cardId: m.cardId, overlap: m.overlap }))
   return (
     <Panel aria-labelledby="mp-req" className="flex flex-col gap-4 p-6">
       <PanelHead id="mp-req" title="요건과 내 카드">
@@ -118,7 +120,7 @@ export function RequirementsPanel({ requirements, matches }: { requirements: Req
               <h3 className={subLabel}>{label}</h3>
               <ul className="flex flex-col gap-4">
                 {rows.map((r, i) => (
-                  <RequirementRow key={i} requirement={r} matches={byId} onOpen={(index) => setPreview({ requirement: r, index })} />
+                  <RequirementRow key={i} requirement={r} matches={byId} onOpen={(index) => setPreview({ label: r.text, overlapTitle: "이 요건과 겹친 태그", cards: r.cards, index })} />
                 ))}
               </ul>
             </div>
@@ -131,10 +133,15 @@ export function RequirementsPanel({ requirements, matches }: { requirements: Req
           <ul className="flex flex-col">
             {matches.map((m, i) => (
               <li key={m.cardId} className={joinClasses("border-t py-2.5", i > 0 ? "border-border-subtle" : "border-transparent")}>
-                <Link to={paths.card(m.cardId)} className="flex min-w-0 flex-col gap-1 text-foreground">
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  onClick={() => setPreview({ label: "맞는 카드", overlapTitle: "이 공고와 겹친 태그", cards: allCards, index: i })}
+                  className="flex w-full min-w-0 cursor-pointer flex-col gap-1 text-left text-foreground"
+                >
                   <span className="text-sm font-bold">{m.title}</span>
                   <span className="text-label-sm text-text-secondary">겹치는 것: {m.overlap.join(", ")}</span>
-                </Link>
+                </button>
               </li>
             ))}
           </ul>
