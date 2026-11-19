@@ -117,7 +117,10 @@ const SCENARIOS = [
   { name: "my-post-more-cards", path: "/my-posts/p-be1", width: 1280, steps: [["press", "카드 1장 더 보기"]] },
   { name: "dialog-card-preview", path: "/my-posts/p-be1", width: 1280, steps: [["click", "button[aria-haspopup=dialog]"]] },
   { name: "dialog-card-preview-next", path: "/my-posts/p-be1", width: 1280, steps: [["click", "button[aria-haspopup=dialog]"], ["press", "다음 카드"]] },
-  { name: "dialog-card-preview-mobile", path: "/my-posts/p-be1", width: 390, scale: 2, steps: [["click", "button[aria-haspopup=dialog]"]] },
+  // 휴대폰에서는 카드 줄이 첫 화면 밖이라 좌표로 누르는 click이 닿지 않는다. 버튼 글 전체(경험 이름, 제목, 겹친 태그)로 누른다
+  { name: "dialog-card-preview-mobile", path: "/my-posts/p-be1", width: 390, scale: 2, steps: [["press", "주문 조회 API 개선 프로젝트주문 조회 API 응답 시간 개선겹친 태그 · Java"]] },
+  // 맞는 카드 목록에서 연 창(겹친 낱말은 matches[].overlap)
+  { name: "dialog-card-preview-all", path: "/my-posts/p-be1", width: 1280, steps: [["press", "주문 조회 API 응답 시간 개선겹치는 것: Java, Spring Boot, Redis"]] },
   { name: "my-post-new", path: "/my-posts/new", width: 1280 },
   { name: "my-post-check", path: "/my-posts/new", width: 1280, steps: [["fill", "#pn-url", "https://careers.example.com/jobs/2001"], ["press", "읽어 오기"]] },
   // 예시 공고 be1의 주소를 넣으면 가짜 서버가 이미 내 공고에 있는 공고(p-be1)로 본다

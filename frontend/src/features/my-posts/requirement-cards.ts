@@ -16,3 +16,9 @@ export function stepCard(index: number, delta: -1 | 1, count: number): number | 
   const next = index + delta
   return next >= 0 && next < count ? next : null
 }
+
+/** 창의 태그 목록에서 강조할 태그: 겹친 낱말과 같은 것(대소문자는 가리지 않는다) */
+export function isOverlapTag(tag: string, overlap: string[]): boolean {
+  const lower = tag.toLowerCase()
+  return overlap.some((word) => word.toLowerCase() === lower)
+}
