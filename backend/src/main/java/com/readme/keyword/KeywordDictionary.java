@@ -98,7 +98,13 @@ public final class KeywordDictionary {
 	 * 찾을 때 쓴다. 부분 문자열로 찾으면 Java 가 JavaScript 에 걸린다.
 	 */
 	public static boolean mentions(String text, String word) {
-		return pattern(word).matcher(text).find();
+		return indexOf(text, word) >= 0;
+	}
+
+	/** mentions 와 같은 규칙으로 찾은 첫 자리. 없으면 -1. */
+	public static int indexOf(String text, String word) {
+		Matcher matcher = pattern(word).matcher(text);
+		return matcher.find() ? matcher.start() : -1;
 	}
 
 	/** 사전에 있는 표기(대표 표기나 다른 표기)인지. 대소문자는 가리지 않는다. */
@@ -126,9 +132,30 @@ public final class KeywordDictionary {
 	 * 긴 표기부터 찾고 찾은 자리를 공백으로 가려서 'Spring Boot' 안의 'Spring', '자바스크립트' 안의 '자바'를 따로 세지 않는다.
 	 */
 	public Map<String, Integer> find(String text) {
+		Map<String, Integer> sorted = new LinkedHashMap<>();
+		scan(text).entrySet()
+			.stream()
+			.sorted(Comparator.comparingInt((Map.Entry<String, Found> entry) -> -entry.getValue().count())
+				.thenComparing(Map.Entry::getKey))
+			.forEach((entry) -> sorted.put(entry.getKey(), entry.getValue().count()));
+		return sorted;
+	}
+
+	/** find 가 찾는 사전 낱말(대표 표기)과 그것이 글에 처음 나온 자리(char 위치). 순서는 없다. */
+	public Map<String, Integer> firstPositions(String text) {
+		Map<String, Integer> positions = new HashMap<>();
+		scan(text).forEach((canonical, found) -> positions.put(canonical, found.first()));
+		return positions;
+	}
+
+	/** 한 대표 표기를 찾은 횟수와 처음 찾은 자리. */
+	private record Found(int count, int first) {
+	}
+
+	private Map<String, Found> scan(String text) {
 		StringBuilder rest = new StringBuilder(text);
 		StringBuilder folded = fold(text);
-		Map<String, Integer> counts = new HashMap<>();
+		Map<String, Found> counts = new HashMap<>();
 		for (Form form : this.forms) {
 			// 정규식은 접은 글에 그 표기가 있는 자리에서만 맞춰 본다. 모든 자리에서 맞춰 보면 표기 수(약 600)만큼 글을 읽어 1MB 에 15초 걸렸다
 			Matcher matcher = form.pattern().matcher(rest).useTransparentBounds(true);
@@ -154,15 +181,11 @@ public final class KeywordDictionary {
 				}
 			}
 			if (size > 0) {
-				counts.merge(form.canonical(), size / 2, Integer::sum);
+				counts.merge(form.canonical(), new Found(size / 2, spans[0]),
+						(a, b) -> new Found(a.count() + b.count(), Math.min(a.first(), b.first())));
 			}
 		}
-		Map<String, Integer> sorted = new LinkedHashMap<>();
-		counts.entrySet()
-			.stream()
-			.sorted(Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
-			.forEach((entry) -> sorted.put(entry.getKey(), entry.getValue()));
-		return sorted;
+		return counts;
 	}
 
 	/**

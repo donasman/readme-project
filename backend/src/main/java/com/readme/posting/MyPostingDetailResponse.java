@@ -14,9 +14,9 @@ import com.readme.posting.ApplicationStatus.Stage;
  *
  * @param analysis     공고 분석(설계 4.7). 아직 없으면 null. 프런트의 PostingAnalysis 모양이다
  * @param memo        나만 보는 메모. 없으면 null
- * @param matches     요건이나 키워드를 하나라도 맞춘 내 카드. 잘 맞는 것이 앞이다(점수는 보이지 않는다)
+ * @param matches     요건이나 키워드를 하나라도 맞춘 내 카드(경험 이름, 제목, 겹친 낱말). 잘 맞는 것이 앞이다(점수는 보이지 않는다)
  * @param unmatched   카드로 답하지 못한 필수·우대 요건(프로필에 있는 요건은 빠진다)
- * @param requirements 필수·우대 요건마다의 결과(카드 있음, 프로필에 있음, 카드 없음, 판단 못 함)
+ * @param requirements 필수·우대 요건마다의 결과(카드 있음, 프로필에 있음, 카드 없음, 판단 못 함)와 맞춘 카드마다 겹친 낱말
  * @param groupStates groups 와 같은 그룹들에 그 그룹에서의 내 관심, 댓글 수, 내 공개 범위가 붙는다
  */
 record MyPostingDetailResponse(long id, String company, String title, DeadlineResponse deadline, Decision decision,
