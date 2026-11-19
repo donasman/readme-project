@@ -132,10 +132,12 @@ class MyPostingQueries {
 			.list()
 			.stream()
 			.collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
-		return this.jdbc.sql("select id, title from experience_cards where user_id = :userId order by created_at, id")
+		return this.jdbc
+			.sql("select id, title, coalesce(experience, '') as experience from experience_cards"
+					+ " where user_id = :userId order by created_at, id")
 			.param("userId", userId)
 			.query((rs, rowNum) -> new CardMatching.MatchCard(rs.getLong("id"), rs.getString("title"),
-					tags.getOrDefault(rs.getLong("id"), List.of())))
+					rs.getString("experience"), tags.getOrDefault(rs.getLong("id"), List.of())))
 			.list();
 	}
 

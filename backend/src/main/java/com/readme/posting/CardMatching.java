@@ -2,6 +2,7 @@ package com.readme.posting;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -36,16 +37,25 @@ final class CardMatching {
 	private CardMatching() {
 	}
 
-	/** 맞출 카드. tags 는 저장된 태그(대표 표기)다. */
-	record MatchCard(long id, String title, List<String> tags) {
+	/** 맞출 카드. experience 는 경험 이름(없으면 빈 글자), tags 는 저장된 태그(대표 표기)다. */
+	record MatchCard(long id, String title, String experience, List<String> tags) {
 	}
 
 	/**
 	 * 맞는 카드 하나. 프런트의 CardMatch 모양이다.
 	 *
-	 * @param overlap 이 카드가 맞춘 요건의 낱말과 공고 키워드 가운데 카드 태그에 있는 것(처음 나온 순)
+	 * @param experience 경험 이름. 없으면 빈 글자(카드 응답과 같다)
+	 * @param overlap    이 카드가 맞춘 요건의 낱말과 공고 키워드 가운데 카드 태그에 있는 것(처음 나온 순)
 	 */
-	record CardMatch(long cardId, String title, List<String> overlap) {
+	record CardMatch(long cardId, String title, String experience, List<String> overlap) {
+	}
+
+	/**
+	 * 한 요건을 맞춘 카드 하나.
+	 *
+	 * @param overlap 이 요건의 낱말 가운데 그 카드의 태그(포함 관계를 더한 것)에 있는 것. 요건 글에 나온 순이다
+	 */
+	record RequirementCard(long cardId, List<String> overlap) {
 	}
 
 	/**
@@ -62,10 +72,11 @@ final class CardMatching {
 	 *
 	 * @param kind         must(필수) 또는 nice(우대)
 	 * @param status       matched, profile, unmatched, unknown(클래스 설명)
-	 * @param cardIds      맞춘 내 카드. 모두 matches 에도 있다. matched 일 때만 있다
+	 * @param cards        맞춘 내 카드와 겹친 낱말. 먼저 만든 카드가 앞이다. 모두 matches 에도 있다. matched 일 때만 있다
 	 * @param profileItems 요건 글에 있는 내 프로필 값(예: 정보처리기사). profile 이나 unmatched 일 때 있을 수 있다
 	 */
-	record RequirementResult(String kind, String text, String status, List<Long> cardIds, List<String> profileItems) {
+	record RequirementResult(String kind, String text, String status, List<RequirementCard> cards,
+			List<String> profileItems) {
 	}
 
 	/**
@@ -120,7 +131,7 @@ final class CardMatching {
 				}
 			}
 			if (score > 0) {
-				matches.add(new CardMatch(card.id(), card.title(), List.copyOf(overlap.values())));
+				matches.add(new CardMatch(card.id(), card.title(), card.experience(), List.copyOf(overlap.values())));
 				scores.add(score);
 			}
 		}
@@ -129,7 +140,7 @@ final class CardMatching {
 			order.add(i);
 		}
 		order.sort(Comparator.comparingInt((Integer i) -> -scores.get(i))); // 같은 점수는 받은 순서(안정 정렬)
-		List<RequirementResult> results = requirements.stream().map((r) -> result(r, profile)).toList();
+		List<RequirementResult> results = requirements.stream().map((r) -> result(r, lowered, profile)).toList();
 		List<String> unmatched = results.stream()
 			.filter((r) -> r.status().equals("unmatched"))
 			.map(RequirementResult::text)
@@ -137,9 +148,15 @@ final class CardMatching {
 		return new Result(order.stream().map(matches::get).toList(), unmatched, results);
 	}
 
-	private static RequirementResult result(Requirement requirement, ProfileFacts profile) {
+	private static RequirementResult result(Requirement requirement, Map<Long, Set<String>> lowered,
+			ProfileFacts profile) {
 		if (!requirement.cards().isEmpty()) {
-			return new RequirementResult(requirement.kind(), requirement.text(), "matched", requirement.cards(), List.of());
+			List<RequirementCard> cards = requirement.cards()
+				.stream()
+				.map((id) -> new RequirementCard(id,
+						requirement.terms().stream().filter((t) -> lowered.get(id).contains(lower(t))).toList()))
+				.toList();
+			return new RequirementResult(requirement.kind(), requirement.text(), "matched", cards, List.of());
 		}
 		List<String> items = profileItems(requirement.text(), profile);
 		String status = !requirement.terms().isEmpty() ? "unmatched" : items.isEmpty() ? "unknown" : "profile";
@@ -196,22 +213,33 @@ final class CardMatching {
 
 	/**
 	 * 글의 낱말(jobfit 의 terms_of): 사전의 대표 표기, 그리고 사전에 없는 카드 태그(예: '배치')도 글에 그대로 있으면 낱말로 친다.
-	 * 사전 낱말은 경계를 지켜 이미 찾았으므로 다시 찾지 않는다. 직무 이름과 한 글자 태그는 뺀다.
+	 * 사전 낱말은 경계를 지켜 이미 찾았으므로 다시 찾지 않는다. 직무 이름과 한 글자 태그는 뺀다. 글에 처음 나온 순이다(공고 설계 4.8의
+	 * 요건마다 겹친 낱말). jobfit 은 사전 낱말을 많이 나온 순으로 둔다.
 	 */
 	static List<String> termsOf(String text, KeywordDictionary dictionary, List<String> extraTags) {
-		List<String> found = new ArrayList<>(
-				dictionary.find(text).keySet().stream().filter((t) -> !ROLE_WORDS.contains(t)).toList());
-		Set<String> seen = new HashSet<>(found.stream().map(CardMatching::lower).toList());
+		Map<String, Integer> found = new HashMap<>();
+		dictionary.firstPositions(text).forEach((term, at) -> {
+			if (!ROLE_WORDS.contains(term)) {
+				found.put(term, at);
+			}
+		});
+		Set<String> seen = new HashSet<>(found.keySet().stream().map(CardMatching::lower).toList());
 		for (String tag : extraTags) {
 			if (tag.length() < 2 || dictionary.contains(tag) || ROLE_WORDS.contains(tag) || seen.contains(lower(tag))) {
 				continue;
 			}
-			if (KeywordDictionary.mentions(text, tag)) {
-				found.add(tag);
+			int at = KeywordDictionary.indexOf(text, tag);
+			if (at >= 0) {
+				found.put(tag, at);
 				seen.add(lower(tag));
 			}
 		}
-		return found;
+		// 같은 자리면 글자 순(사전 낱말끼리는 가린 자리라 겹치지 않는다)
+		return found.entrySet()
+			.stream()
+			.sorted(Map.Entry.<String, Integer>comparingByValue().thenComparing(Map.Entry.comparingByKey()))
+			.map(Map.Entry::getKey)
+			.toList();
 	}
 
 	private static String lower(String text) {

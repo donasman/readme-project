@@ -42,14 +42,15 @@ class MyPostingMatchTests {
 			.update();
 		card(me, "알림 배치", "Docker");
 		long api = card(me, "주문 API 개선", "스프링부트", "Redis");
+		this.jdbc.sql("update experience_cards set experience = '주문 서비스' where id = :id").param("id", api).update();
 		card(other, "남의 카드", "Java", "Kubernetes");
 
 		assertThat(this.mvc.get().uri("/api/me/postings/{id}", posting).with(loginAs(me))).hasStatusOk()
 			.bodyJson()
 			.isLenientlyEqualTo("""
 					{ "posting": {
-					    "matches": [ { "cardId": %d, "title": "주문 API 개선", "overlap": ["Java", "Redis"] },
-					                 { "title": "알림 배치", "overlap": ["Docker"] } ],
+					    "matches": [ { "cardId": %d, "title": "주문 API 개선", "experience": "주문 서비스", "overlap": ["Java", "Redis"] },
+					                 { "title": "알림 배치", "experience": "", "overlap": ["Docker"] } ],
 					    "unmatched": ["Kubernetes 운영"] } }
 					""".formatted(api));
 	}
@@ -82,10 +83,11 @@ class MyPostingMatchTests {
 					{ "posting": {
 					    "unmatched": ["Kubernetes 운영"],
 					    "requirements": [
-					      { "kind": "must", "text": "Java 웹 개발", "status": "matched", "cardIds": [%d], "profileItems": [] },
-					      { "kind": "must", "text": "정보처리기사 자격", "status": "profile", "cardIds": [], "profileItems": ["정보처리기사"] },
-					      { "kind": "must", "text": "Kubernetes 운영", "status": "unmatched", "cardIds": [], "profileItems": [] },
-					      { "kind": "nice", "text": "OPIc IM 이상", "status": "unknown", "cardIds": [], "profileItems": [] } ] } }
+					      { "kind": "must", "text": "Java 웹 개발", "status": "matched",
+					        "cards": [ { "cardId": %d, "overlap": ["Java"] } ], "profileItems": [] },
+					      { "kind": "must", "text": "정보처리기사 자격", "status": "profile", "cards": [], "profileItems": ["정보처리기사"] },
+					      { "kind": "must", "text": "Kubernetes 운영", "status": "unmatched", "cards": [], "profileItems": [] },
+					      { "kind": "nice", "text": "OPIc IM 이상", "status": "unknown", "cards": [], "profileItems": [] } ] } }
 					""".formatted(java));
 	}
 
