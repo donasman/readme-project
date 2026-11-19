@@ -137,7 +137,7 @@ class TranscriptTests {
 	@Test
 	void pdfOverTenMegabytesAndPhotoOverFiveAreTooLarge() {
 		assertError(read(this.me, "성적.pdf", padded("%PDF-1.7\n", 10 * 1024 * 1024 + 1)), HttpStatus.CONTENT_TOO_LARGE,
-				"TRANSCRIPT_TOO_LARGE");
+				"TRANSCRIPT_TOO_LARGE", TranscriptErrorCode.TRANSCRIPT_TOO_LARGE.message());
 		assertError(read(this.me, "성적.png", padded(new String(PNG, StandardCharsets.ISO_8859_1), 5 * 1024 * 1024 + 1)),
 				HttpStatus.CONTENT_TOO_LARGE, "TRANSCRIPT_TOO_LARGE");
 		assertThat(this.claude.calls()).isZero();
@@ -149,10 +149,8 @@ class TranscriptTests {
 		String[] pages = new String[TranscriptReader.MAX_CHARS / 80 + 1];
 		Arrays.fill(pages, "Programming 3 A+ ".repeat(5));
 
-		assertError(read(this.me, "성적.pdf", pdf(pages)), HttpStatus.CONTENT_TOO_LARGE, "TRANSCRIPT_TOO_LARGE");
-		assertThat(read(this.me, "성적.pdf", pdf(pages))).bodyJson()
-			.extractingPath("$.message")
-			.isEqualTo(TranscriptReader.TOO_LONG);
+		assertError(read(this.me, "성적.pdf", pdf(pages)), HttpStatus.CONTENT_TOO_LARGE, "TRANSCRIPT_TOO_LARGE",
+				TranscriptReader.TOO_LONG);
 		assertThat(this.claude.calls()).isZero();
 	}
 
@@ -200,6 +198,14 @@ class TranscriptTests {
 
 	private static void assertError(MockMvcTester.MockMultipartMvcRequestBuilder request, HttpStatus status, String code) {
 		assertThat(request).hasStatus(status).bodyJson().extractingPath("$.code").isEqualTo(code);
+	}
+
+	/** 413 처럼 같은 코드에 사정이 여럿이면 메시지까지 본다. 요청은 한 번만 보낸다. */
+	private static void assertError(MockMvcTester.MockMultipartMvcRequestBuilder request, HttpStatus status, String code,
+			String message) {
+		var body = assertThat(request).hasStatus(status).bodyJson();
+		body.extractingPath("$.code").isEqualTo(code);
+		body.extractingPath("$.message").isEqualTo(message);
 	}
 
 	/** head 로 시작하고 size 바이트가 되게 0 을 채운 파일. */
