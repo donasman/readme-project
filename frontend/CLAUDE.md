@@ -53,7 +53,7 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 - 새 화면: `features/<기능>/pages/`에 만들고 그 기능의 `routes.tsx`에 `lazy`로 등록한다. `app/router.tsx`는 기능의 라우트 묶음을 조립만 한다.
 - 서버와 주고받는 것: 그 층의 `api.ts` 한 곳에 둔다. 응답 모양은 `types.ts`에 둔다. 화면과 훅은 `api.ts`를 거친다.
   - 서버는 `shared/lib/api.ts`의 `request`로 부른다(쿠키, CSRF 헤더, 오류를 `ApiError`로). 가짜 서버가 있는 함수는 맨 앞에서 `if (mockServer) return db.…`로 고른다.
-  - 칸 아래에 알릴 서버 오류는 `api.ts`가 `isApiError(error, "코드")`로 골라 결과 값으로 돌려주고, 나머지는 던진다. 던진 오류는 loader에서 나면 오류 화면(`app/route-error.tsx`)이, 버튼에서 나면 화면 아래 알림(`app/action-error.tsx`)이 보인다. 버튼의 처리기에서 오류를 삼키지 않는다(`catch`로 막으면 알림이 뜨지 않는다). 서버의 id(숫자)는 `request`가 문자열로 읽는다(이름이 `id`이거나 `Id`로 끝나는 칸, `Ids`로 끝나는 목록).
+  - 칸 아래에 알릴 서버 오류는 `api.ts`가 `isApiError(error, "코드")`로 골라 결과 값으로 돌려주고, 나머지는 던진다. 던진 오류는 loader에서 나면 오류 화면(`app/route-error.tsx`)이, 버튼에서 나면 화면 아래 알림(`app/action-error.tsx`)이 보인다. 버튼의 처리기에서 오류를 삼키지 않는다(`catch`로 막으면 알림이 뜨지 않는다). 서버의 id(숫자)는 `request`가 문자열로 읽는다(이름이 `id`이거나 `Id`로 끝나는 칸).
 - 화면과 무관한 규칙(필터, 정렬, 날짜 계산): 순수 함수 파일에 둔다(`list-rules.ts`, `deadline.ts`처럼). 컴포넌트 안에 두지 않는다.
 - 주소: `shared/lib/paths.ts`의 함수로 만든다. 문자열로 직접 만들지 않는다.
 - 아이콘: `shared/icons.ts`에서만 lucide를 불러온다.
