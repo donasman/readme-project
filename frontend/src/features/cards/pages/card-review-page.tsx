@@ -2,6 +2,9 @@ import { useState } from "react"
 import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { FactList, FlaggedText } from "@/domain/card/card-bits"
+import { isOptionalPart, STORY_PARTS } from "@/domain/card/card-rules"
+import type { CardDetail } from "@/domain/card/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Chip } from "@/shared/components/chip"
 import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
@@ -13,10 +16,9 @@ import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
-import { groupByExperience, isOptionalPart, orgAndRole, sceneNumber, startFrom, STORY_PARTS } from "../card-rules"
+import { groupByExperience, orgAndRole, sceneNumber, startFrom } from "../card-rules"
 import { dropFlaggedStory, markUsedNumbers, storyFlaggedValues } from "../card-text"
-import { CardsSubpage, FactList, FlaggedText, ProgressBar, StatBox } from "../components/card-bits"
-import type { CardDetail } from "../types"
+import { CardsSubpage, ProgressBar, StatBox } from "../components/card-bits"
 
 /** 확인을 기다리는 카드를 읽는다. 같은 경험의 장면은 이어서 본다. ?card=id 가 있으면 그 카드부터 본다. */
 export async function cardReviewLoader({ request }: LoaderFunctionArgs) {

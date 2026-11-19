@@ -4,6 +4,9 @@ import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-route
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { getCard } from "@/domain/card/api"
+import { isOptionalPart, STORY_PARTS } from "@/domain/card/card-rules"
+import type { QuestionType } from "@/domain/card/types"
 import { sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { FieldError, FieldHint, FormField as Field, noteId } from "@/shared/components/form-field"
 import { IconNote } from "@/shared/components/notice"
@@ -14,11 +17,11 @@ import { LockIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { cn, docTitle, joinClasses } from "@/shared/lib/utils"
 
-import { createCard, getCard, getCards, suggestKeywords, updateCard } from "../api"
-import { experienceNames, isOptionalPart, STORY_PARTS } from "../card-rules"
+import { createCard, getCards, suggestKeywords, updateCard } from "../api"
+import { experienceNames } from "../card-rules"
 import { storyFlaggedValues, SUMMARY_LIMIT } from "../card-text"
 import { CardsSubpage } from "../components/card-bits"
-import { QUESTION_TYPES, type CardInput, type KeywordSuggestion, type QuestionType } from "../types"
+import { QUESTION_TYPES, type CardInput, type KeywordSuggestion } from "../types"
 
 // 칸의 maxLength는 서버가 받는 길이다(경험카드 문서 4.3). 넘으면 서버가 400으로 거절한다
 

@@ -1,7 +1,8 @@
 // 백엔드 연결 전 경험카드 예시. 목록 6장은 "리드미 시안 3종"의 "A · 카드 목록", 첫 카드의 STAR·근거·원문은
 // 6차 "카드 상세"와 "카드 확인"의 값을 그대로 옮겼다. 회사, 프로젝트, 경험은 모두 지어낸 예시다.
 // 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
-import type { CardDetail, CardSource, Star } from "@/features/cards/types"
+import type { CardDetail, Star } from "@/domain/card/types"
+import type { CardSource } from "@/features/cards/types"
 
 const EMPTY_STAR: Star = { situation: "", task: "", action: "", result: "", obstacle: "", learning: "" }
 

@@ -2,8 +2,8 @@
 // 내 지원 상태와 메모는 내 공고 행(user-postings.ts)에 있고, 그룹 공고와 메일 확인함도 같은 행을 읽고 쓴다.
 // 공고 본체(회사, 공고명, 마감, 내용)는 그룹 공고(db.ts)에서 그때그때 읽는다. 그룹에서 마감일을 넣으면 여기도 바뀐다.
 // 내 공고 조회 API는 아직 설계에 없다(화면 API 대응 3.3의 10번). 이 폴더는 shared와 타입만 불러온다.
+import type { ExperienceCard } from "@/domain/card/types"
 import type { PostingAnalysis, PostUpload } from "@/domain/posting/types"
-import type { ExperienceCard } from "@/features/cards/types"
 import type { GroupPostDetail } from "@/features/group-posts/types"
 import type { AddPostingResult, CardMatch, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup, RequirementResult, Schedule } from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"

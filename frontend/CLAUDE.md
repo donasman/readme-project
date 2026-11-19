@@ -16,12 +16,12 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 
 - `app/`: 라우터, 틀(헤더), 오류 화면, 시작 설정. 기능은 `features/<기능>/index.ts`로만 불러온다.
 - `features/<기능>/`: 화면 단위 묶음. 다른 기능과 `app/`을 불러오지 않는다. 기능 안에서는 상대 경로로 불러온다.
-- `domain/<이름>/`: 두 기능 이상이 쓰는 개념(`session`, `group`, `posting`, `profile`). `features/`와 `app/`을 불러오지 않는다.
+- `domain/<이름>/`: 두 기능 이상이 쓰는 개념(`session`, `group`, `posting`, `profile`, `card`). `features/`와 `app/`을 불러오지 않는다.
 - `shared/`: 도메인을 모르는 코드. `domain/`, `features/`, `app/`을 불러오지 않는다.
 - `components/ui`(shadcn), `components/arc`(dsui): 받아 온 부품이다. 폴더를 옮기지 않는다. `arc`는 고치지 않는다.
 - `mocks/`: 가짜 서버. 각 층의 `api.ts`만 부른다. `npm run dev`에서는 모든 `api.ts`가, 진짜 서버 모드에서는 서버를 아직 붙이지 않은 `api.ts`가 부른다. `mocks/`는 `shared/`와 타입(`import type`)만 불러온다.
 - 다른 층이나 다른 묶음은 `@/` 별칭으로 불러온다. 묶음 밖으로 올라가는 상대 경로(`../../shared/…`)는 쓰지 않는다.
-- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session → posting → profile)도 거기 적는다.
+- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session → posting → profile → card)도 거기 적는다.
 
 ## 쓰기 전에
 

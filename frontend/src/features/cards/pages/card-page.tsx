@@ -2,6 +2,9 @@ import { useState } from "react"
 import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { getCard } from "@/domain/card/api"
+import { CardStatusBadge, FactList, FlaggedText } from "@/domain/card/card-bits"
+import { isOptionalPart, STORY_PARTS } from "@/domain/card/card-rules"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { ArrowLink } from "@/shared/components/arrow-link"
 import { BusyButton } from "@/shared/components/busy-button"
@@ -13,9 +16,9 @@ import { CheckIcon, FileTextIcon, LockIcon, PencilIcon, Trash2Icon } from "@/sha
 import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
-import { deleteCard, getCard } from "../api"
-import { isOptionalPart, orgAndRole, STORY_PARTS } from "../card-rules"
-import { CardStatusBadge, CardsSubpage, FactList, FlaggedText } from "../components/card-bits"
+import { deleteCard } from "../api"
+import { orgAndRole } from "../card-rules"
+import { CardsSubpage } from "../components/card-bits"
 
 export function cardLoader({ params }: LoaderFunctionArgs) {
   return getCard(params.cardId ?? "")
