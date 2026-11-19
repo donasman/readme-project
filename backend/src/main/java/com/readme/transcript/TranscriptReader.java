@@ -29,7 +29,7 @@ import com.readme.transcript.TranscriptResponse.Course;
 @Component
 class TranscriptReader {
 
-	/** 보내는 글의 상한. 성적증명서는 몇 쪽이고 몇천 자다. 넘으면 성적증명서로 보지 않고 사용액도 아낀다 */
+	/** 보내는 글의 상한. 성적증명서는 몇 쪽이고 몇천 자다. 넘으면 성적증명서로 보지 않고(NO_COURSES) 사용액도 아낀다 */
 	static final int MAX_CHARS = 30_000;
 
 	private static final String PROMPT = prompt();
@@ -41,6 +41,12 @@ class TranscriptReader {
 			"F", "P", "NP", "S", "U");
 
 	private static final Pattern NUMBER = Pattern.compile("\\d+");
+
+	/** 적힌 학년으로 믿는 범위의 끝(6년제 학과까지). 넘으면 학년을 읽지 못한 것으로 본다 */
+	private static final int MAX_GRADE_YEAR = 6;
+
+	/** 이보다 큰 학점은 확인 필요다 */
+	private static final BigDecimal MAX_CREDIT = BigDecimal.TEN;
 
 	private static final Pattern DECIMAL = Pattern.compile("\\d+(\\.\\d+)?");
 
@@ -64,12 +70,13 @@ class TranscriptReader {
 	}
 
 	/**
-	 * 한도는 부르는 쪽이 먼저 본다. 글이 MAX_CHARS 를 넘으면 TRANSCRIPT_TOO_LARGE, Claude 가 답을 만들지 못하면 TRANSCRIPT_UNREADABLE,
-	 * 과목 줄이 없으면 TRANSCRIPT_NO_COURSES 다. Claude 를 부를 수 없으면 503 LLM_UNAVAILABLE 그대로다.
+	 * 한도는 부르는 쪽이 먼저 본다. Claude 가 답을 만들지 못하면 TRANSCRIPT_UNREADABLE, 과목 줄이 없거나 글이 MAX_CHARS 를 넘으면
+	 * TRANSCRIPT_NO_COURSES 다. Claude 를 부를 수 없으면 503 LLM_UNAVAILABLE 그대로다.
 	 */
 	TranscriptResponse read(String text, long userId) {
 		if (text.codePointCount(0, text.length()) > MAX_CHARS) {
-			throw new ApiException(TranscriptErrorCode.TRANSCRIPT_TOO_LARGE);
+			// 413 이면 화면이 "파일이 너무 큽니다"라고 한다. 파일은 작아도 글이 이만큼 길면 성적증명서가 아니다
+			throw new ApiException(TranscriptErrorCode.TRANSCRIPT_NO_COURSES);
 		}
 		TranscriptAnswer answer;
 		try {
@@ -91,23 +98,33 @@ class TranscriptReader {
 
 	/** LLM 의 답을 응답 꼴로. 과목명이 빈 줄은 뺀다. */
 	static TranscriptResponse normalize(TranscriptAnswer answer) {
-		List<TranscriptAnswer.Row> rows = (answer.courses() != null) ? answer.courses() : List.of();
+		List<TranscriptAnswer.Row> rows = ((answer.courses() != null) ? answer.courses() : List.<TranscriptAnswer.Row>of())
+			.stream()
+			.filter((row) -> !text(row.name()).isEmpty())
+			.toList();
+		List<Integer> years = new ArrayList<>();
+		List<Integer> calendarYears = new ArrayList<>();
+		for (TranscriptAnswer.Row row : rows) {
+			Integer year = number(row.year());
+			Integer calendarYear = calendarYear(row.calendarYear());
+			if (year != null && year >= 1900) { // LLM 이 학년 칸에 학년도를 넣었다
+				calendarYear = (calendarYear != null) ? calendarYear : year;
+				year = null;
+			}
+			years.add((year != null && year >= 1 && year <= MAX_GRADE_YEAR) ? year : null);
+			calendarYears.add(calendarYear);
+		}
 		// 학년 없이 연도로만 적힌 성적증명서는 가장 이른 연도를 1학년으로 센다(문서 4절의 가정. 성적증명서는 연도 순이라 처음 나온 연도다)
-		Integer firstYear = rows.stream().map((row) -> number(row.calendarYear())).filter((y) -> y != null)
-			.min(Integer::compare).orElse(null);
+		Integer firstYear = calendarYears.stream().filter((y) -> y != null).min(Integer::compare).orElse(null);
 		List<Course> courses = new ArrayList<>();
 		int previousYear = 1;
-		for (TranscriptAnswer.Row row : rows) {
-			String name = text(row.name());
-			if (name.isEmpty()) {
-				continue;
+		for (int i = 0; i < rows.size(); i++) {
+			TranscriptAnswer.Row row = rows.get(i);
+			Integer year = years.get(i);
+			if (year == null && calendarYears.get(i) != null) {
+				year = calendarYears.get(i) - firstYear + 1;
 			}
-			Integer year = number(row.year());
-			Integer calendarYear = number(row.calendarYear());
-			if ((year == null || year < 1) && calendarYear != null) {
-				year = calendarYear - firstYear + 1;
-			}
-			if (year == null || year < 1) {
+			if (year == null) {
 				year = previousYear; // 학년도 연도도 없는 줄은 앞 줄의 학년이다(같은 학기 머리 아래에 있다)
 			}
 			previousYear = year;
@@ -115,13 +132,14 @@ class TranscriptReader {
 			BigDecimal credit = credit(row.credit());
 			String grade = grade(row.grade());
 			List<String> unsure = new ArrayList<>();
-			if (credit == null || said.contains("credit")) {
+			// 10학점이 넘는 과목은 없다. 칸이 밀려 점수(95)가 학점으로 온 것일 수 있다
+			if (credit == null || credit.compareTo(MAX_CREDIT) > 0 || said.contains("credit")) {
 				unsure.add("credit");
 			}
 			if (!GRADES.contains(grade) || said.contains("grade")) {
 				unsure.add("grade");
 			}
-			courses.add(new Course(year, term(row.term()), category(row.category()), name,
+			courses.add(new Course(year, term(row.term()), category(row.category()), text(row.name()),
 					(credit != null) ? credit : BigDecimal.ZERO, grade, retake(row.retake()), unsure));
 		}
 		return new TranscriptResponse(orNull(answer.school()), orNull(answer.department()), scale(answer.scale()),
@@ -183,6 +201,18 @@ class TranscriptReader {
 		}
 		double number = scale.doubleValue();
 		return (number == 4.5 || number == 4.3) ? number : null;
+	}
+
+	/** 학년도·연도. 두 자리(19)는 2000년대로 본다. 1900 이전과 세 자리는 null. */
+	private static Integer calendarYear(String value) {
+		Integer year = number(value);
+		if (year == null) {
+			return null;
+		}
+		if (year < 100) {
+			return 2000 + year;
+		}
+		return (year >= 1900) ? year : null;
 	}
 
 	private static String retake(String value) {

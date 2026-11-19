@@ -104,6 +104,18 @@ class TranscriptTests {
 	}
 
 	@Test
+	void residentAndPhoneNumbersAreMaskedBeforeClaudeButStudentAndCourseNumbersAreNot() throws IOException {
+		this.claude.willAnswer(new TranscriptAnswer("", "", "", List.of(
+				new Row("1", "", "1", "전공필수", "프로그래밍기초", "3", "A+", "", List.of()))));
+
+		assertThat(read(this.me, "성적증명서.pdf", pdf("Student No. 2019123456 RRN 990101-1234567 Tel 010-1234-5678",
+				"2019 Spring CSE2010-01 Programming 3 A+ GEN1001 Writing 2 B0 issued 2026.11.19"))).hasStatusOk();
+		assertThat(this.claude.lastText()).contains("[주민번호]", "[전화번호]", "2019123456", "CSE2010-01", "GEN1001",
+				"2019 Spring", "2026.11.19")
+			.doesNotContain("990101-1234567", "010-1234-5678");
+	}
+
+	@Test
 	void transcriptWithoutCoursesIs422() throws IOException {
 		this.claude.willAnswer(new TranscriptAnswer("예시대학교", "", "", List.of()));
 
@@ -132,11 +144,12 @@ class TranscriptTests {
 	}
 
 	@Test
-	void transcriptTextOverTheLimitIsTooLarge() throws IOException {
+	void textTooLongForATranscriptHasNoCourses() throws IOException {
+		// 파일은 작으니 413(파일이 너무 큽니다)이 아니라 성적증명서가 아니라는 422 다
 		String[] pages = new String[TranscriptReader.MAX_CHARS / 80 + 1];
 		Arrays.fill(pages, "Programming 3 A+ ".repeat(5));
 
-		assertError(read(this.me, "성적.pdf", pdf(pages)), HttpStatus.CONTENT_TOO_LARGE, "TRANSCRIPT_TOO_LARGE");
+		assertError(read(this.me, "성적.pdf", pdf(pages)), HttpStatus.UNPROCESSABLE_CONTENT, "TRANSCRIPT_NO_COURSES");
 		assertThat(this.claude.calls()).isZero();
 	}
 

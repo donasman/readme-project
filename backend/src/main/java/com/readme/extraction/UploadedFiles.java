@@ -81,6 +81,7 @@ public class UploadedFiles {
 	/**
 	 * 성적증명서(학점 계산기 GC3)의 다듬은 글. PDF 와 Claude 가 받는 사진(JPG, PNG, GIF, WebP)만 받는다(SOURCE_UNSUPPORTED_TYPE).
 	 * PDF 는 maxPdfBytes, 사진은 5MB 까지다(SOURCE_TOO_LARGE). 형식은 파일을 다 읽기 전에 앞부분으로 본다. 그 밖은 documentText 와 같다.
+	 * 글의 주민번호·전화번호 꼴은 자료 올리기처럼 가린다(PersonalNumbers). 글은 다시 LLM 으로 가기 때문이다.
 	 */
 	public String pdfOrImageText(MultipartFile file, long maxPdfBytes, long userId) throws IOException {
 		byte[] head;
@@ -94,7 +95,7 @@ public class UploadedFiles {
 		if (file.getSize() > (LlmDocument.PDF.equals(mediaType) ? maxPdfBytes : ScannedFiles.MAX_IMAGE_BYTES)) {
 			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
 		}
-		return read(file, userId).text();
+		return PersonalNumbers.mask(read(file, userId).text());
 	}
 
 }

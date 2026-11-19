@@ -66,6 +66,15 @@ class TranscriptReaderTests {
 	}
 
 	@Test
+	void calendarYearsInTheGradeYearAndTwoDigitYearsAreCountedAsYears() {
+		// 학년 칸의 2019 는 연도다. 두 자리 19 는 2019 다. 1~6 밖의 학년(0, 9)은 없는 것으로 보고 앞 줄의 학년이다
+		TranscriptResponse response = normalize(row("2019", "", "1"), row("", "19", "2"), row("", "2020", "1"),
+				row("9", "", "2"), row("0", "", "1"), row("2학년", "2019", "1"));
+
+		assertThat(response.courses()).extracting(Course::year).containsExactly(1, 1, 2, 2, 2, 2);
+	}
+
+	@Test
 	void retakeIsBeforeAfterOrNull() {
 		TranscriptResponse response = normalize(retake("before"), retake("AFTER"), retake(""), retake("재수강"), retake(null));
 
@@ -79,14 +88,18 @@ class TranscriptReaderTests {
 				new Row("1", "", "1", "전선", "운영체제", "", "B+", "", List.of()),
 				new Row("1", "", "1", "교선", "글쓰기", "2", "", "", List.of()),
 				new Row("1", "", "1", "교선", "체육", "1", "PASS", "", List.of("grade", "name")),
-				new Row("1", "", "1", "교선", "음악", "2", "A+", "", List.of("grade", "credit")));
+				new Row("1", "", "1", "교선", "음악", "2", "A+", "", List.of("grade", "credit")),
+				// 칸이 밀려 점수가 학점으로 왔다. 10학점까지는 믿는다
+				new Row("1", "", "1", "전선", "캡스톤", "95", "A+", "", List.of()),
+				new Row("1", "", "1", "전선", "현장실습", "10", "P", "", List.of()));
 
 		assertThat(response.courses()).extracting(Course::credit)
 			.containsExactly(new BigDecimal("3"), BigDecimal.ZERO, new BigDecimal("2"), new BigDecimal("1"),
-					new BigDecimal("2"));
-		assertThat(response.courses()).extracting(Course::grade).containsExactly("A0", "B+", "", "PASS", "A+");
+					new BigDecimal("2"), new BigDecimal("95"), new BigDecimal("10"));
+		assertThat(response.courses()).extracting(Course::grade).containsExactly("A0", "B+", "", "PASS", "A+", "A+", "P");
 		assertThat(response.courses()).extracting(Course::unsure)
-			.containsExactly(List.of(), List.of("credit"), List.of("grade"), List.of("grade"), List.of("credit", "grade"));
+			.containsExactly(List.of(), List.of("credit"), List.of("grade"), List.of("grade"), List.of("credit", "grade"),
+					List.of("credit"), List.of());
 	}
 
 	@Test
