@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { changePassword, withdraw } from "./api"
+import { changePassword, readTranscript, withdraw } from "./api"
 
 /** 가짜 fetch: 답 하나를 돌려준다. 테스트 모드는 가짜 서버를 쓰지 않아 changePassword가 fetch를 부른다. */
 function serve(status: number, body?: unknown) {
@@ -25,6 +25,30 @@ describe("changePassword", () => {
   it("다른 실패는 그대로 던진다", async () => {
     serve(500, { code: "INTERNAL", message: "오류" })
     await expect(changePassword("x", "newpass99")).rejects.toMatchObject({ status: 500 })
+  })
+})
+
+describe("readTranscript", () => {
+  const file = new File(["%PDF"], "성적.pdf", { type: "application/pdf" })
+
+  it("읽으면 응답 그대로 돌려준다", async () => {
+    const transcript = { school: "예시대학교", department: null, scale: null, courses: [] }
+    serve(200, transcript)
+    expect(await readTranscript(file)).toEqual({ ok: true, transcript })
+  })
+
+  it("문서 4절의 오류는 글로 돌려주고, 본문 없는 413도 너무 크다고 본다", async () => {
+    serve(422, { code: "TRANSCRIPT_NO_COURSES", message: "과목 없음" })
+    expect(await readTranscript(file)).toEqual({ ok: false, message: expect.stringContaining("과목을 찾지 못했습니다") })
+    serve(429, { code: "LLM_LIMIT_REACHED", message: "한도" })
+    expect(await readTranscript(file)).toEqual({ ok: false, message: expect.stringContaining("한도") })
+    serve(413)
+    expect(await readTranscript(file)).toEqual({ ok: false, message: expect.stringContaining("10MB") })
+  })
+
+  it("다른 실패는 그대로 던진다", async () => {
+    serve(500, { code: "INTERNAL", message: "오류" })
+    await expect(readTranscript(file)).rejects.toMatchObject({ status: 500 })
   })
 })
 

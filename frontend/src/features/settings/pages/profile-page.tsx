@@ -17,6 +17,7 @@ import {
   FieldHint,
   FormField,
   noteId,
+  unreadInput,
 } from "@/shared/components/form-field"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { IconNote, Notice } from "@/shared/components/notice"
@@ -48,10 +49,6 @@ export function profileLoader() {
   return getProfile()
 }
 
-
-// 자료에서 읽지 못해 비어 있는 칸(공고 칸 확인의 읽지 못한 칸과 같은 표시)
-const missingInput =
-  "border-2 border-highlight-strong bg-highlight-subtle dark:bg-highlight-subtle"
 
 type Lists = Pick<
   ProfileDraft,
@@ -220,7 +217,7 @@ export function ProfilePage() {
   }
   const rowErrors = (ids: string[]): [string, string][] =>
     ids.filter((id) => errors[id]).map((id) => [id, errors[id]])
-  const missing = (value: string) => (fromSource && !value ? missingInput : "")
+  const missing = (value: string) => (fromSource && !value ? unreadInput : "")
 
   async function save(event: FormEvent) {
     event.preventDefault()

@@ -40,6 +40,14 @@ export function errorMessage(error: unknown): string {
 /** 서버가 받는 파일 크기(자료와 공고 모두 20MB). 화면은 보내기 전에 이 크기로 막는다. */
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
+// 사진은 서버가 Claude로 옮겨 적는다. Claude가 받는 형식과 크기다(HEIC, TIFF는 받지 않는다).
+// .jfif는 윈도우의 Chrome이 JPEG를 저장할 때 붙이는 확장자다
+/** 서버가 받는 사진의 accept(공고 읽어 오기, 성적증명서 읽기). */
+export const IMAGE_ACCEPT = ".jpg,.jpeg,.jfif,.png,.gif,.webp"
+
+/** 서버가 받는 사진 크기(5MB). */
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
 /** 파일이 서버가 받는 크기(20MB)를 넘을 때의 글. 화면은 보내기 전에도 이 글로 막는다. */
 export const FILE_TOO_LARGE = "파일이 너무 큽니다. 20MB까지 올릴 수 있습니다."
 

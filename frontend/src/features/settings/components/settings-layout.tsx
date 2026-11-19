@@ -23,6 +23,9 @@ export function SettingsLayout() {
           <NavLink to={paths.profile()} className={link}>
             기본 프로필
           </NavLink>
+          <NavLink to={paths.grades()} className={link}>
+            학점 계산기
+          </NavLink>
           <NavLink to={paths.mailSettings()} className={link}>
             메일 자동화
           </NavLink>
