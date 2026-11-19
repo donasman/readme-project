@@ -29,8 +29,10 @@ import com.readme.transcript.TranscriptResponse.Course;
 @Component
 class TranscriptReader {
 
-	/** 보내는 글의 상한. 성적증명서는 몇 쪽이고 몇천 자다. 넘으면 성적증명서로 보지 않고(NO_COURSES) 사용액도 아낀다 */
+	/** 보내는 글의 상한. 성적증명서는 몇 쪽이고 몇천 자다. 넘으면 Claude 에 보내지 않고 사용액을 아낀다(TOO_LARGE) */
 	static final int MAX_CHARS = 30_000;
+
+	static final String TOO_LONG = "글이 너무 깁니다. 성적증명서는 3만 자까지 읽습니다. 성적증명서만 담긴 파일인지 확인해 주세요";
 
 	private static final String PROMPT = prompt();
 
@@ -70,13 +72,13 @@ class TranscriptReader {
 	}
 
 	/**
-	 * 한도는 부르는 쪽이 먼저 본다. Claude 가 답을 만들지 못하면 TRANSCRIPT_UNREADABLE, 과목 줄이 없거나 글이 MAX_CHARS 를 넘으면
-	 * TRANSCRIPT_NO_COURSES 다. Claude 를 부를 수 없으면 503 LLM_UNAVAILABLE 그대로다.
+	 * 한도는 부르는 쪽이 먼저 본다. Claude 가 답을 만들지 못하면 TRANSCRIPT_UNREADABLE, 과목 줄이 없으면 TRANSCRIPT_NO_COURSES,
+	 * 글이 MAX_CHARS 를 넘으면 TRANSCRIPT_TOO_LARGE(글이 길다는 메시지)다. Claude 를 부를 수 없으면 503 LLM_UNAVAILABLE 그대로다.
 	 */
 	TranscriptResponse read(String text, long userId) {
 		if (text.codePointCount(0, text.length()) > MAX_CHARS) {
-			// 413 이면 화면이 "파일이 너무 큽니다"라고 한다. 파일은 작아도 글이 이만큼 길면 성적증명서가 아니다
-			throw new ApiException(TranscriptErrorCode.TRANSCRIPT_NO_COURSES);
+			// 파일은 작아도 생기므로 크기 안내가 아니라 글이 길다고 알린다
+			throw new ApiException(TranscriptErrorCode.TRANSCRIPT_TOO_LARGE, TOO_LONG);
 		}
 		TranscriptAnswer answer;
 		try {
