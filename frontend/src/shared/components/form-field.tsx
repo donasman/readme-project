@@ -5,6 +5,9 @@ import { joinClasses } from "@/shared/lib/utils"
 // 입력 칸 한 묶음: 이름표(14px), 입력, 그 아래 작은 글(안내, 근거, 오류). 입력은 children으로 넣고,
 // 아래 글이 있으면 입력에 aria-describedby={noteId(id)}를 단다.
 
+/** 읽지 못했거나 확인할 입력 칸: 굵은 하이라이트 테두리와 옅은 바탕. 공고 칸 확인, 기본 프로필, 학점 계산기가 쓴다. */
+export const unreadInput = "border-2 border-highlight-strong bg-highlight-subtle dark:bg-highlight-subtle"
+
 /** 아래 글의 id. */
 export const noteId = (id: string) => `${id}-note`
 

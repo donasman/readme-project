@@ -1,17 +1,17 @@
-import { useEffect, useRef, useState, type DragEvent } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useLoaderData, useRevalidator } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { getProfile } from "@/domain/profile/api"
 import type { Profile } from "@/domain/profile/types"
-import { FieldError, noteId } from "@/shared/components/form-field"
+import { FileDrop } from "@/shared/components/file-drop"
 import { IconNote } from "@/shared/components/notice"
 import { PanelHead, sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { columns, mainColumn, sideColumn } from "@/shared/components/page-layout"
 import { Panel } from "@/shared/components/panel"
 import { Pill } from "@/shared/components/pill"
-import { CheckIcon, FileTextIcon, LockIcon, UploadIcon } from "@/shared/icons"
+import { CheckIcon, FileTextIcon, LockIcon } from "@/shared/icons"
 import { ApiError, FILE_TOO_LARGE, MAX_FILE_BYTES } from "@/shared/lib/api"
 import { objectParticle } from "@/shared/lib/korean"
 import { paths } from "@/shared/lib/paths"
@@ -325,27 +325,15 @@ export function CardSourcesPage() {
 
 /** 올리기: 파일을 끌어 놓거나 고르기, 또는 글 붙여넣기. */
 function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: string }) => Promise<string | null> }) {
-  const fileInput = useRef<HTMLInputElement>(null)
   const textArea = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState("")
   const [textError, setTextError] = useState<string | null>(null)
-  const [dragging, setDragging] = useState(false)
-  // 같은 이유로 이어서 막혀도 매번 알리도록 횟수를 알림의 key로 쓴다
-  const [fileError, setFileError] = useState<{ message: string; tries: number } | null>(null)
-  const failFile = (message: string | null) => setFileError((e) => (message ? { message, tries: (e?.tries ?? 0) + 1 } : null))
 
-  const take = async (file: File | undefined) => {
-    if (!file) return
-    if (!matchesAccept(file.name, ACCEPT)) return failFile(`${ACCEPT_TEXT} 파일만 올릴 수 있습니다.`)
+  const take = async (file: File) => {
+    if (!matchesAccept(file.name, ACCEPT)) return `${ACCEPT_TEXT} 파일만 올릴 수 있습니다.`
     // 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다(경험카드 문서 6절 7번)
-    if (file.size > MAX_FILE_BYTES) return failFile(FILE_TOO_LARGE)
-    failFile(await onRead({ file }))
-  }
-
-  const drop = (event: DragEvent) => {
-    event.preventDefault()
-    setDragging(false)
-    void take(event.dataTransfer.files[0])
+    if (file.size > MAX_FILE_BYTES) return FILE_TOO_LARGE
+    return onRead({ file })
   }
 
   return (
@@ -353,43 +341,7 @@ function UploadStep({ onRead }: { onRead: (input: { file: File } | { text: strin
       <h2 id="src-upload" className={sectionTitle}>
         자료 올리기
       </h2>
-      <div
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={drop}
-        className={cn(
-          "flex flex-col items-center gap-3 rounded-control border-[1.5px] border-dashed px-6 py-8 text-center",
-          dragging ? "border-primary bg-accent-subtle" : "border-border-strong bg-surface-muted"
-        )}
-      >
-        <UploadIcon aria-hidden="true" className="size-7 text-text-secondary" />
-        <p className="font-bold">파일을 여기에 끌어 놓으세요</p>
-        <p className="text-label-sm text-text-secondary">{ACCEPT_TEXT} · 20MB까지</p>
-        <input
-          ref={fileInput}
-          type="file"
-          accept={ACCEPT}
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(e) => {
-            void take(e.target.files?.[0])
-            // 같은 파일을 다시 골라도 change가 오도록 비운다
-            e.target.value = ""
-          }}
-        />
-        <Button type="button" aria-describedby={fileError ? noteId("src-file") : undefined} onClick={() => fileInput.current?.click()}>
-          파일 고르기
-        </Button>
-        {fileError && (
-          <div role="alert" key={fileError.tries}>
-            <FieldError id="src-file">{fileError.message}</FieldError>
-          </div>
-        )}
-      </div>
+      <FileDrop id="src-file" title="파일을 여기에 끌어 놓으세요" hint={`${ACCEPT_TEXT} · 20MB까지`} accept={ACCEPT} onFile={take} />
       <div className="flex items-center gap-3 text-xs text-text-secondary">
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
         <span>또는</span>
