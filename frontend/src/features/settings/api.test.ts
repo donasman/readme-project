@@ -49,7 +49,7 @@ describe("readTranscript", () => {
   it("413 TRANSCRIPT_TOO_LARGE는 서버의 글을 보인다(파일 크기와 글 길이를 서버가 가른다)", async () => {
     const message = "글이 너무 깁니다. 성적증명서는 3만 자까지 읽습니다. 성적증명서만 담긴 파일인지 확인해 주세요"
     serve(413, { code: "TRANSCRIPT_TOO_LARGE", message })
-    expect(await readTranscript(file)).toEqual({ ok: false, message })
+    expect(await readTranscript(file)).toEqual({ ok: false, message: `${message}.` })
   })
 
   it("다른 실패는 그대로 던진다", async () => {

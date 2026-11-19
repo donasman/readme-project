@@ -5,6 +5,7 @@ import * as db from "@/mocks/account-db"
 import * as profileDb from "@/mocks/profile-db"
 import * as transcriptDb from "@/mocks/transcript-db"
 import { ApiError, isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
+import { sentence } from "@/shared/lib/korean"
 
 import { exampleTranscript } from "./grade-example"
 import type { AccountInfo, MailSettings, Transcript, WithdrawConfirm, WithdrawInfo } from "./types"
@@ -152,7 +153,7 @@ export async function readTranscript(file: File): Promise<ReadTranscriptResult> 
   try {
     return { ok: true, transcript: await request<Transcript>("POST", "/api/transcripts/read", body) }
   } catch (error) {
-    if (isApiError(error, "TRANSCRIPT_TOO_LARGE")) return { ok: false, message: error.message }
+    if (isApiError(error, "TRANSCRIPT_TOO_LARGE")) return { ok: false, message: sentence(error.message) }
     // 서버 앞(Caddy)이 본문 없이 413으로 끊을 수도 있다(shared/lib/api.ts의 tooLargeMessage)
     if (error instanceof ApiError && error.status === 413) return { ok: false, message: TRANSCRIPT_ERRORS.TRANSCRIPT_TOO_LARGE }
     if (isApiError(error, ...Object.keys(TRANSCRIPT_ERRORS))) return { ok: false, message: TRANSCRIPT_ERRORS[error.code] }
