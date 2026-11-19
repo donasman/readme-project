@@ -72,16 +72,21 @@ export const listMyPostings = (): MyPosting[] => entries().filter(visible).map(t
  * 요건마다의 결과 흉내(서버의 CardMatching): 카드 태그가 글에 있으면 matched, 아는 키워드가 글에 있는데 카드가 없으면 unmatched,
  * 그 밖에 프로필 값이 글에 있으면 profile, 아니면 unknown.
  */
-function requirementResults(analysis: PostingAnalysis, cards: ExperienceCard[]): RequirementResult[] {
+function requirementResults(analysis: PostingAnalysis, cards: ExperienceCard[], matches: CardMatch[]): RequirementResult[] {
   const profile = getProfile()
   const facts = [...profile.certificates.map((c) => c.name), ...profile.languages.map((l) => l.test), ...profile.educations.flatMap((e) => (e.major ? [e.major] : []))]
   const has = (text: string, word: string) => text.toLowerCase().includes(word.toLowerCase())
   return (["must", "nice"] as const).flatMap((kind) =>
     analysis[kind].map((text) => {
-      const cardIds = cards.filter((c) => c.tags.some((t) => has(text, t))).map((c) => c.id)
+      // 겹친 태그는 요건 글에 나온 순서다(포함 관계는 흉내 내지 않는다)
+      const at = (t: string) => text.toLowerCase().indexOf(t.toLowerCase())
+      // 서버처럼 요건의 카드는 모두 맞는 카드에도 있고 그 순서를 따른다
+      const matched = matches
+        .map(({ cardId }) => ({ cardId, overlap: (cards.find((c) => c.id === cardId)?.tags ?? []).filter((t) => has(text, t)).sort((a, b) => at(a) - at(b)) }))
+        .filter((c) => c.overlap.length > 0)
       const profileItems = facts.filter((f) => has(text, f))
-      const status = cardIds.length > 0 ? "matched" : KEYWORDS.some((k) => has(text, k)) ? "unmatched" : profileItems.length > 0 ? "profile" : "unknown"
-      return { kind, text, status, cardIds: status === "matched" ? cardIds : [], profileItems: status === "matched" ? [] : profileItems }
+      const status = matched.length > 0 ? "matched" : KEYWORDS.some((k) => has(text, k)) ? "unmatched" : profileItems.length > 0 ? "profile" : "unknown"
+      return { kind, text, status, cards: status === "matched" ? matched : [], profileItems: status === "matched" ? [] : profileItems }
     })
   )
 }
@@ -100,10 +105,10 @@ export function getMyPosting(id: string): MyPostingDetail {
   const matches: CardMatch[] = extra.matches
     ? extra.matches.flatMap(([cardId, overlap]) => {
         const card = cards.find((c) => c.id === cardId)
-        return card ? [{ cardId, title: card.title, overlap }] : []
+        return card ? [{ cardId, title: card.title, experience: card.experience, overlap }] : []
       })
     : cards
-        .map((c) => ({ cardId: c.id, title: c.title, overlap: c.tags.filter((t) => keywords.some((k) => k.toLowerCase() === t.toLowerCase())) }))
+        .map((c) => ({ cardId: c.id, title: c.title, experience: c.experience, overlap: c.tags.filter((t) => keywords.some((k) => k.toLowerCase() === t.toLowerCase())) }))
         .filter((m) => m.overlap.length > 0)
         .sort((a, b) => b.overlap.length - a.overlap.length)
   const sections = structuredClone(extra.sections ?? body?.sections ?? e.own?.sections ?? [])
@@ -119,7 +124,7 @@ export function getMyPosting(id: string): MyPostingDetail {
     analysis,
     matches: analysis ? matches : [],
     unmatched: analysis ? [...(extra.unmatched ?? [])] : [],
-    requirements: analysis ? requirementResults(analysis, cards) : [],
+    requirements: analysis ? requirementResults(analysis, cards, matches) : [],
     groupStates: found.map(({ group, post }) => ({
       ...group,
       interested: post.me.interested,
