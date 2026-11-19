@@ -157,6 +157,22 @@ class CardMatchingTests {
 	}
 
 	@Test
+	void overlapOrderUsesTagPositionsAndEarliestForm() {
+		List<MatchCard> cards = List.of(new MatchCard(1, "알림 배치", "", List.of("배치", "Docker")),
+				new MatchCard(2, "클러스터 운영", "", List.of("Kubernetes", "Docker")));
+		// 사전 밖 태그(배치)도 제자리에 둔다. Kubernetes 는 긴 표기가 먼저 찾아지므로 뒤에 나온 k8s 의 자리로 밀리지 않는다
+		PostingAnalysis analysis = analysis(List.of("배치 작업 후 Docker 배포", "Kubernetes 운영, Docker, k8s 배포"),
+				List.of(), List.of());
+
+		Result result = CardMatching.match(analysis, cards, ProfileFacts.EMPTY, KD);
+
+		assertThat(result.requirements()).extracting(RequirementResult::cards)
+			.containsExactly(
+					List.of(new RequirementCard(1, List.of("배치", "Docker")), new RequirementCard(2, List.of("Docker"))),
+					List.of(new RequirementCard(1, List.of("Docker")), new RequirementCard(2, List.of("Kubernetes", "Docker"))));
+	}
+
+	@Test
 	void profileAnswersRequirementsCardsCannot() {
 		PostingAnalysis analysis = analysis(List.of("컴활 1급 이상", "컴퓨터공학 또는 관련 전공", "Kubernetes 운영"),
 				List.of("TOEIC 800점 이상", "Python 기반 API 개발"), List.of());
