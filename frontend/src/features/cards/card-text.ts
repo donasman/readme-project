@@ -1,23 +1,6 @@
 // 카드 글을 다루는 순수 함수: 추출이 남긴 "[확인 필요: …]" 표시, 자료 원문의 숫자, 자료를 나눠 읽는 조각 수.
-import type { Star } from "./types"
-
-/** 추출이 원문에 없는 숫자를 바꿔 넣은 표시. 예: "[확인 필요: 30%]" */
-const FLAG = /\[확인 필요: ([^\]]+)\]/g
-
-export type TextPart = { text: string; flagged?: boolean }
-
-/** 글을 보통 글자와 "확인 필요" 표시로 나눈다. 표시 부분의 text는 "확인 필요: 30%"다. */
-export function splitFlagged(text: string): TextPart[] {
-  const parts: TextPart[] = []
-  let last = 0
-  for (const m of text.matchAll(FLAG)) {
-    if (m.index > last) parts.push({ text: text.slice(last, m.index) })
-    parts.push({ text: `확인 필요: ${m[1]}`, flagged: true })
-    last = m.index + m[0].length
-  }
-  if (last < text.length) parts.push({ text: text.slice(last) })
-  return parts
-}
+import { FLAG, type TextPart } from "@/domain/card/card-text"
+import type { Star } from "@/domain/card/types"
 
 /** 글에 남은 "확인 필요" 숫자들. 예: ["30%"] */
 export function flaggedValues(text: string): string[] {

@@ -1,5 +1,7 @@
 // 경험카드 목록의 거르기 규칙, 태그 순서, 확인 순서. 화면과 떨어진 순수 함수다.
-import type { CardTag, ExperienceCard, Star } from "./types"
+import type { ExperienceCard } from "@/domain/card/types"
+
+import type { CardTag } from "./types"
 
 /** 목록 보기: 전체, 확인 필요(verified = false), 확인됨 */
 export type CardStatus = "all" | "unverified" | "verified"
@@ -11,19 +13,6 @@ export interface CardFilters {
 }
 
 export const DEFAULT_CARD_FILTERS: CardFilters = { status: "all", tag: "" }
-
-/** 이야기 칸의 이름(화면에 보이는 순서, 경험카드 문서 4.8). STAR 넷 사이와 뒤에 어려움·배운 점이 온다. */
-export const STORY_PARTS: [keyof Star, string][] = [
-  ["situation", "상황"],
-  ["task", "과제"],
-  ["obstacle", "어려움"],
-  ["action", "행동"],
-  ["result", "결과"],
-  ["learning", "배운 점"],
-]
-
-/** 어려움과 배운 점은 선택이다. 자료에 없으면 비워 두고, 비었으면 상세와 확인에 보이지 않는다 */
-export const isOptionalPart = (key: keyof Star): boolean => key === "obstacle" || key === "learning"
 
 /** 같은 경험인지 가르는 열쇠: 앞뒤 공백과 대소문자를 무시한다(서버의 lower(btrim(experience))와 같다). 빈 글자면 경험이 없는 카드다 */
 export const experienceKey = (name: string): string => name.trim().toLowerCase()

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest"
 
+import type { ExperienceCard } from "@/domain/card/types"
+
 import { countUnverified, DEFAULT_CARD_FILTERS, experienceNames, filterCards, groupByExperience, knownTag, orderTags, orgAndRole, sceneNumber, startFrom, type CardFilters } from "./card-rules"
-import type { ExperienceCard } from "./types"
 
 let seq = 0
 function card(over: Partial<ExperienceCard> = {}): ExperienceCard {

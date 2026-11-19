@@ -1,18 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { chunkCount, dropFlaggedSentences, dropFlaggedStory, flaggedValues, formatChars, markUsedNumbers, splitFlagged, storyFlaggedValues } from "./card-text"
+import { chunkCount, dropFlaggedSentences, dropFlaggedStory, flaggedValues, formatChars, markUsedNumbers, storyFlaggedValues } from "./card-text"
 
 const RESULT = "p95 응답 시간이 0.4초로 줄었고 주문 1건당 쿼리가 21회에서 1회가 됐다. 관련 문의도 [확인 필요: 30%] 줄었다."
 
 describe("확인 필요 표시", () => {
-  it("글자와 표시로 나눈다", () => {
-    expect(splitFlagged("문의도 [확인 필요: 30%] 줄었다.")).toEqual([
-      { text: "문의도 " },
-      { text: "확인 필요: 30%", flagged: true },
-      { text: " 줄었다." },
-    ])
-    expect(splitFlagged("표시 없음")).toEqual([{ text: "표시 없음" }])
-  })
   it("표시된 숫자를 꺼낸다", () => {
     expect(flaggedValues(RESULT)).toEqual(["30%"])
     expect(flaggedValues("없음")).toEqual([])

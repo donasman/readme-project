@@ -2,6 +2,9 @@ import { useState } from "react"
 import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { FactList, StoryPart } from "@/domain/card/card-bits"
+import { isOptionalPart, STORY_PARTS } from "@/domain/card/card-rules"
+import type { CardDetail } from "@/domain/card/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { Chip } from "@/shared/components/chip"
 import { sectionTitle, subLabel, subpageTitle } from "@/shared/components/heading"
@@ -13,10 +16,9 @@ import { paths } from "@/shared/lib/paths"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
 import { deleteCard, getUnverifiedCards, updateCard, verifyCard } from "../api"
-import { groupByExperience, isOptionalPart, orgAndRole, sceneNumber, startFrom, STORY_PARTS } from "../card-rules"
+import { groupByExperience, orgAndRole, sceneNumber, startFrom } from "../card-rules"
 import { dropFlaggedStory, markUsedNumbers, storyFlaggedValues } from "../card-text"
-import { CardsSubpage, FactList, FlaggedText, ProgressBar, StatBox } from "../components/card-bits"
-import type { CardDetail } from "../types"
+import { CardsSubpage, ProgressBar, StatBox } from "../components/card-bits"
 
 /** 확인을 기다리는 카드를 읽는다. 같은 경험의 장면은 이어서 본다. ?card=id 가 있으면 그 카드부터 본다. */
 export async function cardReviewLoader({ request }: LoaderFunctionArgs) {
@@ -147,10 +149,17 @@ export function CardReviewPage() {
             </div>
 
             {story.map(([key, label], i) => (
-              <div key={key} className={i === 0 ? "flex flex-col gap-1.5 border-t border-border-subtle pt-5" : "flex flex-col gap-1.5"}>
-                <h3 className={subLabel}>{label}</h3>
-                <p>{card.star[key] ? <FlaggedText text={card.star[key]} /> : <span className="text-sm text-text-secondary">아직 적지 않았습니다.</span>}</p>
-              </div>
+              <StoryPart
+                key={key}
+                label={label}
+                text={card.star[key]}
+                className={i === 0 ? "flex flex-col gap-1.5 border-t border-border-subtle pt-5" : "flex flex-col gap-1.5"}
+                empty={
+                  <p>
+                    <span className="text-sm text-text-secondary">아직 적지 않았습니다.</span>
+                  </p>
+                }
+              />
             ))}
             {flagged.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-control bg-highlight-subtle p-4">

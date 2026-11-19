@@ -1,13 +1,13 @@
 import { Link } from "react-router"
 
+import { CardStatusBadge } from "@/domain/card/card-bits"
+import type { ExperienceCard } from "@/domain/card/types"
 import { Chip } from "@/shared/components/chip"
 import { sectionTitle } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { paths } from "@/shared/lib/paths"
 
 import { orgAndRole } from "../card-rules"
-import type { ExperienceCard } from "../types"
-import { CardStatusBadge } from "./card-bits"
 
 /**
  * 경험카드 한 장: 확인 상태와 기간, 제목과 어디서·맡은 일, 요약, 태그, 쓸 수 있는 문항 유형. 카드 전체가 상세로 가는 링크다.
