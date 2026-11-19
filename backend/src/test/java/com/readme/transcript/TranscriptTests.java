@@ -144,12 +144,15 @@ class TranscriptTests {
 	}
 
 	@Test
-	void textTooLongForATranscriptHasNoCourses() throws IOException {
-		// 파일은 작으니 413(파일이 너무 큽니다)이 아니라 성적증명서가 아니라는 422 다
+	void textTooLongForATranscriptIsTooLargeWithItsOwnMessage() throws IOException {
+		// 파일은 작아도 글이 길면 413 이고, 메시지는 크기 안내가 아니라 글이 길다는 것이다
 		String[] pages = new String[TranscriptReader.MAX_CHARS / 80 + 1];
 		Arrays.fill(pages, "Programming 3 A+ ".repeat(5));
 
-		assertError(read(this.me, "성적.pdf", pdf(pages)), HttpStatus.UNPROCESSABLE_CONTENT, "TRANSCRIPT_NO_COURSES");
+		assertError(read(this.me, "성적.pdf", pdf(pages)), HttpStatus.CONTENT_TOO_LARGE, "TRANSCRIPT_TOO_LARGE");
+		assertThat(read(this.me, "성적.pdf", pdf(pages))).bodyJson()
+			.extractingPath("$.message")
+			.isEqualTo(TranscriptReader.TOO_LONG);
 		assertThat(this.claude.calls()).isZero();
 	}
 
