@@ -3,7 +3,7 @@ import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { getCard } from "@/domain/card/api"
-import { CardStatusBadge, FactList, FlaggedText } from "@/domain/card/card-bits"
+import { CardStatusBadge, FactList, StoryPart } from "@/domain/card/card-bits"
 import { isOptionalPart, STORY_PARTS } from "@/domain/card/card-rules"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
 import { ArrowLink } from "@/shared/components/arrow-link"
@@ -80,16 +80,7 @@ export function CardPage() {
                 이야기
               </h2>
               {story.map(([key, label], i) => (
-                <div key={key} className={i === 0 ? "flex flex-col gap-1.5" : "flex flex-col gap-1.5 border-t border-border-subtle pt-5"}>
-                  <h3 className={subLabel}>{label}</h3>
-                  {card.star[key] ? (
-                    <p>
-                      <FlaggedText text={card.star[key]} />
-                    </p>
-                  ) : (
-                    <p className="text-sm text-text-secondary">아직 적지 않았습니다.</p>
-                  )}
-                </div>
+                <StoryPart key={key} label={label} text={card.star[key]} className={i === 0 ? "flex flex-col gap-1.5" : "flex flex-col gap-1.5 border-t border-border-subtle pt-5"} />
               ))}
             </Panel>
 

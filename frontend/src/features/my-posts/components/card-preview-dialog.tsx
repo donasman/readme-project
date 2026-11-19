@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { getCard } from "@/domain/card/api"
-import { CardStatusBadge, FactList, FlaggedText } from "@/domain/card/card-bits"
+import { CardStatusBadge, FactList, StoryPart } from "@/domain/card/card-bits"
 import { STORY_PARTS } from "@/domain/card/card-rules"
 import type { CardDetail } from "@/domain/card/types"
 import { AppDialog, DialogCancel } from "@/shared/components/app-dialog"
@@ -29,6 +29,12 @@ interface CardPreviewDialogProps {
   onIndex: (index: number) => void
   onClose: () => void
 }
+
+/**
+ * 앞뒤 버튼은 끝 카드에서 꺼져도 초점을 잃지 않게 focusableWhenDisabled로 둔다. 그러면 disabled 속성 대신 aria-disabled가 붙어
+ * 공용 Button의 disabled:opacity-50이 듣지 않으므로 같은 흐림을 여기서 준다.
+ */
+const stepButton = "aria-disabled:pointer-events-none aria-disabled:opacity-50"
 
 /** 묶음 사이의 가는 줄 */
 const divided = "flex flex-col gap-2 border-t border-border-subtle pt-5"
@@ -80,10 +86,10 @@ export function CardPreviewDialog({ preview, matches, onIndex, onClose }: CardPr
               <strong className="font-bold text-foreground">{requirement.text}</strong> · {cardPosition(index, count)}
             </p>
             <div className="-my-2 flex flex-none items-center">
-              <Button type="button" variant="ghost" size="icon" aria-label="이전 카드" disabled={prev === null} onClick={() => prev !== null && onIndex(prev)}>
+              <Button type="button" variant="ghost" size="icon" aria-label="이전 카드" focusableWhenDisabled disabled={prev === null} className={stepButton} onClick={() => prev !== null && onIndex(prev)}>
                 <ChevronLeftIcon aria-hidden="true" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" aria-label="다음 카드" disabled={next === null} onClick={() => next !== null && onIndex(next)}>
+              <Button type="button" variant="ghost" size="icon" aria-label="다음 카드" focusableWhenDisabled disabled={next === null} className={stepButton} onClick={() => next !== null && onIndex(next)}>
                 <ChevronRightIcon aria-hidden="true" />
               </Button>
             </div>
@@ -125,12 +131,7 @@ export function CardPreviewDialog({ preview, matches, onIndex, onClose }: CardPr
             <section className="flex flex-col gap-4 border-t border-border-subtle pt-5">
               <h3 className="font-bold">이야기</h3>
               {STORY_PARTS.filter(([key]) => card.star[key]).map(([key, label]) => (
-                <div key={key} className="flex flex-col gap-1">
-                  <h4 className={subLabel}>{label}</h4>
-                  <p>
-                    <FlaggedText text={card.star[key]} />
-                  </p>
-                </div>
+                <StoryPart key={key} label={label} text={card.star[key]} heading="h4" className="flex flex-col gap-1" />
               ))}
             </section>
           )}

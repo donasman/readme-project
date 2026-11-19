@@ -1,4 +1,7 @@
+import type { ReactNode } from "react"
+
 import { Dot } from "@/shared/components/dot"
+import { subLabel } from "@/shared/components/heading"
 import { CircleAlertIcon, CircleCheckIcon } from "@/shared/icons"
 
 import { splitFlagged } from "./card-text"
@@ -35,6 +38,33 @@ export function FlaggedText({ text }: { text: string }) {
         )
       )}
     </>
+  )
+}
+
+interface StoryPartProps {
+  label: string
+  text: string
+  /** 칸 묶음의 클래스(간격, 칸 사이 가는 줄). 화면마다 줄의 자리가 다르다 */
+  className: string
+  /** 이름표의 제목 단계. 기본 h3 */
+  heading?: "h3" | "h4"
+  /** 빈 칸에 보일 것. 기본은 "아직 적지 않았습니다." */
+  empty?: ReactNode
+}
+
+/** 이야기 한 칸(카드 상세, 카드 확인, 카드 미리 보기 창): 13px 회색 이름표와 글. 글 안의 확인 필요 표시를 강조한다. */
+export function StoryPart({ label, text, className, heading: Heading = "h3", empty = <p className="text-sm text-text-secondary">아직 적지 않았습니다.</p> }: StoryPartProps) {
+  return (
+    <div className={className}>
+      <Heading className={subLabel}>{label}</Heading>
+      {text ? (
+        <p>
+          <FlaggedText text={text} />
+        </p>
+      ) : (
+        empty
+      )}
+    </div>
   )
 }
 
