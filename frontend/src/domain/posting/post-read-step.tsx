@@ -150,7 +150,8 @@ function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
     if (!file || event.clipboardData.getData("text/plain")) return
     event.preventDefault()
     if (busy) return
-    const problem = readFileProblem(file)
+    // 쓰던 글이 있으면 읽지 않는다(사진만 읽고 칸 확인으로 넘어가 쓰던 글이 사라진다)
+    const problem = text.trim() ? "사진은 글과 함께 읽지 못합니다. 본문을 지우고 붙여넣거나 파일 탭에서 올려 주세요." : readFileProblem(file)
     setError((er) => ({ ...er, text: problem ?? undefined }))
     if (problem) return
     setReadingImage(true)

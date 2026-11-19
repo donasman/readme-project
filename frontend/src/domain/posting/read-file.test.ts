@@ -10,6 +10,7 @@ describe("readFileProblem", () => {
     expect(readFileProblem({ name: "공고.HWP", size: MB })).toBeNull()
     expect(readFileProblem({ name: "image.png", size: MB })).toBeNull()
     expect(readFileProblem({ name: "캡처.JPEG", size: MB })).toBeNull()
+    expect(readFileProblem({ name: "저장.jfif", size: MB })).toBeNull()
     expect(readFileProblem({ name: "사진.heic", size: MB })).toMatch("만 올릴 수 있습니다")
     expect(readFileProblem({ name: "공고.pptx", size: MB })).toMatch("만 올릴 수 있습니다")
   })

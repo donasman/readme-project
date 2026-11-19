@@ -3,8 +3,9 @@ import { FILE_TOO_LARGE, MAX_FILE_BYTES } from "@/shared/lib/api"
 import { matchesAccept } from "@/shared/lib/utils"
 
 const DOCUMENTS = ".pdf,.docx,.hwpx,.hwp"
-// 사진은 서버가 Claude로 옮겨 적는다. Claude가 받는 형식과 크기다(HEIC, TIFF는 받지 않는다)
-const IMAGES = ".jpg,.jpeg,.png,.gif,.webp"
+// 사진은 서버가 Claude로 옮겨 적는다. Claude가 받는 형식과 크기다(HEIC, TIFF는 받지 않는다).
+// .jfif는 윈도우의 Chrome이 JPEG를 저장할 때 붙이는 확장자다
+const IMAGES = ".jpg,.jpeg,.jfif,.png,.gif,.webp"
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 /** 파일 고르기 창의 accept. */
