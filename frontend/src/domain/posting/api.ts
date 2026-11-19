@@ -29,7 +29,7 @@ function readBody(groupId: string | null, input: PostReadInput) {
 }
 
 /**
- * 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일(PDF, DOCX, HWPX, HWP).
+ * 공고를 읽어 칸을 채운다: 링크, 붙여넣은 본문, 파일(PDF, DOCX, HWPX, HWP, 사진. 받는 형식은 read-file.ts).
  * 그 그룹에 이미 있으면 그 공고를, 읽지 못하면 이유를 돌려준다. 그룹 id가 null이면(내 공고 넣기) 같은 공고를 보지 않는다.
  */
 export async function readPosting(groupId: string | null, input: PostReadInput): Promise<ReadPostResult> {
