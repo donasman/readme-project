@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChoiceInput } from "@/shared/components/choice-input"
 import { FileDrop } from "@/shared/components/file-drop"
-import { unreadInput } from "@/shared/components/form-field"
+import { FieldError, noteId, unreadInput } from "@/shared/components/form-field"
 import { Heading, sectionTitle } from "@/shared/components/heading"
 import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
@@ -20,6 +20,7 @@ import { EXAMPLE_TRANSCRIPT_NAME, exampleTranscript } from "../grade-example"
 import {
   allText,
   applyEdits,
+  categoryLabel,
   convertGpa,
   countedCourses,
   courseLine,
@@ -28,6 +29,8 @@ import {
   groupCourses,
   groupText,
   isMajor,
+  parseCredit,
+  PASS_FAIL,
   SCALES,
   semesterCount,
   toHundred,
@@ -49,6 +52,8 @@ type Step = { kind: "upload" } | { kind: "reading"; fileName: string } | { kind:
  */
 export function GradesPage() {
   const [step, setStep] = useState<Step>({ kind: "upload" })
+  // 결과에서 돌아오면 놓는 곳을 새로 그려 앞서 실패한 오류 글을 지운다
+  const [dropKey, setDropKey] = useState(0)
 
   // 돌려준 글은 놓는 곳 아래에 보인다. 올리기 칸은 읽는 동안 감춰 두기만 해서 그 알림이 남는다
   const read = async (file: File): Promise<string | null> => {
@@ -89,6 +94,7 @@ export function GradesPage() {
           성적증명서 올리기
         </h3>
         <FileDrop
+          key={dropKey}
           id="gc-file"
           title="성적증명서를 끌어 놓거나 골라 주세요"
           hint={
@@ -126,7 +132,13 @@ export function GradesPage() {
         </Panel>
       )}
 
-      {step.kind === "result" && <GradeResult fileName={step.fileName} transcript={step.transcript} onReset={() => setStep({ kind: "upload" })} />}
+      {step.kind === "result" && (
+        <GradeResult fileName={step.fileName} transcript={step.transcript} onReset={() => {
+            setStep({ kind: "upload" })
+            setDropKey((k) => k + 1)
+          }}
+        />
+      )}
     </>
   )
 }
@@ -144,7 +156,6 @@ const FORMAT_HINTS: Record<CopyFormat, string> = {
   table: "표로 복사: 칸 사이를 탭으로 나눠 엑셀, 시트, 표로 된 지원서 칸에 그대로 들어갑니다.",
   text: "글로 복사: 한 줄에 과목 하나씩, 이수과목을 한 칸에 적는 지원서용입니다.",
 }
-const PASS_FAIL = new Set(["P", "S", "NP", "U"])
 // 과목 줄의 칸: 이수구분, 과목명, 학점, 성적, 줄 복사. 휴대폰에서는 이수구분을 감춘다
 const rowGrid = "grid grid-cols-[minmax(0,1fr)_44px_52px_44px] gap-2 sm:grid-cols-[96px_minmax(0,1fr)_56px_56px_44px]"
 const cellButton = "inline-flex min-h-11 min-w-0 cursor-copy items-center justify-self-start rounded-[8px] px-2 text-left hover:bg-surface-muted"
@@ -302,16 +313,24 @@ function GradeResult({ fileName, transcript, onReset }: { fileName: string; tran
                     c.retake === "before" ? (dropRetake ? "재수강 전 · 계산에서 뺌" : "재수강 전") : c.retake === "after" ? "재수강" : PASS_FAIL.has(c.grade) ? "P/F" : ""
                   const when = groupBy === "term" ? "" : `${c.year}-${c.term}`
                   const label = [when, tag].filter(Boolean).join(" ")
+                  const creditId = `gc-credit-${c.index}`
+                  const typedCredit = edits[c.index]?.credit
+                  const creditBad = check.credit && typedCredit !== undefined && parseCredit(typedCredit) === null
                   return (
                     <div key={c.index} className={joinClasses(rowGrid, "min-h-12 items-center border-t border-border-subtle", out && "opacity-50")}>
-                      <button
-                        type="button"
-                        aria-label={`${c.name} 이수구분 ${c.category} 복사`}
-                        onClick={() => void copy(c.category, `복사함: ${c.category}`)}
-                        className={joinClasses(cellButton, "text-label-sm text-text-secondary max-sm:hidden")}
-                      >
-                        {c.category}
-                      </button>
+                      {c.category.trim() ? (
+                        <button
+                          type="button"
+                          aria-label={`${c.name} 이수구분 ${c.category} 복사`}
+                          onClick={() => void copy(c.category, `복사함: ${c.category}`)}
+                          className={joinClasses(cellButton, "text-label-sm text-text-secondary max-sm:hidden")}
+                        >
+                          {c.category}
+                        </button>
+                      ) : (
+                        // 읽지 못한 이수구분은 복사할 것이 없어 글로만 보인다
+                        <span className="px-2 text-label-sm text-text-secondary max-sm:hidden">{categoryLabel(c.category)}</span>
+                      )}
                       <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <button
                           type="button"
@@ -325,11 +344,14 @@ function GradeResult({ fileName, transcript, onReset }: { fileName: string; tran
                       </span>
                       {check.credit ? (
                         <Input
+                          id={creditId}
                           aria-label={`${c.name} 학점 (확인 필요)`}
                           inputMode="decimal"
                           value={edits[c.index]?.credit ?? String(original.credit)}
+                          aria-invalid={creditBad || undefined}
+                          aria-describedby={creditBad ? noteId(creditId) : undefined}
                           onChange={(e) => edit(c.index, { credit: e.target.value })}
-                          className={joinClasses("h-9 px-2 md:text-base", unreadInput)}
+                          className={joinClasses("h-9 px-2 md:text-base aria-invalid:ring-0", unreadInput)}
                         />
                       ) : (
                         <button type="button" aria-label={`${c.name} 학점 ${c.credit} 복사`} onClick={() => void copy(String(c.credit), `복사함: ${c.credit}`)} className={cellButton}>
@@ -351,6 +373,11 @@ function GradeResult({ fileName, transcript, onReset }: { fileName: string; tran
                       <Button type="button" variant="ghost" size="icon" aria-label={`${c.name} 줄 복사`} onClick={() => void copy(courseLine(c, format), `${c.name} 줄을 복사했습니다`)} className="text-text-secondary">
                         <CopyIcon aria-hidden="true" />
                       </Button>
+                      {creditBad && (
+                        <div className="col-span-full pb-2">
+                          <FieldError id={creditId}>학점은 숫자로 넣어 주세요(예: 3, 1.5). 고치기 전에는 읽은 값 {original.credit}학점으로 계산합니다.</FieldError>
+                        </div>
+                      )}
                     </div>
                   )
                 })}

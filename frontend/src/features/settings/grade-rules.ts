@@ -14,7 +14,7 @@ const POINTS: Record<GradeScale, Record<string, number>> = {
 }
 
 /** P/F 과목의 등급. P, S는 취득학점에만 들고 NP, U는 어디에도 들지 않는다(GC6). */
-const PASS_FAIL = new Set(["P", "S", "NP", "U"])
+export const PASS_FAIL = new Set(["P", "S", "NP", "U"])
 
 /** 취득학점에 들지 않는 등급. F는 평점에는 0으로 든다. */
 const NOT_EARNED = new Set(["F", "NP", "U"])
@@ -85,6 +85,9 @@ export interface CourseGroup<T> {
 
 const TERM_ORDER = ["1", "여름", "2", "겨울"]
 const CATEGORY_ORDER = ["전공필수", "전공선택", "교양필수", "교양선택", "일반선택"]
+/** 이수구분을 보일 이름. 서버가 읽지 못하면 빈 글("")을 준다. */
+export const categoryLabel = (category: string) => category.trim() || "이수구분 없음"
+
 // 목록에 없는 값은 뒤로 보내고, 같은 순위끼리는 나온 순서를 지킨다(sort는 안정 정렬이다)
 const rank = (order: string[], value: string) => (order.includes(value) ? order.indexOf(value) : order.length)
 
@@ -96,7 +99,8 @@ export function groupCourses<T extends Pick<TranscriptCourse, "year" | "term" | 
   const groups = new Map<string, CourseGroup<T>>()
   for (const course of sorted) {
     const key = by === "term" ? `${course.year}-${course.term}` : by === "year" ? String(course.year) : course.category
-    const title = by === "term" ? `${course.year}학년 ${course.term}학기` : by === "year" ? `${course.year}학년` : course.category
+    const term = course.term.trim() ? `${course.term}학기` : "학기 없음"
+    const title = by === "term" ? `${course.year}학년 ${term}` : by === "year" ? `${course.year}학년` : categoryLabel(course.category)
     const group = groups.get(key) ?? { key, title, courses: [] }
     group.courses.push(course)
     groups.set(key, group)
@@ -111,7 +115,7 @@ type CopyCourse = Pick<TranscriptCourse, "category" | "name" | "credit" | "grade
 
 /** 과목 한 줄의 복사 글. */
 export const courseLine = (c: CopyCourse, format: CopyFormat): string =>
-  format === "table" ? [c.category, c.name, c.credit, c.grade].join("\t") : `${c.name} (${c.category}) ${c.credit}학점 ${c.grade}`
+  format === "table" ? [c.category, c.name, c.credit, c.grade].join("\t") : `${c.name}${c.category.trim() ? ` (${c.category})` : ""} ${c.credit}학점 ${c.grade}`
 
 /** 묶음 하나의 복사 글. 표는 머리 줄(이수구분, 과목명, 학점, 성적)을 앞에 둔다. */
 export const groupText = (courses: CopyCourse[], format: CopyFormat): string =>
@@ -130,15 +134,21 @@ export interface CourseEdit {
   grade?: string
 }
 
-/** 고친 값을 과목에 넣는다. 숫자가 아닌 학점과 빈 성적은 넣지 않고 읽은 값을 쓴다. */
+/** 고쳐 넣은 학점을 숫자로 읽는다. 쉼표 소수("3,0")도 받는다. 0 이상의 숫자가 아니면(빈 글, "3학점") null. */
+export function parseCredit(text: string): number | null {
+  const value = text.trim().replace(",", ".")
+  const credit = value ? Number(value) : NaN
+  return Number.isFinite(credit) && credit >= 0 ? credit : null
+}
+
+/** 고친 값을 과목에 넣는다. 숫자가 아닌 학점과 빈 성적은 넣지 않고 읽은 값을 쓴다(학점 칸은 화면이 틀렸다고 알린다). */
 export function applyEdits<T extends TranscriptCourse>(courses: T[], edits: Record<number, CourseEdit>): T[] {
   return courses.map((course, i) => {
     const edit = edits[i]
     if (!edit) return course
-    const credit = edit.credit?.trim() ? Number(edit.credit.trim()) : NaN
     return {
       ...course,
-      credit: Number.isFinite(credit) && credit >= 0 ? credit : course.credit,
+      credit: (edit.credit === undefined ? null : parseCredit(edit.credit)) ?? course.credit,
       grade: edit.grade?.trim() ? normalizeGrade(edit.grade) : course.grade,
     }
   })

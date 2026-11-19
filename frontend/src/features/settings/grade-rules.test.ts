@@ -4,6 +4,7 @@ import { exampleTranscript } from "./grade-example"
 import {
   allText,
   applyEdits,
+  categoryLabel,
   convertGpa,
   countedCourses,
   courseLine,
@@ -15,6 +16,7 @@ import {
   isMajor,
   needsGradeCheck,
   normalizeGrade,
+  parseCredit,
   semesterCount,
   toHundred,
   transcriptFileProblem,
@@ -184,6 +186,14 @@ describe("groupCourses", () => {
   it("과목이 없으면 묶음도 없다", () => {
     expect(groupCourses([], "term")).toEqual([])
   })
+
+  it("서버가 읽지 못한 이수구분과 학기(빈 글)는 없음으로 묶는다", () => {
+    const blank = [course({ category: "", term: "" })]
+    expect(groupCourses(blank, "category").map((g) => g.title)).toEqual(["이수구분 없음"])
+    expect(groupCourses(blank, "term").map((g) => g.title)).toEqual(["1학년 학기 없음"])
+    expect(categoryLabel(" ")).toBe("이수구분 없음")
+    expect(courseLine(course({ category: "", name: "과목", credit: 3, grade: "A0" }), "text")).toBe("과목 3학점 A0")
+  })
 })
 
 describe("복사 글", () => {
@@ -219,6 +229,16 @@ describe("확인 필요 칸 고치기", () => {
     expect(applyEdits(list, { 0: { credit: "" } })[0].credit).toBe(3)
     expect(applyEdits(list, { 0: { credit: "-1" } })[0].credit).toBe(3)
     expect(applyEdits(list, { 0: { credit: "0.5" } })[0].credit).toBe(0.5)
+    expect(applyEdits(list, { 0: { credit: "3,0" } })[0].credit).toBe(3)
+  })
+
+  it("parseCredit: 숫자와 쉼표 소수는 받고, 단위가 붙거나 빈 글은 null", () => {
+    expect(parseCredit(" 2.5 ")).toBe(2.5)
+    expect(parseCredit("3,0")).toBe(3)
+    expect(parseCredit("0")).toBe(0)
+    expect(parseCredit("3학점")).toBeNull()
+    expect(parseCredit("")).toBeNull()
+    expect(parseCredit("-1")).toBeNull()
   })
 
   it("고치지 않은 과목은 그대로 둔다", () => {
