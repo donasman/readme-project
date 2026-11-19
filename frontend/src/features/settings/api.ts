@@ -3,9 +3,11 @@ import type { Profile, ProfileInput } from "@/domain/profile/types"
 import type { MeResponse } from "@/domain/session/types"
 import * as db from "@/mocks/account-db"
 import * as profileDb from "@/mocks/profile-db"
-import { isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
+import * as transcriptDb from "@/mocks/transcript-db"
+import { ApiError, isApiError, mockServer, request, SERVER_ORIGIN } from "@/shared/lib/api"
 
-import type { AccountInfo, MailSettings, WithdrawConfirm, WithdrawInfo } from "./types"
+import { exampleTranscript } from "./grade-example"
+import type { AccountInfo, MailSettings, Transcript, WithdrawConfirm, WithdrawInfo } from "./types"
 
 /** 내 정보. 로그인한 계정은 모두 이메일 인증을 마쳤다(로그인 문서 7절 16번). */
 export async function getAccount(): Promise<AccountInfo> {
@@ -124,6 +126,34 @@ export async function saveProfile(input: ProfileInput): Promise<SaveProfileResul
     return { ok: true, profile: await request<Profile>("PUT", "/api/me/profile", input) }
   } catch (error) {
     if (isApiError(error, "INVALID_INPUT")) return { ok: false, message: error.message }
+    throw error
+  }
+}
+
+/** 성적증명서 읽기 결과. 읽지 못했으면 올리기 칸 아래에 보일 글이다. */
+export type ReadTranscriptResult = { ok: true; transcript: Transcript } | { ok: false; message: string }
+
+// 오류마다 보일 글(학점 계산기 문서 4절). 오류 이름은 초안이라 서버의 글 대신 화면이 정한 글을 보인다
+const TRANSCRIPT_ERRORS: Record<string, string> = {
+  TRANSCRIPT_TOO_LARGE: "파일이 너무 큽니다. PDF는 10MB, 사진은 5MB, 스캔한 PDF는 20쪽까지 읽을 수 있습니다.",
+  TRANSCRIPT_UNSUPPORTED_TYPE: "PDF와 사진(JPG, PNG, GIF, WebP)만 읽을 수 있습니다.",
+  TRANSCRIPT_UNREADABLE: "파일을 읽지 못했습니다. 손상되었거나 암호가 걸려 있지 않은지 확인해 주세요. 사진이면 종이가 반듯하게 보이도록 다시 찍어 주세요.",
+  TRANSCRIPT_NO_COURSES: "과목을 찾지 못했습니다. 성적증명서가 맞는지 확인해 주세요.",
+  LLM_LIMIT_REACHED: "이번 달 AI 사용 한도에 닿았습니다. 다음 달에 다시 읽을 수 있습니다.",
+  LLM_UNAVAILABLE: "지금은 AI를 부를 수 없습니다. 잠시 뒤 다시 해 주세요.",
+}
+
+/** 성적증명서 한 파일을 읽는다(POST /api/transcripts/read, multipart의 file). 서버는 파일과 결과를 저장하지 않는다. */
+export async function readTranscript(file: File): Promise<ReadTranscriptResult> {
+  if (mockServer) return { ok: true, transcript: await transcriptDb.readTranscript(exampleTranscript()) }
+  const body = new FormData()
+  body.append("file", file)
+  try {
+    return { ok: true, transcript: await request<Transcript>("POST", "/api/transcripts/read", body) }
+  } catch (error) {
+    // 서버 앞(Caddy)이 본문 없이 413으로 끊을 수도 있다(shared/lib/api.ts의 tooLargeMessage)
+    if (error instanceof ApiError && error.status === 413) return { ok: false, message: TRANSCRIPT_ERRORS.TRANSCRIPT_TOO_LARGE }
+    if (isApiError(error, ...Object.keys(TRANSCRIPT_ERRORS))) return { ok: false, message: TRANSCRIPT_ERRORS[error.code] }
     throw error
   }
 }
