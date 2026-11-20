@@ -1,6 +1,7 @@
 package com.readme.extraction;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -8,9 +9,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.readme.common.error.ApiException;
+import com.readme.llm.LlmDocument;
 
 /**
- * 올린 파일에서 글을 읽는다. 자료 올리기(CardSourceController)와 공고 읽어 오기(postingread)가 함께 쓴다.
+ * 올린 파일에서 글을 읽는다. 자료 올리기(CardSourceController), 공고 읽어 오기(postingread), 성적증명서 읽기(transcript)가 함께 쓴다.
  *
  * <p>동시에 읽는 파일 수는 둘을 합쳐 CONCURRENT_READS 개다. 파일 하나를 읽는 데 메모리가 수십~수백 MB 든다
  * (PDF·HWP 는 256MB 힙의 다른 프로세스). 기다리는 파일은 Tomcat 의 임시 파일에 있다.
@@ -74,6 +76,26 @@ public class UploadedFiles {
 			throw new ApiException(ExtractionErrorCode.SOURCE_UNSUPPORTED_TYPE);
 		}
 		return input.text();
+	}
+
+	/**
+	 * 성적증명서(학점 계산기 GC3)의 다듬은 글. PDF 와 Claude 가 받는 사진(JPG, PNG, GIF, WebP)만 받는다(SOURCE_UNSUPPORTED_TYPE).
+	 * PDF 는 maxPdfBytes, 사진은 5MB 까지다(SOURCE_TOO_LARGE). 형식은 파일을 다 읽기 전에 앞부분으로 본다. 그 밖은 documentText 와 같다.
+	 * 글의 주민번호·전화번호 꼴은 자료 올리기처럼 가린다(PersonalNumbers). 글은 다시 LLM 으로 가기 때문이다.
+	 */
+	public String pdfOrImageText(MultipartFile file, long maxPdfBytes, long userId) throws IOException {
+		byte[] head;
+		try (InputStream in = file.getInputStream()) {
+			head = in.readNBytes(1024);
+		}
+		String mediaType = SourceFiles.llmMediaType(head);
+		if (mediaType == null) {
+			throw new ApiException(ExtractionErrorCode.SOURCE_UNSUPPORTED_TYPE);
+		}
+		if (file.getSize() > (LlmDocument.PDF.equals(mediaType) ? maxPdfBytes : ScannedFiles.MAX_IMAGE_BYTES)) {
+			throw new ApiException(ExtractionErrorCode.SOURCE_TOO_LARGE);
+		}
+		return PersonalNumbers.mask(read(file, userId).text());
 	}
 
 }

@@ -1,22 +1,17 @@
-// 경험카드 화면이 서버와 주고받는 유일한 곳. 주소는 경험카드 문서 4.1(카드)과 4.2(자료와 추출)다.
+// 경험카드 화면이 서버와 주고받는 곳. 주소는 경험카드 문서 4.1(카드)과 4.2(자료와 추출)다. 카드 한 장 읽기는 domain/card/api.ts에 있다.
+import type { CardDetail } from "@/domain/card/types"
 import * as db from "@/mocks/cards-db"
 import { apiPath, isApiError, mockServer, request, tooLargeMessage } from "@/shared/lib/api"
 import { sentence } from "@/shared/lib/korean"
 
 import { chunkCount } from "./card-text"
-import type { CardDetail, CardInput, CardsData, CardSource, CardTag, ExtractionJob, KeywordSuggestion } from "./types"
+import type { CardInput, CardsData, CardSource, CardTag, ExtractionJob, KeywordSuggestion } from "./types"
 
 /** 내 경험카드 목록과 태그. 거르기는 화면에서 한다(카드 수가 적어서). */
 export async function getCards(): Promise<CardsData> {
   if (mockServer) return { cards: db.listCards(), tags: db.listCardTags() }
   const [cards, tags] = await Promise.all([request<CardDetail[]>("GET", "/api/cards"), request<CardTag[]>("GET", "/api/cards/tags")])
   return { cards, tags }
-}
-
-/** 카드 상세. 없거나 남의 카드면 404 CARD_NOT_FOUND(오류 화면이 "찾을 수 없습니다"를 보인다). */
-export async function getCard(id: string): Promise<CardDetail> {
-  if (mockServer) return db.getCard(id)
-  return request<CardDetail>("GET", apiPath`/api/cards/${id}`)
 }
 
 /** 확인을 기다리는 카드(카드 확인 화면이 한 장씩 보여 준다). */

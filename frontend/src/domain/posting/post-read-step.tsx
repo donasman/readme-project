@@ -1,17 +1,17 @@
-import { useEffect, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type ReactNode } from "react"
 
 import SegmentedControl from "@/components/arc/segmented-control/segmented-control"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
+import { FileDrop } from "@/shared/components/file-drop"
 import { Notice } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
-import { UploadIcon } from "@/shared/icons"
-import { FILE_TOO_LARGE, MAX_FILE_BYTES } from "@/shared/lib/api"
-import { cn, isHttpUrl, matchesAccept } from "@/shared/lib/utils"
+import { isHttpUrl } from "@/shared/lib/utils"
 
 import { readPosting } from "./api"
+import { READ_FILE_ACCEPT, readFileProblem } from "./read-file"
 import type { DuplicatePost, PostDraft, PostReadInput, ReadPostResult } from "./types"
 
 type Via = "url" | "text" | "file"
@@ -20,8 +20,6 @@ const VIAS: { value: Via; label: string }[] = [
   { value: "text", label: "본문 붙여넣기" },
   { value: "file", label: "파일" },
 ]
-// 서버가 받는 형식과 크기(공고 문서 4.6). 큰 파일을 다 보낸 뒤 서버가 거절하지 않게 먼저 막는다
-const ACCEPT = ".pdf,.docx,.hwpx,.hwp"
 const TEXT_MAX = 50_000
 
 type ReadNotice = Exclude<ReadPostResult, { status: "ok" }>
@@ -85,7 +83,7 @@ export function PostReadStep({ groupId, onDraft, duplicateNotice }: PostReadStep
         <SegmentedControl label="넣는 방법" value={via} onValueChange={(value) => setVia(value as Via)} options={VIAS} />
         {via === "url" && <UrlForm busy={busy} onRead={read} initialUrl={failedUrl} />}
         {via === "text" && <TextForm busy={busy} onRead={read} initialUrl={failedUrl} />}
-        {via === "file" && <FileDrop busy={busy} onRead={read} />}
+        {via === "file" && <FileStep busy={busy} onRead={read} />}
       </Panel>
     </>
   )
@@ -142,6 +140,27 @@ function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
   const [text, setText] = useState("")
   const [sourceUrl, setSourceUrl] = useState(initialUrl)
   const [error, setError] = useState<{ text?: string; url?: string }>({})
+  // 붙여넣은 사진을 읽는 중인가. 칸에 보이는 것이 없어 아래 글로 알린다
+  const [readingImage, setReadingImage] = useState(false)
+
+  /** 사진(캡처)을 붙여넣으면 파일처럼 읽는다. 글과 함께는 보내지 못한다. */
+  async function pasteFile(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const file = event.clipboardData.files[0]
+    // 글이 함께 오면(엑셀·워드에서 복사하면 그림이 딸려 온다) 브라우저가 글을 넣게 둔다
+    if (!file || event.clipboardData.getData("text/plain")) return
+    event.preventDefault()
+    if (busy) return
+    // 쓰던 글이 있으면 읽지 않는다(사진만 읽고 칸 확인으로 넘어가 쓰던 글이 사라진다)
+    const problem = text.trim() ? "사진은 글과 함께 읽지 못합니다. 본문을 지우고 붙여넣거나 파일 탭에서 올려 주세요." : readFileProblem(file)
+    setError((er) => ({ ...er, text: problem ?? undefined }))
+    if (problem) return
+    setReadingImage(true)
+    try {
+      await onRead({ kind: "file", file })
+    } finally {
+      setReadingImage(false)
+    }
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -156,14 +175,27 @@ function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
 
   return (
     <form onSubmit={submit} noValidate className="contents">
-      <FormField id="pn-text" label="공고 본문" note={error.text && <FieldError id="pn-text">{error.text}</FieldError>}>
+      <FormField
+        id="pn-text"
+        label="공고 본문"
+        note={
+          error.text ? (
+            <FieldError id="pn-text">{error.text}</FieldError>
+          ) : (
+            <FieldHint id="pn-text">
+              {readingImage ? <span role="status">붙여넣은 사진을 읽고 있습니다. 수십 초 걸릴 수 있습니다.</span> : "공고를 찍은 사진이나 캡처를 붙여넣어도 읽습니다(JPG, PNG, GIF, WebP · 5MB까지)."}
+            </FieldHint>
+          )
+        }
+      >
         <Textarea
           id="pn-text"
           rows={8}
           placeholder="공고 내용을 그대로 붙여넣으세요"
           value={text}
           aria-invalid={error.text ? true : undefined}
-          aria-describedby={error.text ? noteId("pn-text") : undefined}
+          aria-describedby={noteId("pn-text")}
+          onPaste={(e) => void pasteFile(e)}
           onChange={(e) => {
             setText(e.target.value)
             setError((er) => ({ ...er, text: undefined }))
@@ -202,65 +234,25 @@ function TextForm({ busy, onRead, initialUrl }: UrlReadProps) {
 }
 
 /** 파일: 끌어 놓거나 고르기. */
-function FileDrop({ busy, onRead }: ReadProps) {
-  const fileInput = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
-  // 같은 이유로 이어서 막혀도 매번 알리도록 횟수를 알림의 key로 쓴다
-  const [fileError, setFileError] = useState<{ message: string; tries: number } | null>(null)
-  const failFile = (message: string | null) => setFileError((e) => (message ? { message, tries: (e?.tries ?? 0) + 1 } : null))
-
-  const take = (file: File | undefined) => {
-    // 읽는 중에 끌어 놓은 파일은 받지 않는다(버튼만 막혀 있어 두 번 읽고 늦게 끝난 쪽이 칸 확인을 덮는다)
-    if (!file || busy) return
-    if (!matchesAccept(file.name, ACCEPT)) return failFile("PDF, DOCX, HWPX, HWP 파일만 올릴 수 있습니다.")
-    if (file.size > MAX_FILE_BYTES) return failFile(FILE_TOO_LARGE)
-    failFile(null)
-    void onRead({ kind: "file", file })
-  }
-
-  const drop = (event: DragEvent) => {
-    event.preventDefault()
-    setDragging(false)
-    take(event.dataTransfer.files[0])
-  }
-
+function FileStep({ busy, onRead }: ReadProps) {
   return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault()
-        setDragging(true)
+    <FileDrop
+      id="pn-file"
+      title="공고문 파일을 여기에 끌어 놓으세요"
+      hint={
+        <>
+          PDF, DOCX, HWPX, HWP · 20MB까지
+          <br />
+          사진(JPG, PNG, GIF, WebP) · 5MB까지
+        </>
+      }
+      accept={READ_FILE_ACCEPT}
+      busy={busy}
+      onFile={(file) => {
+        const problem = readFileProblem(file)
+        if (!problem) void onRead({ kind: "file", file })
+        return problem
       }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={drop}
-      className={cn(
-        "flex flex-col items-center gap-3 rounded-control border-[1.5px] border-dashed px-6 py-8 text-center",
-        dragging ? "border-primary bg-accent-subtle" : "border-border-strong bg-surface-muted"
-      )}
-    >
-      <UploadIcon aria-hidden="true" className="size-7 text-text-secondary" />
-      <p className="font-bold">공고문 파일을 여기에 끌어 놓으세요</p>
-      <p className="text-label-sm text-text-secondary">PDF, DOCX, HWPX, HWP · 20MB까지</p>
-      <input
-        ref={fileInput}
-        type="file"
-        accept={ACCEPT}
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={(e) => {
-          take(e.target.files?.[0])
-          // 같은 파일을 다시 골라도 change가 오도록 비운다
-          e.target.value = ""
-        }}
-      />
-      <Button type="button" disabled={busy} aria-describedby={fileError ? noteId("pn-file") : undefined} onClick={() => fileInput.current?.click()}>
-        파일 고르기
-      </Button>
-      {fileError && (
-        <div role="alert" key={fileError.tries}>
-          <FieldError id="pn-file">{fileError.message}</FieldError>
-        </div>
-      )}
-    </div>
+    />
   )
 }

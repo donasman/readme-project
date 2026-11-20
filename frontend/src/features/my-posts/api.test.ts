@@ -31,8 +31,15 @@ describe("getMyPosting", () => {
 
   it("공고 분석, 서버가 센 맞는 카드, 답하지 못한 요건을 그대로 쓰고 빈 메모는 빈 글로 읽는다", async () => {
     const analysis = { must: ["Java"], nice: [], duties: ["API 개발"], keywords: ["Java"], questions: [{ text: "지원 동기", limit: 800 }] }
-    serve(200, detail(analysis, [{ cardId: 5, title: "주문 조회 개선", overlap: ["Java"] }], ["Kotlin"]))
+    serve(200, detail(analysis, [{ cardId: 5, title: "주문 조회 개선", experience: "", overlap: ["Java"] }], ["Kotlin"]))
     const { posting } = await getMyPosting("3")
-    expect(posting).toMatchObject({ analysis, memo: "", matches: [{ cardId: "5", title: "주문 조회 개선", overlap: ["Java"] }], unmatched: ["Kotlin"] })
+    expect(posting).toMatchObject({ analysis, memo: "", matches: [{ cardId: "5", title: "주문 조회 개선", experience: "", overlap: ["Java"] }], unmatched: ["Kotlin"] })
+  })
+
+  it("요건마다 맞춘 카드의 id를 글자로 읽는다", async () => {
+    const requirements = [{ kind: "must", text: "Java", status: "matched", cards: [{ cardId: 5, overlap: ["Java"] }], profileItems: [] }]
+    serve(200, { today: "2026-11-19", posting: { id: 3, memo: null, requirements } })
+    const { posting } = await getMyPosting("3")
+    expect(posting.requirements[0].cards).toEqual([{ cardId: "5", overlap: ["Java"] }])
   })
 })

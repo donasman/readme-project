@@ -30,3 +30,34 @@ export interface WithdrawInfo {
 
 /** 탈퇴의 확인: 비밀번호가 있는 계정은 비밀번호, 없는 계정(구글로만 가입)은 계정의 이메일. */
 export type WithdrawConfirm = { password: string } | { email: string }
+
+/** 만점(학점 계산기 문서 GC4). */
+export type GradeScale = 4.5 | 4.3
+
+/** 성적증명서의 과목 한 줄(POST /api/transcripts/read, 학점 계산기 문서 4절). */
+export interface TranscriptCourse {
+  /** 학년(1부터) */
+  year: number
+  /** "1", "2", "여름", "겨울" */
+  term: string
+  /** 이수구분. 줄임말은 서버가 풀어 쓴다(전필 → 전공필수) */
+  category: string
+  name: string
+  credit: number
+  /** 대문자와 기호로 맞춘 등급: A+, A0, A- … F, P, NP, S, U */
+  grade: string
+  /** 재수강하기 전의 성적(before), 재수강한 성적(after) */
+  retake: "before" | "after" | null
+  /** 확실히 읽지 못한 칸 */
+  unsure: ("credit" | "grade")[]
+}
+
+/** 성적증명서를 읽은 결과(POST /api/transcripts/read). 서버는 저장하지 않는다. */
+export interface Transcript {
+  school: string | null
+  department: string | null
+  /** 성적증명서에 적힌 만점. 없거나 다른 값이면 null */
+  scale: GradeScale | null
+  /** 성적증명서에 나온 순서 */
+  courses: TranscriptCourse[]
+}

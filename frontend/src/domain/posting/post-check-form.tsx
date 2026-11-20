@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { BackLink } from "@/shared/components/back-link"
 import { Chip } from "@/shared/components/chip"
-import { FieldError, FieldHint, FormField, noteId } from "@/shared/components/form-field"
+import { FieldError, FieldHint, FormField, noteId, unreadInput } from "@/shared/components/form-field"
 import { PanelHead, sectionTitle, subpageTitle } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { Page } from "@/shared/components/page"
@@ -29,9 +29,6 @@ const DUE_MODES: { value: DueMode; label: string }[] = [
 /** 서버가 받는 칸의 길이(공고 문서 4.4의 올리기 요청) */
 const MAX_LENGTH = { company: 200, title: 300, sourceUrl: 2000, applyAt: 100 }
 const FIELD_NAMES: Record<DraftField, string> = { company: "회사명", title: "공고명", deadline: "마감일", sourceUrl: "원문 링크", applyAt: "지원하는 곳" }
-
-/** 읽지 못한 칸: 하이라이트 테두리와 옅은 바탕. */
-const unreadInput = "border-2 border-highlight-strong bg-highlight-subtle dark:bg-highlight-subtle"
 
 interface PostCheckFormProps {
   draft: PostDraft

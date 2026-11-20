@@ -20,6 +20,8 @@ export const paths = {
   account: () => "/settings/account",
   /** 카드 뽑기 결과에서 오면 자료에서 채운 값을 확인하라는 안내를 보인다 */
   profile: (fromSource = false) => (fromSource ? "/settings/profile?from=source" : "/settings/profile"),
+  /** 학점 계산기(설정의 기본 프로필 아래) */
+  grades: () => "/settings/grades",
   mailSettings: () => "/settings/mail",
   withdraw: () => "/settings/withdraw",
   mail: () => "/mail",

@@ -16,12 +16,12 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 
 - `app/`: 라우터, 틀(헤더), 오류 화면, 시작 설정. 기능은 `features/<기능>/index.ts`로만 불러온다.
 - `features/<기능>/`: 화면 단위 묶음. 다른 기능과 `app/`을 불러오지 않는다. 기능 안에서는 상대 경로로 불러온다.
-- `domain/<이름>/`: 두 기능 이상이 쓰는 개념(`session`, `group`, `posting`, `profile`). `features/`와 `app/`을 불러오지 않는다.
+- `domain/<이름>/`: 두 기능 이상이 쓰는 개념(`session`, `group`, `posting`, `profile`, `card`). `features/`와 `app/`을 불러오지 않는다.
 - `shared/`: 도메인을 모르는 코드. `domain/`, `features/`, `app/`을 불러오지 않는다.
 - `components/ui`(shadcn), `components/arc`(dsui): 받아 온 부품이다. 폴더를 옮기지 않는다. `arc`는 고치지 않는다.
 - `mocks/`: 가짜 서버. 각 층의 `api.ts`만 부른다. `npm run dev`에서는 모든 `api.ts`가, 진짜 서버 모드에서는 서버를 아직 붙이지 않은 `api.ts`가 부른다. `mocks/`는 `shared/`와 타입(`import type`)만 불러온다.
 - 다른 층이나 다른 묶음은 `@/` 별칭으로 불러온다. 묶음 밖으로 올라가는 상대 경로(`../../shared/…`)는 쓰지 않는다.
-- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session → posting → profile)도 거기 적는다.
+- 이 규칙은 `npm run lint`가 막는다(`eslint.layers.js`). 도메인 사이 순서(group → session → posting → profile → card)도 거기 적는다.
 
 ## 쓰기 전에
 
@@ -53,7 +53,7 @@ src/app → src/features/<기능> → src/domain/<이름> → src/shared, src/co
 - 새 화면: `features/<기능>/pages/`에 만들고 그 기능의 `routes.tsx`에 `lazy`로 등록한다. `app/router.tsx`는 기능의 라우트 묶음을 조립만 한다.
 - 서버와 주고받는 것: 그 층의 `api.ts` 한 곳에 둔다. 응답 모양은 `types.ts`에 둔다. 화면과 훅은 `api.ts`를 거친다.
   - 서버는 `shared/lib/api.ts`의 `request`로 부른다(쿠키, CSRF 헤더, 오류를 `ApiError`로). 가짜 서버가 있는 함수는 맨 앞에서 `if (mockServer) return db.…`로 고른다.
-  - 칸 아래에 알릴 서버 오류는 `api.ts`가 `isApiError(error, "코드")`로 골라 결과 값으로 돌려주고, 나머지는 던진다. 던진 오류는 loader에서 나면 오류 화면(`app/route-error.tsx`)이, 버튼에서 나면 화면 아래 알림(`app/action-error.tsx`)이 보인다. 버튼의 처리기에서 오류를 삼키지 않는다(`catch`로 막으면 알림이 뜨지 않는다). 서버의 id(숫자)는 `request`가 문자열로 읽는다(이름이 `id`이거나 `Id`로 끝나는 칸, `Ids`로 끝나는 목록).
+  - 칸 아래에 알릴 서버 오류는 `api.ts`가 `isApiError(error, "코드")`로 골라 결과 값으로 돌려주고, 나머지는 던진다. 던진 오류는 loader에서 나면 오류 화면(`app/route-error.tsx`)이, 버튼에서 나면 화면 아래 알림(`app/action-error.tsx`)이 보인다. 버튼의 처리기에서 오류를 삼키지 않는다(`catch`로 막으면 알림이 뜨지 않는다). 서버의 id(숫자)는 `request`가 문자열로 읽는다(이름이 `id`이거나 `Id`로 끝나는 칸).
 - 화면과 무관한 규칙(필터, 정렬, 날짜 계산): 순수 함수 파일에 둔다(`list-rules.ts`, `deadline.ts`처럼). 컴포넌트 안에 두지 않는다.
 - 주소: `shared/lib/paths.ts`의 함수로 만든다. 문자열로 직접 만들지 않는다.
 - 아이콘: `shared/icons.ts`에서만 lucide를 불러온다.

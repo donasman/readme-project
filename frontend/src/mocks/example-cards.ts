@@ -1,7 +1,8 @@
 // 백엔드 연결 전 경험카드 예시. 목록 6장은 "리드미 시안 3종"의 "A · 카드 목록", 첫 카드의 STAR·근거·원문은
 // 6차 "카드 상세"와 "카드 확인"의 값을 그대로 옮겼다. 회사, 프로젝트, 경험은 모두 지어낸 예시다.
 // 화면과 api.ts는 이 파일을 직접 읽지 않는다. 같은 폴더의 db.ts만 읽는다.
-import type { CardDetail, CardSource, Star } from "@/features/cards/types"
+import type { CardDetail, Star } from "@/domain/card/types"
+import type { CardSource } from "@/features/cards/types"
 
 const EMPTY_STAR: Star = { situation: "", task: "", action: "", result: "", obstacle: "", learning: "" }
 
@@ -174,6 +175,31 @@ export function createExampleCards(): CardDetail[] {
         verified: true,
       },
       RESUME
+    ),
+    // 내 공고 상세(예시 커머스 백엔드)의 Java 요건이 카드 4장이 되어 "카드 N장 더 보기"가 보이도록 더한 카드(최종 시안)
+    card(
+      {
+        id: "8",
+        title: "주문 알림 메일 발송 서버 만들기",
+        period: "2024-03 ~ 2024-05",
+        org: "개인 프로젝트",
+        role: "1인 개발",
+        tags: ["Java", "Spring Boot"],
+        summary: "주문이 들어오면 알림 메일을 보내는 작은 서버를 만들고 실패한 메일을 다시 보내게 한 경험",
+        usableFor: ["직무역량"],
+        verified: true,
+      },
+      {
+        star: {
+          situation: "개인 쇼핑몰 연습 프로젝트에서 주문이 들어와도 판매자가 바로 알 수 없었다.",
+          task: "주문이 들어오면 판매자에게 알림 메일을 보내는 서버를 만드는 일을 맡았다.",
+          action: "주문 이벤트를 받아 메일을 보내고, 실패한 메일은 표에 남겨 5분마다 다시 보내게 했다.",
+          result: "보내지 못한 메일 없이 주문 알림이 판매자에게 닿았다.",
+          obstacle: "",
+          learning: "",
+        },
+        facts: ["실패한 메일 다시 보내기 5분 간격"],
+      }
     ),
   ]
 }

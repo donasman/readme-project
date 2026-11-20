@@ -24,7 +24,10 @@ public enum LlmFeature {
 	MAIL_CLASSIFY(Effort.LOW, 8_000),
 
 	/** 글자 층이 없는 PDF(스캔본)와 사진의 글 옮겨 적기(5-8, 6-1). 옮겨 적는 글이 길어 출력 상한이 크다 */
-	DOCUMENT_READ(Effort.LOW, 32_000);
+	DOCUMENT_READ(Effort.LOW, 32_000),
+
+	/** 성적증명서의 글에서 과목 줄 읽기(학점 계산기). 파일마다 한 번. 과목이 수십 개라 답이 길다 */
+	TRANSCRIPT_READ(Effort.LOW, 16_000);
 
 	private final Effort effort;
 

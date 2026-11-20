@@ -44,16 +44,24 @@ export interface RequirementResult {
   kind: "must" | "nice"
   text: string
   status: "matched" | "profile" | "unmatched" | "unknown"
-  /** 맞춘 내 카드. 모두 matches에 있다 */
-  cardIds: string[]
+  /** 맞춘 내 카드(matches의 순서). 모두 matches에도 있다 */
+  cards: RequirementCard[]
   /** 요건 글에 있는 내 프로필 값(자격증, 어학 시험, 전공) */
   profileItems: string[]
 }
 
-/** 맞는 카드(공고 문서 4.8): 카드 제목과, 공고의 요건 낱말·키워드 가운데 카드 태그에 있는 것. 가짜 서버는 태그 겹침으로 흉내 낸다. */
+/** 요건 하나를 맞춘 카드(공고 문서 4.8, 2026-11-19): overlap은 이 요건의 낱말 가운데 카드 태그(포함 관계를 더한 것)에 있는 것, 요건 글에 나온 순서. */
+export interface RequirementCard {
+  cardId: string
+  overlap: string[]
+}
+
+/** 맞는 카드(공고 문서 4.8): 카드 제목, 경험 이름, 공고의 요건 낱말·키워드 가운데 카드 태그에 있는 것. 가짜 서버는 태그 겹침으로 흉내 낸다. */
 export interface CardMatch {
   cardId: string
   title: string
+  /** 경험 이름. 없으면 빈 글자 */
+  experience: string
   overlap: string[]
 }
 

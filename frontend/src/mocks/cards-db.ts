@@ -1,6 +1,7 @@
 // 가짜 서버의 경험카드 쪽: 카드, 올린 자료, 카드 뽑기 작업, 태그 대표 표기. 백엔드를 연결하면 이 파일도 지운다.
 // 서버가 할 일(카드 검사, 조각 나누기, 뽑기 진행)도 흉내 낸다. 이 폴더는 shared와 타입(import type)만 불러온다.
-import type { CardDetail, CardInput, CardSource, CardTag, ExperienceCard, ExtractionJob, KeywordSuggestion } from "@/features/cards/types"
+import type { CardDetail, ExperienceCard } from "@/domain/card/types"
+import type { CardInput, CardSource, CardTag, ExtractionJob, KeywordSuggestion } from "@/features/cards/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { createExampleCards, createExampleSources, createExtractionPool, KEYWORD_ALIASES, KEYWORDS } from "./example-cards"
