@@ -15,5 +15,9 @@ indent_size = 4
 [*.bat]
 end_of_line = crlf
 
+# Windows PowerShell 5.1 은 BOM 이 없으면 한글을 깨뜨려 읽는다.
+[*.ps1]
+charset = utf-8-bom
+
 [*.md]
 trim_trailing_whitespace = false

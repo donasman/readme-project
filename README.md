@@ -23,7 +23,9 @@ readme/
 
 ## 처음 띄우기
 
-터미널 세 개를 쓴다. 모두 이 폴더(`C:\Dev\readme`)에서 시작한다.
+한 번에 띄우려면 이 폴더에서 `powershell -ExecutionPolicy Bypass -File .\dev.ps1` 을 실행한다. Docker Desktop 을 켜고 DB·메일 수신기를 올린 뒤 서버와 화면을 창 두 개로 띄운다. 1025 를 다른 프로그램(Oracle 등)이 쓰고 있으면 메일 수신기를 1026 에 띄우고 서버도 그쪽으로 보낸다.
+
+손으로 띄우려면 터미널 세 개를 쓴다. 모두 이 폴더(`C:\Dev\readme`)에서 시작한다.
 
 ```powershell
 # 1) DB(localhost:5433) 와 메일 수신기
