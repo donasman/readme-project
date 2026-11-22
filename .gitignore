@@ -15,3 +15,6 @@ Thumbs.db
 application-local.yml
 
 # 백엔드와 프런트의 빌드 결과는 각 폴더의 .gitignore 가 맡는다
+
+# 루트의 npm run dev 가 쓰는 패키지(concurrently)
+/node_modules/

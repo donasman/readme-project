@@ -1,0 +1,11 @@
+{
+  "name": "readme-dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
+}
