@@ -32,11 +32,14 @@ test("초안을 만들고 위·아래, 빼기, 더하기로 순서를 고친다"
   await panel.getByRole("button", { name: "LLM으로 초안 다시 만들기" }).click()
   const dialog = page.getByRole("dialog", { name: "초안으로 바꿀까요?" })
   await dialog.getByRole("button", { name: "초안 만들기" }).click()
-  // 초안을 만드는 동안 창은 "만드는 중"을 보인다. 기다리다 창을 닫아도 목록은 고칠 수 없다(늦게 끝난 초안이 고친 순서를 덮어쓰지 않게)
+  // 초안을 만드는 동안 창은 "만드는 중"을 보이고 목록은 고칠 수 없다(늦게 끝난 초안이 고친 순서를 덮어쓰지 않게).
+  // 잠금은 창을 닫기 전에 본다: 닫히기를 기다리면 가짜 초안(600ms)이 먼저 끝날 수 있다. 창이 덮은 목록은 역할로 찾지 못해 aria-label로 찾는다
+  const remove = panel.locator(`button[aria-label="${first} 빼기"]`)
   await expect(dialog.getByRole("button", { name: "만드는 중…" })).toBeDisabled()
+  await expect(remove).toBeDisabled()
+  await expect(panel.locator("button", { hasText: "초안 만드는 중…" })).toBeDisabled()
   await page.keyboard.press("Escape")
   await expect(dialog).toBeHidden()
-  await expect(panel.getByRole("button", { name: `${first} 빼기` })).toBeDisabled()
-  await expect(panel.getByRole("button", { name: `${first} 빼기` })).toBeEnabled()
+  await expect(remove).toBeEnabled()
   await expect(titles.nth(0)).toHaveText(first)
 })
