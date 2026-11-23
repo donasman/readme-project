@@ -18,19 +18,30 @@ import com.readme.posting.ApplicationStatus.Stage;
  * @param unmatched   카드로 답하지 못한 필수·우대 요건(프로필에 있는 요건은 빠진다)
  * @param requirements 필수·우대 요건마다의 결과(카드 있음, 프로필에 있음, 카드 없음, 판단 못 함)와 맞춘 카드마다 겹친 낱말
  * @param groupStates groups 와 같은 그룹들에 그 그룹에서의 내 관심, 댓글 수, 내 공개 범위가 붙는다
+ * @param cardPriority 이 공고에 먼저 쓸 내 경험카드(카드 우선순위 설계). 첫째가 앞이다. 없으면 빈 목록
  */
 record MyPostingDetailResponse(long id, String company, String title, DeadlineResponse deadline, Decision decision,
 		Stage stage, Result result, String status, List<MyPostingResponse.Group> groups, String applyAt,
 		String sourceUrl, List<PostSection> sections, List<String> keywords, PostingAnalysis analysis, String memo,
 		List<CardMatching.CardMatch> matches, List<String> unmatched,
-		List<CardMatching.RequirementResult> requirements, List<GroupState> groupStates) {
+		List<CardMatching.RequirementResult> requirements, List<GroupState> groupStates,
+		List<PriorityCard> cardPriority) {
 
 	static MyPostingDetailResponse of(MyPostingResponse posting, Details details, List<String> keywords,
-			CardMatching.Result match, List<GroupState> groupStates) {
+			CardMatching.Result match, List<GroupState> groupStates, List<PriorityCard> cardPriority) {
 		return new MyPostingDetailResponse(posting.id(), posting.company(), posting.title(), posting.deadline(),
 				posting.decision(), posting.stage(), posting.result(), posting.status(), posting.groups(),
 				details.applyAt(), details.sourceUrl(), details.sections(), keywords, details.analysis(),
-				details.memo(), match.matches(), match.unmatched(), match.requirements(), groupStates);
+				details.memo(), match.matches(), match.unmatched(), match.requirements(), groupStates, cardPriority);
+	}
+
+	/**
+	 * 카드 우선순위 한 장. 프런트의 PriorityCard 모양이다.
+	 *
+	 * @param experience 경험 이름. 없으면 빈 글자
+	 * @param reason     LLM 이 고른 이유. 사용자가 더한 카드는 null
+	 */
+	record PriorityCard(long cardId, String title, String experience, String reason) {
 	}
 
 	/** 상세에만 있는 공고 본체의 값과 내 메모. */

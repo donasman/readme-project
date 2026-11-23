@@ -10,7 +10,13 @@ enum PostingErrorCode implements ErrorCode {
 	POSTING_NOT_FOUND(HttpStatus.NOT_FOUND, "공고를 찾을 수 없습니다"),
 
 	/** 그룹 없이 내 공고에 넣기: 이미 내 공고에 있는 공고다. 응답에 그 공고의 postingId 가 붙는다. */
-	ALREADY_IN_MY_POSTINGS(HttpStatus.CONFLICT, "이미 내 공고에 있는 공고입니다");
+	ALREADY_IN_MY_POSTINGS(HttpStatus.CONFLICT, "이미 내 공고에 있는 공고입니다"),
+
+	/** 카드 우선순위 초안: 내 경험카드가 하나도 없다 */
+	NO_CARDS(HttpStatus.CONFLICT, "경험카드가 없어 우선순위를 만들 수 없습니다. 카드를 먼저 만들어 주세요"),
+
+	/** 카드 우선순위 초안: 공고 분석도 공고 내용 묶음도 없어 LLM 에 보낼 글이 없다 */
+	NO_POSTING_CONTENT(HttpStatus.CONFLICT, "공고 내용이 없어 우선순위를 만들 수 없습니다");
 
 	private final HttpStatus status;
 

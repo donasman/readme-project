@@ -55,4 +55,18 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 	int upsertSchedule(@Param("userId") long userId, @Param("postingId") long postingId, @Param("stage") String stage,
 			@Param("date") LocalDate date, @Param("time") LocalTime time, @Param("now") Instant now);
 
+	/** 이 내 공고의 카드 우선순위를 모두 지운다(카드 우선순위 설계). */
+	@Modifying
+	@Query(value = "delete from user_posting_cards where user_id = :userId and posting_id = :postingId", nativeQuery = true)
+	int deleteCards(@Param("userId") long userId, @Param("postingId") long postingId);
+
+	/** 카드 우선순위 한 줄. 지운 뒤에만 부른다. */
+	@Modifying
+	@Query(value = """
+			insert into user_posting_cards (user_id, posting_id, card_id, position, reason)
+			values (:userId, :postingId, :cardId, :position, cast(:reason as varchar))
+			""", nativeQuery = true)
+	int insertCard(@Param("userId") long userId, @Param("postingId") long postingId, @Param("cardId") long cardId,
+			@Param("position") int position, @Param("reason") String reason);
+
 }

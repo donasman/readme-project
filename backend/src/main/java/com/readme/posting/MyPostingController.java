@@ -35,14 +35,18 @@ class MyPostingController {
 
 	private final UserPostings userPostings;
 
+	private final CardPriorities cardPriorities;
+
 	private final MyPostingQueries queries;
 
 	private final JdbcClient jdbc;
 
 	private final Clock clock;
 
-	MyPostingController(UserPostings userPostings, MyPostingQueries queries, JdbcClient jdbc, Clock clock) {
+	MyPostingController(UserPostings userPostings, CardPriorities cardPriorities, MyPostingQueries queries, JdbcClient jdbc,
+			Clock clock) {
 		this.userPostings = userPostings;
+		this.cardPriorities = cardPriorities;
 		this.queries = queries;
 		this.jdbc = jdbc;
 		this.clock = clock;
@@ -119,6 +123,36 @@ class MyPostingController {
 		if (!this.userPostings.setMemo(user.id(), postingId, request.memo())) {
 			throw new ApiException(PostingErrorCode.POSTING_NOT_FOUND);
 		}
+	}
+
+	/**
+	 * 경험카드 우선순위 초안(카드 우선순위 설계). LLM 이 내 카드에서 5장까지 고르고 이유를 붙여 앞 목록을 바꾼다. 새 목록을 돌려준다.
+	 * 내 공고에 없으면 404 POSTING_NOT_FOUND, 카드가 없으면 409 NO_CARDS, 공고 내용이 없으면 409 NO_POSTING_CONTENT,
+	 * 한도에 닿았으면 429 LLM_LIMIT_REACHED, 답을 못 받으면 503 LLM_UNAVAILABLE, 쓸 수 없는 답이면 502 LLM_FAILED.
+	 */
+	@PostMapping("/api/me/postings/{postingId}/card-priority/draft")
+	CardPriorityResponse draftCardPriority(@PathVariable long postingId, @CurrentUser LoginUser user) {
+		this.cardPriorities.draft(user.id(), postingId);
+		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId));
+	}
+
+	/**
+	 * 경험카드 우선순위를 이 순서로 둔다(5장까지, 빈 목록이면 비운다). 앞 목록에 있던 카드의 이유는 남는다. 새 목록을 돌려준다.
+	 * 겹친 카드나 내 카드가 아닌 카드는 400 INVALID_INPUT, 내 공고에 없으면 404 POSTING_NOT_FOUND.
+	 */
+	@PutMapping("/api/me/postings/{postingId}/card-priority")
+	CardPriorityResponse setCardPriority(@PathVariable long postingId, @Valid @RequestBody CardPriorityRequest request,
+			@CurrentUser LoginUser user) {
+		this.cardPriorities.reorder(user.id(), postingId, request.cardIds());
+		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId));
+	}
+
+	/** 카드 우선순위 바꾸기의 본문. 첫째가 앞이다. */
+	record CardPriorityRequest(@NotNull @Size(max = CardPriorities.MAX) List<@NotNull Long> cardIds) {
+	}
+
+	/** 카드 우선순위 초안과 바꾸기의 응답. */
+	record CardPriorityResponse(List<MyPostingDetailResponse.PriorityCard> cards) {
 	}
 
 	private boolean canSee(long userId, long postingId) {
