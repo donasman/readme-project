@@ -81,7 +81,24 @@ export interface MyPostingDetail extends MyPosting {
   /** 필수·우대 요건마다의 결과(공고 문서 4.8). 분석이 없으면 비어 있다 */
   requirements: RequirementResult[]
   groupStates: PostingGroupState[]
+  /** 이 공고에 먼저 쓸 내 경험카드(카드 우선순위 문서). 첫째가 앞, 5장까지. 없으면 빈 목록 */
+  cardPriority: PriorityCard[]
 }
+
+/** 경험카드 우선순위 한 장. reason은 LLM 초안이 고른 이유이고, 사용자가 더한 카드는 null이다. */
+export interface PriorityCard {
+  cardId: string
+  title: string
+  /** 경험 이름. 없으면 빈 글자 */
+  experience: string
+  reason: string | null
+}
+
+/** 더할 수 있는 내 카드 하나(제목과 경험 이름). */
+export type CardChoice = Pick<PriorityCard, "cardId" | "title" | "experience">
+
+/** 우선순위 초안 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(카드 없음, 공고 내용 없음, 이번 달 한도). */
+export type DraftResult = { ok: true; cards: PriorityCard[] } | { ok: false; error: "NO_CARDS" | "NO_POSTING_CONTENT" | "LLM_LIMIT_REACHED" }
 
 /** 홈의 "그룹 소식" 한 줄: 내 그룹의 최근 7일 새 공고와 새 댓글(GET /api/me/group-activity, 공고 문서 4.5). */
 export interface GroupNews {

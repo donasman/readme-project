@@ -1,10 +1,11 @@
 // 홈과 내 공고 화면이 서버와 주고받는 곳. 주소는 공고 문서 4.2(내 공고)와 4.5(그룹 소식), 메일 설계 4.4·4.5(메일에서 온 변경, 전형 일정)다.
 import { mailSummary } from "@/mocks/mail-db"
+import { listCards } from "@/mocks/cards-db"
 import * as db from "@/mocks/my-db"
 import type { PostUpload } from "@/domain/posting/types"
 import { apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
 
-import type { AddPostingResult, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, Schedule } from "./types"
+import type { AddPostingResult, CardChoice, DraftResult, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PriorityCard, Schedule } from "./types"
 
 /** 내 공고 목록과 서버 기준 오늘. 거르기, 검색, 정렬, 지원 현황의 숫자는 화면에서 한다. */
 export async function getMyPostings(): Promise<{ today: string; postings: MyPosting[] }> {
@@ -74,4 +75,34 @@ export async function removeMyPosting(id: string): Promise<void> {
 export async function getSchedules(): Promise<Schedule[]> {
   if (mockServer) return db.listSchedules()
   return request("GET", "/api/me/schedules")
+}
+
+/**
+ * 경험카드 우선순위 LLM 초안(POST /api/me/postings/{postingId}/card-priority/draft, 카드 우선순위 문서 4절). 앞 목록을 바꾼다.
+ * 카드 없음(409 NO_CARDS), 공고 내용 없음(409 NO_POSTING_CONTENT), 이번 달 한도(429 LLM_LIMIT_REACHED)는 패널에 알리고, 나머지(LLM 실패 등)는 던진다.
+ */
+export async function draftCardPriority(id: string): Promise<DraftResult> {
+  if (mockServer) return db.draftCardPriority(id)
+  try {
+    const { cards } = await request<{ cards: PriorityCard[] }>("POST", apiPath`/api/me/postings/${id}/card-priority/draft`)
+    return { ok: true, cards }
+  } catch (error) {
+    for (const code of ["NO_CARDS", "NO_POSTING_CONTENT", "LLM_LIMIT_REACHED"] as const) {
+      if (isApiError(error, code)) return { ok: false, error: code }
+    }
+    throw error
+  }
+}
+
+/** 경험카드 우선순위를 이 순서로 저장한다(PUT …/card-priority). 앞 목록에 있던 카드는 고른 이유가 남는다. */
+export async function saveCardPriority(id: string, cardIds: string[]): Promise<PriorityCard[]> {
+  if (mockServer) return db.saveCardPriority(id, cardIds)
+  const { cards } = await request<{ cards: PriorityCard[] }>("PUT", apiPath`/api/me/postings/${id}/card-priority`, { cardIds: cardIds.map(Number) })
+  return cards
+}
+
+/** 우선순위에 더할 수 있는 내 카드 전부(GET /api/cards). 기능끼리 불러오지 않으려 cards의 api.ts 대신 바로 부른다(getHome과 같다). */
+export async function getCardChoices(): Promise<CardChoice[]> {
+  const cards = mockServer ? listCards() : await request<{ id: string; title: string; experience: string }[]>("GET", "/api/cards")
+  return cards.map((c) => ({ cardId: c.id, title: c.title, experience: c.experience }))
 }

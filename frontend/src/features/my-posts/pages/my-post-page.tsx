@@ -20,7 +20,8 @@ import { paths } from "@/shared/lib/paths"
 import { useArrivalState } from "@/shared/lib/router"
 import { docTitle, joinClasses } from "@/shared/lib/utils"
 
-import { getMyPosting, getSchedules, removeMyPosting, saveMemo } from "../api"
+import { getCardChoices, getMyPosting, getSchedules, removeMyPosting, saveMemo } from "../api"
+import { CardPriorityPanel } from "../components/card-priority-panel"
 import { DdayBadge } from "../components/my-bits"
 import { RemoveDialog } from "../components/remove-dialog"
 import { QuestionsPanel, RequirementsPanel } from "../components/requirement-panels"
@@ -30,15 +31,15 @@ import type { ArrivedState, RemovedState } from "../types"
 
 export async function myPostLoader({ params }: LoaderFunctionArgs) {
   // 전형 일정 수는 빼기 창이 알린다(상세 응답에 없다)
-  const [detail, schedules] = await Promise.all([getMyPosting(params.postingId ?? ""), getSchedules()])
-  return { ...detail, scheduleCount: schedules.filter((s) => s.postingId === detail.posting.id).length }
+  const [detail, schedules, cardChoices] = await Promise.all([getMyPosting(params.postingId ?? ""), getSchedules(), getCardChoices()])
+  return { ...detail, cardChoices, scheduleCount: schedules.filter((s) => s.postingId === detail.posting.id).length }
 }
 
 const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-bold whitespace-nowrap text-primary"
 
-/** 공고 상세(시안 8차, 내 공고. 요건과 내 카드, 자기소개서 문항, 빼기는 12차): 마감과 지원처, 내 상태, 공고 내용(원문), 메모, 옆 칸에 요건과 내 카드, 이 공고가 있는 그룹. */
+/** 공고 상세(시안 8차, 내 공고. 요건과 내 카드, 자기소개서 문항, 빼기는 12차): 마감과 지원처, 내 상태, 공고 내용(원문), 경험카드 우선순위(시안 없음), 메모, 옆 칸에 요건과 내 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
-  const { today, posting, scheduleCount } = useLoaderData<typeof myPostLoader>()
+  const { today, posting, scheduleCount, cardChoices } = useLoaderData<typeof myPostLoader>()
   const navigate = useNavigate()
   // 내 공고 넣기에서 이미 있는 공고로 왔을 때
   const arrived = useArrivalState<ArrivedState>()?.arrived ?? false
@@ -129,6 +130,8 @@ export function MyPostPage() {
               </div>
             )}
           </Panel>
+
+          <CardPriorityPanel key={posting.id} postingId={posting.id} initial={posting.cardPriority} choices={cardChoices} />
 
           <Panel aria-labelledby="mp-memo" className="flex flex-col gap-4 p-6">
             <PanelHead id="mp-memo" title="나만 보는 메모">그룹에는 보이지 않습니다.</PanelHead>

@@ -5,7 +5,7 @@
 import type { ExperienceCard } from "@/domain/card/types"
 import type { PostingAnalysis, PostUpload } from "@/domain/posting/types"
 import type { GroupPostDetail } from "@/features/group-posts/types"
-import type { AddPostingResult, CardMatch, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup, RequirementResult, Schedule } from "@/features/my-posts/types"
+import type { AddPostingResult, CardMatch, DraftResult, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup, PriorityCard, RequirementResult, Schedule } from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
@@ -125,6 +125,7 @@ export function getMyPosting(id: string): MyPostingDetail {
     matches: analysis ? matches : [],
     unmatched: analysis ? [...(extra.unmatched ?? [])] : [],
     requirements: analysis ? requirementResults(analysis, cards, matches) : [],
+    cardPriority: priorityOf(e),
     groupStates: found.map(({ group, post }) => ({
       ...group,
       interested: post.me.interested,
@@ -195,4 +196,40 @@ export function getHome(): Omit<HomeData, "mailChanges"> {
     return g ? [{ group: { id: g.id, name: g.name, mark: g.mark }, text: n.text, postId: n.postId }] : []
   })
   return { today: today(), postings: listMyPostings(), unverifiedCards: listUnverifiedCards().length, news }
+}
+
+/** 우선순위 목록. 지운 카드는 빠진다(서버는 외래 키로 지운다). */
+function priorityOf(e: Entry): PriorityCard[] {
+  const cards = listCards()
+  return (e.priority ?? []).flatMap(({ cardId, reason }) => {
+    const card = cards.find((c) => c.id === cardId)
+    return card ? [{ cardId, title: card.title, experience: card.experience, reason }] : []
+  })
+}
+
+/**
+ * 우선순위 LLM 초안 흉내(POST …/card-priority/draft): 공고 키워드와 겹치는 태그가 많은 카드부터 5장, 이유는 겹친 키워드다.
+ * 카드가 없으면 NO_CARDS, 공고 내용도 키워드도 없으면 NO_POSTING_CONTENT.
+ */
+export function draftCardPriority(id: string): DraftResult {
+  const posting = getMyPosting(id)
+  const cards = listCards()
+  if (cards.length === 0) return { ok: false, error: "NO_CARDS" }
+  if (posting.sections.length === 0 && posting.keywords.length === 0) return { ok: false, error: "NO_POSTING_CONTENT" }
+  const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+  rawEntry(id).priority = cards
+    .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
+    .filter((c) => c.overlap.length > 0)
+    .sort((a, b) => b.overlap.length - a.overlap.length)
+    .slice(0, 5)
+    .map(({ cardId, overlap }) => ({ cardId, reason: `공고 키워드 ${overlap.join(", ")}에 답하는 카드입니다` }))
+  return { ok: true, cards: priorityOf(rawEntry(id)) }
+}
+
+/** 우선순위를 이 순서로 둔다(PUT …/card-priority). 앞 목록에 있던 카드는 이유가 남는다. */
+export function saveCardPriority(id: string, cardIds: string[]): PriorityCard[] {
+  const e = rawEntry(id)
+  if (cardIds.length > 5 || new Set(cardIds).size !== cardIds.length) throw new Error("INVALID_INPUT: 5장까지, 겹치지 않게")
+  e.priority = cardIds.map((cardId) => ({ cardId, reason: e.priority?.find((p) => p.cardId === cardId)?.reason ?? null }))
+  return priorityOf(e)
 }
