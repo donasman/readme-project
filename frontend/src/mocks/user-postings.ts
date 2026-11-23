@@ -1,9 +1,10 @@
 // 가짜 서버의 내 공고 행(서버의 user_postings): 공고마다 내 결정·단계·결과와 메모. 값은 시안 8차 "내 공고"의 9건이다.
 // 내 공고와 지원 현황(my-db.ts), 그룹 공고의 내 상태(db.ts), 메일 확인함의 반영(mail-db.ts)이 모두 이것을 읽고 쓴다.
 // db.ts와 my-db.ts가 서로 부르지 않게 따로 둔다. 이 폴더는 shared와 타입만 불러온다.
+import type { Star } from "@/domain/card/types"
 import type { MyState } from "@/domain/posting/my-state"
 import type { PostSection } from "@/domain/posting/types"
-import type { MyPosting } from "@/features/my-posts/types"
+import type { MyPosting, QuestionType } from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
 /** 내 공고 하나: 어느 그룹 공고들에 걸려 있는지와 내 상태. */
@@ -16,6 +17,8 @@ export interface Entry extends MyState {
   memo: string
   /** 경험카드 우선순위(서버의 user_posting_cards). 첫째가 앞. 없으면 빈 목록으로 본다 */
   priority?: { cardId: string; reason: string | null }[]
+  /** 자기소개서 문항과 고른 카드(서버의 user_posting_questions, 문항 매칭 문서 3절). 없으면 저장 전이라 공고 분석의 문항을 보인다 */
+  questions?: { id: string; text: string; limit: number | null; type: QuestionType | null; cards: { cardId: string; reason: string | null; emphasis: (keyof Star)[] }[] }[]
   /** 그룹 없이 넣은 공고의 나머지 본체(어느 그룹 공고에도 걸려 있지 않다) */
   own?: { applyAt: string | null; sourceUrl: string | null; sections: PostSection[]; keywords: string[] }
 }

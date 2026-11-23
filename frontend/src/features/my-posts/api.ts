@@ -5,7 +5,7 @@ import * as db from "@/mocks/my-db"
 import type { PostUpload } from "@/domain/posting/types"
 import { apiPath, isApiError, mockServer, request } from "@/shared/lib/api"
 
-import type { AddPostingResult, CardChoice, DraftResult, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PriorityCard, Schedule } from "./types"
+import type { AddPostingResult, CardChoice, DraftResult, GroupNews, HomeData, MatchResult, MyPosting, MyPostingDetail, MyState, PriorityCard, Question, Schedule } from "./types"
 
 /** 내 공고 목록과 서버 기준 오늘. 거르기, 검색, 정렬, 지원 현황의 숫자는 화면에서 한다. */
 export async function getMyPostings(): Promise<{ today: string; postings: MyPosting[] }> {
@@ -105,4 +105,38 @@ export async function saveCardPriority(id: string, cardIds: string[]): Promise<P
 export async function getCardChoices(): Promise<CardChoice[]> {
   const cards = mockServer ? listCards() : await request<{ id: string; title: string; experience: string }[]>("GET", "/api/cards")
   return cards.map((c) => ({ cardId: c.id, title: c.title, experience: c.experience }))
+}
+
+/**
+ * 자기소개서 문항 목록을 이 순서로 통째로 둔다(PUT …/questions, 문항 매칭 문서 4절). id가 있으면 그 문항을 고쳐 카드와 유형이 남고,
+ * 없으면 새 문항, 빠진 문항은 지워진다. 수와 길이는 창이 먼저 막는다(10개, 1,000자, 글자 수 1~10,000).
+ */
+export async function saveQuestions(id: string, questions: Pick<Question, "id" | "text" | "limit">[]): Promise<Question[]> {
+  if (mockServer) return db.saveQuestions(id, questions)
+  const body = { questions: questions.map((q) => ({ id: q.id === null ? null : Number(q.id), text: q.text, limit: q.limit })) }
+  return (await request<{ questions: Question[] }>("PUT", apiPath`/api/me/postings/${id}/questions`, body)).questions
+}
+
+/**
+ * LLM으로 모든 문항의 유형과 카드를 고른다(POST …/questions/match). 저장 전이면 지금 문항을 먼저 저장하고, 앞 결과를 바꾼다.
+ * 문항 없음(409 NO_QUESTIONS), 카드 없음(409 NO_CARDS), 이번 달 한도(429 LLM_LIMIT_REACHED)는 패널에 알리고, 나머지(LLM 실패 등)는 던진다.
+ */
+export async function matchQuestions(id: string): Promise<MatchResult> {
+  if (mockServer) return db.matchQuestions(id)
+  try {
+    const { questions } = await request<{ questions: Question[] }>("POST", apiPath`/api/me/postings/${id}/questions/match`)
+    return { ok: true, questions }
+  } catch (error) {
+    for (const code of ["NO_QUESTIONS", "NO_CARDS", "LLM_LIMIT_REACHED"] as const) {
+      if (isApiError(error, code)) return { ok: false, error: code }
+    }
+    throw error
+  }
+}
+
+/** 문항 하나의 카드를 이 순서로 둔다(PUT …/questions/{questionId}/cards). 앞에 있던 카드는 이유와 살릴 칸이 남는다. */
+export async function setQuestionCards(id: string, questionId: string, cardIds: string[]): Promise<Question[]> {
+  if (mockServer) return db.setQuestionCards(id, questionId, cardIds)
+  const body = { cardIds: cardIds.map(Number) }
+  return (await request<{ questions: Question[] }>("PUT", apiPath`/api/me/postings/${id}/questions/${questionId}/cards`, body)).questions
 }

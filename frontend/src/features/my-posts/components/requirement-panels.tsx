@@ -1,9 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router"
 
-import { formatQuestionLimit } from "@/domain/posting/analysis"
-import type { PostingAnalysis } from "@/domain/posting/types"
-import { PanelHead, sectionTitle, subLabel } from "@/shared/components/heading"
+import { PanelHead, subLabel } from "@/shared/components/heading"
 import { Panel } from "@/shared/components/panel"
 import { CheckIcon, ChevronDownIcon, ChevronRightIcon, CircleAlertIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
@@ -162,26 +160,6 @@ export function RequirementsPanel({ requirements, matches }: { requirements: Req
         onIndex={(index) => setPreview((p) => p && { ...p, index })}
         onClose={() => setPreview(null)}
       />
-    </Panel>
-  )
-}
-
-/** 자기소개서 문항(12차 시안 안 B): 공고 분석이 찾은 문항과 글자 수. */
-export function QuestionsPanel({ questions }: { questions: PostingAnalysis["questions"] }) {
-  return (
-    <Panel aria-labelledby="mp-questions" className="flex flex-col gap-4 p-6">
-      <h2 id="mp-questions" className={sectionTitle}>
-        자기소개서 문항
-      </h2>
-      <ol className="flex flex-col gap-3">
-        {questions.map((q, i) => (
-          <li key={i} className="flex flex-col gap-0.5 text-sm">
-            <span>{q.text}</span>
-            <span className="text-[13px] font-bold">{formatQuestionLimit(q.limit)}</span>
-          </li>
-        ))}
-      </ol>
-      <p className="text-label-sm text-text-secondary">공고에 적힌 문항을 AI가 찾은 것입니다. 원문과 맞는지 확인하세요.</p>
     </Panel>
   )
 }

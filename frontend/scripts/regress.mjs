@@ -118,6 +118,15 @@ const SCENARIOS = [
   { name: "my-post-priority", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 초안 만들기"], ["wait", "LLM으로 초안 다시 만들기"]] },
   { name: "my-post-priority-mobile", path: "/my-posts/p-pub1", width: 390, scale: 2, steps: [["press", "LLM으로 초안 만들기"], ["wait", "LLM으로 초안 다시 만들기"]] },
   { name: "dialog-priority-redraft", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 초안 만들기"], ["wait", "LLM으로 초안 다시 만들기"], ["press", "LLM으로 초안 다시 만들기"]] },
+  // 자기소개서 문항과 경험카드(문항 매칭 문서, 시안 없음): 고른 뒤, 휴대폰, 카드 바꾸기 메뉴, 다시 고르기 창, 문항 고치기 창, 문항이 없을 때, 문항 카드 미리 보기
+  { name: "my-post-questions", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 카드 고르기"], ["wait", "협업·소통"]] },
+  { name: "my-post-questions-mobile", path: "/my-posts/p-pub1", width: 390, scale: 2, steps: [["press", "LLM으로 카드 고르기"], ["wait", "협업·소통"]] },
+  { name: "my-post-questions-menu", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 카드 고르기"], ["wait", "협업·소통"], ["click", 'button[aria-label="2번 문항 카드 바꾸기"]']] },
+  { name: "dialog-questions-rematch", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 카드 고르기"], ["wait", "협업·소통"], ["press", "LLM으로 카드 고르기"]] },
+  { name: "dialog-questions-edit", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "문항 고치기"]] },
+  { name: "dialog-questions-edit-errors", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "문항 고치기"], ["press", "문항 더하기"], ["press", "저장"]] },
+  { name: "my-post-questions-empty", path: "/my-posts/p-be2", width: 1280 },
+  { name: "dialog-question-card-preview", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 카드 고르기"], ["wait", "협업·소통"], ["click", "section[aria-labelledby=mp-questions] button[aria-haspopup=dialog]"]] },
   // 요건별 카드 줄과 카드 미리 보기 창(최종 시안). p-be1의 첫 요건은 카드 4장이라 "더 보기"가 나온다
   { name: "my-post-more-cards", path: "/my-posts/p-be1", width: 1280, steps: [["press", "카드 1장 더 보기"]] },
   { name: "dialog-card-preview", path: "/my-posts/p-be1", width: 1280, steps: [["click", "button[aria-haspopup=dialog]"]] },
@@ -212,7 +221,8 @@ async function step(c, [kind, target, value]) {
     const ok = await c.evaluate(`(() => { const el = [...document.querySelectorAll("button, a, [role=radio], [role=tab]")].find((x) => x.textContent.trim() === ${JSON.stringify(target)} || x.getAttribute("aria-label") === ${JSON.stringify(target)}); el?.click(); return !!el })()`)
     if (!ok) throw new Error(`누를 것을 찾지 못했다: ${target}`)
   } else if (kind === "click") {
-    const box = await c.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(target)})?.getBoundingClientRect(); return r && { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()`)
+    // 첫 화면 밖의 요소(본문 아래쪽 패널의 메뉴)는 먼저 보이게 굴린다. 이미 보이는 요소는 굴리지 않는다(nearest)
+    const box = await c.evaluate(`(() => { const el = document.querySelector(${JSON.stringify(target)}); el?.scrollIntoView({ block: "nearest" }); const r = el?.getBoundingClientRect(); return r && { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()`)
     if (!box) throw new Error(`누를 요소가 없다: ${target}`)
     for (const type of ["mousePressed", "mouseReleased"]) await c.send("Input.dispatchMouseEvent", { type, x: box.x, y: box.y, button: "left", clickCount: 1 })
   } else if (kind === "fill") {

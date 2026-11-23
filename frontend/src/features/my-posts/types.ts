@@ -1,5 +1,6 @@
 // 내 공고의 데이터 모양(관심을 켜거나 상태를 넣은 공고와 내 지원 상태). 서버의 응답(공고 문서 4.2) 그대로다.
 // 서버는 상태 글자(status)도 주지만 화면은 domain/posting/my-state.ts의 statusLabel로 그린다(공고 문서 8절 14번).
+import type { Star } from "@/domain/card/types"
 import type { Disclosure } from "@/domain/group/types"
 import type { MyState } from "@/domain/posting/my-state"
 import type { Deadline, PostingAnalysis, PostSection } from "@/domain/posting/types"
@@ -83,6 +84,8 @@ export interface MyPostingDetail extends MyPosting {
   groupStates: PostingGroupState[]
   /** 이 공고에 먼저 쓸 내 경험카드(카드 우선순위 문서). 첫째가 앞, 5장까지. 없으면 빈 목록 */
   cardPriority: PriorityCard[]
+  /** 자기소개서 문항(문항 매칭 문서 4절). 저장 전이면 공고 분석의 문항이고 id가 null, 카드는 빈 목록이다 */
+  questions: Question[]
 }
 
 /** 경험카드 우선순위 한 장. reason은 LLM 초안이 고른 이유이고, 사용자가 더한 카드는 null이다. */
@@ -99,6 +102,33 @@ export type CardChoice = Pick<PriorityCard, "cardId" | "title" | "experience">
 
 /** 우선순위 초안 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(카드 없음, 공고 내용 없음, 이번 달 한도). */
 export type DraftResult = { ok: true; cards: PriorityCard[] } | { ok: false; error: "NO_CARDS" | "NO_POSTING_CONTENT" | "LLM_LIMIT_REACHED" }
+
+/** 문항 유형(문항 매칭 문서 QD8). LLM이 고르기 전이나 아홉 밖이면 null */
+export type QuestionType = "JOB" | "PROBLEM" | "GOAL" | "TEAM" | "FAILURE" | "GROWTH" | "VALUES" | "MOTIVE" | "FUTURE"
+
+/** 자기소개서 문항 하나와 고른 카드(문항 매칭 문서 4절). 카드는 첫째가 주된 카드, 둘째가 보조 카드다. */
+export interface Question {
+  /** 저장 전(공고 분석의 문항)이면 null */
+  id: string | null
+  text: string
+  /** 글자 수. 없으면 null */
+  limit: number | null
+  type: QuestionType | null
+  cards: QuestionCard[]
+}
+
+/** 문항에 고른 카드. reason과 emphasis는 LLM이 고른 이유와 살릴 칸이고, 사용자가 더한 카드는 null과 빈 목록이다. */
+export interface QuestionCard {
+  cardId: string
+  title: string
+  /** 경험 이름. 없으면 빈 글자 */
+  experience: string
+  reason: string | null
+  emphasis: (keyof Star)[]
+}
+
+/** 카드 고르기 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(문항 없음, 카드 없음, 이번 달 한도). */
+export type MatchResult = { ok: true; questions: Question[] } | { ok: false; error: "NO_QUESTIONS" | "NO_CARDS" | "LLM_LIMIT_REACHED" }
 
 /** 홈의 "그룹 소식" 한 줄: 내 그룹의 최근 7일 새 공고와 새 댓글(GET /api/me/group-activity, 공고 문서 4.5). */
 export interface GroupNews {

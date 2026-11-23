@@ -10,6 +10,7 @@ import { DialogCancel } from "@/shared/components/app-dialog"
 import { ArrowLink } from "@/shared/components/arrow-link"
 import { Chip } from "@/shared/components/chip"
 import { subLabel } from "@/shared/components/heading"
+import { stepButton } from "@/shared/components/step-button"
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "@/shared/icons"
 import { errorMessage } from "@/shared/lib/api"
 import { paths } from "@/shared/lib/paths"
@@ -19,12 +20,14 @@ import type { CardMatch, RequirementCard } from "../types"
 
 /** 창에 띄운 것: 어느 목록(요건 하나, 또는 맞는 카드 전체)의 몇 번째 카드인지 */
 export interface CardPreview {
-  /** 머리의 굵은 글: 요건 글, 또는 "맞는 카드" */
+  /** 머리의 굵은 글: 요건 글, "맞는 카드", 또는 "N번 문항" */
   label: string
   /** 겹친 태그 상자의 제목 */
   overlapTitle: string
   cards: RequirementCard[]
   index: number
+  /** 겹친 것이 태그가 아니면(문항의 살릴 칸) false. 창의 태그 목록에서 강조하지 않는다 */
+  overlapTags?: boolean
 }
 
 interface CardPreviewDialogProps {
@@ -34,12 +37,6 @@ interface CardPreviewDialogProps {
   onIndex: (index: number) => void
   onClose: () => void
 }
-
-/**
- * 앞뒤 버튼은 끝 카드에서 꺼져도 초점을 잃지 않게 focusableWhenDisabled로 둔다. 그러면 disabled 속성 대신 aria-disabled가 붙어
- * 공용 Button의 disabled:opacity-50이 듣지 않으므로 시안의 흐림(0.35)을 여기서 준다.
- */
-const stepButton = "aria-disabled:pointer-events-none aria-disabled:opacity-35"
 
 /** 묶음 사이의 가는 줄 */
 const divided = "flex flex-col gap-2 border-t border-border-subtle pt-5"
@@ -94,7 +91,7 @@ interface PreviewBodyProps {
 }
 
 function PreviewBody({ preview, target, matches, loaded, onIndex }: PreviewBodyProps) {
-  const { label, overlapTitle, cards, index } = preview
+  const { label, overlapTitle, cards, index, overlapTags = true } = preview
   const prev = stepCard(index, -1, cards.length)
   const next = stepCard(index, 1, cards.length)
   const current = loaded?.id === target.cardId ? loaded : null
@@ -135,16 +132,19 @@ function PreviewBody({ preview, target, matches, loaded, onIndex }: PreviewBodyP
       </div>
 
       <div className={`flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto py-5 ${sidePad}`}>
-        <div className="flex flex-col gap-2 rounded-control bg-accent-subtle px-4 py-3.5">
-          <h3 className="text-label-sm font-bold text-accent-strong">{overlapTitle}</h3>
-          <ul className="flex flex-wrap gap-1.5">
-            {target.overlap.map((tag) => (
-              <li key={tag} className="rounded-full bg-surface px-2.5 py-1 text-xs font-bold text-accent-strong">
-                {tag}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* 문항에 사용자가 더한 카드는 살릴 칸이 없다 */}
+        {target.overlap.length > 0 && (
+          <div className="flex flex-col gap-2 rounded-control bg-accent-subtle px-4 py-3.5">
+            <h3 className="text-label-sm font-bold text-accent-strong">{overlapTitle}</h3>
+            <ul className="flex flex-wrap gap-1.5">
+              {target.overlap.map((tag) => (
+                <li key={tag} className="rounded-full bg-surface px-2.5 py-1 text-xs font-bold text-accent-strong">
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {card ? (
           <>
             <section className="flex flex-col gap-1.5">
@@ -167,7 +167,7 @@ function PreviewBody({ preview, target, matches, loaded, onIndex }: PreviewBodyP
               <h3 className="font-bold">태그</h3>
               <ul className="flex flex-wrap gap-1.5">
                 {card.tags.map((tag) =>
-                  isOverlapTag(tag, target.overlap) ? (
+                  overlapTags && isOverlapTag(tag, target.overlap) ? (
                     // Chip은 클래스를 덮어쓸 수 없어(joinClasses) 겹친 태그는 같은 크기로 따로 그린다
                     <li key={tag} className="rounded-full bg-accent-subtle px-2.5 py-1 text-xs font-bold text-accent-strong">
                       {tag}
