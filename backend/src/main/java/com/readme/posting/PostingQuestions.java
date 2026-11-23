@@ -246,7 +246,8 @@ class PostingQuestions {
 				this.repository.deleteQuestionCards(question.id());
 				int position = 0;
 				for (Pick pick : (match != null) ? match.picks() : List.<Pick>of()) {
-					this.repository.insertQuestionCard(question.id(), pick.cardId(), position++, pick.reason(),
+					// LLM 을 기다리는 동안 지워진 카드는 넣지 않으므로 자리도 건너뛰지 않는다
+					position += this.repository.insertQuestionCard(question.id(), pick.cardId(), position, pick.reason(),
 							pick.emphasis().isEmpty() ? null : String.join(",", pick.emphasis()));
 				}
 			}

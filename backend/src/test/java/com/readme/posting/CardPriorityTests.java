@@ -109,6 +109,22 @@ class CardPriorityTests {
 		assertThat(this.claude.lastText()).contains("## 필수 요건\n- Docker 배포 경험");
 	}
 
+	/** LLM 을 기다리는 동안 지워진 카드는 빼고 남은 카드만 빈자리 없이 저장한다. */
+	@Test
+	void draftSkipsCardsDeletedWhileTheLlmAnswers() {
+		this.claude.whileAnswering(() -> this.jdbc.sql("delete from experience_cards where id = :id")
+			.param("id", this.api)
+			.update());
+		this.claude.willAnswer(new Answer(List.of(new Pick(this.api, "지워질 카드"), new Pick(this.batch, "남는 카드"))));
+
+		assertThat(draft(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.extractingPath("$.cards[*].cardId")
+			.isEqualTo(List.of((int) this.batch));
+		assertThat(this.jdbc.sql("select position from user_posting_cards where posting_id = :id").param("id", this.posting)
+			.query(Integer.class).list()).containsExactly(0);
+	}
+
 	/** 사용자가 정한 순서로 바꾼다. 앞 목록에 있던 카드는 이유가 남고, 더한 카드는 이유가 없다. 빈 목록이면 비운다. */
 	@Test
 	void reorderKeepsReasonsOfCardsAlreadyInTheList() {

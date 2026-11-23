@@ -167,6 +167,25 @@ class QuestionMatchTests {
 			.single()).isZero();
 	}
 
+	/** LLM 이 고르는 동안 지워진 카드는 빼고 남은 카드만 빈자리 없이 저장한다. */
+	@Test
+	void matchSkipsCardsDeletedMeanwhile() {
+		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\", \"limit\": 800 } ]").getFirst();
+		this.claude.whileAnswering(() -> this.jdbc.sql("delete from experience_cards where id = :id")
+			.param("id", this.api)
+			.update());
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB",
+				List.of(new Pick(this.api, "지워질 카드", List.of()), new Pick(this.batch, "남는 카드", List.of("action")))))));
+
+		assertThat(match(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "questions": [ { "id": %d, "type": "JOB", "cards": [ { "cardId": %d, "reason": "남는 카드" } ] } ] }
+					""".formatted(question, this.batch));
+		assertThat(this.jdbc.sql("select position from user_posting_question_cards where question_id = :id")
+			.param("id", question).query(Integer.class).list()).containsExactly(0);
+	}
+
 	/** 문항 목록 두기: id 를 보낸 문항은 카드와 유형이 남고, 빠진 문항은 지워지고, 새 문항이 들어간다. 빈 목록이면 모두 지운다. */
 	@Test
 	void replaceKeepsCardsOfQuestionsSentWithTheirId() {

@@ -146,7 +146,8 @@ class CardPriorities {
 			this.repository.deleteCards(userId, postingId);
 			int position = 0;
 			for (Map.Entry<Long, String> card : cards.entrySet()) {
-				this.repository.insertCard(userId, postingId, card.getKey(), position++, card.getValue());
+				// 지워진 카드는 넣지 않으므로 자리도 건너뛰지 않는다
+				position += this.repository.insertCard(userId, postingId, card.getKey(), position, card.getValue());
 			}
 		});
 	}

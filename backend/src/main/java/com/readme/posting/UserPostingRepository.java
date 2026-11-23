@@ -60,11 +60,11 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 	@Query(value = "delete from user_posting_cards where user_id = :userId and posting_id = :postingId", nativeQuery = true)
 	int deleteCards(@Param("userId") long userId, @Param("postingId") long postingId);
 
-	/** 카드 우선순위 한 줄. 지운 뒤에만 부른다. */
+	/** 카드 우선순위 한 줄. 지운 뒤에만 부른다. 그 사이 지워진 카드면 넣지 않고 0 이다(LLM 을 기다리는 동안 지울 수 있다). */
 	@Modifying
 	@Query(value = """
 			insert into user_posting_cards (user_id, posting_id, card_id, position, reason)
-			values (:userId, :postingId, :cardId, :position, cast(:reason as varchar))
+			select :userId, :postingId, id, :position, cast(:reason as varchar) from experience_cards where id = :cardId
 			""", nativeQuery = true)
 	int insertCard(@Param("userId") long userId, @Param("postingId") long postingId, @Param("cardId") long cardId,
 			@Param("position") int position, @Param("reason") String reason);
@@ -107,11 +107,15 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 	@Query(value = "delete from user_posting_question_cards where question_id = :questionId", nativeQuery = true)
 	int deleteQuestionCards(@Param("questionId") long questionId);
 
-	/** 문항의 카드 한 장. 지운 뒤에만 부른다. emphasis 는 살릴 칸을 쉼표로 이은 것이다. */
+	/**
+	 * 문항의 카드 한 장. 지운 뒤에만 부른다. emphasis 는 살릴 칸을 쉼표로 이은 것이다. 그 사이 지워진 카드면 넣지 않고 0 이다(LLM 을
+	 * 기다리는 동안 지울 수 있다).
+	 */
 	@Modifying
 	@Query(value = """
 			insert into user_posting_question_cards (question_id, card_id, position, reason, emphasis)
-			values (:questionId, :cardId, :position, cast(:reason as varchar), cast(:emphasis as varchar))
+			select :questionId, id, :position, cast(:reason as varchar), cast(:emphasis as varchar)
+			  from experience_cards where id = :cardId
 			""", nativeQuery = true)
 	int insertQuestionCard(@Param("questionId") long questionId, @Param("cardId") long cardId,
 			@Param("position") int position, @Param("reason") String reason, @Param("emphasis") String emphasis);
