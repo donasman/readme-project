@@ -77,6 +77,8 @@ test("문항과 카드가 그대로면 앞서 고른 결과를 다시 보이고,
   await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeVisible()
   await expect(panel.locator("p[role=status]")).toHaveText(REUSED)
   expect(await cardTitles()).toEqual(matched)
+  // 알림 줄이 휴대폰 폭에서 옆으로 넘치지 않는다
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
 
   // 문항 글을 고치면 알림을 지우고, 다시 고르면 LLM이 새로 고른다
   await panel.getByRole("button", { name: "문항 고치기" }).click()

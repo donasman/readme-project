@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { PostUpload } from "@/domain/posting/types"
 
-import { addMyPosting, getMyPosting, matchQuestions, saveQuestions } from "./api"
+import { addMyPosting, draftCardPriority, getMyPosting, matchQuestions, saveQuestions } from "./api"
 
 /** 가짜 fetch: 답 하나를 돌려준다. 테스트 모드는 가짜 서버를 쓰지 않아 addMyPosting이 fetch를 부른다. */
 function serve(status: number, body: unknown) {
@@ -74,5 +74,18 @@ describe("문항 매칭", () => {
     expect(await matchQuestions("3")).toEqual({ ok: false, error: "NO_QUESTIONS" })
     serve(502, { code: "LLM_FAILED", message: "실패" })
     await expect(matchQuestions("3")).rejects.toThrow()
+  })
+})
+
+describe("LLM 답 다시 쓰기", () => {
+  it("reused를 그대로 읽고, 이 칸이 없는 서버는 새로 만든 것으로 본다", async () => {
+    serve(200, { cards: [], reused: true })
+    expect(await draftCardPriority("3")).toEqual({ ok: true, cards: [], reused: true })
+    serve(200, { cards: [] })
+    expect(await draftCardPriority("3")).toEqual({ ok: true, cards: [], reused: false })
+    serve(200, { questions: [], reused: true })
+    expect(await matchQuestions("3")).toEqual({ ok: true, questions: [], reused: true })
+    serve(200, { questions: [] })
+    expect(await matchQuestions("3")).toEqual({ ok: true, questions: [], reused: false })
   })
 })

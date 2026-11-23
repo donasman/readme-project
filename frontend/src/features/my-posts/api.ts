@@ -85,7 +85,9 @@ export async function getSchedules(): Promise<Schedule[]> {
 export async function draftCardPriority(id: string): Promise<DraftResult> {
   if (mockServer) return db.draftCardPriority(id)
   try {
-    return { ok: true, ...(await request<{ cards: PriorityCard[]; reused: boolean }>("POST", apiPath`/api/me/postings/${id}/card-priority/draft`)) }
+    // reused가 없는 서버(이 칸을 더하기 전)는 새로 만든 것으로 본다
+    const { cards, reused } = await request<{ cards: PriorityCard[]; reused?: boolean }>("POST", apiPath`/api/me/postings/${id}/card-priority/draft`)
+    return { ok: true, cards, reused: reused === true }
   } catch (error) {
     for (const code of ["NO_CARDS", "NO_POSTING_CONTENT", "LLM_LIMIT_REACHED"] as const) {
       if (isApiError(error, code)) return { ok: false, error: code }
@@ -125,7 +127,8 @@ export async function saveQuestions(id: string, questions: Pick<Question, "id" |
 export async function matchQuestions(id: string): Promise<MatchResult> {
   if (mockServer) return db.matchQuestions(id)
   try {
-    return { ok: true, ...(await request<{ questions: Question[]; reused: boolean }>("POST", apiPath`/api/me/postings/${id}/questions/match`)) }
+    const { questions, reused } = await request<{ questions: Question[]; reused?: boolean }>("POST", apiPath`/api/me/postings/${id}/questions/match`)
+    return { ok: true, questions, reused: reused === true }
   } catch (error) {
     for (const code of ["NO_QUESTIONS", "NO_CARDS", "LLM_LIMIT_REACHED"] as const) {
       if (isApiError(error, code)) return { ok: false, error: code }

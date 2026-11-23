@@ -54,6 +54,8 @@ test("공고와 카드가 그대로면 앞 초안을 다시 보이고, 카드를
   await dialog.getByRole("button", { name: "초안 만들기" }).click()
   await expect(dialog).toBeHidden()
   await expect(titles).toHaveText(drafted)
+  // 알림 줄이 휴대폰 폭에서 옆으로 넘치지 않는다
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
   await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeVisible()
   await expect(panel.locator("p[role=status]")).toHaveText(REUSED)
 
