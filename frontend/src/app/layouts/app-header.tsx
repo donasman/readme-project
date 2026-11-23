@@ -17,21 +17,22 @@ import type { GroupsPageState } from "@/features/groups"
 import { Avatar } from "@/shared/components/avatar"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { navPill } from "@/shared/components/nav-pill"
+import { pageWidth } from "@/shared/components/page"
 import { CheckIcon, ChevronDownIcon, MenuIcon, PlusIcon } from "@/shared/icons"
 import { mainNavOf, type MainNav } from "@/shared/lib/main-nav"
 import { paths } from "@/shared/lib/paths"
-import { firstChar } from "@/shared/lib/utils"
+import { firstChar, joinClasses } from "@/shared/lib/utils"
 
 const onMark = (on: boolean) => (on ? <CheckIcon role="img" aria-label="지금 보는 메뉴" className="text-primary" /> : null)
 
 /**
- * 로그인한 모든 화면의 위쪽 헤더(11차 시안): 로고, 홈 · 내 그룹 · 경험카드 · 정보공유, 내 계정. 폭은 그룹 화면 본문(1240px)에 맞추고
- * 화면을 옮겨도 로고가 움직이지 않게 그룹 밖(1120px)에서도 같은 폭을 쓴다.
+ * 로그인한 모든 화면의 위쪽 헤더(11차 시안): 로고, 홈 · 내 그룹 · 경험카드 · 정보공유, 내 계정. 폭은 아래 본문과 같다(그룹 화면 1240px,
+ * 그룹 밖 narrow 1120px). 로고와 내 계정이 본문의 양 끝에 세로로 맞는다.
  * 그룹 화면에서는 "내 그룹" 자리가 지금 그룹을 보이고 눌러서 그룹을 바꾼다. 그룹 밖에서는 내 그룹 화면으로 가는 링크다
  * (내 그룹 목록은 그룹 라우트만 읽는다). 768px 아래에서는 내 그룹 자리만 두고 나머지와 내 계정은 메뉴(☰)에 넣는다.
  * 지금 메뉴는 아래 라우트의 handle.mainNav로 정하고, 그룹 화면이면 내 그룹이다.
  */
-export function AppHeader() {
+export function AppHeader({ narrow = false }: { narrow?: boolean }) {
   const viewer = useViewer()
   const navigate = useNavigate()
   const groupData = useRouteLoaderData<typeof groupLoader>(GROUP_ROUTE_ID)
@@ -43,7 +44,7 @@ export function AppHeader() {
 
   return (
     <header className="border-b border-border-subtle bg-surface">
-      <div className="mx-auto flex min-h-18 max-w-[1240px] items-center gap-3 px-4 md:gap-5">
+      <div className={joinClasses("mx-auto flex min-h-18 items-center gap-3 md:gap-5", pageWidth(narrow))}>
         <Link to={paths.home()} aria-label="리드미 홈" className="inline-flex min-h-control-md flex-none items-center gap-2 text-base font-bold text-foreground">
           <LogoMark size={26} />
           <span className="hidden sm:inline">리드미</span>
