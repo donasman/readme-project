@@ -19,20 +19,23 @@ import com.readme.posting.ApplicationStatus.Stage;
  * @param requirements 필수·우대 요건마다의 결과(카드 있음, 프로필에 있음, 카드 없음, 판단 못 함)와 맞춘 카드마다 겹친 낱말
  * @param groupStates groups 와 같은 그룹들에 그 그룹에서의 내 관심, 댓글 수, 내 공개 범위가 붙는다
  * @param cardPriority 이 공고에 먼저 쓸 내 경험카드(카드 우선순위 설계). 첫째가 앞이다. 없으면 빈 목록
+ * @param questions   자기소개서 문항과 문항마다 고른 카드(문항 매칭 설계). 저장 전이면 공고 분석의 문항이다(id 는 null, 카드는 빈 목록)
  */
 record MyPostingDetailResponse(long id, String company, String title, DeadlineResponse deadline, Decision decision,
 		Stage stage, Result result, String status, List<MyPostingResponse.Group> groups, String applyAt,
 		String sourceUrl, List<PostSection> sections, List<String> keywords, PostingAnalysis analysis, String memo,
 		List<CardMatching.CardMatch> matches, List<String> unmatched,
 		List<CardMatching.RequirementResult> requirements, List<GroupState> groupStates,
-		List<PriorityCard> cardPriority) {
+		List<PriorityCard> cardPriority, List<Question> questions) {
 
 	static MyPostingDetailResponse of(MyPostingResponse posting, Details details, List<String> keywords,
-			CardMatching.Result match, List<GroupState> groupStates, List<PriorityCard> cardPriority) {
+			CardMatching.Result match, List<GroupState> groupStates, List<PriorityCard> cardPriority,
+			List<Question> questions) {
 		return new MyPostingDetailResponse(posting.id(), posting.company(), posting.title(), posting.deadline(),
 				posting.decision(), posting.stage(), posting.result(), posting.status(), posting.groups(),
 				details.applyAt(), details.sourceUrl(), details.sections(), keywords, details.analysis(),
-				details.memo(), match.matches(), match.unmatched(), match.requirements(), groupStates, cardPriority);
+				details.memo(), match.matches(), match.unmatched(), match.requirements(), groupStates, cardPriority,
+				questions);
 	}
 
 	/**
@@ -44,9 +47,30 @@ record MyPostingDetailResponse(long id, String company, String title, DeadlineRe
 	record PriorityCard(long cardId, String title, String experience, String reason) {
 	}
 
-	/** 상세에만 있는 공고 본체의 값과 내 메모. */
+	/**
+	 * 자기소개서 문항 하나(문항 매칭 설계 4절).
+	 *
+	 * @param id    저장 전(공고 분석의 문항)이면 null
+	 * @param limit 글자 수. 없으면 null
+	 * @param type  LLM 이 고른 문항 유형(JOB, PROBLEM 등 아홉). 고르기 전이면 null
+	 * @param cards 고른 카드. 0 이 주된 카드다
+	 */
+	record Question(Long id, String text, Integer limit, String type, List<QuestionCard> cards) {
+	}
+
+	/**
+	 * 문항에 고른 카드 한 장.
+	 *
+	 * @param experience 경험 이름. 없으면 빈 글자
+	 * @param reason     LLM 이 고른 이유. 사용자가 더한 카드는 null
+	 * @param emphasis   살릴 칸(situation, task 등). 사용자가 더한 카드는 빈 목록
+	 */
+	record QuestionCard(long cardId, String title, String experience, String reason, List<String> emphasis) {
+	}
+
+	/** 상세에만 있는 공고 본체의 값과 내 메모, 내 문항 목록을 저장했는지. */
 	record Details(String applyAt, String sourceUrl, List<PostSection> sections, PostingAnalysis analysis,
-			String memo) {
+			String memo, boolean questionsSaved) {
 	}
 
 	/**

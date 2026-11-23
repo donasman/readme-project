@@ -29,10 +29,17 @@ public class FakeClaudeApi implements ClaudeApi {
 
 	private final List<ClaudeRequest<?>> requests = new CopyOnWriteArrayList<>();
 
+	private volatile Runnable whileAnswering;
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> ClaudeReply<T> send(ClaudeRequest<T> request) {
 		this.requests.add(request);
+		Runnable action = this.whileAnswering;
+		this.whileAnswering = null;
+		if (action != null) {
+			action.run();
+		}
 		ClaudeReply<?> reply = this.replies.poll();
 		if (reply == null) {
 			throw new ApiException(LlmErrorCode.LLM_UNAVAILABLE);
@@ -78,6 +85,11 @@ public class FakeClaudeApi implements ClaudeApi {
 		willReply(ClaudeReply.done(value, List.of(attempt())));
 	}
 
+	/** 다음 호출이 답하기 전에 이것을 한 번 돌린다. LLM 을 부르는 동안 다른 요청이 데이터를 바꾼 경우를 만든다. */
+	public void whileAnswering(Runnable action) {
+		this.whileAnswering = action;
+	}
+
 	/** 다음 호출에서 거절한다(사용액은 든다). */
 	public void willRefuse() {
 		willReply(ClaudeReply.failed(Outcome.REFUSED, List.of(attempt())));
@@ -111,6 +123,7 @@ public class FakeClaudeApi implements ClaudeApi {
 	public void reset() {
 		this.replies.clear();
 		this.requests.clear();
+		this.whileAnswering = null;
 	}
 
 	private static LlmAttempt attempt() {
