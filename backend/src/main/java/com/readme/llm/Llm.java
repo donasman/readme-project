@@ -45,6 +45,11 @@ public class Llm {
 		this.clock = clock;
 	}
 
+	/** 모든 기능이 쓰는 모델(app.llm.model). 저장한 답을 다시 쓸지 볼 때 입력에 넣는다. */
+	public String model() {
+		return this.properties.model();
+	}
+
 	/**
 	 * 이번 달(서울 기준 달력 월) 사용액이 한도보다 적어야 한다. 닿았으면 429 LLM_LIMIT_REACHED.
 	 *

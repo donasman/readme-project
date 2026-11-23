@@ -69,6 +69,24 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 	int insertCard(@Param("userId") long userId, @Param("postingId") long postingId, @Param("cardId") long cardId,
 			@Param("position") int position, @Param("reason") String reason);
 
+	/** 카드 우선순위 초안의 입력 key 와 LLM 답(jsonb). 같은 입력이면 다음 초안이 이 답을 다시 쓴다. */
+	@Modifying
+	@Query(value = """
+			update user_postings set card_priority_key = :key, card_priority_answer = cast(:answer as jsonb)
+			 where user_id = :userId and posting_id = :postingId
+			""", nativeQuery = true)
+	int saveCardPriorityAnswer(@Param("userId") long userId, @Param("postingId") long postingId, @Param("key") String key,
+			@Param("answer") String answer);
+
+	/** 문항 매칭의 입력 key 와 LLM 답(jsonb). 같은 입력이면 다음 고르기가 이 답을 다시 쓴다. */
+	@Modifying
+	@Query(value = """
+			update user_postings set question_match_key = :key, question_match_answer = cast(:answer as jsonb)
+			 where user_id = :userId and posting_id = :postingId
+			""", nativeQuery = true)
+	int saveQuestionMatchAnswer(@Param("userId") long userId, @Param("postingId") long postingId,
+			@Param("key") String key, @Param("answer") String answer);
+
 	/** 이 내 공고는 내 문항 목록을 쓴다(문항 매칭 QD2). 이 뒤로는 공고 분석의 문항을 따라가지 않는다. */
 	@Modifying
 	@Query(value = "update user_postings set questions_saved = true where user_id = :userId and posting_id = :postingId",

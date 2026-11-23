@@ -42,6 +42,8 @@ import tools.jackson.databind.json.JsonMapper;
  * <li>고르기는 사용자가 누를 때만 한다. 한도는 누를 때 보고, LLM 은 트랜잭션 밖에서 부른다(카드 우선순위와 같다).</li>
  * <li>LLM 의 답은 {@link #check}로 거른다: 내 카드가 아닌 id, 한 문항 안에서 겹친 id, 아홉 밖의 유형, 여섯 밖의 칸을 버린다.</li>
  * <li>쓰기는 모두 내 공고 행을 잠근 한 트랜잭션에서 한다. 같은 사람이 함께 눌러도 차례로 돈다.</li>
+ * <li>LLM 의 답과 입력 key 를 결과와 함께 저장한다({@link LlmAnswers}). 입력이 같으면 다음 고르기는 LLM 을 부르지 않고 그 답을 같은
+ * 길로 다시 거른다. 어느 문항에도 유형이나 카드가 남지 않은 답은 두지 않는다.</li>
  * </ul>
  */
 @Component
@@ -194,9 +196,9 @@ class PostingQuestions {
 	/**
 	 * LLM 이 모든 문항의 유형과 카드를 골라 앞 결과를 바꾼다(QD5). 저장 전이면 지금 보이는 문항(공고 분석의 것)을 먼저 저장한다. 내 공고가
 	 * 아니면 404 POSTING_NOT_FOUND, 문항이 없으면 409 NO_QUESTIONS, 카드가 없으면 409 NO_CARDS, 한도에 닿았으면 429
-	 * LLM_LIMIT_REACHED.
+	 * LLM_LIMIT_REACHED. 저장한 답을 다시 썼으면 true.
 	 */
-	void match(long userId, long postingId) {
+	boolean match(long userId, long postingId) {
 		Posting posting = posting(userId, postingId);
 		List<Question> visible = posting.questionsSaved() ? this.queries.questions(userId, postingId)
 				: MyPostingQueries.analysisQuestions(posting.analysis());
@@ -207,17 +209,23 @@ class PostingQuestions {
 		if (cards.isEmpty()) {
 			throw new ApiException(PostingErrorCode.NO_CARDS);
 		}
-		this.llm.requireBudget(userId);
 		if (!posting.questionsSaved()) {
+			// 저장 전 문항은 새 id 를 받으므로 저장한 답과 맞을 수 없다. 한도를 먼저 보고 문항을 저장한다
+			this.llm.requireBudget(userId);
 			saveAnalysisQuestions(userId, postingId, visible);
 		}
 		List<Question> questions = this.queries.questions(userId, postingId);
 		if (questions.isEmpty()) {
 			throw new ApiException(PostingErrorCode.NO_QUESTIONS);
 		}
-		Answer answer = this.llm.ask(userId, LlmFeature.QUESTION_MATCH, PROMPT,
-				text(posting, questions) + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n")),
-				Answer.class);
+		String text = text(posting, questions) + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n"));
+		// 입력이 같으면 저장한 답을 다시 쓴다. 한도를 보지 않고 사용액도 들지 않는다
+		LlmAnswers.Reply<Answer> reply = LlmAnswers.reuseOrAsk(this.jsonMapper, LlmAnswers.key(this.llm.model(), PROMPT, text),
+				posting.answerKey(), posting.answer(), Answer.class, () -> {
+					this.llm.requireBudget(userId);
+					return this.llm.ask(userId, LlmFeature.QUESTION_MATCH, PROMPT, text, Answer.class);
+				});
+		Answer answer = reply.answer();
 		Map<Long, Integer> limits = new HashMap<>();
 		questions.forEach((q) -> limits.put(q.id(), q.limit()));
 		Map<Long, Match> matched = check(answer, limits,
@@ -251,7 +259,12 @@ class PostingQuestions {
 							pick.emphasis().isEmpty() ? null : String.join(",", pick.emphasis()));
 				}
 			}
+			// 어느 문항에도 유형이나 카드가 남지 않은 답(지어낸 문항 id 등)은 두지 않는다. 같은 입력으로 다시 누르면 LLM 에 다시 묻는다
+			if (matched.values().stream().anyMatch((m) -> m.type() != null || !m.picks().isEmpty())) {
+				this.repository.saveQuestionMatchAnswer(userId, postingId, reply.key(), reply.json());
+			}
 		});
+		return reply.reused();
 	}
 
 	/**
@@ -340,7 +353,8 @@ class PostingQuestions {
 
 	private Posting posting(long userId, long postingId) {
 		return this.jdbc.sql("""
-				select p.company, p.title, p.analysis::text as analysis, up.questions_saved
+				select p.company, p.title, p.analysis::text as analysis, up.questions_saved,
+				       up.question_match_key, up.question_match_answer::text as question_match_answer
 				  from user_postings up join postings p on p.id = up.posting_id
 				 where up.user_id = :userId and up.posting_id = :postingId
 				""")
@@ -349,7 +363,8 @@ class PostingQuestions {
 			.query((rs, rowNum) -> new Posting(rs.getString("company"), rs.getString("title"),
 					(rs.getString("analysis") != null)
 							? this.jsonMapper.readValue(rs.getString("analysis"), PostingAnalysis.class) : null,
-					rs.getBoolean("questions_saved")))
+					rs.getBoolean("questions_saved"), rs.getString("question_match_key"),
+					rs.getString("question_match_answer")))
 			.optional()
 			.orElseThrow(() -> new ApiException(PostingErrorCode.POSTING_NOT_FOUND));
 	}
@@ -375,8 +390,9 @@ class PostingQuestions {
 		return (list != null) ? list : List.of();
 	}
 
-	/** 고르기에 쓰는 공고 본체의 값과 내 문항을 저장했는지. */
-	private record Posting(String company, String title, PostingAnalysis analysis, boolean questionsSaved) {
+	/** 고르기에 쓰는 공고 본체의 값과 내 문항을 저장했는지. answerKey 와 answer 는 앞 고르기의 입력 key 와 LLM 답(json)이다. 없으면 null. */
+	private record Posting(String company, String title, PostingAnalysis analysis, boolean questionsSaved,
+			String answerKey, String answer) {
 	}
 
 	private static String prompt() {

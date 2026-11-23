@@ -281,6 +281,23 @@ public class Fixtures {
 			.update();
 	}
 
+	/** 카드 제목을 고친다(LLM 에 보내는 칸이 바뀐다). 고친 때도 늘어난다. */
+	public void retitleCard(long cardId, String title) {
+		this.jdbc.sql("update experience_cards set title = :title, updated_at = :at where id = :id")
+			.param("title", title)
+			.param("at", nextMoment())
+			.param("id", cardId)
+			.update();
+	}
+
+	/** 이달 LLM 사용액을 한도(application.yml 의 2달러)까지 채운다. */
+	public void useUpLlmBudget(long userId) {
+		this.jdbc.sql("""
+				insert into llm_usage (user_id, feature, model, input_tokens, output_tokens, cost_micros, created_at)
+				values (:userId, 'CARD_EXTRACT', 'claude-opus-5-5', 0, 0, 2000000, :at)
+				""").param("userId", userId).param("at", Timestamp.from(FixedClockConfiguration.NOW)).update();
+	}
+
 	/** 부를 때마다 1ms 씩 늘어나는 시각. 멈춘 시계의 NOW 하루 전에서 시작한다. */
 	private Timestamp nextMoment() {
 		return Timestamp.from(FixedClockConfiguration.NOW.minus(Duration.ofDays(1)).plusMillis(this.ticks.incrementAndGet()));

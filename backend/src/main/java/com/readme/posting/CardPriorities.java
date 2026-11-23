@@ -31,6 +31,8 @@ import tools.jackson.databind.json.JsonMapper;
  * <li>초안은 사용자가 누를 때만 만든다. 한도는 누를 때 보고, LLM 은 트랜잭션 밖에서 부른다. 저장할 때 앞 목록을 바꾼다.</li>
  * <li>LLM 이 고른 id 중 내 카드가 아닌 것과 겹친 것은 버리고 {@link #MAX}장까지만 둔다.</li>
  * <li>저장은 내 공고 행을 잠그고 지운 뒤 다시 넣는다. 같은 사람이 두 번 함께 눌러도 뒤의 것 하나만 남는다.</li>
+ * <li>LLM 의 답과 입력 key 를 목록과 함께 저장한다({@link LlmAnswers}). 입력이 같으면 다음 초안은 LLM 을 부르지 않고 그 답을 같은 길로
+ * 다시 거른다. 거르고 남은 카드가 없는 답은 두지 않는다.</li>
  * </ul>
  */
 @Component
@@ -78,9 +80,9 @@ class CardPriorities {
 
 	/**
 	 * LLM 초안을 만들어 앞 목록을 바꾼다. 내 공고가 아니면 404 POSTING_NOT_FOUND, 카드가 없으면 409 NO_CARDS, 공고 분석도 내용 묶음도
-	 * 없으면 409 NO_POSTING_CONTENT, 한도에 닿았으면 429 LLM_LIMIT_REACHED.
+	 * 없으면 409 NO_POSTING_CONTENT, 한도에 닿았으면 429 LLM_LIMIT_REACHED. 저장한 답을 다시 썼으면 true.
 	 */
-	void draft(long userId, long postingId) {
+	boolean draft(long userId, long postingId) {
 		Posting posting = posting(userId, postingId);
 		List<PromptCards.Card> cards = this.promptCards.of(userId);
 		if (cards.isEmpty()) {
@@ -90,9 +92,14 @@ class CardPriorities {
 		if (postingText.isBlank()) {
 			throw new ApiException(PostingErrorCode.NO_POSTING_CONTENT);
 		}
-		this.llm.requireBudget(userId);
-		Answer answer = this.llm.ask(userId, LlmFeature.CARD_PRIORITY, PROMPT,
-				postingText + "\n\n" + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n")), Answer.class);
+		String text = postingText + "\n\n" + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n"));
+		// 입력이 같으면 저장한 답을 다시 쓴다. 한도를 보지 않고 사용액도 들지 않는다
+		LlmAnswers.Reply<Answer> reply = LlmAnswers.reuseOrAsk(this.jsonMapper, LlmAnswers.key(this.llm.model(), PROMPT, text),
+				posting.answerKey(), posting.answer(), Answer.class, () -> {
+					this.llm.requireBudget(userId);
+					return this.llm.ask(userId, LlmFeature.CARD_PRIORITY, PROMPT, text, Answer.class);
+				});
+		Answer answer = reply.answer();
 		Set<Long> mine = cards.stream().map(PromptCards.Card::id).collect(Collectors.toSet());
 		Map<Long, String> picked = new LinkedHashMap<>();
 		for (Pick pick : (answer.picks() != null) ? answer.picks() : List.<Pick>of()) {
@@ -100,7 +107,13 @@ class CardPriorities {
 				picked.putIfAbsent(pick.cardId(), PromptCards.cut(pick.reason(), REASON_CHARS));
 			}
 		}
-		save(userId, postingId, picked);
+		save(userId, postingId, picked, () -> {
+			// 거르고 남은 카드가 없는 답은 두지 않는다. 같은 입력으로 다시 누르면 LLM 에 다시 묻는다
+			if (!picked.isEmpty()) {
+				this.repository.saveCardPriorityAnswer(userId, postingId, reply.key(), reply.json());
+			}
+		});
+		return reply.reused();
 	}
 
 	/**
@@ -129,10 +142,12 @@ class CardPriorities {
 			.collect(Collectors.toMap((row) -> Long.parseLong(row[0]), (row) -> row[1]));
 		Map<Long, String> ordered = new LinkedHashMap<>();
 		cardIds.forEach((id) -> ordered.put(id, reasons.get(id)));
-		save(userId, postingId, ordered);
+		save(userId, postingId, ordered, () -> {
+		});
 	}
 
-	private void save(long userId, long postingId, Map<Long, String> cards) {
+	/** also 는 목록과 같은 트랜잭션에서 돈다(초안의 입력 key 와 답 저장). */
+	private void save(long userId, long postingId, Map<Long, String> cards, Runnable also) {
 		this.transaction.executeWithoutResult((status) -> {
 			// 내 공고 행을 잠가 같은 목록을 함께 바꾸는 두 요청이 차례로 돌게 한다. 그 사이 빠졌으면 404
 			if (this.jdbc.sql("select 1 from user_postings where user_id = :userId and posting_id = :postingId for update")
@@ -149,12 +164,14 @@ class CardPriorities {
 				// 지워진 카드는 넣지 않으므로 자리도 건너뛰지 않는다
 				position += this.repository.insertCard(userId, postingId, card.getKey(), position, card.getValue());
 			}
+			also.run();
 		});
 	}
 
 	private Posting posting(long userId, long postingId) {
 		return this.jdbc.sql("""
-				select p.company, p.title, p.sections::text as sections, p.analysis::text as analysis
+				select p.company, p.title, p.sections::text as sections, p.analysis::text as analysis,
+				       up.card_priority_key, up.card_priority_answer::text as card_priority_answer
 				  from user_postings up join postings p on p.id = up.posting_id
 				 where up.user_id = :userId and up.posting_id = :postingId
 				""")
@@ -163,13 +180,18 @@ class CardPriorities {
 			.query((rs, rowNum) -> new Posting(rs.getString("company"), rs.getString("title"),
 					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS),
 					(rs.getString("analysis") != null)
-							? this.jsonMapper.readValue(rs.getString("analysis"), PostingAnalysis.class) : null))
+							? this.jsonMapper.readValue(rs.getString("analysis"), PostingAnalysis.class) : null,
+					rs.getString("card_priority_key"), rs.getString("card_priority_answer")))
 			.optional()
 			.orElseThrow(() -> new ApiException(PostingErrorCode.POSTING_NOT_FOUND));
 	}
 
-	/** 초안에 쓰는 공고 본체의 값. 공고 분석이 있으면 분석을, 없으면 내용 묶음을 보낸다. */
-	private record Posting(String company, String title, List<PostSection> sections, PostingAnalysis analysis) {
+	/**
+	 * 초안에 쓰는 공고 본체의 값. 공고 분석이 있으면 분석을, 없으면 내용 묶음을 보낸다. answerKey 와 answer 는 앞 초안의 입력 key 와
+	 * LLM 답(json)이다. 없으면 null.
+	 */
+	private record Posting(String company, String title, List<PostSection> sections, PostingAnalysis analysis,
+			String answerKey, String answer) {
 
 		String text() {
 			String body;
