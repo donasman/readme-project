@@ -1,5 +1,6 @@
 package com.readme.posting;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -91,7 +92,7 @@ class CardPriorityTests {
 		assertThat(spent(this.me)).isEqualTo(FakeClaudeApi.ANSWER_COST_MICROS);
 	}
 
-	/** 공고 분석이 없으면 공고 내용 묶음을 보낸다. 새 초안은 앞 목록을 바꾼다. */
+	/** 공고 분석이 없으면 공고 내용 묶음을 보낸다. 입력이 바뀐 뒤의 새 초안은 앞 목록을 바꾼다. */
 	@Test
 	void draftUsesTheSectionsWithoutAnAnalysisAndReplacesTheList() {
 		long plain = myPosting(this.me, null, """
@@ -99,6 +100,7 @@ class CardPriorityTests {
 				""");
 		this.claude.willAnswer(new Answer(List.of(new Pick(this.api, "앞 초안"))));
 		assertThat(draft(this.me, plain)).hasStatusOk();
+		card(this.me, "배포 자동화", "Docker");
 		this.claude.willAnswer(new Answer(List.of(new Pick(this.batch, "Docker 배포 경험에 답한다"))));
 
 		assertThat(draft(this.me, plain)).hasStatusOk()
@@ -107,6 +109,75 @@ class CardPriorityTests {
 					{ "cards": [ { "cardId": %d, "reason": "Docker 배포 경험에 답한다" } ] }
 					""".formatted(this.batch));
 		assertThat(this.claude.lastText()).contains("## 필수 요건\n- Docker 배포 경험");
+	}
+
+	/** 입력(지시문, 공고, 카드)이 같으면 LLM 을 부르지 않고 저장한 답을 다시 쓴다. 사용액도 들지 않는다. */
+	@Test
+	void sameInputReusesTheStoredAnswer() throws Exception {
+		this.claude.willAnswer(new Answer(List.of(new Pick(this.api, "필수 요건에 답한다"), new Pick(this.batch, "업무에 닿는다"))));
+		MvcTestResult firstResult = draft(this.me, this.posting);
+		assertThat(firstResult).hasStatusOk();
+		String first = firstResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
+		assertThat(first).contains("\"reused\":false");
+
+		assertThat(draft(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isStrictlyEqualTo(first.replace("\"reused\":false", "\"reused\":true"));
+		assertThat(this.claude.calls()).isEqualTo(1);
+		assertThat(spent(this.me)).isEqualTo(FakeClaudeApi.ANSWER_COST_MICROS);
+	}
+
+	/** 사용자가 순서를 바꾼 뒤에도 입력이 같으면 초안은 저장한 LLM 결과로 되돌린다. */
+	@Test
+	void draftAfterAManualReorderRestoresTheStoredResult() {
+		this.claude.willAnswer(new Answer(List.of(new Pick(this.api, "필수 요건에 답한다"), new Pick(this.batch, "업무에 닿는다"))));
+		assertThat(draft(this.me, this.posting)).hasStatusOk();
+		assertThat(reorder(this.me, this.posting, "[%d]".formatted(this.club))).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("{ \"reused\": false }");
+
+		assertThat(draft(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "cards": [ { "cardId": %d, "reason": "필수 요건에 답한다" }, { "cardId": %d, "reason": "업무에 닿는다" } ],
+					  "reused": true }
+					""".formatted(this.api, this.batch));
+		assertThat(this.claude.calls()).isEqualTo(1);
+	}
+
+	/** 카드를 고치면 입력이 바뀌므로 LLM 을 다시 부르고 새 답을 저장한다. */
+	@Test
+	void editingACardCallsTheLlmAgain() {
+		this.claude.willAnswer(new Answer(List.of(new Pick(this.api, "앞 초안"))));
+		assertThat(draft(this.me, this.posting)).hasStatusOk();
+		assertThat(editCard(this.me, this.batch, "알림 배치 개선")).hasStatusOk();
+		this.claude.willAnswer(new Answer(List.of(new Pick(this.batch, "새 초안"))));
+
+		assertThat(draft(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "cards": [ { "cardId": %d, "reason": "새 초안" } ], "reused": false }
+					""".formatted(this.batch));
+		assertThat(this.claude.calls()).isEqualTo(2);
+		assertThat(draft(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "cards": [ { "cardId": %d, "reason": "새 초안" } ], "reused": true }
+				""".formatted(this.batch));
+		assertThat(this.claude.calls()).isEqualTo(2);
+	}
+
+	/** 다시 쓰기는 사용액이 들지 않으므로 한도에 닿아도 된다. 입력이 바뀌면 429 다. */
+	@Test
+	void reuseWorksOverTheLimit() {
+		this.claude.willAnswer(new Answer(List.of(new Pick(this.api, "필수 요건에 답한다"))));
+		assertThat(draft(this.me, this.posting)).hasStatusOk();
+		useUpTheBudget(this.me);
+
+		assertThat(draft(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "cards": [ { "cardId": %d } ], "reused": true }
+				""".formatted(this.api));
+		assertThat(editCard(this.me, this.batch, "알림 배치 개선")).hasStatusOk();
+		assertThat(draft(this.me, this.posting)).hasStatus(HttpStatus.TOO_MANY_REQUESTS);
+		assertThat(this.claude.calls()).isEqualTo(1);
 	}
 
 	/** LLM 을 기다리는 동안 지워진 카드는 빼고 남은 카드만 빈자리 없이 저장한다. */
@@ -190,10 +261,7 @@ class CardPriorityTests {
 	@Test
 	void overTheLimitIs429AndTheListStays() {
 		assertThat(reorder(this.me, this.posting, "[%d]".formatted(this.club))).hasStatusOk();
-		this.jdbc.sql("""
-				insert into llm_usage (user_id, feature, model, input_tokens, output_tokens, cost_micros, created_at)
-				values (:userId, 'CARD_EXTRACT', 'claude-opus-5-5', 0, 0, 2000000, :at)
-				""").param("userId", this.me).param("at", Timestamp.from(FixedClockConfiguration.NOW)).update();
+		useUpTheBudget(this.me);
 
 		assertThat(draft(this.me, this.posting)).hasStatus(HttpStatus.TOO_MANY_REQUESTS).bodyJson().extractingPath("$.code")
 			.isEqualTo("LLM_LIMIT_REACHED");
@@ -244,6 +312,24 @@ class CardPriorityTests {
 			.contentType(MediaType.APPLICATION_JSON)
 			.content("{ \"cardIds\": " + cardIds + " }")
 			.exchange();
+	}
+
+	private MvcTestResult editCard(long userId, long cardId, String title) {
+		return this.mvc.put()
+			.uri("/api/cards/{id}", cardId)
+			.with(loginAs(userId))
+			.with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{ \"title\": \"%s\" }".formatted(title))
+			.exchange();
+	}
+
+	/** 이달 사용액을 한도 넘게 채운다. */
+	private void useUpTheBudget(long userId) {
+		this.jdbc.sql("""
+				insert into llm_usage (user_id, feature, model, input_tokens, output_tokens, cost_micros, created_at)
+				values (:userId, 'CARD_EXTRACT', 'claude-opus-5-5', 0, 0, 2000000, :at)
+				""").param("userId", userId).param("at", Timestamp.from(FixedClockConfiguration.NOW)).update();
 	}
 
 	/** 내 공고 하나. analysis 가 null 이면 분석이 없는 공고다. */

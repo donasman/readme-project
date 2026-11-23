@@ -1,5 +1,7 @@
 package com.readme.posting;
 
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +13,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
+import com.readme.FixedClockConfiguration;
 import com.readme.Fixtures;
 import com.readme.IntegrationTest;
 import com.readme.llm.FakeClaudeApi;
@@ -135,6 +138,11 @@ class QuestionMatchTests {
 			.isEqualTo(List.of((int) this.api, (int) this.batch));
 		assertThat(this.claude.lastText()).doesNotContain("남의 카드").contains("(글자 수 없음)");
 
+		// 입력이 같으면 저장한 답을 다시 쓰므로 문항 하나를 고쳐 다시 고르게 한다
+		saveQuestions(this.me, this.posting, """
+				[ { "id": %d, "text": "직무 경험", "limit": 800 }, { "id": %d, "text": "실패 경험", "limit": 300 },
+				  { "id": %d, "text": "입사 후 포부와 계획" } ]
+				""".formatted(ids.get(0), ids.get(1), ids.get(2)));
 		this.claude.willAnswer(new Answer(List.of(new Match(ids.get(0), "PROBLEM", List.of(new Pick(this.club, "다시", null))))));
 		assertThat(match(this.me, this.posting)).hasStatusOk()
 			.bodyJson()
@@ -142,6 +150,94 @@ class QuestionMatchTests {
 					{ "questions": [ { "type": "PROBLEM", "cards": [ { "cardId": %d, "emphasis": [] } ] },
 					                 { "type": null, "cards": [] }, { "type": null, "cards": [] } ] }
 					""".formatted(this.club));
+	}
+
+	/**
+	 * 입력(지시문, 공고, 문항, 카드)이 같으면 LLM 을 부르지 않고 저장한 답을 다시 쓴다. 처음 누를 때 저장한 문항의 id 로 보낸 입력이
+	 * key 라서 두 번째 누름이 맞는다. 사용액도 들지 않는다.
+	 */
+	@Test
+	void sameInputReusesTheStoredAnswer() throws Exception {
+		this.claude.whileAnswering(() -> {
+			List<Long> ids = questionIds(this.posting);
+			this.claude.willAnswer(new Answer(List.of(new Match(ids.get(0), "JOB", List.of(new Pick(this.api, "직무에 답한다", List.of("action")))),
+					new Match(ids.get(1), "FAILURE", List.of(new Pick(this.club, "실패 장면", List.of("learning")))))));
+		});
+		MvcTestResult firstResult = match(this.me, this.posting);
+		assertThat(firstResult).hasStatusOk();
+		String first = firstResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
+		assertThat(first).contains("\"reused\":false", "\"type\":\"JOB\"");
+
+		assertThat(match(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isStrictlyEqualTo(first.replace("\"reused\":false", "\"reused\":true"));
+		assertThat(this.claude.calls()).isEqualTo(1);
+		assertThat(spent(this.me)).isEqualTo(FakeClaudeApi.ANSWER_COST_MICROS);
+	}
+
+	/** 사용자가 문항의 카드를 바꾼 뒤에도 입력이 같으면 고르기는 저장한 LLM 결과로 되돌린다. */
+	@Test
+	void matchAfterAManualEditRestoresTheStoredResult() {
+		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\" } ]").getFirst();
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB", List.of(new Pick(this.api, "직무에 답한다", List.of("action")))))));
+		assertThat(match(this.me, this.posting)).hasStatusOk();
+		assertThat(setCards(this.me, this.posting, question, "[%d]".formatted(this.club))).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("{ \"reused\": false }");
+
+		assertThat(match(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "questions": [ { "id": %d, "type": "JOB", "cards": [ { "cardId": %d, "reason": "직무에 답한다" } ] } ],
+					  "reused": true }
+					""".formatted(question, this.api));
+		assertThat(this.claude.calls()).isEqualTo(1);
+	}
+
+	/** 문항을 고치면 입력이 바뀌므로 LLM 을 다시 부른다. */
+	@Test
+	void editingAQuestionCallsTheLlmAgain() {
+		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\" } ]").getFirst();
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB", List.of()))));
+		assertThat(match(this.me, this.posting)).hasStatusOk();
+		assertThat(putQuestions(this.me, this.posting, "[ { \"id\": %d, \"text\": \"직무 경험\", \"limit\": 300 } ]".formatted(question)))
+			.hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("{ \"reused\": false }");
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "PROBLEM", List.of()))));
+
+		assertThat(match(this.me, this.posting)).hasStatusOk()
+			.bodyJson()
+			.isLenientlyEqualTo("""
+					{ "questions": [ { "id": %d, "type": "PROBLEM" } ], "reused": false }
+					""".formatted(question));
+		assertThat(this.claude.calls()).isEqualTo(2);
+		assertThat(this.claude.lastText()).contains("(글자 수 300자)");
+	}
+
+	/** 다시 쓰기는 사용액이 들지 않으므로 한도에 닿아도 된다. 카드를 고쳐 입력이 바뀌면 429 다. */
+	@Test
+	void reuseWorksOverTheLimit() {
+		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\" } ]").getFirst();
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB", List.of(new Pick(this.api, "직무에 답한다", List.of()))))));
+		assertThat(match(this.me, this.posting)).hasStatusOk();
+		this.jdbc.sql("""
+				insert into llm_usage (user_id, feature, model, input_tokens, output_tokens, cost_micros, created_at)
+				values (:userId, 'CARD_EXTRACT', 'claude-opus-5-5', 0, 0, 2000000, :at)
+				""").param("userId", this.me).param("at", Timestamp.from(FixedClockConfiguration.NOW)).update();
+
+		assertThat(match(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "questions": [ { "type": "JOB", "cards": [ { "cardId": %d } ] } ], "reused": true }
+				""".formatted(this.api));
+		assertThat(this.mvc.put()
+			.uri("/api/cards/{id}", this.batch)
+			.with(loginAs(this.me))
+			.with(xsrf())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{ \"title\": \"알림 배치 개선\" }")).hasStatusOk();
+		assertThat(match(this.me, this.posting)).hasStatus(HttpStatus.TOO_MANY_REQUESTS).bodyJson().extractingPath("$.code")
+			.isEqualTo("LLM_LIMIT_REACHED");
+		assertThat(this.claude.calls()).isEqualTo(1);
 	}
 
 	/** LLM 이 고르는 동안 지워진 문항의 답은 버리고, 남은 문항만 저장한다. */
@@ -335,6 +431,13 @@ class QuestionMatchTests {
 		assertThat(questionIds(this.posting)).isEmpty();
 		assertThat(this.jdbc.sql("select count(*) from user_posting_question_cards where question_id = :id")
 			.param("id", question).query(Long.class).single()).isZero();
+	}
+
+	private long spent(long userId) {
+		return this.jdbc.sql("select coalesce(sum(cost_micros), 0) from llm_usage where user_id = :userId")
+			.param("userId", userId)
+			.query(Long.class)
+			.single();
 	}
 
 	/** 내 공고 상세의 JSON. */

@@ -132,11 +132,12 @@ class MyPostingController {
 	 * 경험카드 우선순위 초안(카드 우선순위 설계). LLM 이 내 카드에서 5장까지 고르고 이유를 붙여 앞 목록을 바꾼다. 새 목록을 돌려준다.
 	 * 내 공고에 없으면 404 POSTING_NOT_FOUND, 카드가 없으면 409 NO_CARDS, 공고 내용이 없으면 409 NO_POSTING_CONTENT,
 	 * 한도에 닿았으면 429 LLM_LIMIT_REACHED, 답을 못 받으면 503 LLM_UNAVAILABLE, 쓸 수 없는 답이면 502 LLM_FAILED.
+	 * 입력(지시문, 공고, 카드)이 앞 초안과 같으면 LLM 을 부르지 않고 저장한 답을 다시 쓴다(한도를 보지 않는다, reused true).
 	 */
 	@PostMapping("/api/me/postings/{postingId}/card-priority/draft")
 	CardPriorityResponse draftCardPriority(@PathVariable long postingId, @CurrentUser LoginUser user) {
-		this.cardPriorities.draft(user.id(), postingId);
-		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId));
+		boolean reused = this.cardPriorities.draft(user.id(), postingId);
+		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId), reused);
 	}
 
 	/**
@@ -147,7 +148,7 @@ class MyPostingController {
 	CardPriorityResponse setCardPriority(@PathVariable long postingId, @Valid @RequestBody CardPriorityRequest request,
 			@CurrentUser LoginUser user) {
 		this.cardPriorities.reorder(user.id(), postingId, request.cardIds());
-		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId));
+		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId), false);
 	}
 
 	/**
@@ -159,18 +160,19 @@ class MyPostingController {
 	QuestionsResponse setQuestions(@PathVariable long postingId, @Valid @RequestBody QuestionsRequest request,
 			@CurrentUser LoginUser user) {
 		this.postingQuestions.replace(user.id(), postingId, request.questions());
-		return new QuestionsResponse(this.queries.questions(user.id(), postingId));
+		return new QuestionsResponse(this.queries.questions(user.id(), postingId), false);
 	}
 
 	/**
 	 * 문항마다 LLM 이 유형과 카드(2장까지, 500자 아래 문항은 1장)를 골라 앞 결과를 바꾼다. 저장 전이면 공고 분석의 문항을 먼저 저장한다.
 	 * 새 목록을 돌려준다. 내 공고에 없으면 404 POSTING_NOT_FOUND, 문항이 없으면 409 NO_QUESTIONS, 카드가 없으면 409 NO_CARDS,
 	 * 한도에 닿았으면 429 LLM_LIMIT_REACHED, 답을 못 받으면 503 LLM_UNAVAILABLE, 쓸 수 없는 답이면 502 LLM_FAILED.
+	 * 입력(지시문, 공고, 문항, 카드)이 앞 고르기와 같으면 LLM 을 부르지 않고 저장한 답을 다시 쓴다(한도를 보지 않는다, reused true).
 	 */
 	@PostMapping("/api/me/postings/{postingId}/questions/match")
 	QuestionsResponse matchQuestions(@PathVariable long postingId, @CurrentUser LoginUser user) {
-		this.postingQuestions.match(user.id(), postingId);
-		return new QuestionsResponse(this.queries.questions(user.id(), postingId));
+		boolean reused = this.postingQuestions.match(user.id(), postingId);
+		return new QuestionsResponse(this.queries.questions(user.id(), postingId), reused);
 	}
 
 	/**
@@ -182,7 +184,7 @@ class MyPostingController {
 	QuestionsResponse setQuestionCards(@PathVariable long postingId, @PathVariable long questionId,
 			@Valid @RequestBody QuestionCardsRequest request, @CurrentUser LoginUser user) {
 		this.postingQuestions.setCards(user.id(), postingId, questionId, request.cardIds());
-		return new QuestionsResponse(this.queries.questions(user.id(), postingId));
+		return new QuestionsResponse(this.queries.questions(user.id(), postingId), false);
 	}
 
 	/** 문항 목록 두기의 본문. 첫째가 앞이다. */
@@ -194,16 +196,16 @@ class MyPostingController {
 	record QuestionCardsRequest(@NotNull @Size(max = PostingQuestions.MAX_CARDS) List<@NotNull Long> cardIds) {
 	}
 
-	/** 문항 API 들의 응답. 상세의 questions 와 같은 모양이다. */
-	record QuestionsResponse(List<MyPostingDetailResponse.Question> questions) {
+	/** 문항 API 들의 응답. questions 는 상세의 questions 와 같은 모양이다. reused 는 고르기가 저장한 LLM 답을 다시 썼을 때만 true 다. */
+	record QuestionsResponse(List<MyPostingDetailResponse.Question> questions, boolean reused) {
 	}
 
 	/** 카드 우선순위 바꾸기의 본문. 첫째가 앞이다. */
 	record CardPriorityRequest(@NotNull @Size(max = CardPriorities.MAX) List<@NotNull Long> cardIds) {
 	}
 
-	/** 카드 우선순위 초안과 바꾸기의 응답. */
-	record CardPriorityResponse(List<MyPostingDetailResponse.PriorityCard> cards) {
+	/** 카드 우선순위 초안과 바꾸기의 응답. reused 는 초안이 저장한 LLM 답을 다시 썼을 때만 true 다. */
+	record CardPriorityResponse(List<MyPostingDetailResponse.PriorityCard> cards, boolean reused) {
 	}
 
 	private boolean canSee(long userId, long postingId) {
