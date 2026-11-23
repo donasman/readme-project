@@ -9,7 +9,10 @@ export const authRoutes: RouteObject[] = [
   {
     // 로그인 전 첫 화면. 로그인하지 않은 사람이 /로 오면 여기로 온다
     path: "/welcome",
-    lazy: async () => ({ Component: (await import("./pages/landing-page")).LandingPage }),
+    lazy: async () => {
+      const { LandingPage, landingLoader } = await import("./pages/landing-page")
+      return { loader: landingLoader, Component: LandingPage }
+    },
   },
   {
     path: "/login",

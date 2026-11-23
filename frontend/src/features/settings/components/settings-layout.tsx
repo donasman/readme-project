@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router"
+import { Link, NavLink, Outlet } from "react-router"
 
 import { Heading } from "@/shared/components/heading"
 import { navPill } from "@/shared/components/nav-pill"
@@ -7,7 +7,7 @@ import { mainColumn } from "@/shared/components/page-layout"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
 
-/** 설정의 틀(시안 9차 "내 정보"): 제목, 왼쪽 메뉴, 오른쪽 720px 본문. */
+/** 설정의 틀(시안 9차 "내 정보"): 제목, 왼쪽 메뉴, 오른쪽 720px 본문. 메뉴 끝의 리드미 소개는 로그인한 사람이 랜딩으로 가는 길이다. */
 export function SettingsLayout() {
   const link = ({ isActive }: { isActive: boolean }) => navPill(isActive)
   return (
@@ -33,6 +33,9 @@ export function SettingsLayout() {
             탈퇴
           </NavLink>
           <span className="inline-flex min-h-control-sm items-center rounded-full px-4 text-sm font-medium whitespace-nowrap text-text-secondary">외부 연동 (나중에)</span>
+          <Link to={paths.welcome()} className={navPill(false)}>
+            리드미 소개
+          </Link>
         </nav>
         <div className={joinClasses(mainColumn, "max-w-[720px] gap-6")}>
           <Outlet />

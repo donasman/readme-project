@@ -83,8 +83,9 @@ const SCENARIOS = [
   { name: "invite-guest", path: "/invite/Xk3f9QmT2a?mock=guest", width: 1280 },
   { name: "invite-expired", path: "/invite/nope", width: 1280 },
   // 로그인 전(1·5·9차)
-  { name: "landing", path: "/welcome", width: 1280 },
-  { name: "landing-mobile", path: "/welcome", width: 390, scale: 2 },
+  { name: "landing", path: "/welcome?mock=guest", width: 1280 },
+  { name: "landing-mobile", path: "/welcome?mock=guest", width: 390, scale: 2 },
+  { name: "landing-signed-in", path: "/welcome", width: 1280 },
   { name: "login", path: "/login", width: 1280 },
   // 회원가입은 이름, 이메일, 비밀번호만 받는다(2026-11-17)
   { name: "signup", path: "/signup", width: 1280 },

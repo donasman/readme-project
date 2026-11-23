@@ -16,7 +16,7 @@ const ITEMS: { key: MySpace; label: string; to: string }[] = [
   { key: "mail", label: "메일 확인함", to: paths.mail() },
 ]
 
-/** 오늘(홈), 내 공고, 지원 현황, 달력, 메일 확인함. 위쪽 헤더의 "홈"과 겹치지 않게 첫 칸은 "오늘"이다. 좁으면 옆으로 민다. */
+/** 오늘(홈), 내 공고, 지원 현황, 달력, 메일 확인함. 위쪽 헤더의 "대시보드"와 겹치지 않게 첫 칸은 "오늘"이다. 좁으면 옆으로 민다. */
 export function MySpaceNav({ current }: { current: MySpace }) {
   return (
     <nav aria-label="내 공간" className="-mx-2 -mt-2 flex gap-1 overflow-x-auto px-2 [scrollbar-width:none]">
