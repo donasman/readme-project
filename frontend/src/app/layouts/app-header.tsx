@@ -26,7 +26,7 @@ import { firstChar, joinClasses } from "@/shared/lib/utils"
 const onMark = (on: boolean) => (on ? <CheckIcon role="img" aria-label="지금 보는 메뉴" className="text-primary" /> : null)
 
 /**
- * 로그인한 모든 화면의 위쪽 헤더(11차 시안): 로고, 홈 · 내 그룹 · 경험카드 · 정보공유, 내 계정. 폭은 아래 본문과 같다(그룹 화면 1240px,
+ * 로그인한 모든 화면의 위쪽 헤더(11차 시안): 로고, 대시보드 · 내 그룹 · 경험카드 · 정보공유, 내 계정. 폭은 아래 본문과 같다(그룹 화면 1240px,
  * 그룹 밖 narrow 1120px). 로고와 내 계정이 본문의 양 끝에 세로로 맞는다.
  * 그룹 화면에서는 "내 그룹" 자리가 지금 그룹을 보이고 눌러서 그룹을 바꾼다. 그룹 밖에서는 내 그룹 화면으로 가는 링크다
  * (내 그룹 목록은 그룹 라우트만 읽는다). 768px 아래에서는 내 그룹 자리만 두고 나머지와 내 계정은 메뉴(☰)에 넣는다.
@@ -54,7 +54,7 @@ export function AppHeader({ narrow = false }: { narrow?: boolean }) {
           <ul className="flex items-center gap-1">
             <li className="hidden md:block">
               <Link to={paths.home()} aria-current={current === "home" ? "page" : undefined} className={navPill(current === "home")}>
-                홈
+                대시보드
               </Link>
             </li>
             <li className="min-w-0">
@@ -119,7 +119,7 @@ export function AppHeader({ narrow = false }: { narrow?: boolean }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-48">
             <DropdownMenuItem onClick={() => navigate(paths.home())}>
-              <span className="flex-1">홈</span>
+              <span className="flex-1">대시보드</span>
               {onMark(current === "home")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate(paths.cards())}>

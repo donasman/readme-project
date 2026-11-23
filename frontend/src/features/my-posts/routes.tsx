@@ -6,7 +6,7 @@ import { revalidateOnParams } from "@/shared/lib/router"
 const handle: MainRouteHandle = { mainNav: "home" }
 
 /**
- * 홈과 내 공고 화면들(시안 8차). 앱의 위쪽 헤더 틀 아래에 붙고 헤더의 "홈"에 든다(11차 시안).
+ * 홈과 내 공고 화면들(시안 8차). 앱의 위쪽 헤더 틀 아래에 붙고 헤더의 "대시보드"에 든다(11차 시안).
  * 본문 맨 위의 "내 공간" 줄(오늘, 내 공고, 지원 현황, 달력, 메일 확인함)이 지금 화면을 보인다.
  */
 export const myPostsRoutes: RouteObject[] = [

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react"
-import { Link } from "react-router"
+import { Link, useLoaderData } from "react-router"
 
 import { buttonVariants } from "@/components/ui/button"
+import { getViewer } from "@/domain/session/api"
 import { DISCLOSURE_DESCRIPTIONS, DISCLOSURE_LABELS, DISCLOSURES } from "@/domain/group/disclosure"
 import { LogoMark } from "@/shared/components/logo-mark"
 import { Panel } from "@/shared/components/panel"
@@ -31,11 +32,26 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
 /** 섹션 제목(28px). */
 const sectionTitle = "font-heading text-[28px] leading-[1.2] font-bold tracking-display"
 
+/** 로그인했는지 읽는다. 로그인한 사람도 설정의 "리드미 소개"로 이 화면에 온다. */
+export async function landingLoader() {
+  return { signedIn: (await getViewer()) !== null }
+}
+
+/** 로그인한 사람에게 로그인·회원가입 대신 보이는 버튼. */
+function DashboardLink({ size }: { size: "sm" | "lg" }) {
+  return (
+    <Link to={paths.home()} className={buttonVariants({ size, className: size === "lg" ? "px-7" : undefined })}>
+      대시보드로 가기
+    </Link>
+  )
+}
+
 /**
- * 랜딩(시안 9차): 로그인하지 않은 사람이 처음 보는 화면. 앱 화면, 하는 일 셋, 공개 범위 셋을 알린다.
+ * 랜딩(시안 9차): 로그인하지 않은 사람이 처음 보는 화면. 로그인했으면 로그인·회원가입 자리에 대시보드로 가는 버튼을 둔다. 앱 화면, 하는 일 셋, 공개 범위 셋을 알린다.
  * 앱 화면(2026-11-17, 시안보다 코드를 먼저)은 `npm run shots`가 가짜 서버의 그룹 공고 목록을 찍은 것이다. 앱이 바뀌면 다시 찍는다.
  */
 export function LandingPage() {
+  const { signedIn } = useLoaderData<typeof landingLoader>()
   return (
     <>
       <title>{docTitle("취업준비생을 위한 정보공유·스터디")}</title>
@@ -45,14 +61,18 @@ export function LandingPage() {
             <LogoMark size={26} />
             <span>리드미</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link to={paths.login()} className={buttonVariants({ variant: "outline", size: "sm" })}>
-              로그인
-            </Link>
-            <Link to={paths.signup()} className={buttonVariants({ size: "sm" })}>
-              회원가입
-            </Link>
-          </div>
+          {signedIn ? (
+            <DashboardLink size="sm" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to={paths.login()} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                로그인
+              </Link>
+              <Link to={paths.signup()} className={buttonVariants({ size: "sm" })}>
+                회원가입
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -66,14 +86,18 @@ export function LandingPage() {
             <span className="rounded-control bg-highlight px-3.5 py-1 text-highlight-foreground">정보공유·스터디</span>
           </h1>
           <p className="max-w-140 text-lg text-text-secondary">그룹에서 공고를 같이 모으고, 내 경험은 카드로 정리해 공고에 맞춰 봅니다.</p>
-          <div className="flex flex-wrap gap-2">
-            <Link to={paths.signup()} className={buttonVariants({ size: "lg", className: "px-7" })}>
-              회원가입
-            </Link>
-            <Link to={paths.login()} className={buttonVariants({ variant: "outline", size: "lg", className: "px-7" })}>
-              로그인
-            </Link>
-          </div>
+          {signedIn ? (
+            <DashboardLink size="lg" />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Link to={paths.signup()} className={buttonVariants({ size: "lg", className: "px-7" })}>
+                회원가입
+              </Link>
+              <Link to={paths.login()} className={buttonVariants({ variant: "outline", size: "lg", className: "px-7" })}>
+                로그인
+              </Link>
+            </div>
+          )}
           <AppShot />
         </section>
 
@@ -118,9 +142,13 @@ export function LandingPage() {
               가입한 뒤 그룹을 만들고 초대 링크를 보내면 됩니다. 초대 링크를 받았다면 그 링크로 가입하면 바로 그 그룹에 들어갑니다.
             </p>
           </div>
-          <Link to={paths.signup()} className={buttonVariants({ size: "lg", className: "px-7" })}>
-            회원가입
-          </Link>
+          {signedIn ? (
+            <DashboardLink size="lg" />
+          ) : (
+            <Link to={paths.signup()} className={buttonVariants({ size: "lg", className: "px-7" })}>
+              회원가입
+            </Link>
+          )}
         </section>
       </main>
     </>

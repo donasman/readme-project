@@ -31,7 +31,7 @@ export async function homeLoader() {
 const UPCOMING = 5
 const WEEK = 7
 
-/** 홈(시안 8차 "홈", 11차에서 숫자 셋): 오늘, 숫자 셋, 다가오는 마감, 확인 필요, 그룹 소식. */
+/** 대시보드(시안 8차 "홈", 11차에서 숫자 셋, 2026-11-23에 이름을 대시보드로): 오늘, 숫자 셋, 다가오는 마감, 확인 필요, 그룹 소식. */
 export function HomePage() {
   const { today, postings, unverifiedCards, mailChanges, news } = useLoaderData<typeof homeLoader>()
   const open = sortPostings(postings, today).filter((p) => !isClosed(p.deadline, today))
@@ -57,7 +57,7 @@ export function HomePage() {
 
   return (
     <Page narrow className="gap-6 pt-10">
-      <title>{docTitle("홈")}</title>
+      <title>{docTitle("대시보드")}</title>
       <MySpaceNav current="home" />
       <div className="flex flex-col gap-2">
         <p className="text-sm text-text-secondary">{formatLongDate(today)}</p>
