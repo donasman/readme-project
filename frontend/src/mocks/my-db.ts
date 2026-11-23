@@ -211,7 +211,11 @@ function priorityOf(e: Entry): PriorityCard[] {
  * 우선순위 LLM 초안 흉내(POST …/card-priority/draft): 공고 키워드와 겹치는 태그가 많은 카드부터 5장, 이유는 겹친 키워드다.
  * 카드가 없으면 NO_CARDS, 공고 내용도 키워드도 없으면 NO_POSTING_CONTENT.
  */
-export function draftCardPriority(id: string): DraftResult {
+// 초안을 만드는 동안 목록이 막힌 화면이 보이도록 잠깐 기다린다. 진짜 서버(LLM)는 몇 초 걸린다
+const DRAFT_MS = 600
+
+export async function draftCardPriority(id: string): Promise<DraftResult> {
+  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   const posting = getMyPosting(id)
   const cards = listCards()
   if (cards.length === 0) return { ok: false, error: "NO_CARDS" }

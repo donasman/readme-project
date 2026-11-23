@@ -35,11 +35,13 @@ interface CardPriorityPanelProps {
 /**
  * 경험카드 우선순위(카드 우선순위 문서): 이 공고에 먼저 쓸 카드 5장까지. 초안은 LLM이 짜고(누를 때만), 그 뒤에는 끌거나 위·아래 버튼으로
  * 순서를 바꾸고, 빼고, 더한다. 바꿀 때마다 목록 전체를 저장한다. 시안이 없다.
+ * 초안을 만드는 동안(몇 초)은 목록을 고치지 못하게 막는다. 그 사이 고친 순서를 늦게 끝난 초안이 덮어쓰지 않게 한다.
  */
 export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityPanelProps) {
   const [cards, setCards] = useState(initial)
   const [draftError, setDraftError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [drafting, setDrafting] = useState(false)
   const [announced, setAnnounced] = useState("")
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
   const addable = addableCards(choices, cards)
@@ -57,13 +59,20 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
     }
   }
 
+  // 다시 만들기 창은 초안이 끝날 때까지 열어 두어 "만드는 중"을 보인다
   async function draft() {
-    setConfirming(false)
     setDraftError(null)
-    const result = await draftCardPriority(postingId)
-    if (!result.ok) return setDraftError(DRAFT_ERRORS[result.error])
-    setCards(result.cards)
-    setAnnounced(result.cards.length > 0 ? `초안으로 카드 ${result.cards.length}장을 골랐습니다.` : "이 공고에 맞는 카드를 고르지 못했습니다.")
+    setDrafting(true)
+    setAnnounced("초안을 만드는 중입니다.")
+    try {
+      const result = await draftCardPriority(postingId)
+      if (!result.ok) return setDraftError(DRAFT_ERRORS[result.error])
+      setCards(result.cards)
+      setAnnounced(result.cards.length > 0 ? `초안으로 카드 ${result.cards.length}장을 골랐습니다.` : "이 공고에 맞는 카드를 고르지 못했습니다.")
+    } finally {
+      setDrafting(false)
+      setConfirming(false)
+    }
   }
 
   function onDragEnd({ active, over }: DragEndEvent) {
@@ -91,12 +100,12 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
           이 공고에 먼저 쓸 카드입니다. 끌거나 화살표로 순서를 바꿉니다.
         </PanelHead>
         {cards.length > 0 ? (
-          <Button type="button" variant="outline" size="sm" onClick={() => setConfirming(true)}>
+          <Button type="button" variant="outline" size="sm" disabled={drafting} onClick={() => setConfirming(true)}>
             LLM으로 초안 다시 만들기
           </Button>
         ) : (
           <BusyButton type="button" variant="outline" size="sm" onClick={draft}>
-            LLM으로 초안 만들기
+            {drafting ? "초안 만드는 중…" : "LLM으로 초안 만들기"}
           </BusyButton>
         )}
       </div>
@@ -119,6 +128,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
                   card={card}
                   index={index}
                   last={index === cards.length - 1}
+                  disabled={drafting}
                   onMove={(by) => void save(moveBy(cards, index, by), `${card.title}을(를) ${index + by + 1}번째로 옮겼습니다.`)}
                   onRemove={() => void save(cards.filter((c) => c.cardId !== card.cardId), `${card.title}을(를) 뺐습니다.`)}
                 />
@@ -130,7 +140,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
 
       {addable.length > 0 && (
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="self-start" />}>
+          <DropdownMenuTrigger disabled={drafting} render={<Button variant="outline" size="sm" className="self-start" />}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             카드 더하기
             <ChevronDownIcon data-icon="inline-end" aria-hidden="true" />
@@ -157,7 +167,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
           <>
             <DialogCancel />
             <BusyButton type="button" onClick={draft}>
-              초안 만들기
+              {drafting ? "만드는 중…" : "초안 만들기"}
             </BusyButton>
           </>
         }
@@ -175,13 +185,15 @@ interface PriorityRowProps {
   card: PriorityCard
   index: number
   last: boolean
+  /** 초안을 만드는 중이면 끌기와 버튼을 막는다 */
+  disabled: boolean
   onMove: (by: -1 | 1) => void
   onRemove: () => void
 }
 
 /** 우선순위 한 줄: 끄는 손잡이, 순번, 카드 제목(카드 상세로), 고른 이유, 위·아래·빼기 버튼(휴대폰은 아래 줄). */
-function PriorityRow({ card, index, last, onMove, onRemove }: PriorityRowProps) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: card.cardId })
+function PriorityRow({ card, index, last, disabled, onMove, onRemove }: PriorityRowProps) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: card.cardId, disabled })
   return (
     <li
       ref={setNodeRef}
@@ -197,7 +209,8 @@ function PriorityRow({ card, index, last, onMove, onRemove }: PriorityRowProps) 
         {...attributes}
         {...listeners}
         aria-label={`${card.title} 끌어서 옮기기`}
-        className="flex size-8 flex-none cursor-grab touch-none items-center justify-center rounded-control text-text-secondary hover:bg-muted active:cursor-grabbing"
+        disabled={disabled}
+        className="flex size-8 flex-none cursor-grab touch-none items-center justify-center rounded-control text-text-secondary hover:bg-muted active:cursor-grabbing disabled:pointer-events-none disabled:opacity-35"
       >
         <GripVerticalIcon aria-hidden="true" className="size-4" />
       </button>
@@ -213,13 +226,13 @@ function PriorityRow({ card, index, last, onMove, onRemove }: PriorityRowProps) 
       </div>
       {/* 휴대폰은 글 칸이 좁아지지 않게 버튼 줄을 글 아래로 내린다 */}
       <div className="flex flex-none items-center max-sm:w-full max-sm:justify-end">
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={`${card.title} 위로`} disabled={index === 0} focusableWhenDisabled className={stepButton} onClick={() => onMove(-1)}>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={`${card.title} 위로`} disabled={disabled || index === 0} focusableWhenDisabled className={stepButton} onClick={() => onMove(-1)}>
           <ArrowUpIcon aria-hidden="true" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={`${card.title} 아래로`} disabled={last} focusableWhenDisabled className={stepButton} onClick={() => onMove(1)}>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={`${card.title} 아래로`} disabled={disabled || last} focusableWhenDisabled className={stepButton} onClick={() => onMove(1)}>
           <ArrowDownIcon aria-hidden="true" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={`${card.title} 빼기`} onClick={onRemove}>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={`${card.title} 빼기`} disabled={disabled} onClick={onRemove}>
           <XIcon aria-hidden="true" />
         </Button>
       </div>
