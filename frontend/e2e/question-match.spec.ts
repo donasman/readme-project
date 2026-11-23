@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test"
 
 // 자기소개서 문항과 경험카드(문항 매칭 문서 5절): 내 공고 상세의 경험카드 우선순위와 메모 사이. 카드는 LLM이 고르고(가짜 서버는 문항 글과 키워드), 그 뒤에는 손으로 고친다.
 const panelOf = (page: Page) => page.getByRole("region", { name: "자기소개서 문항" })
+const REUSED = "문항과 카드가 바뀌지 않아 앞서 고른 결과를 그대로 보입니다."
 
 test("공고의 문항에 카드를 고르고, 카드 바꾸기로 고친 뒤 다시 고른다", async ({ page }) => {
   await page.goto("/my-posts/p-pub1")
@@ -49,13 +50,51 @@ test("공고의 문항에 카드를 고르고, 카드 바꾸기로 고친 뒤 �
   await expect(cards).toHaveCount(2)
   await expect(cards.nth(1)).toContainText("알고리즘 스터디 운영")
 
-  // 다시 고르기는 모든 문항의 카드가 바뀐다고 먼저 묻는다. 고르는 동안 창은 "고르는 중"을 보인다
+  // 다시 고르기는 모든 문항의 카드가 바뀐다고 먼저 묻는다. 문항과 카드가 그대로라 손으로 고친 카드가 앞 결과로 돌아간다
   await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
   const dialog = page.getByRole("dialog", { name: "카드를 다시 고를까요?" })
   await dialog.getByRole("button", { name: "카드 고르기" }).click()
+  await expect(dialog).toBeHidden()
+  await expect(cards.nth(0)).toContainText(first)
+  await expect(cards.nth(1)).toContainText(second)
+  await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeVisible()
+})
+
+test("문항과 카드가 그대로면 앞서 고른 결과를 다시 보이고, 문항을 고치면 새로 고른다", async ({ page }) => {
+  await page.goto("/my-posts/p-pub1")
+  const panel = panelOf(page)
+  const rows = panel.locator("ol > li")
+  const cardTitles = () => panel.locator("button[aria-haspopup=dialog] span.font-bold").allInnerTexts()
+  await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
+  await expect(rows.nth(2).getByText("협업·소통")).toBeVisible()
+  const matched = await cardTitles()
+
+  const dialog = page.getByRole("dialog", { name: "카드를 다시 고를까요?" })
+  await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
+  await expect(dialog.getByText("공고나 문항, 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.")).toBeVisible()
+  await dialog.getByRole("button", { name: "카드 고르기" }).click()
+  await expect(dialog).toBeHidden()
+  await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeVisible()
+  await expect(panel.locator("p[role=status]")).toHaveText(REUSED)
+  expect(await cardTitles()).toEqual(matched)
+  // 알림 줄이 휴대폰 폭에서 옆으로 넘치지 않는다
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
+
+  // 문항 글을 고치면 알림을 지우고, 다시 고르면 LLM이 새로 고른다
+  await panel.getByRole("button", { name: "문항 고치기" }).click()
+  const editor = page.getByRole("dialog", { name: "문항 고치기" })
+  await editor.getByRole("textbox", { name: "2번 문항", exact: true }).fill("직무와 관련해 문제를 해결하고 개선한 경험을 기술하시오")
+  await editor.getByRole("button", { name: "저장" }).click()
+  await expect(editor).toBeHidden()
+  await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeHidden()
+
+  await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
+  await dialog.getByRole("button", { name: "카드 고르기" }).click()
+  // 고르는 동안 창은 "고르는 중"을 보인다
   await expect(dialog.getByRole("button", { name: "고르는 중…" })).toBeDisabled()
   await expect(dialog).toBeHidden()
-  await expect(cards.nth(1)).not.toContainText("알고리즘 스터디 운영")
+  await expect(rows.nth(1).getByText("문제해결·개선")).toBeVisible()
+  await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeHidden()
 })
 
 test("문항 고치기 창에서 빼고, 더하고, 순서와 글자 수를 바꾼다", async ({ page }) => {

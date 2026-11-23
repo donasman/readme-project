@@ -79,13 +79,15 @@ export async function getSchedules(): Promise<Schedule[]> {
 
 /**
  * 경험카드 우선순위 LLM 초안(POST /api/me/postings/{postingId}/card-priority/draft, 카드 우선순위 문서 4절). 앞 목록을 바꾼다.
+ * 공고와 카드가 앞 초안 때와 같으면 서버가 LLM을 부르지 않고 그 초안을 준다(reused).
  * 카드 없음(409 NO_CARDS), 공고 내용 없음(409 NO_POSTING_CONTENT), 이번 달 한도(429 LLM_LIMIT_REACHED)는 패널에 알리고, 나머지(LLM 실패 등)는 던진다.
  */
 export async function draftCardPriority(id: string): Promise<DraftResult> {
   if (mockServer) return db.draftCardPriority(id)
   try {
-    const { cards } = await request<{ cards: PriorityCard[] }>("POST", apiPath`/api/me/postings/${id}/card-priority/draft`)
-    return { ok: true, cards }
+    // reused가 없는 서버(이 칸을 더하기 전)는 새로 만든 것으로 본다
+    const { cards, reused } = await request<{ cards: PriorityCard[]; reused?: boolean }>("POST", apiPath`/api/me/postings/${id}/card-priority/draft`)
+    return { ok: true, cards, reused: reused === true }
   } catch (error) {
     for (const code of ["NO_CARDS", "NO_POSTING_CONTENT", "LLM_LIMIT_REACHED"] as const) {
       if (isApiError(error, code)) return { ok: false, error: code }
@@ -119,13 +121,14 @@ export async function saveQuestions(id: string, questions: Pick<Question, "id" |
 
 /**
  * LLM으로 모든 문항의 유형과 카드를 고른다(POST …/questions/match). 저장 전이면 지금 문항을 먼저 저장하고, 앞 결과를 바꾼다.
+ * 공고, 문항, 카드가 앞 매칭 때와 같으면 서버가 LLM을 부르지 않고 그때 고른 것을 준다(reused).
  * 문항 없음(409 NO_QUESTIONS), 카드 없음(409 NO_CARDS), 이번 달 한도(429 LLM_LIMIT_REACHED)는 패널에 알리고, 나머지(LLM 실패 등)는 던진다.
  */
 export async function matchQuestions(id: string): Promise<MatchResult> {
   if (mockServer) return db.matchQuestions(id)
   try {
-    const { questions } = await request<{ questions: Question[] }>("POST", apiPath`/api/me/postings/${id}/questions/match`)
-    return { ok: true, questions }
+    const { questions, reused } = await request<{ questions: Question[]; reused?: boolean }>("POST", apiPath`/api/me/postings/${id}/questions/match`)
+    return { ok: true, questions, reused: reused === true }
   } catch (error) {
     for (const code of ["NO_QUESTIONS", "NO_CARDS", "LLM_LIMIT_REACHED"] as const) {
       if (isApiError(error, code)) return { ok: false, error: code }

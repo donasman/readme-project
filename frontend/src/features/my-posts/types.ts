@@ -100,8 +100,11 @@ export interface PriorityCard {
 /** 더할 수 있는 내 카드 하나(제목과 경험 이름). */
 export type CardChoice = Pick<PriorityCard, "cardId" | "title" | "experience">
 
-/** 우선순위 초안 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(카드 없음, 공고 내용 없음, 이번 달 한도). */
-export type DraftResult = { ok: true; cards: PriorityCard[] } | { ok: false; error: "NO_CARDS" | "NO_POSTING_CONTENT" | "LLM_LIMIT_REACHED" }
+/**
+ * 우선순위 초안 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(카드 없음, 공고 내용 없음, 이번 달 한도).
+ * reused는 공고와 카드가 앞 초안 때와 같아 서버가 LLM을 부르지 않고 그 초안을 다시 준 것이다(사용액이 들지 않는다).
+ */
+export type DraftResult = { ok: true; cards: PriorityCard[]; reused: boolean } | { ok: false; error: "NO_CARDS" | "NO_POSTING_CONTENT" | "LLM_LIMIT_REACHED" }
 
 /** 문항 유형(문항 매칭 문서 QD8). LLM이 고르기 전이나 아홉 밖이면 null */
 export type QuestionType = "JOB" | "PROBLEM" | "GOAL" | "TEAM" | "FAILURE" | "GROWTH" | "VALUES" | "MOTIVE" | "FUTURE"
@@ -127,8 +130,11 @@ export interface QuestionCard {
   emphasis: (keyof Star)[]
 }
 
-/** 카드 고르기 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(문항 없음, 카드 없음, 이번 달 한도). */
-export type MatchResult = { ok: true; questions: Question[] } | { ok: false; error: "NO_QUESTIONS" | "NO_CARDS" | "LLM_LIMIT_REACHED" }
+/**
+ * 카드 고르기 결과. 패널 아래에 알릴 오류는 값으로 돌려준다(문항 없음, 카드 없음, 이번 달 한도).
+ * reused는 공고, 문항, 카드가 앞 매칭 때와 같아 서버가 LLM을 부르지 않고 그때 고른 것을 다시 준 것이다(사용액이 들지 않는다).
+ */
+export type MatchResult = { ok: true; questions: Question[]; reused: boolean } | { ok: false; error: "NO_QUESTIONS" | "NO_CARDS" | "LLM_LIMIT_REACHED" }
 
 /** 홈의 "그룹 소식" 한 줄: 내 그룹의 최근 7일 새 공고와 새 댓글(GET /api/me/group-activity, 공고 문서 4.5). */
 export interface GroupNews {

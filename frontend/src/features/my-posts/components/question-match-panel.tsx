@@ -27,6 +27,8 @@ const MATCH_ERRORS: Record<Extract<MatchResult, { ok: false }>["error"], string>
 
 const EMPHASIS_LABELS = new Map(STORY_PARTS)
 
+const REUSED = "문항과 카드가 바뀌지 않아 앞서 고른 결과를 그대로 보입니다."
+
 interface QuestionMatchPanelProps {
   postingId: string
   initial: Question[]
@@ -42,6 +44,8 @@ interface QuestionMatchPanelProps {
 export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatchPanelProps) {
   const [questions, setQuestions] = useState(initial)
   const [matchError, setMatchError] = useState<string | null>(null)
+  // 서버가 LLM을 부르지 않고 앞 결과를 다시 줬다. 다음에 무언가 고치면 지운다
+  const [reused, setReused] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [matching, setMatching] = useState(false)
   // 카드 바꾸기가 도는 동안. 끝나기 전에 메뉴를 다시 열면 앞 목록으로 보내 방금 더한 카드가 사라진다
@@ -60,6 +64,7 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
   // 다시 고르기 창은 끝날 때까지 열어 두어 "고르는 중"을 보인다
   async function match() {
     setMatchError(null)
+    setReused(false)
     setMatching(true)
     setAnnounced("카드를 고르는 중입니다.")
     try {
@@ -69,7 +74,8 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
         return setAnnounced(MATCH_ERRORS[result.error])
       }
       setQuestions(result.questions)
-      setAnnounced(`문항 ${result.questions.length}개의 카드를 골랐습니다.`)
+      setReused(result.reused)
+      setAnnounced(result.reused ? REUSED : `문항 ${result.questions.length}개의 카드를 골랐습니다.`)
     } finally {
       setMatching(false)
       setConfirming(false)
@@ -79,6 +85,7 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
   // 저장 전 문항은 id가 없어 카드를 둘 수 없으니 지금 문항을 먼저 저장한다(고르기와 같다)
   async function changeCards(index: number, cardIds: string[], message: string) {
     setChanging(true)
+    setReused(false)
     // 같은 글을 두 번 알려도 읽히게 먼저 비운다
     setAnnounced("")
     try {
@@ -123,6 +130,7 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
         )}
       </div>
       {matchError && <IconNote tone="danger">{matchError}</IconNote>}
+      {reused && <p className="text-label-sm text-text-secondary">{REUSED}</p>}
 
       {questions.length === 0 ? (
         <div className="flex flex-col items-start gap-3">
@@ -168,6 +176,7 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
         unsaved={unsaved}
         onSave={async (list) => {
           setAnnounced("")
+          setReused(false)
           setQuestions(await saveQuestions(postingId, list))
           setEditing(false)
           setAnnounced(`문항 ${list.length}개를 저장했습니다.`)
@@ -186,7 +195,7 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
           </>
         }
       >
-        <p className="text-sm">모든 문항의 카드가 LLM이 새로 고른 카드로 바뀝니다. 이번 달 LLM 사용액이 듭니다.</p>
+        <p className="text-sm">모든 문항의 카드가 LLM이 고른 카드로 바뀝니다. 공고나 문항, 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.</p>
       </AppDialog>
       <CardPreviewDialog preview={preview} matches={byId} onIndex={(index) => setPreview((p) => p && { ...p, index })} onClose={() => setPreview(null)} />
     </Panel>

@@ -19,6 +19,10 @@ export interface Entry extends MyState {
   priority?: { cardId: string; reason: string | null }[]
   /** 자기소개서 문항과 고른 카드(서버의 user_posting_questions, 문항 매칭 문서 3절). 없으면 저장 전이라 공고 분석의 문항을 보인다 */
   questions?: { id: string; text: string; limit: number | null; type: QuestionType | null; cards: { cardId: string; reason: string | null; emphasis: (keyof Star)[] }[] }[]
+  /** 마지막 LLM 초안의 입력(공고와 카드)과 답. 입력이 같으면 서버처럼 LLM을 다시 부르지 않고 이 답을 쓴다 */
+  lastDraft?: { key: string; priority: NonNullable<Entry["priority"]> }
+  /** 마지막 LLM 문항 매칭의 입력(공고, 문항, 카드)과 문항마다 고른 유형과 카드 */
+  lastMatch?: { key: string; picks: Pick<NonNullable<Entry["questions"]>[number], "type" | "cards">[] }
   /** 그룹 없이 넣은 공고의 나머지 본체(어느 그룹 공고에도 걸려 있지 않다) */
   own?: { applyAt: string | null; sourceUrl: string | null; sections: PostSection[]; keywords: string[] }
 }

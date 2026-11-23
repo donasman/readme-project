@@ -24,7 +24,7 @@ import type {
 } from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
-import { listCards, listUnverifiedCards } from "./cards-db"
+import { getCard, listCards, listUnverifiedCards } from "./cards-db"
 import { KEYWORDS } from "./example-cards"
 import { getProfile } from "./profile-db"
 import { exampleAnalysis, findPost, listGroups, setInterest, today } from "./db"
@@ -225,26 +225,46 @@ function priorityOf(e: Entry): PriorityCard[] {
 }
 
 /**
+ * LLM에 넘기는 입력의 열쇠. 서버처럼 이것이 앞 답 때와 같으면 LLM을 부르지 않고 그 답을 다시 준다.
+ * 카드는 서버가 넘기는 칸만 id 순서로 본다(확인 여부, 어디서, 쓸 수 있는 문항은 넘기지 않아 바뀌어도 같은 입력이다).
+ */
+function inputKey(posting: MyPostingDetail, questions: unknown[] = []): string {
+  const cards = listCards()
+    .map((c) => getCard(c.id))
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .map(({ id, title, experience, period, role, summary, star: s, tags }) => [id, title, experience, period, role, summary, [s.situation, s.task, s.action, s.result, s.obstacle, s.learning], tags])
+  return JSON.stringify([posting.company, posting.title, posting.sections, posting.keywords, questions, cards])
+}
+
+/**
  * 우선순위 LLM 초안 흉내(POST …/card-priority/draft): 공고 키워드와 겹치는 태그가 많은 카드부터 5장, 이유는 겹친 키워드다.
- * 카드가 없으면 NO_CARDS, 공고 내용도 키워드도 없으면 NO_POSTING_CONTENT.
+ * 카드가 없으면 NO_CARDS, 공고 내용도 키워드도 없으면 NO_POSTING_CONTENT. 입력이 앞 초안 때와 같으면 기다리지 않고 그 초안을 다시 둔다(reused).
+ * 고른 카드가 없으면 서버처럼 기억하지 않아 다음에 다시 만든다.
  */
 // 초안을 만드는 동안 목록이 막힌 화면이 보이도록 잠깐 기다린다. 진짜 서버(LLM)는 몇 초 걸린다
 const DRAFT_MS = 600
 
 export async function draftCardPriority(id: string): Promise<DraftResult> {
-  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
+  const e = rawEntry(id)
   const posting = getMyPosting(id)
   const cards = listCards()
   if (cards.length === 0) return { ok: false, error: "NO_CARDS" }
   if (posting.sections.length === 0 && posting.keywords.length === 0) return { ok: false, error: "NO_POSTING_CONTENT" }
+  const key = inputKey(posting)
+  if (e.lastDraft?.key === key) {
+    e.priority = structuredClone(e.lastDraft.priority)
+    return { ok: true, cards: priorityOf(e), reused: true }
+  }
+  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
-  rawEntry(id).priority = cards
+  e.priority = cards
     .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
     .filter((c) => c.overlap.length > 0)
     .sort((a, b) => b.overlap.length - a.overlap.length)
     .slice(0, 5)
     .map(({ cardId, overlap }) => ({ cardId, reason: `공고 키워드 ${overlap.join(", ")}에 답하는 카드입니다` }))
-  return { ok: true, cards: priorityOf(rawEntry(id)) }
+  if (e.priority.length > 0) e.lastDraft = { key, priority: structuredClone(e.priority) }
+  return { ok: true, cards: priorityOf(e), reused: false }
 }
 
 /** 우선순위를 이 순서로 둔다(PUT …/card-priority). 앞 목록에 있던 카드는 이유가 남는다. */
@@ -321,10 +341,12 @@ const EMPHASIS: Record<QuestionType, (keyof Star)[]> = {
 /**
  * 문항 매칭 LLM 흉내(POST …/questions/match): 문항과 카드가 있으면 저장 전 문항을 먼저 저장하고, 문항 글로 유형을, 공고 키워드와 겹치는 태그가 많은
  * 카드부터 문항끼리 겹치지 않게 골라 앞 결과를 바꾼다(모자라면 다시 쓴다). 지원동기·포부는 카드를 고르지 않는다.
+ * 공고, 문항(id, 앞뒤 빈칸을 뗀 글, 글자 수), 카드가 앞 매칭 때와 같으면 기다리지 않고 그때 고른 유형과 카드를 다시 둔다(reused).
+ * 모든 문항에 카드가 없으면 서버처럼 기억하지 않아 다음에 다시 고른다.
  */
 export async function matchQuestions(id: string): Promise<MatchResult> {
-  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   const posting = getMyPosting(id)
+  const e = rawEntry(id)
   // 서버처럼 문항 없음과 카드 없음을 먼저 보고, 고를 수 있을 때만 저장 전 문항을 저장한다
   if (posting.questions.length === 0) return { ok: false, error: "NO_QUESTIONS" }
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
@@ -332,9 +354,16 @@ export async function matchQuestions(id: string): Promise<MatchResult> {
     .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
     .sort((a, b) => b.overlap.length - a.overlap.length)
   if (ranked.length === 0) return { ok: false, error: "NO_CARDS" }
-  const e = rawEntry(id)
   if (!e.questions) saveQuestions(id, posting.questions)
   const questions = e.questions ?? []
+  // 저장한 뒤의 문항 id로 본다. 처음 누를 때 저장된 문항도 다음에 같은 입력이 된다
+  const key = inputKey(posting, questions.map((q) => [q.id, q.text.trim(), q.limit]))
+  const last = e.lastMatch
+  if (last?.key === key) {
+    questions.forEach((q, i) => Object.assign(q, structuredClone(last.picks[i])))
+    return { ok: true, questions: questionsOf(e, null), reused: true }
+  }
+  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   const used = new Set<string>()
   for (const q of questions) {
     const type = TYPE_WORDS.find(([, words]) => words.test(q.text))?.[0] ?? "JOB"
@@ -347,7 +376,8 @@ export async function matchQuestions(id: string): Promise<MatchResult> {
       emphasis: EMPHASIS[type],
     }))
   }
-  return { ok: true, questions: questionsOf(e, null) }
+  if (questions.some((q) => q.cards.length > 0)) e.lastMatch = { key, picks: structuredClone(questions.map(({ type, cards }) => ({ type, cards }))) }
+  return { ok: true, questions: questionsOf(e, null), reused: false }
 }
 
 /** 문항 하나의 카드를 이 순서로 둔다(PUT …/questions/{questionId}/cards). 앞에 있던 카드는 이유와 살릴 칸이 남는다. */
