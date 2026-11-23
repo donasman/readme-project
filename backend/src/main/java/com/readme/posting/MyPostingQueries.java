@@ -18,6 +18,7 @@ import com.readme.group.Disclosure;
 import com.readme.keyword.KeywordDictionary;
 import com.readme.posting.MyPostingDetailResponse.Details;
 import com.readme.posting.MyPostingDetailResponse.GroupState;
+import com.readme.posting.MyPostingDetailResponse.PriorityCard;
 
 /**
  * 내 공고 화면(내 공고, 지원 현황, 달력, 홈, 공고 상세)에 내보내는 것을 읽는다. 내 공고 행(user_postings)이 있는 공고만 읽는다.
@@ -106,8 +107,23 @@ class MyPostingQueries {
 						CardMatching.match(details.analysis(), myCards(userId),
 								(details.analysis() != null) ? profileFacts(userId) : CardMatching.ProfileFacts.EMPTY,
 								KeywordDictionary.standard()),
-						groups.getOrDefault(postingId, List.of()));
+						groups.getOrDefault(postingId, List.of()), cardPriority(userId, postingId));
 			});
+	}
+
+	/** 내 공고의 카드 우선순위. 첫째가 앞이다. 카드 이름은 card 패키지의 테이블을 읽기만 한다. */
+	List<PriorityCard> cardPriority(long userId, long postingId) {
+		return this.jdbc.sql("""
+				select c.id, c.title, coalesce(c.experience, '') as experience, upc.reason
+				  from user_posting_cards upc join experience_cards c on c.id = upc.card_id
+				 where upc.user_id = :userId and upc.posting_id = :postingId
+				 order by upc.position
+				""")
+			.param("userId", userId)
+			.param("postingId", postingId)
+			.query((rs, rowNum) -> new PriorityCard(rs.getLong("id"), rs.getString("title"), rs.getString("experience"),
+					rs.getString("reason")))
+			.list();
 	}
 
 	/** 요건과 맞춰 볼 내 프로필 값(profile 패키지의 테이블을 읽기만 한다). 프로필을 넣지 않았으면 모두 빈 목록이다. */
