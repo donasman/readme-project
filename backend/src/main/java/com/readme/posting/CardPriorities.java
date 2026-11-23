@@ -18,11 +18,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.readme.common.error.ApiException;
 import com.readme.common.error.CommonErrorCode;
-import com.readme.common.token.Tokens;
 import com.readme.llm.Llm;
 import com.readme.llm.LlmFeature;
 
-import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -33,7 +31,8 @@ import tools.jackson.databind.json.JsonMapper;
  * <li>초안은 사용자가 누를 때만 만든다. 한도는 누를 때 보고, LLM 은 트랜잭션 밖에서 부른다. 저장할 때 앞 목록을 바꾼다.</li>
  * <li>LLM 이 고른 id 중 내 카드가 아닌 것과 겹친 것은 버리고 {@link #MAX}장까지만 둔다.</li>
  * <li>저장은 내 공고 행을 잠그고 지운 뒤 다시 넣는다. 같은 사람이 두 번 함께 눌러도 뒤의 것 하나만 남는다.</li>
- * <li>LLM 의 답과 입력 key 를 목록과 함께 저장한다. 입력이 같으면 다음 초안은 LLM 을 부르지 않고 그 답을 같은 길로 다시 거른다.</li>
+ * <li>LLM 의 답과 입력 key 를 목록과 함께 저장한다({@link LlmAnswers}). 입력이 같으면 다음 초안은 LLM 을 부르지 않고 그 답을 같은 길로
+ * 다시 거른다. 거르고 남은 카드가 없는 답은 두지 않는다.</li>
  * </ul>
  */
 @Component
@@ -94,15 +93,13 @@ class CardPriorities {
 			throw new ApiException(PostingErrorCode.NO_POSTING_CONTENT);
 		}
 		String text = postingText + "\n\n" + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n"));
-		String key = answerKey(PROMPT, text);
-		// 입력이 같으면 저장한 답을 다시 쓴다(2026-11-24 사용자 결정). 한도를 보지 않고 사용액도 들지 않는다
-		Answer answer = key.equals(posting.answerKey()) ? storedAnswer(this.jsonMapper, posting.answer(), Answer.class) : null;
-		boolean reused = answer != null;
-		if (!reused) {
-			this.llm.requireBudget(userId);
-			answer = this.llm.ask(userId, LlmFeature.CARD_PRIORITY, PROMPT, text, Answer.class);
-		}
-		String answerJson = this.jsonMapper.writeValueAsString(answer);
+		// 입력이 같으면 저장한 답을 다시 쓴다. 한도를 보지 않고 사용액도 들지 않는다
+		LlmAnswers.Reply<Answer> reply = LlmAnswers.reuseOrAsk(this.jsonMapper, LlmAnswers.key(this.llm.model(), PROMPT, text),
+				posting.answerKey(), posting.answer(), Answer.class, () -> {
+					this.llm.requireBudget(userId);
+					return this.llm.ask(userId, LlmFeature.CARD_PRIORITY, PROMPT, text, Answer.class);
+				});
+		Answer answer = reply.answer();
 		Set<Long> mine = cards.stream().map(PromptCards.Card::id).collect(Collectors.toSet());
 		Map<Long, String> picked = new LinkedHashMap<>();
 		for (Pick pick : (answer.picks() != null) ? answer.picks() : List.<Pick>of()) {
@@ -110,8 +107,13 @@ class CardPriorities {
 				picked.putIfAbsent(pick.cardId(), PromptCards.cut(pick.reason(), REASON_CHARS));
 			}
 		}
-		save(userId, postingId, picked, () -> this.repository.saveCardPriorityAnswer(userId, postingId, key, answerJson));
-		return reused;
+		save(userId, postingId, picked, () -> {
+			// 거르고 남은 카드가 없는 답은 두지 않는다. 같은 입력으로 다시 누르면 LLM 에 다시 묻는다
+			if (!picked.isEmpty()) {
+				this.repository.saveCardPriorityAnswer(userId, postingId, reply.key(), reply.json());
+			}
+		});
+		return reply.reused();
 	}
 
 	/**
@@ -208,24 +210,6 @@ class CardPriorities {
 	static String analysisText(PostingAnalysis analysis) {
 		return part("필수 요건", analysis.must()) + part("우대 사항", analysis.nice()) + part("주요 업무", analysis.duties())
 				+ part("키워드", analysis.keywords());
-	}
-
-	/** LLM 입력의 key. 보낸 지시문과 사용자 글이 같으면 같다(2026-11-24 사용자 결정). 문항 매칭도 쓴다. */
-	static String answerKey(String system, String text) {
-		return Tokens.sha256Hex(system + "\0" + text);
-	}
-
-	/** 저장한 LLM 답. 없거나 지금의 답 모양으로 읽지 못하면 null 이라 LLM 을 다시 부른다. 문항 매칭도 쓴다. */
-	static <T> T storedAnswer(JsonMapper jsonMapper, String json, Class<T> type) {
-		if (json == null) {
-			return null;
-		}
-		try {
-			return jsonMapper.readValue(json, type);
-		}
-		catch (JacksonException ex) {
-			return null;
-		}
 	}
 
 	private static String part(String title, List<String> items) {

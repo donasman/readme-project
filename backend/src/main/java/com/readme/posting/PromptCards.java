@@ -27,11 +27,14 @@ class PromptCards {
 		this.jdbc = jdbc;
 	}
 
-	/** LLM 에 보낼 카드 한 장. text 는 "### 카드 id 3: 제목" 과 채워진 칸들이다. */
+	/** LLM 에 보낼 카드 한 장. text 는 "### 카드 id 3: 제목" 과 채워진 칸들이다. 태그는 이름 순이다. */
 	record Card(long id, String text) {
 	}
 
-	/** 최근에 고친 카드부터 {@link #MAX}장. */
+	/**
+	 * 최근에 고친 카드 {@link #MAX}장을 카드 id 순으로. 고친 때로 늘어놓지 않으므로 보내는 칸이 그대로인 저장(카드 확인, 보내지 않는 칸만 고치기)은
+	 * LLM 입력을 바꾸지 않는다(저장한 답을 다시 쓴다, {@link LlmAnswers}).
+	 */
 	List<Card> of(long userId) {
 		Map<Long, List<String>> tags = this.jdbc.sql("""
 				select t.card_id, t.tag from card_tags t join experience_cards c on c.id = t.card_id
@@ -41,8 +44,10 @@ class PromptCards {
 			.stream()
 			.collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 		return this.jdbc.sql("""
-				select id, title, experience, period, role, summary, situation, task, action, result, obstacle, learning
-				  from experience_cards where user_id = :userId order by updated_at desc, id desc limit :limit
+				select * from (
+				  select id, title, experience, period, role, summary, situation, task, action, result, obstacle, learning
+				    from experience_cards where user_id = :userId order by updated_at desc, id desc limit :limit
+				) recent order by id
 				""")
 			.param("userId", userId)
 			.param("limit", MAX)

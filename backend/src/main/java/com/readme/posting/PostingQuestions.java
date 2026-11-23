@@ -42,7 +42,8 @@ import tools.jackson.databind.json.JsonMapper;
  * <li>고르기는 사용자가 누를 때만 한다. 한도는 누를 때 보고, LLM 은 트랜잭션 밖에서 부른다(카드 우선순위와 같다).</li>
  * <li>LLM 의 답은 {@link #check}로 거른다: 내 카드가 아닌 id, 한 문항 안에서 겹친 id, 아홉 밖의 유형, 여섯 밖의 칸을 버린다.</li>
  * <li>쓰기는 모두 내 공고 행을 잠근 한 트랜잭션에서 한다. 같은 사람이 함께 눌러도 차례로 돈다.</li>
- * <li>LLM 의 답과 입력 key 를 결과와 함께 저장한다. 입력이 같으면 다음 고르기는 LLM 을 부르지 않고 그 답을 같은 길로 다시 거른다.</li>
+ * <li>LLM 의 답과 입력 key 를 결과와 함께 저장한다({@link LlmAnswers}). 입력이 같으면 다음 고르기는 LLM 을 부르지 않고 그 답을 같은
+ * 길로 다시 거른다. 어느 문항에도 유형이나 카드가 남지 않은 답은 두지 않는다.</li>
  * </ul>
  */
 @Component
@@ -218,16 +219,13 @@ class PostingQuestions {
 			throw new ApiException(PostingErrorCode.NO_QUESTIONS);
 		}
 		String text = text(posting, questions) + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n"));
-		String key = CardPriorities.answerKey(PROMPT, text);
-		// 입력이 같으면 저장한 답을 다시 쓴다(2026-11-24 사용자 결정). 한도를 보지 않고 사용액도 들지 않는다
-		Answer answer = key.equals(posting.answerKey())
-				? CardPriorities.storedAnswer(this.jsonMapper, posting.answer(), Answer.class) : null;
-		boolean reused = answer != null;
-		if (!reused) {
-			this.llm.requireBudget(userId);
-			answer = this.llm.ask(userId, LlmFeature.QUESTION_MATCH, PROMPT, text, Answer.class);
-		}
-		String answerJson = this.jsonMapper.writeValueAsString(answer);
+		// 입력이 같으면 저장한 답을 다시 쓴다. 한도를 보지 않고 사용액도 들지 않는다
+		LlmAnswers.Reply<Answer> reply = LlmAnswers.reuseOrAsk(this.jsonMapper, LlmAnswers.key(this.llm.model(), PROMPT, text),
+				posting.answerKey(), posting.answer(), Answer.class, () -> {
+					this.llm.requireBudget(userId);
+					return this.llm.ask(userId, LlmFeature.QUESTION_MATCH, PROMPT, text, Answer.class);
+				});
+		Answer answer = reply.answer();
 		Map<Long, Integer> limits = new HashMap<>();
 		questions.forEach((q) -> limits.put(q.id(), q.limit()));
 		Map<Long, Match> matched = check(answer, limits,
@@ -261,9 +259,12 @@ class PostingQuestions {
 							pick.emphasis().isEmpty() ? null : String.join(",", pick.emphasis()));
 				}
 			}
-			this.repository.saveQuestionMatchAnswer(userId, postingId, key, answerJson);
+			// 어느 문항에도 유형이나 카드가 남지 않은 답(지어낸 문항 id 등)은 두지 않는다. 같은 입력으로 다시 누르면 LLM 에 다시 묻는다
+			if (matched.values().stream().anyMatch((m) -> m.type() != null || !m.picks().isEmpty())) {
+				this.repository.saveQuestionMatchAnswer(userId, postingId, reply.key(), reply.json());
+			}
 		});
-		return reused;
+		return reply.reused();
 	}
 
 	/**

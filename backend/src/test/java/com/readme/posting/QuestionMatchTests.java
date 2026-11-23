@@ -1,7 +1,6 @@
 package com.readme.posting;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +12,6 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-import com.readme.FixedClockConfiguration;
 import com.readme.Fixtures;
 import com.readme.IntegrationTest;
 import com.readme.llm.FakeClaudeApi;
@@ -221,22 +219,44 @@ class QuestionMatchTests {
 		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\" } ]").getFirst();
 		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB", List.of(new Pick(this.api, "직무에 답한다", List.of()))))));
 		assertThat(match(this.me, this.posting)).hasStatusOk();
-		this.jdbc.sql("""
-				insert into llm_usage (user_id, feature, model, input_tokens, output_tokens, cost_micros, created_at)
-				values (:userId, 'CARD_EXTRACT', 'claude-opus-5-5', 0, 0, 2000000, :at)
-				""").param("userId", this.me).param("at", Timestamp.from(FixedClockConfiguration.NOW)).update();
+		this.fixtures.useUpLlmBudget(this.me);
 
 		assertThat(match(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
 				{ "questions": [ { "type": "JOB", "cards": [ { "cardId": %d } ] } ], "reused": true }
 				""".formatted(this.api));
-		assertThat(this.mvc.put()
-			.uri("/api/cards/{id}", this.batch)
-			.with(loginAs(this.me))
-			.with(xsrf())
-			.contentType(MediaType.APPLICATION_JSON)
-			.content("{ \"title\": \"알림 배치 개선\" }")).hasStatusOk();
+		this.fixtures.retitleCard(this.batch, "알림 배치 개선");
 		assertThat(match(this.me, this.posting)).hasStatus(HttpStatus.TOO_MANY_REQUESTS).bodyJson().extractingPath("$.code")
 			.isEqualTo("LLM_LIMIT_REACHED");
+		assertThat(this.claude.calls()).isEqualTo(1);
+	}
+
+	/** 어느 문항에도 유형이나 카드가 남지 않은 답(지어낸 문항 id)은 두지 않으므로, 같은 입력으로 다시 누르면 LLM 에 다시 묻는다. */
+	@Test
+	void anAnswerWithNothingUsableIsNotReused() {
+		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\" } ]").getFirst();
+		this.claude.willAnswer(new Answer(List.of(new Match(1, "JOB", List.of(new Pick(this.api, "번호를 지어냈다", List.of()))),
+				new Match(question, "NOT_A_TYPE", List.of(new Pick(999_999_999L, "없는 카드", List.of()))))));
+		assertThat(match(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "questions": [ { "id": %d, "type": null, "cards": [] } ], "reused": false }
+				""".formatted(question));
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB", List.of()))));
+
+		assertThat(match(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+				{ "questions": [ { "id": %d, "type": "JOB" } ], "reused": false }
+				""".formatted(question));
+		assertThat(this.claude.calls()).isEqualTo(2);
+	}
+
+	/** 고친 때만 바뀐 카드는 입력을 바꾸지 않는다. 문항을 같은 글로 다시 두어도(id 를 보내면) 입력이 같다. */
+	@Test
+	void unchangedContentStillReuses() {
+		long question = saveQuestions(this.me, this.posting, "[ { \"text\": \"직무 경험\", \"limit\": 800 } ]").getFirst();
+		this.claude.willAnswer(new Answer(List.of(new Match(question, "JOB", List.of(new Pick(this.api, "직무에 답한다", List.of()))))));
+		assertThat(match(this.me, this.posting)).hasStatusOk();
+		this.fixtures.touchCard(this.api);
+		saveQuestions(this.me, this.posting, "[ { \"id\": %d, \"text\": \"직무 경험\", \"limit\": 800 } ]".formatted(question));
+
+		assertThat(match(this.me, this.posting)).hasStatusOk().bodyJson().isLenientlyEqualTo("{ \"reused\": true }");
 		assertThat(this.claude.calls()).isEqualTo(1);
 	}
 
