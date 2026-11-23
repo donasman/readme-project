@@ -69,4 +69,51 @@ interface UserPostingRepository extends JpaRepository<UserPosting, UserPosting.K
 	int insertCard(@Param("userId") long userId, @Param("postingId") long postingId, @Param("cardId") long cardId,
 			@Param("position") int position, @Param("reason") String reason);
 
+	/** 이 내 공고는 내 문항 목록을 쓴다(문항 매칭 QD2). 이 뒤로는 공고 분석의 문항을 따라가지 않는다. */
+	@Modifying
+	@Query(value = "update user_postings set questions_saved = true where user_id = :userId and posting_id = :postingId",
+			nativeQuery = true)
+	int markQuestionsSaved(@Param("userId") long userId, @Param("postingId") long postingId);
+
+	/** 문항 하나를 넣고 새 id 를 돌려준다. */
+	@Query(value = """
+			insert into user_posting_questions (user_id, posting_id, position, text, char_limit)
+			values (:userId, :postingId, :position, :text, cast(:limit as integer)) returning id
+			""", nativeQuery = true)
+	long insertQuestion(@Param("userId") long userId, @Param("postingId") long postingId,
+			@Param("position") int position, @Param("text") String text, @Param("limit") Integer limit);
+
+	/** 문항의 자리와 글, 글자 수를 고친다. 유형과 고른 카드는 그대로다. */
+	@Modifying
+	@Query(value = """
+			update user_posting_questions set position = :position, text = :text, char_limit = cast(:limit as integer)
+			 where id = :id
+			""", nativeQuery = true)
+	int updateQuestion(@Param("id") long id, @Param("position") int position, @Param("text") String text,
+			@Param("limit") Integer limit);
+
+	/** 문항을 지운다. 고른 카드는 외래 키로 함께 지워진다. */
+	@Modifying
+	@Query(value = "delete from user_posting_questions where id = :id", nativeQuery = true)
+	int deleteQuestion(@Param("id") long id);
+
+	/** LLM 이 고른 문항 유형. 버렸으면 null. */
+	@Modifying
+	@Query(value = "update user_posting_questions set type = cast(:type as varchar) where id = :id", nativeQuery = true)
+	int updateQuestionType(@Param("id") long id, @Param("type") String type);
+
+	/** 문항의 카드를 모두 지운다. */
+	@Modifying
+	@Query(value = "delete from user_posting_question_cards where question_id = :questionId", nativeQuery = true)
+	int deleteQuestionCards(@Param("questionId") long questionId);
+
+	/** 문항의 카드 한 장. 지운 뒤에만 부른다. emphasis 는 살릴 칸을 쉼표로 이은 것이다. */
+	@Modifying
+	@Query(value = """
+			insert into user_posting_question_cards (question_id, card_id, position, reason, emphasis)
+			values (:questionId, :cardId, :position, cast(:reason as varchar), cast(:emphasis as varchar))
+			""", nativeQuery = true)
+	int insertQuestionCard(@Param("questionId") long questionId, @Param("cardId") long cardId,
+			@Param("position") int position, @Param("reason") String reason, @Param("emphasis") String emphasis);
+
 }

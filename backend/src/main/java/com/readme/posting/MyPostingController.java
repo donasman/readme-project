@@ -37,16 +37,19 @@ class MyPostingController {
 
 	private final CardPriorities cardPriorities;
 
+	private final PostingQuestions postingQuestions;
+
 	private final MyPostingQueries queries;
 
 	private final JdbcClient jdbc;
 
 	private final Clock clock;
 
-	MyPostingController(UserPostings userPostings, CardPriorities cardPriorities, MyPostingQueries queries, JdbcClient jdbc,
-			Clock clock) {
+	MyPostingController(UserPostings userPostings, CardPriorities cardPriorities, PostingQuestions postingQuestions,
+			MyPostingQueries queries, JdbcClient jdbc, Clock clock) {
 		this.userPostings = userPostings;
 		this.cardPriorities = cardPriorities;
+		this.postingQuestions = postingQuestions;
 		this.queries = queries;
 		this.jdbc = jdbc;
 		this.clock = clock;
@@ -145,6 +148,54 @@ class MyPostingController {
 			@CurrentUser LoginUser user) {
 		this.cardPriorities.reorder(user.id(), postingId, request.cardIds());
 		return new CardPriorityResponse(this.queries.cardPriority(user.id(), postingId));
+	}
+
+	/**
+	 * 자기소개서 문항 목록을 이 순서로 통째로 둔다(문항 매칭 설계 4절). id 가 있으면 그 문항을 고쳐 카드와 유형을 남기고, 없으면 새
+	 * 문항이다. 빠진 문항은 지운다. 새 목록을 돌려준다. 10개를 넘거나 빈 글, 1,000자 넘는 글, 1~10,000 밖의 글자 수, 이 공고의 내
+	 * 문항이 아닌 id 는 400 INVALID_INPUT, 내 공고에 없으면 404 POSTING_NOT_FOUND.
+	 */
+	@PutMapping("/api/me/postings/{postingId}/questions")
+	QuestionsResponse setQuestions(@PathVariable long postingId, @Valid @RequestBody QuestionsRequest request,
+			@CurrentUser LoginUser user) {
+		this.postingQuestions.replace(user.id(), postingId, request.questions());
+		return new QuestionsResponse(this.queries.questions(user.id(), postingId));
+	}
+
+	/**
+	 * 문항마다 LLM 이 유형과 카드(2장까지, 500자 아래 문항은 1장)를 골라 앞 결과를 바꾼다. 저장 전이면 공고 분석의 문항을 먼저 저장한다.
+	 * 새 목록을 돌려준다. 내 공고에 없으면 404 POSTING_NOT_FOUND, 문항이 없으면 409 NO_QUESTIONS, 카드가 없으면 409 NO_CARDS,
+	 * 한도에 닿았으면 429 LLM_LIMIT_REACHED, 답을 못 받으면 503 LLM_UNAVAILABLE, 쓸 수 없는 답이면 502 LLM_FAILED.
+	 */
+	@PostMapping("/api/me/postings/{postingId}/questions/match")
+	QuestionsResponse matchQuestions(@PathVariable long postingId, @CurrentUser LoginUser user) {
+		this.postingQuestions.match(user.id(), postingId);
+		return new QuestionsResponse(this.queries.questions(user.id(), postingId));
+	}
+
+	/**
+	 * 문항 하나의 카드를 이 순서로 둔다(빈 목록이면 비운다). 앞에 있던 카드는 이유와 살릴 칸이 남는다. 새 목록을 돌려준다. 수를 넘거나
+	 * 겹치거나 내 카드가 아닌 id 는 400 INVALID_INPUT, 이 공고의 내 문항이 아니면 404 QUESTION_NOT_FOUND, 내 공고에 없으면 404
+	 * POSTING_NOT_FOUND.
+	 */
+	@PutMapping("/api/me/postings/{postingId}/questions/{questionId}/cards")
+	QuestionsResponse setQuestionCards(@PathVariable long postingId, @PathVariable long questionId,
+			@Valid @RequestBody QuestionCardsRequest request, @CurrentUser LoginUser user) {
+		this.postingQuestions.setCards(user.id(), postingId, questionId, request.cardIds());
+		return new QuestionsResponse(this.queries.questions(user.id(), postingId));
+	}
+
+	/** 문항 목록 두기의 본문. 첫째가 앞이다. */
+	record QuestionsRequest(
+			@NotNull @Size(max = PostingQuestions.MAX_QUESTIONS) List<PostingQuestions.@NotNull @Valid Input> questions) {
+	}
+
+	/** 문항 카드 바꾸기의 본문. 첫째가 주된 카드다. */
+	record QuestionCardsRequest(@NotNull @Size(max = PostingQuestions.MAX_CARDS) List<@NotNull Long> cardIds) {
+	}
+
+	/** 문항 API 들의 응답. 상세의 questions 와 같은 모양이다. */
+	record QuestionsResponse(List<MyPostingDetailResponse.Question> questions) {
 	}
 
 	/** 카드 우선순위 바꾸기의 본문. 첫째가 앞이다. */

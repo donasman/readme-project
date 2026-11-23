@@ -19,6 +19,8 @@ import com.readme.keyword.KeywordDictionary;
 import com.readme.posting.MyPostingDetailResponse.Details;
 import com.readme.posting.MyPostingDetailResponse.GroupState;
 import com.readme.posting.MyPostingDetailResponse.PriorityCard;
+import com.readme.posting.MyPostingDetailResponse.Question;
+import com.readme.posting.MyPostingDetailResponse.QuestionCard;
 
 /**
  * 내 공고 화면(내 공고, 지원 현황, 달력, 홈, 공고 상세)에 내보내는 것을 읽는다. 내 공고 행(user_postings)이 있는 공고만 읽는다.
@@ -107,7 +109,8 @@ class MyPostingQueries {
 						CardMatching.match(details.analysis(), myCards(userId),
 								(details.analysis() != null) ? profileFacts(userId) : CardMatching.ProfileFacts.EMPTY,
 								KeywordDictionary.standard()),
-						groups.getOrDefault(postingId, List.of()), cardPriority(userId, postingId));
+						groups.getOrDefault(postingId, List.of()), cardPriority(userId, postingId),
+						details.questionsSaved() ? questions(userId, postingId) : analysisQuestions(details.analysis()));
 			});
 	}
 
@@ -124,6 +127,54 @@ class MyPostingQueries {
 			.query((rs, rowNum) -> new PriorityCard(rs.getLong("id"), rs.getString("title"), rs.getString("experience"),
 					rs.getString("reason")))
 			.list();
+	}
+
+	/** 저장한 내 문항과 문항마다 고른 카드(문항 매칭 설계). 카드 이름은 card 패키지의 테이블을 읽기만 한다. */
+	List<Question> questions(long userId, long postingId) {
+		Map<Long, List<QuestionCard>> cards = this.jdbc.sql("""
+				select qc.question_id, c.id, c.title, coalesce(c.experience, '') as experience, qc.reason, qc.emphasis
+				  from user_posting_question_cards qc
+				  join user_posting_questions q on q.id = qc.question_id
+				  join experience_cards c on c.id = qc.card_id
+				 where q.user_id = :userId and q.posting_id = :postingId
+				 order by qc.question_id, qc.position
+				""")
+			.param("userId", userId)
+			.param("postingId", postingId)
+			.query((rs, rowNum) -> Map.entry(rs.getLong("question_id"),
+					new QuestionCard(rs.getLong("id"), rs.getString("title"), rs.getString("experience"),
+							rs.getString("reason"), (rs.getString("emphasis") != null)
+									? List.of(rs.getString("emphasis").split(",")) : List.of())))
+			.list()
+			.stream()
+			.collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+		return this.jdbc.sql("""
+				select id, text, char_limit, type from user_posting_questions
+				 where user_id = :userId and posting_id = :postingId order by position, id
+				""")
+			.param("userId", userId)
+			.param("postingId", postingId)
+			.query((rs, rowNum) -> new Question(rs.getLong("id"), rs.getString("text"),
+					rs.getObject("char_limit", Integer.class), rs.getString("type"),
+					cards.getOrDefault(rs.getLong("id"), List.of())))
+			.list();
+	}
+
+	/**
+	 * 저장 전에 보이는 문항: 공고 분석의 문항(QD2). 빈 글은 빼고, 내 문항의 한도(QD6)에 맞춰 자른다. 고르기를 누르면 이대로 저장된다.
+	 */
+	static List<Question> analysisQuestions(PostingAnalysis analysis) {
+		if (analysis == null || analysis.questions() == null) {
+			return List.of();
+		}
+		return analysis.questions()
+			.stream()
+			.filter((q) -> q != null && q.text() != null && !q.text().isBlank())
+			.limit(PostingQuestions.MAX_QUESTIONS)
+			.map((q) -> new Question(null, PromptCards.cut(q.text(), PostingQuestions.TEXT_CHARS),
+					(q.limit() != null && q.limit() >= 1 && q.limit() <= PostingQuestions.MAX_LIMIT) ? q.limit() : null,
+					null, List.of()))
+			.toList();
 	}
 
 	/** 요건과 맞춰 볼 내 프로필 값(profile 패키지의 테이블을 읽기만 한다). 프로필을 넣지 않았으면 모두 빈 목록이다. */
@@ -183,7 +234,8 @@ class MyPostingQueries {
 
 	private Details details(long userId, long postingId) {
 		return this.jdbc.sql("""
-				select p.apply_at, p.source_url, p.sections::text as sections, p.analysis::text as analysis, up.memo
+				select p.apply_at, p.source_url, p.sections::text as sections, p.analysis::text as analysis, up.memo,
+				       up.questions_saved
 				  from user_postings up
 				  join postings p on p.id = up.posting_id
 				 where up.user_id = :userId and up.posting_id = :postingId
@@ -194,7 +246,7 @@ class MyPostingQueries {
 					this.jsonMapper.readValue(rs.getString("sections"), SECTIONS),
 					(rs.getString("analysis") != null)
 							? this.jsonMapper.readValue(rs.getString("analysis"), PostingAnalysis.class) : null,
-					rs.getString("memo")))
+					rs.getString("memo"), rs.getBoolean("questions_saved")))
 			.single();
 	}
 

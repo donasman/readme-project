@@ -68,7 +68,7 @@ class MyPostingAddTests {
 				    "decision": "undecided", "stage": null, "result": null, "status": null, "groups": [],
 				    "applyAt": null, "sourceUrl": "%s", "sections": [], "keywords": [], "analysis": null, "memo": null,
 				    "matches": [], "unmatched": [], "requirements": [],
-				    "groupStates": [], "cardPriority": []
+				    "groupStates": [], "cardPriority": [], "questions": []
 				  }
 				}
 				""".formatted(postingId, url));

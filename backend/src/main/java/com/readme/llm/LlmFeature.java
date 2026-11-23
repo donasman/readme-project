@@ -30,7 +30,10 @@ public enum LlmFeature {
 	TRANSCRIPT_READ(Effort.LOW, 16_000),
 
 	/** 내 공고에 쓸 경험카드 5장과 고른 이유 고르기(카드 우선순위 설계). 사용자가 버튼을 누를 때마다 한 번 */
-	CARD_PRIORITY(Effort.LOW, 8_000);
+	CARD_PRIORITY(Effort.LOW, 8_000),
+
+	/** 자기소개서 문항마다 경험카드 2장까지와 문항 유형 고르기(문항 매칭 설계 4.5). 사용자가 버튼을 누를 때마다 한 번 */
+	QUESTION_MATCH(Effort.LOW, 8_000);
 
 	private final Effort effort;
 

@@ -135,7 +135,7 @@ class MyPostingReadTests {
 					      { "id": %3$d, "name": "둘째 그룹", "mark": "둘", "postId": %1$d,
 					        "interested": false, "commentCount": 0, "disclosure": "applied" }
 					    ],
-					    "cardPriority": []
+					    "cardPriority": [], "questions": []
 					  }
 					}
 					""".formatted(posting, first, second));
