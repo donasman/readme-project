@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,13 +39,6 @@ class CardPriorities {
 	/** 목록에 두는 카드 수. 초안도 사용자가 고친 목록도 같다 */
 	static final int MAX = 5;
 
-	/** LLM 에 보내는 카드 수. 최근에 고친 카드부터 */
-	// shortcut: 카드가 이보다 많으면 오래 고치지 않은 카드는 초안 후보에서 빠진다, 카드가 많은 사용자가 생기면 규칙(CardMatching)으로 먼저 거른다
-	static final int CARDS_IN_PROMPT = 60;
-
-	/** 카드 칸 하나를 LLM 에 보내는 길이 */
-	private static final int FIELD_CHARS = 300;
-
 	private static final int REASON_CHARS = 200;
 
 	private static final String PROMPT = prompt();
@@ -56,6 +48,8 @@ class CardPriorities {
 
 	private final Llm llm;
 
+	private final PromptCards promptCards;
+
 	private final UserPostingRepository repository;
 
 	private final JdbcClient jdbc;
@@ -64,9 +58,10 @@ class CardPriorities {
 
 	private final TransactionTemplate transaction;
 
-	CardPriorities(Llm llm, UserPostingRepository repository, JdbcClient jdbc, JsonMapper jsonMapper,
-			TransactionTemplate transaction) {
+	CardPriorities(Llm llm, PromptCards promptCards, UserPostingRepository repository, JdbcClient jdbc,
+			JsonMapper jsonMapper, TransactionTemplate transaction) {
 		this.llm = llm;
+		this.promptCards = promptCards;
 		this.repository = repository;
 		this.jdbc = jdbc;
 		this.jsonMapper = jsonMapper;
@@ -87,7 +82,7 @@ class CardPriorities {
 	 */
 	void draft(long userId, long postingId) {
 		Posting posting = posting(userId, postingId);
-		List<Card> cards = cards(userId);
+		List<PromptCards.Card> cards = this.promptCards.of(userId);
 		if (cards.isEmpty()) {
 			throw new ApiException(PostingErrorCode.NO_CARDS);
 		}
@@ -97,12 +92,12 @@ class CardPriorities {
 		}
 		this.llm.requireBudget(userId);
 		Answer answer = this.llm.ask(userId, LlmFeature.CARD_PRIORITY, PROMPT,
-				postingText + "\n\n" + cards.stream().map(Card::text).collect(Collectors.joining("\n\n")), Answer.class);
-		Set<Long> mine = cards.stream().map(Card::id).collect(Collectors.toSet());
+				postingText + "\n\n" + cards.stream().map(PromptCards.Card::text).collect(Collectors.joining("\n\n")), Answer.class);
+		Set<Long> mine = cards.stream().map(PromptCards.Card::id).collect(Collectors.toSet());
 		Map<Long, String> picked = new LinkedHashMap<>();
 		for (Pick pick : (answer.picks() != null) ? answer.picks() : List.<Pick>of()) {
 			if (picked.size() < MAX && mine.contains(pick.cardId())) {
-				picked.putIfAbsent(pick.cardId(), cut(pick.reason(), REASON_CHARS));
+				picked.putIfAbsent(pick.cardId(), PromptCards.cut(pick.reason(), REASON_CHARS));
 			}
 		}
 		save(userId, postingId, picked);
@@ -172,62 +167,13 @@ class CardPriorities {
 			.orElseThrow(() -> new ApiException(PostingErrorCode.POSTING_NOT_FOUND));
 	}
 
-	/** 최근에 고친 카드부터 {@link #CARDS_IN_PROMPT}장. card 패키지의 테이블을 읽기만 한다. */
-	private List<Card> cards(long userId) {
-		Map<Long, List<String>> tags = this.jdbc.sql("""
-				select t.card_id, t.tag from card_tags t join experience_cards c on c.id = t.card_id
-				 where c.user_id = :userId order by t.card_id, t.tag
-				""").param("userId", userId).query((rs, rowNum) -> Map.entry(rs.getLong("card_id"), rs.getString("tag")))
-			.list()
-			.stream()
-			.collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
-		return this.jdbc.sql("""
-				select id, title, experience, period, role, summary, situation, task, action, result, obstacle, learning
-				  from experience_cards where user_id = :userId order by updated_at desc, id desc limit :limit
-				""")
-			.param("userId", userId)
-			.param("limit", CARDS_IN_PROMPT)
-			.query((rs, rowNum) -> {
-				long id = rs.getLong("id");
-				List<String> lines = new ArrayList<>();
-				lines.add("### 카드 id " + id + ": " + rs.getString("title"));
-				for (String[] field : new String[][] { { "경험", "experience" }, { "기간", "period" }, { "역할", "role" },
-						{ "요약", "summary" }, { "상황", "situation" }, { "과제", "task" }, { "행동", "action" },
-						{ "결과", "result" }, { "어려움", "obstacle" }, { "배운 점", "learning" } }) {
-					String value = rs.getString(field[1]);
-					if (value != null && !value.isBlank()) {
-						lines.add("- " + field[0] + ": " + cut(value.strip().replaceAll("\\s+", " "), FIELD_CHARS));
-					}
-				}
-				List<String> cardTags = tags.getOrDefault(id, List.of());
-				if (!cardTags.isEmpty()) {
-					lines.add("- 태그: " + String.join(", ", cardTags));
-				}
-				return new Card(id, String.join("\n", lines));
-			})
-			.list();
-	}
-
-	private static String cut(String value, int max) {
-		if (value == null || value.isBlank()) {
-			return null;
-		}
-		String text = value.strip();
-		return (text.codePointCount(0, text.length()) > max) ? text.substring(0, text.offsetByCodePoints(0, max)) : text;
-	}
-
-	/** LLM 에 보낼 카드 한 장. */
-	private record Card(long id, String text) {
-	}
-
 	/** 초안에 쓰는 공고 본체의 값. 공고 분석이 있으면 분석을, 없으면 내용 묶음을 보낸다. */
 	private record Posting(String company, String title, List<PostSection> sections, PostingAnalysis analysis) {
 
 		String text() {
 			String body;
 			if (this.analysis != null) {
-				body = part("필수 요건", this.analysis.must()) + part("우대 사항", this.analysis.nice())
-						+ part("주요 업무", this.analysis.duties()) + part("키워드", this.analysis.keywords());
+				body = analysisText(this.analysis);
 			}
 			else {
 				body = this.sections.isEmpty() ? "" : PostingAnalysisRules.maskContacts(PostingAnalysisRules.posting(this.sections));
@@ -235,10 +181,16 @@ class CardPriorities {
 			return body.isBlank() ? "" : "## 공고 — " + this.company + " / " + this.title + "\n" + body.strip() + "\n\n## 내 경험카드";
 		}
 
-		private static String part(String title, List<String> items) {
-			return items.isEmpty() ? "" : "### " + title + "\n" + items.stream().map((i) -> "- " + i).collect(Collectors.joining("\n")) + "\n";
-		}
+	}
 
+	/** 공고 분석의 필수·우대·업무·키워드. 빈 칸은 뺀다. 문항 매칭(QD7)도 쓴다. */
+	static String analysisText(PostingAnalysis analysis) {
+		return part("필수 요건", analysis.must()) + part("우대 사항", analysis.nice()) + part("주요 업무", analysis.duties())
+				+ part("키워드", analysis.keywords());
+	}
+
+	private static String part(String title, List<String> items) {
+		return items.isEmpty() ? "" : "### " + title + "\n" + items.stream().map((i) -> "- " + i).collect(Collectors.joining("\n")) + "\n";
 	}
 
 	private static String prompt() {
