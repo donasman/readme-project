@@ -26,6 +26,8 @@ const DRAFT_ERRORS: Record<Extract<DraftResult, { ok: false }>["error"], string>
   LLM_LIMIT_REACHED: "이번 달 LLM 사용 한도에 닿아 초안을 만들 수 없습니다. 순서는 직접 정할 수 있습니다.",
 }
 
+const REUSED = "공고와 카드가 바뀌지 않아 앞서 만든 초안을 그대로 보입니다."
+
 interface CardPriorityPanelProps {
   postingId: string
   initial: PriorityCard[]
@@ -41,6 +43,8 @@ interface CardPriorityPanelProps {
 export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityPanelProps) {
   const [cards, setCards] = useState(initial)
   const [draftError, setDraftError] = useState<string | null>(null)
+  // 서버가 LLM을 부르지 않고 앞 초안을 다시 줬다. 다음에 무언가 고치면 지운다
+  const [reused, setReused] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [drafting, setDrafting] = useState(false)
   const [announced, setAnnounced] = useState("")
@@ -51,6 +55,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
   async function save(next: PriorityCard[], message: string) {
     const before = cards
     setCards(next)
+    setReused(false)
     try {
       setCards(await saveCardPriority(postingId, next.map((c) => c.cardId)))
       setAnnounced(message)
@@ -63,6 +68,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
   // 다시 만들기 창은 초안이 끝날 때까지 열어 두어 "만드는 중"을 보인다
   async function draft() {
     setDraftError(null)
+    setReused(false)
     setDrafting(true)
     setAnnounced("초안을 만드는 중입니다.")
     try {
@@ -72,6 +78,8 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
         return setAnnounced(DRAFT_ERRORS[result.error])
       }
       setCards(result.cards)
+      setReused(result.reused)
+      if (result.reused) return setAnnounced(REUSED)
       setAnnounced(result.cards.length > 0 ? `초안으로 카드 ${result.cards.length}장을 골랐습니다.` : "이 공고에 맞는 카드를 고르지 못했습니다.")
     } finally {
       setDrafting(false)
@@ -117,6 +125,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
         </Button>
       </div>
       {draftError && <IconNote tone="danger">{draftError}</IconNote>}
+      {reused && <p className="text-label-sm text-text-secondary">{REUSED}</p>}
 
       {cards.length === 0 ? (
         <p className="text-sm text-text-secondary">아직 고른 카드가 없습니다. LLM으로 초안을 만들거나 카드를 직접 더해 보세요.</p>
@@ -179,7 +188,7 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
           </>
         }
       >
-        <p className="text-sm">지금 순서가 LLM이 새로 고른 카드로 바뀝니다. 이번 달 LLM 사용액이 듭니다.</p>
+        <p className="text-sm">지금 순서가 LLM이 고른 카드로 바뀝니다. 공고나 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.</p>
       </AppDialog>
     </Panel>
   )

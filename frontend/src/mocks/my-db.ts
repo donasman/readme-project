@@ -224,27 +224,37 @@ function priorityOf(e: Entry): PriorityCard[] {
   })
 }
 
+/** LLM에 넘기는 공고 내용. 서버처럼 이것과 카드가 같으면 앞서 받은 답을 다시 쓴다 */
+const postingInput = (p: MyPostingDetail) => [p.company, p.title, p.sections, p.keywords]
+
 /**
  * 우선순위 LLM 초안 흉내(POST …/card-priority/draft): 공고 키워드와 겹치는 태그가 많은 카드부터 5장, 이유는 겹친 키워드다.
- * 카드가 없으면 NO_CARDS, 공고 내용도 키워드도 없으면 NO_POSTING_CONTENT.
+ * 카드가 없으면 NO_CARDS, 공고 내용도 키워드도 없으면 NO_POSTING_CONTENT. 공고와 카드가 앞 초안 때와 같으면 기다리지 않고 그 초안을 다시 둔다(reused).
  */
 // 초안을 만드는 동안 목록이 막힌 화면이 보이도록 잠깐 기다린다. 진짜 서버(LLM)는 몇 초 걸린다
 const DRAFT_MS = 600
 
 export async function draftCardPriority(id: string): Promise<DraftResult> {
-  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
+  const e = rawEntry(id)
   const posting = getMyPosting(id)
   const cards = listCards()
+  const key = JSON.stringify([postingInput(posting), cards])
+  if (e.lastDraft?.key === key) {
+    e.priority = structuredClone(e.lastDraft.priority)
+    return { ok: true, cards: priorityOf(e), reused: true }
+  }
+  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   if (cards.length === 0) return { ok: false, error: "NO_CARDS" }
   if (posting.sections.length === 0 && posting.keywords.length === 0) return { ok: false, error: "NO_POSTING_CONTENT" }
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
-  rawEntry(id).priority = cards
+  e.priority = cards
     .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
     .filter((c) => c.overlap.length > 0)
     .sort((a, b) => b.overlap.length - a.overlap.length)
     .slice(0, 5)
     .map(({ cardId, overlap }) => ({ cardId, reason: `공고 키워드 ${overlap.join(", ")}에 답하는 카드입니다` }))
-  return { ok: true, cards: priorityOf(rawEntry(id)) }
+  e.lastDraft = { key, priority: structuredClone(e.priority) }
+  return { ok: true, cards: priorityOf(e), reused: false }
 }
 
 /** 우선순위를 이 순서로 둔다(PUT …/card-priority). 앞 목록에 있던 카드는 이유가 남는다. */
@@ -321,10 +331,18 @@ const EMPHASIS: Record<QuestionType, (keyof Star)[]> = {
 /**
  * 문항 매칭 LLM 흉내(POST …/questions/match): 문항과 카드가 있으면 저장 전 문항을 먼저 저장하고, 문항 글로 유형을, 공고 키워드와 겹치는 태그가 많은
  * 카드부터 문항끼리 겹치지 않게 골라 앞 결과를 바꾼다(모자라면 다시 쓴다). 지원동기·포부는 카드를 고르지 않는다.
+ * 공고, 문항(글과 글자 수), 카드가 앞 매칭 때와 같으면 기다리지 않고 그때 고른 유형과 카드를 다시 둔다(reused).
  */
 export async function matchQuestions(id: string): Promise<MatchResult> {
-  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   const posting = getMyPosting(id)
+  const e = rawEntry(id)
+  const key = JSON.stringify([postingInput(posting), posting.questions.map((q) => [q.text, q.limit]), listCards()])
+  const last = e.lastMatch
+  if (last?.key === key && e.questions) {
+    e.questions.forEach((q, i) => Object.assign(q, structuredClone(last.picks[i])))
+    return { ok: true, questions: questionsOf(e, null), reused: true }
+  }
+  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   // 서버처럼 문항 없음과 카드 없음을 먼저 보고, 고를 수 있을 때만 저장 전 문항을 저장한다
   if (posting.questions.length === 0) return { ok: false, error: "NO_QUESTIONS" }
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
@@ -332,7 +350,6 @@ export async function matchQuestions(id: string): Promise<MatchResult> {
     .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
     .sort((a, b) => b.overlap.length - a.overlap.length)
   if (ranked.length === 0) return { ok: false, error: "NO_CARDS" }
-  const e = rawEntry(id)
   if (!e.questions) saveQuestions(id, posting.questions)
   const questions = e.questions ?? []
   const used = new Set<string>()
@@ -347,7 +364,8 @@ export async function matchQuestions(id: string): Promise<MatchResult> {
       emphasis: EMPHASIS[type],
     }))
   }
-  return { ok: true, questions: questionsOf(e, null) }
+  e.lastMatch = { key, picks: structuredClone(questions.map(({ type, cards }) => ({ type, cards }))) }
+  return { ok: true, questions: questionsOf(e, null), reused: false }
 }
 
 /** 문항 하나의 카드를 이 순서로 둔다(PUT …/questions/{questionId}/cards). 앞에 있던 카드는 이유와 살릴 칸이 남는다. */
