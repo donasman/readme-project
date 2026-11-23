@@ -195,7 +195,7 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
           </>
         }
       >
-        <p className="text-sm">모든 문항의 카드가 LLM이 고른 카드로 바뀝니다. 문항이나 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.</p>
+        <p className="text-sm">모든 문항의 카드가 LLM이 고른 카드로 바뀝니다. 공고나 문항, 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.</p>
       </AppDialog>
       <CardPreviewDialog preview={preview} matches={byId} onIndex={(index) => setPreview((p) => p && { ...p, index })} onClose={() => setPreview(null)} />
     </Panel>

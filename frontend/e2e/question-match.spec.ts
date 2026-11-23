@@ -71,7 +71,7 @@ test("문항과 카드가 그대로면 앞서 고른 결과를 다시 보이고,
 
   const dialog = page.getByRole("dialog", { name: "카드를 다시 고를까요?" })
   await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
-  await expect(dialog.getByText("문항이나 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.")).toBeVisible()
+  await expect(dialog.getByText("공고나 문항, 카드가 바뀌었으면 이번 달 LLM 사용액이 듭니다.")).toBeVisible()
   await dialog.getByRole("button", { name: "카드 고르기" }).click()
   await expect(dialog).toBeHidden()
   await expect(panel.getByRole("paragraph").filter({ hasText: REUSED })).toBeVisible()
