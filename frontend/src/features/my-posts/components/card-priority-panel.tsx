@@ -11,6 +11,7 @@ import { BusyButton } from "@/shared/components/busy-button"
 import { PanelHead } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
+import { busyButton, stepButton } from "@/shared/components/step-button"
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
@@ -66,7 +67,10 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
     setAnnounced("초안을 만드는 중입니다.")
     try {
       const result = await draftCardPriority(postingId)
-      if (!result.ok) return setDraftError(DRAFT_ERRORS[result.error])
+      if (!result.ok) {
+        setDraftError(DRAFT_ERRORS[result.error])
+        return setAnnounced(DRAFT_ERRORS[result.error])
+      }
       setCards(result.cards)
       setAnnounced(result.cards.length > 0 ? `초안으로 카드 ${result.cards.length}장을 골랐습니다.` : "이 공고에 맞는 카드를 고르지 못했습니다.")
     } finally {
@@ -99,15 +103,18 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
         <PanelHead id="mp-priority" title="경험카드 우선순위">
           이 공고에 먼저 쓸 카드입니다. 끌거나 화살표로 순서를 바꿉니다.
         </PanelHead>
-        {cards.length > 0 ? (
-          <Button type="button" variant="outline" size="sm" disabled={drafting} onClick={() => setConfirming(true)}>
-            LLM으로 초안 다시 만들기
-          </Button>
-        ) : (
-          <BusyButton type="button" variant="outline" size="sm" onClick={draft}>
-            {drafting ? "초안 만드는 중…" : "LLM으로 초안 만들기"}
-          </BusyButton>
-        )}
+        {/* 첫 초안이 끝나면 같은 버튼이 "다시 만들기"가 된다. 버튼을 바꿔 끼우면 초점이 body로 떨어진다 */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={drafting}
+          focusableWhenDisabled
+          className={busyButton}
+          onClick={() => (cards.length > 0 ? setConfirming(true) : void draft())}
+        >
+          {drafting ? "초안 만드는 중…" : cards.length > 0 ? "LLM으로 초안 다시 만들기" : "LLM으로 초안 만들기"}
+        </Button>
       </div>
       {draftError && <IconNote tone="danger">{draftError}</IconNote>}
 
@@ -177,9 +184,6 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
     </Panel>
   )
 }
-
-/** 끝에서 꺼진 위·아래 버튼도 초점을 잃지 않게 aria-disabled로 두므로(focusableWhenDisabled) 흐림을 여기서 준다 */
-const stepButton = "aria-disabled:pointer-events-none aria-disabled:opacity-35"
 
 interface PriorityRowProps {
   card: PriorityCard

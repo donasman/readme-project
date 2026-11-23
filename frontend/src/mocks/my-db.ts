@@ -2,10 +2,26 @@
 // 내 지원 상태와 메모는 내 공고 행(user-postings.ts)에 있고, 그룹 공고와 메일 확인함도 같은 행을 읽고 쓴다.
 // 공고 본체(회사, 공고명, 마감, 내용)는 그룹 공고(db.ts)에서 그때그때 읽는다. 그룹에서 마감일을 넣으면 여기도 바뀐다.
 // 내 공고 조회 API는 아직 설계에 없다(화면 API 대응 3.3의 10번). 이 폴더는 shared와 타입만 불러온다.
-import type { ExperienceCard } from "@/domain/card/types"
+import type { ExperienceCard, Star } from "@/domain/card/types"
 import type { PostingAnalysis, PostUpload } from "@/domain/posting/types"
 import type { GroupPostDetail } from "@/features/group-posts/types"
-import type { AddPostingResult, CardMatch, DraftResult, GroupNews, HomeData, MyPosting, MyPostingDetail, MyState, PostingGroup, PriorityCard, RequirementResult, Schedule } from "@/features/my-posts/types"
+import type {
+  AddPostingResult,
+  CardMatch,
+  DraftResult,
+  GroupNews,
+  HomeData,
+  MatchResult,
+  MyPosting,
+  MyPostingDetail,
+  MyState,
+  PostingGroup,
+  PriorityCard,
+  Question,
+  QuestionType,
+  RequirementResult,
+  Schedule,
+} from "@/features/my-posts/types"
 import { NotFoundError } from "@/shared/lib/errors"
 
 import { listCards, listUnverifiedCards } from "./cards-db"
@@ -126,6 +142,7 @@ export function getMyPosting(id: string): MyPostingDetail {
     unmatched: analysis ? [...(extra.unmatched ?? [])] : [],
     requirements: analysis ? requirementResults(analysis, cards, matches) : [],
     cardPriority: priorityOf(e),
+    questions: questionsOf(e, analysis),
     groupStates: found.map(({ group, post }) => ({
       ...group,
       interested: post.me.interested,
@@ -236,4 +253,112 @@ export function saveCardPriority(id: string, cardIds: string[]): PriorityCard[] 
   if (cardIds.length > 5 || new Set(cardIds).size !== cardIds.length) throw new Error("INVALID_INPUT: 5장까지, 겹치지 않게")
   e.priority = cardIds.map((cardId) => ({ cardId, reason: e.priority?.find((p) => p.cardId === cardId)?.reason ?? null }))
   return priorityOf(e)
+}
+
+/** 자기소개서 문항(문항 매칭 문서 4절). 저장 전이면 공고 분석의 문항이고 id가 null이다. 지운 카드는 빠진다(서버는 외래 키로 지운다). */
+function questionsOf(e: Entry, analysis: PostingAnalysis | null): Question[] {
+  if (!e.questions) return (analysis?.questions ?? []).map((q) => ({ id: null, text: q.text, limit: q.limit, type: null, cards: [] }))
+  const cards = listCards()
+  return e.questions.map((q) => ({
+    ...q,
+    cards: q.cards.flatMap((c) => {
+      const card = cards.find((x) => x.id === c.cardId)
+      return card ? [{ ...c, title: card.title, experience: card.experience }] : []
+    }),
+  }))
+}
+
+/** 문항에 둘 카드 수(QD1). 화면의 question-match.ts와 같은 규칙이다(가짜 서버는 features를 불러오지 않는다) */
+const maxQuestionCards = (limit: number | null) => (limit !== null && limit < 500 ? 1 : 2)
+
+let nextQuestionId = 1
+
+/** 문항 목록을 통째로 둔다(PUT …/questions). id가 있으면 그 문항의 유형과 카드가 남고, 없으면 새 문항, 빠진 문항은 지운다. */
+export function saveQuestions(id: string, list: Pick<Question, "id" | "text" | "limit">[]): Question[] {
+  const e = rawEntry(id)
+  const ok =
+    list.length <= 10 &&
+    list.every(
+      (q) =>
+        q.text.trim() !== "" &&
+        q.text.length <= 1000 &&
+        (q.limit === null || (Number.isInteger(q.limit) && q.limit >= 1 && q.limit <= 10000)) &&
+        (q.id === null || e.questions?.some((s) => s.id === q.id))
+    )
+  if (!ok) throw new Error("INVALID_INPUT: 문항 10개까지, 글 1~1,000자, 글자 수 1~10,000이나 없음, 이 공고의 내 문항")
+  e.questions = list.map((q) => {
+    const before = e.questions?.find((s) => s.id === q.id)
+    return { id: before?.id ?? `q${nextQuestionId++}`, text: q.text, limit: q.limit, type: before?.type ?? null, cards: before?.cards ?? [] }
+  })
+  return questionsOf(e, null)
+}
+
+// 문항 글로 유형을 흉내 낸다. 앞의 것이 먼저다(지원 동기와 포부를 함께 물으면 지원동기)
+const TYPE_WORDS: [QuestionType, RegExp][] = [
+  ["MOTIVE", /지원\s?동기/],
+  ["FUTURE", /포부/],
+  ["FAILURE", /실패/],
+  ["TEAM", /협업|갈등|소통/],
+  ["PROBLEM", /문제|개선/],
+  ["GOAL", /목표|도전/],
+  ["GROWTH", /성장|노력|자기\s?개발/],
+  ["VALUES", /가치관|성격|장단점/],
+]
+
+/** 유형마다 살릴 칸(문항 매칭 리서치 3절) */
+const EMPHASIS: Record<QuestionType, (keyof Star)[]> = {
+  JOB: ["action", "result"],
+  PROBLEM: ["situation", "action", "result"],
+  GOAL: ["task", "obstacle", "result"],
+  TEAM: ["action", "obstacle", "result"],
+  FAILURE: ["obstacle", "learning"],
+  GROWTH: ["action", "learning"],
+  VALUES: ["learning", "action"],
+  MOTIVE: [],
+  FUTURE: [],
+}
+
+/**
+ * 문항 매칭 LLM 흉내(POST …/questions/match): 문항과 카드가 있으면 저장 전 문항을 먼저 저장하고, 문항 글로 유형을, 공고 키워드와 겹치는 태그가 많은
+ * 카드부터 문항끼리 겹치지 않게 골라 앞 결과를 바꾼다(모자라면 다시 쓴다). 지원동기·포부는 카드를 고르지 않는다.
+ */
+export async function matchQuestions(id: string): Promise<MatchResult> {
+  await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
+  const posting = getMyPosting(id)
+  // 서버처럼 문항 없음과 카드 없음을 먼저 보고, 고를 수 있을 때만 저장 전 문항을 저장한다
+  if (posting.questions.length === 0) return { ok: false, error: "NO_QUESTIONS" }
+  const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+  const ranked = listCards()
+    .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
+    .sort((a, b) => b.overlap.length - a.overlap.length)
+  if (ranked.length === 0) return { ok: false, error: "NO_CARDS" }
+  const e = rawEntry(id)
+  if (!e.questions) saveQuestions(id, posting.questions)
+  const questions = e.questions ?? []
+  const used = new Set<string>()
+  for (const q of questions) {
+    const type = TYPE_WORDS.find(([, words]) => words.test(q.text))?.[0] ?? "JOB"
+    const picks = type === "MOTIVE" || type === "FUTURE" ? [] : [...ranked.filter((c) => !used.has(c.cardId)), ...ranked.filter((c) => used.has(c.cardId))].slice(0, maxQuestionCards(q.limit))
+    for (const c of picks) used.add(c.cardId)
+    q.type = type
+    q.cards = picks.map(({ cardId, overlap }) => ({
+      cardId,
+      reason: overlap.length > 0 ? `공고 키워드 ${overlap.join(", ")}와 이어지는 장면입니다` : "이 문항에 답할 장면이 있는 카드입니다",
+      emphasis: EMPHASIS[type],
+    }))
+  }
+  return { ok: true, questions: questionsOf(e, null) }
+}
+
+/** 문항 하나의 카드를 이 순서로 둔다(PUT …/questions/{questionId}/cards). 앞에 있던 카드는 이유와 살릴 칸이 남는다. */
+export function setQuestionCards(id: string, questionId: string, cardIds: string[]): Question[] {
+  const e = rawEntry(id)
+  const q = e.questions?.find((x) => x.id === questionId)
+  if (!q) throw new NotFoundError("문항")
+  const mine = listCards()
+  if (cardIds.length > maxQuestionCards(q.limit) || new Set(cardIds).size !== cardIds.length || !cardIds.every((c) => mine.some((m) => m.id === c))) {
+    throw new Error("INVALID_INPUT: 문항의 카드 수까지, 겹치지 않게, 내 카드만")
+  }
+  q.cards = cardIds.map((cardId) => q.cards.find((c) => c.cardId === cardId) ?? { cardId, reason: null, emphasis: [] })
+  return questionsOf(e, null)
 }

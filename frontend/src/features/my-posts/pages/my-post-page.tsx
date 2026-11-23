@@ -24,7 +24,8 @@ import { getCardChoices, getMyPosting, getSchedules, removeMyPosting, saveMemo }
 import { CardPriorityPanel } from "../components/card-priority-panel"
 import { DdayBadge } from "../components/my-bits"
 import { RemoveDialog } from "../components/remove-dialog"
-import { QuestionsPanel, RequirementsPanel } from "../components/requirement-panels"
+import { QuestionMatchPanel } from "../components/question-match-panel"
+import { RequirementsPanel } from "../components/requirement-panels"
 import { removalOf, type Removal } from "../removal"
 import { dueText } from "../status"
 import type { ArrivedState, RemovedState } from "../types"
@@ -37,7 +38,7 @@ export async function myPostLoader({ params }: LoaderFunctionArgs) {
 
 const sourceLink = "-my-3 inline-flex min-h-control-md items-center gap-1 font-bold whitespace-nowrap text-primary"
 
-/** 공고 상세(시안 8차, 내 공고. 요건과 내 카드, 자기소개서 문항, 빼기는 12차): 마감과 지원처, 내 상태, 공고 내용(원문), 경험카드 우선순위(시안 없음), 메모, 옆 칸에 요건과 내 카드, 이 공고가 있는 그룹. */
+/** 공고 상세(시안 8차, 내 공고. 요건과 내 카드, 자기소개서 문항, 빼기는 12차): 마감과 지원처, 내 상태, 공고 내용(원문), 경험카드 우선순위와 자기소개서 문항(시안 없음), 메모, 옆 칸에 요건과 내 카드, 이 공고가 있는 그룹. */
 export function MyPostPage() {
   const { today, posting, scheduleCount, cardChoices } = useLoaderData<typeof myPostLoader>()
   const navigate = useNavigate()
@@ -133,6 +134,8 @@ export function MyPostPage() {
 
           <CardPriorityPanel key={posting.id} postingId={posting.id} initial={posting.cardPriority} choices={cardChoices} />
 
+          <QuestionMatchPanel key={`q-${posting.id}`} postingId={posting.id} initial={posting.questions} choices={cardChoices} />
+
           <Panel aria-labelledby="mp-memo" className="flex flex-col gap-4 p-6">
             <PanelHead id="mp-memo" title="나만 보는 메모">그룹에는 보이지 않습니다.</PanelHead>
             <label htmlFor="mp-memo-text" className="sr-only">
@@ -165,10 +168,7 @@ export function MyPostPage() {
 
         <aside className={joinClasses(sideColumn(320), "gap-6")}>
           {posting.analysis ? (
-            <>
-              <RequirementsPanel requirements={posting.requirements} matches={posting.matches} />
-              {posting.analysis.questions.length > 0 && <QuestionsPanel questions={posting.analysis.questions} />}
-            </>
+            <RequirementsPanel requirements={posting.requirements} matches={posting.matches} />
           ) : (
             <Panel aria-labelledby="mp-match" className="flex flex-col gap-4 p-6">
               <h2 id="mp-match" className={sectionTitle}>
