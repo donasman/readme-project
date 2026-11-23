@@ -14,6 +14,8 @@ export interface Entry extends MyState {
   /** 그룹을 나가 본체를 못 읽을 때 쓰는 마지막 값. 그룹 없이 넣은 공고는 처음부터 이 값이다 */
   snapshot: Pick<MyPosting, "company" | "title" | "deadline"> | null
   memo: string
+  /** 경험카드 우선순위(서버의 user_posting_cards). 첫째가 앞. 없으면 빈 목록으로 본다 */
+  priority?: { cardId: string; reason: string | null }[]
   /** 그룹 없이 넣은 공고의 나머지 본체(어느 그룹 공고에도 걸려 있지 않다) */
   own?: { applyAt: string | null; sourceUrl: string | null; sections: PostSection[]; keywords: string[] }
 }

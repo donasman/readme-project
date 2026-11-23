@@ -114,6 +114,10 @@ const SCENARIOS = [
   { name: "dialog-remove-posting", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "내 공고에서 빼기"]] },
   { name: "dialog-remove-posting-plain", path: "/my-posts/p-be1", width: 1280, steps: [["press", "내 공고에서 빼기"]] },
   { name: "my-posts-removed", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "내 공고에서 빼기"], ["press", "빼기"]] },
+  // 경험카드 우선순위(카드 우선순위 문서, 시안 없음): 초안, 휴대폰, 다시 만들기 창
+  { name: "my-post-priority", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 초안 만들기"]] },
+  { name: "my-post-priority-mobile", path: "/my-posts/p-pub1", width: 390, scale: 2, steps: [["press", "LLM으로 초안 만들기"]] },
+  { name: "dialog-priority-redraft", path: "/my-posts/p-pub1", width: 1280, steps: [["press", "LLM으로 초안 만들기"], ["press", "LLM으로 초안 다시 만들기"]] },
   // 요건별 카드 줄과 카드 미리 보기 창(최종 시안). p-be1의 첫 요건은 카드 4장이라 "더 보기"가 나온다
   { name: "my-post-more-cards", path: "/my-posts/p-be1", width: 1280, steps: [["press", "카드 1장 더 보기"]] },
   { name: "dialog-card-preview", path: "/my-posts/p-be1", width: 1280, steps: [["click", "button[aria-haspopup=dialog]"]] },
