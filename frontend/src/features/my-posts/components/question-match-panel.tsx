@@ -11,7 +11,7 @@ import { PanelHead } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
 import { busyButton } from "@/shared/components/step-button"
-import { ChevronDownIcon, ChevronRightIcon } from "@/shared/icons"
+import { ChevronDownIcon, ChevronRightIcon, XIcon } from "@/shared/icons"
 
 import { matchQuestions, saveQuestions, setQuestionCards } from "../api"
 import { addableQuestionCards, isResearchType, maxCards, QUESTION_TYPES } from "../question-match"
@@ -208,11 +208,12 @@ interface QuestionRowProps {
   onChange: (cardIds: string[], message: string) => Promise<void>
 }
 
-/** 문항 하나: 번호, 글, 글자 수와 유형, 카드 바꾸기 메뉴, 그 아래 카드 줄(누르면 미리 보기 창). */
+/** 문항 하나: 번호, 글, 글자 수와 유형, 카드 바꾸기 메뉴(더하기, 주된·보조 바꾸기), 그 아래 카드 줄(누르면 미리 보기 창, 옆에 빼기). */
 function QuestionRow({ question, number, choices, locked, busy, onOpen, onChange }: QuestionRowProps) {
   const { text, limit, type, cards } = question
   const ids = cards.map((c) => c.cardId)
   const addable = addableQuestionCards(choices, question)
+  const swappable = cards.length === 2 && maxCards(limit) === 2
   return (
     <li className="flex flex-col gap-3 border-t border-border-subtle py-4 first:border-t-0 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
@@ -234,17 +235,12 @@ function QuestionRow({ question, number, choices, locked, busy, onOpen, onChange
               <ChevronDownIcon data-icon="inline-end" aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {cards.length === 2 && maxCards(limit) === 2 && (
+              {swappable && (
                 <DropdownMenuItem disabled={busy} onClick={() => void onChange([ids[1], ids[0]], `${number}번 문항의 주된 카드를 ${cards[1].title}(으)로 바꿨습니다.`)}>
                   주된 카드와 보조 카드 바꾸기
                 </DropdownMenuItem>
               )}
-              {cards.map((c) => (
-                <DropdownMenuItem key={c.cardId} disabled={busy} onClick={() => void onChange(ids.filter((id) => id !== c.cardId), `${number}번 문항에서 ${c.title}을(를) 뺐습니다.`)}>
-                  {c.title} 빼기
-                </DropdownMenuItem>
-              ))}
-              {cards.length > 0 && addable.length > 0 && <DropdownMenuSeparator />}
+              {swappable && addable.length > 0 && <DropdownMenuSeparator />}
               {addable.length > 0 && (
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>다른 카드 더하기</DropdownMenuLabel>
@@ -255,7 +251,7 @@ function QuestionRow({ question, number, choices, locked, busy, onOpen, onChange
                   ))}
                 </DropdownMenuGroup>
               )}
-              {cards.length === 0 && addable.length === 0 && <DropdownMenuItem disabled>더할 수 있는 카드가 없습니다</DropdownMenuItem>}
+              {!swappable && addable.length === 0 && <DropdownMenuItem disabled>더할 수 있는 카드가 없습니다</DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -264,12 +260,12 @@ function QuestionRow({ question, number, choices, locked, busy, onOpen, onChange
       {cards.length > 0 ? (
         <ul className="flex flex-col gap-1.5 sm:pl-7">
           {cards.map((c, i) => (
-            <li key={c.cardId}>
+            <li key={c.cardId} className="flex items-center gap-1">
               <button
                 type="button"
                 aria-haspopup="dialog"
                 onClick={() => onOpen(i)}
-                className="flex min-h-14 w-full cursor-pointer items-center gap-2.5 rounded-control border border-border-subtle bg-surface py-2.5 pr-2.5 pl-3.5 text-left text-foreground"
+                className="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-control border border-border-subtle bg-surface py-2.5 pr-2.5 pl-3.5 text-left text-foreground"
               >
                 <span className="flex min-w-0 flex-auto flex-col gap-1">
                   <span className="text-xs text-text-secondary">
@@ -291,6 +287,16 @@ function QuestionRow({ question, number, choices, locked, busy, onOpen, onChange
                 </span>
                 <ChevronRightIcon aria-hidden="true" className="size-4 flex-none text-text-secondary" />
               </button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`${number}번 문항에서 ${c.title} 빼기`}
+                disabled={busy}
+                onClick={() => void onChange(ids.filter((id) => id !== c.cardId), `${number}번 문항에서 ${c.title}을(를) 뺐습니다.`)}
+              >
+                <XIcon aria-hidden="true" />
+              </Button>
             </li>
           ))}
         </ul>

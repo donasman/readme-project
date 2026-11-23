@@ -40,8 +40,7 @@ test("공고의 문항에 카드를 고르고, 카드 바꾸기로 고친 뒤 �
   await expect(cards.nth(0)).toContainText(second)
   await expect(panel.locator("p[role=status]")).toHaveText(`2번 문항의 주된 카드를 ${second}(으)로 바꿨습니다.`)
 
-  await panel.getByRole("button", { name: "2번 문항 카드 바꾸기" }).click()
-  await page.getByRole("menuitem", { name: `${second} 빼기` }).click()
+  await panel.getByRole("button", { name: `2번 문항에서 ${second} 빼기` }).click()
   await expect(cards).toHaveCount(1)
   await expect(cards.nth(0)).toContainText("주된 카드")
 
