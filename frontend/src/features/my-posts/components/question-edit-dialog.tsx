@@ -9,7 +9,7 @@ import { stepButton } from "@/shared/components/step-button"
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, XIcon } from "@/shared/icons"
 
 import { moveBy } from "../card-priority"
-import { limitError, MAX_QUESTIONS, QUESTION_LIMIT_MAX, QUESTION_TEXT_MAX, textError, toLimit } from "../question-match"
+import { limitError, MAX_QUESTIONS, QUESTION_TEXT_MAX, textError, toLimit } from "../question-match"
 import type { Question } from "../types"
 
 /** 창의 한 줄. 글자 수는 칸의 글 그대로 두고 저장할 때 숫자로 바꾼다 */
@@ -76,7 +76,7 @@ export function QuestionEditDialog({ open, onOpenChange, questions, unsaved, onS
         <p className="text-label-sm text-text-secondary">
           문항은 {MAX_QUESTIONS}개, 글은 {QUESTION_TEXT_MAX.toLocaleString("ko-KR")}자까지 넣을 수 있습니다. 글자 수가 없으면 비워 둡니다.
         </p>
-        {rows.length === 0 && <p className="text-sm text-text-secondary">문항이 없습니다. 저장하면 이 공고의 문항을 모두 뺍니다.</p>}
+        {rows.length === 0 && !isNew && <p className="text-sm text-text-secondary">문항이 없습니다. 저장하면 이 공고의 문항을 모두 뺍니다.</p>}
         {rows.length > 0 && (
           <ol className="flex flex-col gap-5">
             {rows.map((row, i) => {
@@ -113,13 +113,19 @@ export function QuestionEditDialog({ open, onOpenChange, questions, unsaved, onS
                       onChange={(e) => change(row.key, { text: e.target.value })}
                     />
                   </FormField>
-                  <FormField id={limitId} label="글자 수" note={error.limit && <FieldError id={limitId}>{error.limit}</FieldError>}>
+                  <FormField
+                    id={limitId}
+                    label={
+                      <>
+                        <span className="sr-only">{i + 1}번 문항 </span>글자 수
+                      </>
+                    }
+                    note={error.limit && <FieldError id={limitId}>{error.limit}</FieldError>}>
                     <Input
                       id={limitId}
-                      type="number"
+                      // number 칸은 틀린 글(-, 1e)을 빈 값으로 넘겨 글자 수 없음으로 저장된다. 글로 받아 검사한다
+                      type="text"
                       inputMode="numeric"
-                      min={1}
-                      max={QUESTION_LIMIT_MAX}
                       placeholder="없음"
                       value={row.limit}
                       aria-invalid={!!error.limit || undefined}

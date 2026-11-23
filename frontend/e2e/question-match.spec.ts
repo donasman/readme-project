@@ -38,7 +38,7 @@ test("공고의 문항에 카드를 고르고, 카드 바꾸기로 고친 뒤 �
   await panel.getByRole("button", { name: "2번 문항 카드 바꾸기" }).click()
   await page.getByRole("menuitem", { name: "주된 카드와 보조 카드 바꾸기" }).click()
   await expect(cards.nth(0)).toContainText(second)
-  await expect(panel.locator("p[role=status]")).toHaveText("주된 카드와 보조 카드를 바꿨습니다.")
+  await expect(panel.locator("p[role=status]")).toHaveText(`2번 문항의 주된 카드를 ${second}(으)로 바꿨습니다.`)
 
   await panel.getByRole("button", { name: "2번 문항 카드 바꾸기" }).click()
   await page.getByRole("menuitem", { name: `${second} 빼기` }).click()
@@ -68,16 +68,20 @@ test("문항 고치기 창에서 빼고, 더하고, 순서와 글자 수를 바�
   await expect(dialog.getByText("공고에서 찾은 문항입니다. 저장하면 이 목록을 씁니다.")).toBeVisible()
 
   await dialog.getByRole("button", { name: "1번 문항 빼기" }).click()
-  await dialog.getByRole("spinbutton").nth(0).fill("300")
+  await dialog.getByRole("textbox", { name: "1번 문항 글자 수" }).fill("300")
   await dialog.getByRole("button", { name: "문항 더하기" }).click()
   await dialog.getByRole("button", { name: "저장" }).click()
   await expect(dialog.getByText("문항 글을 넣어 주세요.")).toBeVisible()
 
   await dialog.getByRole("textbox", { name: "3번 문항", exact: true }).fill("성격의 장단점을 쓰시오")
-  await dialog.getByRole("spinbutton").nth(2).fill("0")
+  // 숫자가 아닌 글자 수는 빈 값(글자 수 없음)으로 넘어가지 않고 막힌다
+  const limit = dialog.getByRole("textbox", { name: "3번 문항 글자 수" })
+  await limit.fill("1e3")
   await dialog.getByRole("button", { name: "저장" }).click()
   await expect(dialog.getByText("글자 수는 1~10,000 사이 숫자로 넣거나 비워 두세요.")).toBeVisible()
-  await dialog.getByRole("spinbutton").nth(2).fill("")
+  await limit.fill("0")
+  await expect(dialog.getByText("글자 수는 1~10,000 사이 숫자로 넣거나 비워 두세요.")).toBeVisible()
+  await limit.fill("")
   await dialog.getByRole("button", { name: "3번 문항 위로" }).click()
   await dialog.getByRole("button", { name: "저장" }).click()
   await expect(dialog).toBeHidden()
@@ -88,7 +92,7 @@ test("문항 고치기 창에서 빼고, 더하고, 순서와 글자 수를 바�
   await expect(rows.nth(1)).toContainText("성격의 장단점을 쓰시오")
   await expect(rows.nth(1)).toContainText("글자 수 없음")
   await expect(panel.getByText("공고에서 찾은 문항입니다")).toBeHidden()
-  await expect(panel.locator("p[role=status]")).toHaveText("문항을 저장했습니다.")
+  await expect(panel.locator("p[role=status]")).toHaveText("문항 3개를 저장했습니다.")
 
   // 500자 아래 문항은 카드 한 장
   await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
@@ -103,9 +107,12 @@ test("공고에 문항이 없으면 지원서의 문항을 넣는다", async ({ 
   await expect(panel.getByText("공고에서 문항을 찾지 못했습니다. 지원서의 문항을 넣어 주세요.")).toBeVisible()
   await panel.getByRole("button", { name: "문항 넣기" }).click()
   const dialog = page.getByRole("dialog", { name: "문항 넣기" })
+  // 처음부터 문항이 없던 공고는 "모두 뺍니다"를 알리지 않는다
+  await expect(dialog.getByRole("button", { name: "문항 더하기" })).toBeVisible()
+  await expect(dialog.getByText("저장하면 이 공고의 문항을 모두 뺍니다")).toHaveCount(0)
   await dialog.getByRole("button", { name: "문항 더하기" }).click()
   await dialog.getByRole("textbox", { name: "1번 문항", exact: true }).fill("입사 후 포부를 쓰시오")
-  await dialog.getByRole("spinbutton").fill("700")
+  await dialog.getByRole("textbox", { name: "1번 문항 글자 수" }).fill("700")
   await dialog.getByRole("button", { name: "저장" }).click()
   await expect(dialog).toBeHidden()
   await expect(panel.locator("ol > li")).toHaveCount(1)
@@ -114,4 +121,17 @@ test("공고에 문항이 없으면 지원서의 문항을 넣는다", async ({ 
   await panel.getByRole("button", { name: "LLM으로 카드 고르기" }).click()
   await expect(panel.getByText("입사 후 포부", { exact: true })).toBeVisible()
   await expect(panel.getByText("회사와 직무 조사가 중심인 문항이라 카드를 고르지 않았습니다.")).toBeVisible()
+})
+
+test("고르기 전에 저장 전 문항에 카드를 더하면 문항을 먼저 저장한다", async ({ page }) => {
+  await page.goto("/my-posts/p-pub1")
+  const panel = panelOf(page)
+  const rows = panel.locator("ol > li")
+  await expect(panel.getByText("공고에서 찾은 문항입니다")).toBeVisible()
+  await panel.getByRole("button", { name: "1번 문항 카드 바꾸기" }).click()
+  await page.getByRole("menuitem", { name: /알고리즘 스터디 운영/ }).click()
+  await expect(rows.nth(0).locator("button[aria-haspopup=dialog]")).toHaveCount(1)
+  await expect(rows.nth(0).locator("button[aria-haspopup=dialog]")).toContainText("알고리즘 스터디 운영")
+  await expect(panel.getByText("공고에서 찾은 문항입니다")).toBeHidden()
+  await expect(panel.locator("p[role=status]")).toHaveText("1번 문항에 알고리즘 스터디 운영을(를) 더했습니다.")
 })

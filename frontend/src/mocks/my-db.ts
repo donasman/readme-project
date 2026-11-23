@@ -319,21 +319,22 @@ const EMPHASIS: Record<QuestionType, (keyof Star)[]> = {
 }
 
 /**
- * 문항 매칭 LLM 흉내(POST …/questions/match): 저장 전이면 지금 문항을 먼저 저장하고, 문항 글로 유형을, 공고 키워드와 겹치는 태그가 많은
+ * 문항 매칭 LLM 흉내(POST …/questions/match): 문항과 카드가 있으면 저장 전 문항을 먼저 저장하고, 문항 글로 유형을, 공고 키워드와 겹치는 태그가 많은
  * 카드부터 문항끼리 겹치지 않게 골라 앞 결과를 바꾼다(모자라면 다시 쓴다). 지원동기·포부는 카드를 고르지 않는다.
  */
 export async function matchQuestions(id: string): Promise<MatchResult> {
   await new Promise((resolve) => setTimeout(resolve, DRAFT_MS))
   const posting = getMyPosting(id)
-  const e = rawEntry(id)
-  if (!e.questions) saveQuestions(id, posting.questions)
-  const questions = e.questions ?? []
-  if (questions.length === 0) return { ok: false, error: "NO_QUESTIONS" }
+  // 서버처럼 문항 없음과 카드 없음을 먼저 보고, 고를 수 있을 때만 저장 전 문항을 저장한다
+  if (posting.questions.length === 0) return { ok: false, error: "NO_QUESTIONS" }
   const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
   const ranked = listCards()
     .map((c) => ({ cardId: c.id, overlap: c.tags.filter((t) => posting.keywords.some((k) => same(k, t))) }))
     .sort((a, b) => b.overlap.length - a.overlap.length)
   if (ranked.length === 0) return { ok: false, error: "NO_CARDS" }
+  const e = rawEntry(id)
+  if (!e.questions) saveQuestions(id, posting.questions)
+  const questions = e.questions ?? []
   const used = new Set<string>()
   for (const q of questions) {
     const type = TYPE_WORDS.find(([, words]) => words.test(q.text))?.[0] ?? "JOB"

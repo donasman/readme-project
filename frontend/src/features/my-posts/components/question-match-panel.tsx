@@ -10,6 +10,7 @@ import { Chip } from "@/shared/components/chip"
 import { PanelHead } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
+import { busyButton } from "@/shared/components/step-button"
 import { ChevronDownIcon, ChevronRightIcon } from "@/shared/icons"
 
 import { matchQuestions, saveQuestions, setQuestionCards } from "../api"
@@ -43,6 +44,9 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
   const [matchError, setMatchError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [matching, setMatching] = useState(false)
+  // 카드 바꾸기가 도는 동안. 끝나기 전에 메뉴를 다시 열면 앞 목록으로 보내 방금 더한 카드가 사라진다
+  const [changing, setChanging] = useState(false)
+  const busy = matching || changing
   const [editing, setEditing] = useState(false)
   // 창을 열 때마다 지금 문항으로 칸을 새로 채운다
   const [editKey, setEditKey] = useState(0)
@@ -60,7 +64,10 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
     setAnnounced("카드를 고르는 중입니다.")
     try {
       const result = await matchQuestions(postingId)
-      if (!result.ok) return setMatchError(MATCH_ERRORS[result.error])
+      if (!result.ok) {
+        setMatchError(MATCH_ERRORS[result.error])
+        return setAnnounced(MATCH_ERRORS[result.error])
+      }
       setQuestions(result.questions)
       setAnnounced(`문항 ${result.questions.length}개의 카드를 골랐습니다.`)
     } finally {
@@ -71,10 +78,17 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
 
   // 저장 전 문항은 id가 없어 카드를 둘 수 없으니 지금 문항을 먼저 저장한다(고르기와 같다)
   async function changeCards(index: number, cardIds: string[], message: string) {
-    const saved = unsaved ? await saveQuestions(postingId, questions) : questions
-    setQuestions(saved)
-    setQuestions(await setQuestionCards(postingId, saved[index].id ?? "", cardIds))
-    setAnnounced(message)
+    setChanging(true)
+    // 같은 글을 두 번 알려도 읽히게 먼저 비운다
+    setAnnounced("")
+    try {
+      const saved = unsaved ? await saveQuestions(postingId, questions) : questions
+      setQuestions(saved)
+      setQuestions(await setQuestionCards(postingId, saved[index].id ?? "", cardIds))
+      setAnnounced(message)
+    } finally {
+      setChanging(false)
+    }
   }
 
   function openEditor() {
@@ -90,18 +104,21 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
         </PanelHead>
         {questions.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" size="sm" disabled={matching} onClick={openEditor}>
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={openEditor}>
               문항 고치기
             </Button>
-            {matched ? (
-              <Button type="button" variant="outline" size="sm" disabled={matching} onClick={() => setConfirming(true)}>
-                {matching ? "고르는 중…" : "LLM으로 카드 고르기"}
-              </Button>
-            ) : (
-              <BusyButton type="button" variant="outline" size="sm" onClick={match}>
-                {matching ? "고르는 중…" : "LLM으로 카드 고르기"}
-              </BusyButton>
-            )}
+            {/* 처음 고르기와 다시 고르기는 같은 버튼이다. 버튼을 바꿔 끼우면 초점이 body로 떨어진다 */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              focusableWhenDisabled
+              className={busyButton}
+              onClick={() => (matched ? setConfirming(true) : void match())}
+            >
+              {matching ? "고르는 중…" : "LLM으로 카드 고르기"}
+            </Button>
           </div>
         )}
       </div>
@@ -122,7 +139,8 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
               question={q}
               number={i + 1}
               choices={choices}
-              disabled={matching}
+              locked={matching}
+              busy={busy}
               onOpen={(index) =>
                 setPreview({
                   label: `${i + 1}번 문항`,
@@ -149,9 +167,10 @@ export function QuestionMatchPanel({ postingId, initial, choices }: QuestionMatc
         questions={questions}
         unsaved={unsaved}
         onSave={async (list) => {
+          setAnnounced("")
           setQuestions(await saveQuestions(postingId, list))
           setEditing(false)
-          setAnnounced("문항을 저장했습니다.")
+          setAnnounced(`문항 ${list.length}개를 저장했습니다.`)
         }}
       />
       <AppDialog
@@ -178,14 +197,19 @@ interface QuestionRowProps {
   question: Question
   number: number
   choices: CardChoice[]
-  /** 고르는 중이면 카드 바꾸기를 막는다 */
-  disabled: boolean
+  /** 고르는 중이면 카드 바꾸기 메뉴를 막는다 */
+  locked: boolean
+  /**
+   * 고르거나 카드를 바꾸는 중이면 메뉴의 항목을 막는다. 카드를 바꾸는 동안은 메뉴 버튼을 끄지 않는다:
+   * 항목을 누르면 초점이 메뉴 버튼으로 돌아오는데, 메뉴 버튼(base-ui Menu.Trigger)은 꺼진 채 초점을 받지 못한다
+   */
+  busy: boolean
   onOpen: (index: number) => void
   onChange: (cardIds: string[], message: string) => Promise<void>
 }
 
 /** 문항 하나: 번호, 글, 글자 수와 유형, 카드 바꾸기 메뉴, 그 아래 카드 줄(누르면 미리 보기 창). */
-function QuestionRow({ question, number, choices, disabled, onOpen, onChange }: QuestionRowProps) {
+function QuestionRow({ question, number, choices, locked, busy, onOpen, onChange }: QuestionRowProps) {
   const { text, limit, type, cards } = question
   const ids = cards.map((c) => c.cardId)
   const addable = addableQuestionCards(choices, question)
@@ -205,16 +229,18 @@ function QuestionRow({ question, number, choices, disabled, onOpen, onChange }: 
         {/* 휴대폰은 글 칸이 좁아지지 않게 메뉴를 글 아래로 내린다 */}
         <div className="flex flex-none max-sm:w-full max-sm:justify-end">
           <DropdownMenu>
-            <DropdownMenuTrigger disabled={disabled} aria-label={`${number}번 문항 카드 바꾸기`} render={<Button variant="outline" size="sm" />}>
+            <DropdownMenuTrigger disabled={locked} aria-label={`${number}번 문항 카드 바꾸기`} render={<Button variant="outline" size="sm" />}>
               카드 바꾸기
               <ChevronDownIcon data-icon="inline-end" aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {cards.length === 2 && maxCards(limit) === 2 && (
-                <DropdownMenuItem onClick={() => void onChange([ids[1], ids[0]], "주된 카드와 보조 카드를 바꿨습니다.")}>주된 카드와 보조 카드 바꾸기</DropdownMenuItem>
+                <DropdownMenuItem disabled={busy} onClick={() => void onChange([ids[1], ids[0]], `${number}번 문항의 주된 카드를 ${cards[1].title}(으)로 바꿨습니다.`)}>
+                  주된 카드와 보조 카드 바꾸기
+                </DropdownMenuItem>
               )}
               {cards.map((c) => (
-                <DropdownMenuItem key={c.cardId} onClick={() => void onChange(ids.filter((id) => id !== c.cardId), `${c.title}을(를) 뺐습니다.`)}>
+                <DropdownMenuItem key={c.cardId} disabled={busy} onClick={() => void onChange(ids.filter((id) => id !== c.cardId), `${number}번 문항에서 ${c.title}을(를) 뺐습니다.`)}>
                   {c.title} 빼기
                 </DropdownMenuItem>
               ))}
@@ -223,7 +249,7 @@ function QuestionRow({ question, number, choices, disabled, onOpen, onChange }: 
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>다른 카드 더하기</DropdownMenuLabel>
                   {addable.map((c) => (
-                    <DropdownMenuItem key={c.cardId} onClick={() => void onChange([...ids, c.cardId], `${c.title}을(를) 더했습니다.`)}>
+                    <DropdownMenuItem key={c.cardId} disabled={busy} onClick={() => void onChange([...ids, c.cardId], `${number}번 문항에 ${c.title}을(를) 더했습니다.`)}>
                       {c.experience ? `${c.experience} · ${c.title}` : c.title}
                     </DropdownMenuItem>
                   ))}
