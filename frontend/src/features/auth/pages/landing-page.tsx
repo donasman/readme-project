@@ -32,9 +32,13 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
 /** 섹션 제목(28px). */
 const sectionTitle = "font-heading text-[28px] leading-[1.2] font-bold tracking-display"
 
-/** 로그인했는지 읽는다. 로그인한 사람도 설정의 "리드미 소개"로 이 화면에 온다. */
+/**
+ * 로그인했는지 읽는다. 로그인한 사람도 설정의 "리드미 소개"로 이 화면에 온다.
+ * 서버가 꺼졌거나 오류를 내도 랜딩은 로그인 전 모습으로 보인다(누구나 보는 첫 화면이라 오류 화면을 띄우지 않는다).
+ */
 export async function landingLoader() {
-  return { signedIn: (await getViewer()) !== null }
+  const viewer = await getViewer().catch(() => null)
+  return { signedIn: viewer !== null }
 }
 
 /** 로그인한 사람에게 로그인·회원가입 대신 보이는 버튼. */
