@@ -45,7 +45,7 @@ npm run dev:server   # 서버를 부른다. 서버 없이 가짜 서버로만 �
 
 - `http://localhost:8080/actuator/health` 가 `{"status":"UP"}` 을 돌려준다. 서버가 뜰 때 Flyway 가 테이블 30개를 만들므로, 서버가 떴다면 DB 연결과 테이블 생성까지 된 것이다.
 - 서버는 dev 프로필로 뜨고, 빈 DB 에 개발용 사용자와 예시 그룹·공고를 넣는다. 예시 사용자는 개발용 비밀번호로 로그인한다: `POST /api/auth/login` 에 `{ "email": "daon@example.com", "password": "readme1234" }`(`docs/리드미_백엔드_구조.md` 6.2).
-- `http://localhost:5173` 은 로그인하지 않았으면 랜딩(`/welcome`)을 보인다. 예시 사용자로 로그인하면 홈(`/`)이 열린다. `npm run dev:server` 에서는 모든 화면이 서버를 부른다(아래 "지금 들어 있는 것"의 frontend). `npm run dev` 는 서버 없이 가짜 서버만 부르고, 예시 사용자로 로그인한 채 시작한다.
+- `http://localhost:5173` 은 로그인하지 않았으면 랜딩(`/welcome`)을 보인다. 예시 사용자로 로그인하면 대시보드(`/`)가 열린다. `npm run dev:server` 에서는 모든 화면이 서버를 부른다(아래 "지금 들어 있는 것"의 frontend). `npm run dev` 는 서버 없이 가짜 서버만 부르고, 예시 사용자로 로그인한 채 시작한다.
 - 보낸 메일(가입 확인, 비밀번호 재설정)은 `http://localhost:8025` 에서 본다.
 
 ## 빌드와 테스트
