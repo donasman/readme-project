@@ -7,12 +7,15 @@ interface PageProps extends HTMLAttributes<HTMLElement> {
   narrow?: boolean
 }
 
+/** 본문 폭과 좌우 여백. 헤더(app-header.tsx)도 같은 값을 써서 로고와 본문의 왼쪽 끝을 맞춘다. */
+export const pageWidth = (narrow: boolean) => (narrow ? "max-w-[1120px] px-6" : "max-w-[1240px] px-4")
+
 /** 화면의 본문 틀(main): 가운데, 아래 64px, 세로로 쌓는다. 위 여백과 간격은 className으로 준다. */
 export function Page({ narrow = false, className, ...props }: PageProps) {
   return (
     <main
       id="main"
-      className={joinClasses("mx-auto flex flex-col pb-16", narrow ? "max-w-[1120px] px-6" : "max-w-[1240px] px-4", className)}
+      className={joinClasses("mx-auto flex flex-col pb-16", pageWidth(narrow), className)}
       {...props}
     />
   )

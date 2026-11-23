@@ -74,7 +74,7 @@ export function HomePage() {
       </dl>
 
       <div className={columns}>
-        <section aria-labelledby="home-due" className={joinClasses(mainColumn, "gap-3")}>
+        <section aria-labelledby="home-due" className={joinClasses(mainColumn, "gap-3 self-stretch")}>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <h2 id="home-due" className={sectionTitle}>
               다가오는 마감
@@ -82,7 +82,7 @@ export function HomePage() {
             <ArrowLink to={paths.myPosts()}>내 공고 모두 보기</ArrowLink>
           </div>
           {open.length > 0 ? (
-            <Panel as="ul" className="flex flex-col">
+            <Panel as="ul" className="flex flex-1 flex-col">
               {open.slice(0, UPCOMING).map((p, i) => {
                 const due = dueText(p, today)
                 return (
@@ -105,7 +105,7 @@ export function HomePage() {
           )}
         </section>
 
-        <aside className={joinClasses(sideColumn(320), "gap-6")}>
+        <aside className={joinClasses(sideColumn(320), "gap-6 self-stretch")}>
           <section aria-labelledby="home-todo" className="flex flex-col gap-3 rounded-panel bg-highlight-subtle p-5">
             <h2 id="home-todo" className={sectionTitle}>
               확인 필요 {todos.length}
@@ -126,7 +126,7 @@ export function HomePage() {
             )}
           </section>
 
-          <Panel aria-labelledby="home-news" className="flex flex-col gap-4 p-6">
+          <Panel aria-labelledby="home-news" className="flex flex-1 flex-col gap-4 p-6">
             <h2 id="home-news" className={sectionTitle}>
               그룹 소식
             </h2>

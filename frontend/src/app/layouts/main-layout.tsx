@@ -6,7 +6,8 @@ import { AppHeader } from "./app-header"
 export function MainLayout() {
   return (
     <>
-      <AppHeader />
+      {/* 그룹 밖 화면은 모두 Page narrow다 */}
+      <AppHeader narrow />
       <Outlet />
     </>
   )
