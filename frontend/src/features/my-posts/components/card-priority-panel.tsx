@@ -11,6 +11,7 @@ import { BusyButton } from "@/shared/components/busy-button"
 import { PanelHead } from "@/shared/components/heading"
 import { IconNote } from "@/shared/components/notice"
 import { Panel } from "@/shared/components/panel"
+import { stepButton } from "@/shared/components/step-button"
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, GripVerticalIcon, PlusIcon, XIcon } from "@/shared/icons"
 import { paths } from "@/shared/lib/paths"
 import { joinClasses } from "@/shared/lib/utils"
@@ -177,9 +178,6 @@ export function CardPriorityPanel({ postingId, initial, choices }: CardPriorityP
     </Panel>
   )
 }
-
-/** 끝에서 꺼진 위·아래 버튼도 초점을 잃지 않게 aria-disabled로 두므로(focusableWhenDisabled) 흐림을 여기서 준다 */
-const stepButton = "aria-disabled:pointer-events-none aria-disabled:opacity-35"
 
 interface PriorityRowProps {
   card: PriorityCard
